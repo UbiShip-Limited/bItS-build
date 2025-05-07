@@ -135,5 +135,4 @@ CREATE TABLE TattooRequests (
 Let me know if this structure captures everything you need for the initial project setup!
 
 
-https://github.com/Maximilian93B/bItS-build.git
 

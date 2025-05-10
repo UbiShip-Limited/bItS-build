@@ -1,8 +1,10 @@
 import Fastify, { FastifyInstance, RouteShorthandOptions } from 'fastify';
 import { Server, IncomingMessage, ServerResponse } from 'http';
+import config from './config'; // Import the configuration
 
 const server: FastifyInstance<Server, IncomingMessage, ServerResponse> = Fastify({
-  logger: process.env.NODE_ENV !== 'production' ? {
+  logger: config.NODE_ENV !== 'production' ? {
+    level: config.LOG_LEVEL, // Use LOG_LEVEL from config
     transport: {
       target: 'pino-pretty',
       options: {
@@ -10,7 +12,7 @@ const server: FastifyInstance<Server, IncomingMessage, ServerResponse> = Fastify
         ignore: 'pid,hostname',
       },
     },
-  } : true, // Enable default JSON logger for production
+  } : { level: config.LOG_LEVEL }, // Use LOG_LEVEL for production, default JSON logger
 });
 
 // Health check route
@@ -34,11 +36,12 @@ server.get('/health', healthCheckOpts, async (request, reply) => {
 
 const start = async () => {
   try {
-    const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001; // Default to 3001 for backend
-    const host = process.env.HOST || '0.0.0.0'; // Listen on all available interfaces
-
-    await server.listen({ port, host });
-    server.log.info(`Server listening on http://${host}:${port}`);
+    // Use PORT and HOST from the imported config
+    await server.listen({ port: config.PORT, host: config.HOST });
+    // Corrected to access the address after server is listening, especially if port is 0 (dynamic)
+    const address = server.server.address();
+    const port = typeof address === 'string' ? address : address?.port;
+    server.log.info(`Server listening on http://${config.HOST}:${port}`);
   } catch (err) {
     server.log.error(err);
     process.exit(1);

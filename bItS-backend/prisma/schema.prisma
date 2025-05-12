@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Define your models below, based on biTs-Backend.md
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  hashedPassword String? // Assuming you'll handle auth with Supabase, password might be managed there or synced
+  role          Role          @default(USER) // Example: Define a Role enum
+  name          String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  appointments  Appointment[] // Relation to Appointments (if artists are users)
+  auditLogs     AuditLog[]    // Relation to AuditLogs
+  // Add other fields as needed
+}
+
+model Customer {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  firstName       String
+  lastName        String
+  phone           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  tattooRequests  TattooRequest[]
+  appointments    Appointment[]
+  payments        Payment[]
+  invoices        Invoice[]
+  // Add other fields as needed
+}
+
+model TattooRequest {
+  id            String        @id @default(cuid())
+  description   String
+  placement     String
+  size          String
+  style         String?
+  status        String        @default("PENDING") // e.g., PENDING, APPROVED, REJECTED
+  customerId    String
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  artistId      String?       // Optional: if assigned to a specific artist (User)
+  // artist     User?         @relation(fields: [artistId], references: [id])
+  images        Image[]
+  appointment   Appointment?  // A request might lead to one appointment
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  // Add other fields as needed
+}
+
+model Appointment {
+  id              String        @id @default(cuid())
+  dateTime        DateTime
+  status          String        @default("PENDING") // e.g., PENDING, CONFIRMED, COMPLETED, CANCELED
+  notes           String?
+  customerId      String
+  customer        Customer      @relation(fields: [customerId], references: [id])
+  artistId        String?       // Assuming an artist (User) is assigned
+  // artist       User?         @relation(fields: [artistId], references: [id])
+  tattooRequestId String?       @unique // Link to the originating TattooRequest
+  tattooRequest   TattooRequest?@relation(fields: [tattooRequestId], references: [id])
+  payments        Payment[]
+  invoice         Invoice?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  // Add other fields as needed
+}
+
+model Image {
+  id              String        @id @default(cuid())
+  cloudinaryUrl   String
+  altText         String?
+  uploadedAt      DateTime      @default(now())
+  tattooRequestId String?
+  tattooRequest  TattooRequest?@relation(fields: [tattooRequestId], references: [id])
+  // Could also be linked to completed tattoos, portfolio items, etc.
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Payment {
+  id            String      @id @default(cuid())
+  amount        Float
+  currency      String      @default("CAD")
+  status        String      // e.g., PENDING, SUCCEEDED, FAILED
+  squarePaymentId String?     @unique // ID from Square
+  customerId    String
+  customer      Customer    @relation(fields: [customerId], references: [id])
+  appointmentId String?
+  appointment   Appointment?@relation(fields: [appointmentId], references: [id])
+  invoiceId     String?
+  invoice       Invoice?    @relation(fields: [invoiceId], references: [id])
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Invoice {
+  id            String      @id @default(cuid())
+  invoiceNumber String      @unique @default(cuid()) // Or generate a more human-readable one
+  amountDue     Float
+  dueDate       DateTime?
+  status        String      // e.g., DRAFT, SENT, PAID, VOID
+  customerId    String
+  customer      Customer    @relation(fields: [customerId], references: [id])
+  appointmentId String?     @unique // An invoice might be for one appointment
+  appointment   Appointment?@relation(fields: [appointmentId], references: [id])
+  payments      Payment[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String   // e.g., "USER_LOGIN", "APPOINTMENT_CREATE"
+  details   Json?    // Store relevant details about the action
+  userId    String?  // User performing the action (if applicable)
+  user      User?    @relation(fields: [userId], references: [id])
+  timestamp DateTime @default(now())
+}
+
+enum Role {
+  USER // Standard customer/user
+  ARTIST
+  ASSISTANT
+  ADMIN
+}

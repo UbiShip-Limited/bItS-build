@@ -1,6 +1,6 @@
 import server from '../src/server'; // Import the Fastify instance
 import config from '../src/config'; // To use the configured port for testing
-
+import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
 describe('Server Health Check (src/server.ts)', () => {
   beforeAll(async () => {
     // Ensure the server is started before tests run

@@ -1,4 +1,7 @@
 import path from 'path';
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
+import type { SpyInstance } from 'jest-mock';
+
 
 // Helper to set environment variables for a test
 const setEnvVars = (vars: Record<string, string | undefined>) => {
@@ -13,7 +16,7 @@ const setEnvVars = (vars: Record<string, string | undefined>) => {
 
 describe('Configuration Loading (src/config/index.ts)', () => {
   let originalEnv: NodeJS.ProcessEnv;
-  let consoleErrorSpy: jest.SpyInstance;
+  let consoleErrorSpy: SpyInstance;
 
   beforeEach(() => {
     // Save original environment variables
@@ -31,10 +34,22 @@ describe('Configuration Loading (src/config/index.ts)', () => {
   });
 
   it('should load variables from .env.test when NODE_ENV is test', () => {
-    // NODE_ENV=test is typically set by the test script
-    // We ensure our .env.test values are used
-    // We expect dotenv to load .env.test automatically based on logic in config/index.ts
-    // For this test to be robust, ensure .env.test exists and has distinct values.
+
+  
+    // Add any other required environment variables for testing
+    setEnvVars({
+      DATABASE_URL: 'postgresql://test_user:test_password@localhost:5432/test_db',
+      SUPABASE_URL: 'https://test.supabase.co',
+      SUPABASE_ANON_KEY: 'test_anon_key',
+      SUPABASE_SERVICE_ROLE_KEY: 'test_service_key',
+      CLOUDINARY_CLOUD_NAME: 'test_cloud',
+      CLOUDINARY_API_KEY: 'test_key',
+      CLOUDINARY_API_SECRET: 'test_secret',
+      SQUARE_APPLICATION_ID: 'test_app_id',
+      SQUARE_ACCESS_TOKEN: 'test_token',
+      SQUARE_LOCATION_ID: 'test_loc_id'
+    });
+    
     const config = require('../src/config').default;
 
     expect(config.NODE_ENV).toBe('test');

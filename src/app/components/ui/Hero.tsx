@@ -56,7 +56,7 @@ export function TattooHero() {
     
 
             <h1 className="font-gotham text-5xl font-black tracking-tight md:text-6xl lg:text-7xl">
-              <span className="block">BOWEN</span>
+              <span className="block">VANCOUVER</span>
               <span className="mt-1 block">
                 <span className="text-[#00FFFF]">ISLAND</span>
                 <span className="relative ml-2 inline-block">

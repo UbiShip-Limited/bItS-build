@@ -7,7 +7,7 @@ import { TattooHero } from "./components/ui/Hero";
 export default function Home() {
   return (
     <div className="bg-[#0F0F0F] min-h-screen">
-      <TattooHero />
+    <TattooHero />
     <ParallaxSections />
      <DynamicGallery />
     </div>

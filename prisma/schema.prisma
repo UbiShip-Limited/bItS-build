@@ -1,0 +1,139 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// schema.prisma // This comment can be removed or kept, it's just a marker
+// The generator client and datasource db blocks below were duplicates and have been removed.
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String?
+  role      String   @default("artist") // artist, assistant, admin
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+  
+  appointments Appointment[]
+  
+  @@map("users")
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?  @unique
+  phone     String?
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+  
+  appointments    Appointment[]
+  tattooRequests  TattooRequest[]
+  
+  @@map("customers")
+}
+
+model Appointment {
+  id         String   @id @default(uuid())
+  customerId String   @map("customer_id")
+  artistId   String?  @map("artist_id")
+  date       DateTime
+  duration   Int      // Duration in minutes
+  status     String   @default("pending") // pending, confirmed, completed, canceled
+  notes      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @map("updated_at")
+  
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  artist     User?    @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  invoices   Invoice[]
+  
+  @@map("appointments")
+}
+
+model TattooRequest {
+  id               String   @id @default(uuid())
+  customerId       String   @map("customer_id")
+  description      String
+  placement        String?
+  size             String?
+  colorPreference  String?  @map("color_preference")
+  style            String?
+  referenceImages  Json     @default("[]") @map("reference_images")
+  status           String   @default("new") // new, reviewed, approved, rejected
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @map("updated_at")
+  
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  images           Image[]
+  
+  @@map("tattoo_requests")
+}
+
+model Payment {
+  id             String   @id @default(uuid())
+  amount         Float
+  status         String   @default("pending") // pending, completed, failed, refunded
+  paymentMethod  String?  @map("payment_method")
+  paymentDetails Json?    @map("payment_details")
+  squareId       String?  @unique @map("square_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @map("updated_at")
+  
+  invoices       Invoice[]
+  
+  @@map("payments")
+}
+
+model Image {
+  id              String   @id @default(uuid())
+  tattooRequestId String?  @map("tattoo_request_id")
+  url             String
+  publicId        String   @map("public_id")
+  metadata        Json?
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  tattooRequest   TattooRequest? @relation(fields: [tattooRequestId], references: [id], onDelete: SetNull)
+  
+  @@map("images")
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  appointmentId String?  @map("appointment_id")
+  paymentId     String?  @map("payment_id")
+  amount        Float
+  status        String   @default("pending") // pending, paid, canceled
+  description   String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @map("updated_at")
+  
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  payment       Payment?     @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  
+  @@map("invoices")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  action    String
+  resource  String
+  resourceId String?  @map("resource_id")
+  details   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@map("audit_logs")
+}

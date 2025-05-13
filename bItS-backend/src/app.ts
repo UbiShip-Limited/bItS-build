@@ -1,6 +1,8 @@
 import Fastify, { FastifyInstance, RouteShorthandOptions } from 'fastify';
 import { Server, IncomingMessage, ServerResponse } from 'http';
 import config from './config'; // Ensure config is loaded
+import cors from '@fastify/cors';
+import apiRoutes from './api/routes';
 
 // Import application modules like routes, plugins, services as needed later
 // Example:
@@ -21,6 +23,13 @@ const server: FastifyInstance<Server, IncomingMessage, ServerResponse> = Fastify
   } : { level: config.LOG_LEVEL }, // Use LOG_LEVEL for production, default JSON logger
 });
 
+// Setup CORS
+server.register(cors, {
+  origin: config.CORS_ORIGIN,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  credentials: true,
+});
+
 // Health check route
 const healthCheckOpts: RouteShorthandOptions = {
   schema: {
@@ -39,6 +48,9 @@ const healthCheckOpts: RouteShorthandOptions = {
 server.get('/health', healthCheckOpts, async (request, reply) => {
   return { status: 'ok', timestamp: new Date().toISOString() };
 });
+
+// Register API routes
+server.register(apiRoutes, { prefix: '/api/v1' });
 
 // Graceful shutdown logic
 const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM'];

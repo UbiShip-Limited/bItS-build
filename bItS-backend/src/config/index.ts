@@ -18,7 +18,7 @@ const config = cleanEnv(process.env, {
     default: 'info',
   }),
 
-  DATABASE_URL: url(),
+  DATABASE_URI: url(),
 
   SUPABASE_URL: url(),
   SUPABASE_ANON_KEY: str(),

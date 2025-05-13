@@ -11,21 +11,21 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("DATABASE_URI")
 }
 
 // Define your models below, based on biTs-Backend.md
 
 model User {
-  id            String        @id @default(cuid())
-  email         String        @unique
-  hashedPassword String? // Assuming you'll handle auth with Supabase, password might be managed there or synced
-  role          Role          @default(USER) // Example: Define a Role enum
-  name          String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  appointments  Appointment[] // Relation to Appointments (if artists are users)
-  auditLogs     AuditLog[]    // Relation to AuditLogs
+  id                     String         @id @default(cuid())
+  email                  String         @unique
+  role                   Role           @default(USER)
+  name                   String?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  assignedTattooRequests TattooRequest[] @relation("AssignedTattooRequests")
+  assignedAppointments   Appointment[]  @relation("AssignedAppointments")
+  auditLogs              AuditLog[]     // Relation to AuditLogs
   // Add other fields as needed
 }
 
@@ -50,11 +50,11 @@ model TattooRequest {
   placement     String
   size          String
   style         String?
-  status        String        @default("PENDING") // e.g., PENDING, APPROVED, REJECTED
+  status        RequestStatus @default(PENDING)
   customerId    String
   customer      Customer      @relation(fields: [customerId], references: [id])
-  artistId      String?       // Optional: if assigned to a specific artist (User)
-  // artist     User?         @relation(fields: [artistId], references: [id])
+  artistId      String?
+  artist        User?         @relation("AssignedTattooRequests", fields: [artistId], references: [id])
   images        Image[]
   appointment   Appointment?  // A request might lead to one appointment
   createdAt     DateTime      @default(now())
@@ -63,20 +63,20 @@ model TattooRequest {
 }
 
 model Appointment {
-  id              String        @id @default(cuid())
+  id              String           @id @default(cuid())
   dateTime        DateTime
-  status          String        @default("PENDING") // e.g., PENDING, CONFIRMED, COMPLETED, CANCELED
+  status          AppointmentStatus @default(PENDING)
   notes           String?
   customerId      String
-  customer        Customer      @relation(fields: [customerId], references: [id])
-  artistId        String?       // Assuming an artist (User) is assigned
-  // artist       User?         @relation(fields: [artistId], references: [id])
-  tattooRequestId String?       @unique // Link to the originating TattooRequest
-  tattooRequest   TattooRequest?@relation(fields: [tattooRequestId], references: [id])
+  customer        Customer         @relation(fields: [customerId], references: [id])
+  artistId        String?
+  artist          User?            @relation("AssignedAppointments", fields: [artistId], references: [id])
+  tattooRequestId String?          @unique
+  tattooRequest   TattooRequest?   @relation(fields: [tattooRequestId], references: [id])
   payments        Payment[]
   invoice         Invoice?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
   // Add other fields as needed
 }
 
@@ -93,34 +93,34 @@ model Image {
 }
 
 model Payment {
-  id            String      @id @default(cuid())
+  id            String         @id @default(cuid())
   amount        Float
-  currency      String      @default("CAD")
-  status        String      // e.g., PENDING, SUCCEEDED, FAILED
-  squarePaymentId String?     @unique // ID from Square
+  currency      String         @default("CAD")
+  status        PaymentStatus
+  squarePaymentId String?        @unique
   customerId    String
-  customer      Customer    @relation(fields: [customerId], references: [id])
+  customer      Customer       @relation(fields: [customerId], references: [id])
   appointmentId String?
   appointment   Appointment?@relation(fields: [appointmentId], references: [id])
   invoiceId     String?
-  invoice       Invoice?    @relation(fields: [invoiceId], references: [id])
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  invoice       Invoice?       @relation(fields: [invoiceId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
 model Invoice {
-  id            String      @id @default(cuid())
-  invoiceNumber String      @unique @default(cuid()) // Or generate a more human-readable one
+  id            String         @id @default(cuid())
+  invoiceNumber String         @unique
   amountDue     Float
   dueDate       DateTime?
-  status        String      // e.g., DRAFT, SENT, PAID, VOID
+  status        InvoiceStatus
   customerId    String
-  customer      Customer    @relation(fields: [customerId], references: [id])
-  appointmentId String?     @unique // An invoice might be for one appointment
-  appointment   Appointment?@relation(fields: [appointmentId], references: [id])
+  customer      Customer         @relation(fields: [customerId], references: [id])
+  appointmentId String?          @unique
+  appointment   Appointment?     @relation(fields: [appointmentId], references: [id])
   payments      Payment[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 }
 
 model AuditLog {
@@ -133,8 +133,40 @@ model AuditLog {
 }
 
 enum Role {
-  USER // Standard customer/user
+  USER
   ARTIST
   ASSISTANT
   ADMIN
+}
+
+// Added Enums for Status fields
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  VOID
+  OVERDUE
 }

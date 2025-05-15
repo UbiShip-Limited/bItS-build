@@ -1,7 +1,9 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import prismaPlugin from './plugins/prisma'; // Path to your prisma plugin
 // import { User } from '@prisma/client'; // Example: Import Prisma types if needed
-import { pathToFileURL } from 'url'; // <--- Add this import
+import tattooRequestsRoutes from './routes/tattooRequest';
+import customerRoutes from './routes/customer';
+import paymentRoutes from './routes/payment';
 
 // Initialize Fastify
 const build = (opts = {}): FastifyInstance => {
@@ -21,6 +23,11 @@ const build = (opts = {}): FastifyInstance => {
       reply.status(500).send({ error: 'Failed to fetch users' });
     }
   });
+
+  // Register your routes
+  fastify.register(tattooRequestsRoutes, { prefix: '/tattoo-requests' });
+  fastify.register(customerRoutes, { prefix: '/customers' });
+  fastify.register(paymentRoutes, { prefix: '/payments' });
 
   // TODO: Register your other routes and plugins here
   return fastify;
@@ -68,9 +75,17 @@ const main = async () => {
   await start(app);
 };
 
-// Start the server only if this file is run directly (not imported as a module)
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+// Only run the main function when directly executed, not when imported
+// Use a safer check that works in both ESM and CommonJS
+if (typeof require !== 'undefined' && require.main === module) {
   main();
+} else if (typeof process !== 'undefined' && process.argv.length > 1) {
+  // Simple check for ESM
+  const argv1 = process.argv[1];
+  const currentFile = __filename;
+  if (argv1 && currentFile && argv1.endsWith(currentFile)) {
+    main();
+  }
 }
 
 // Export the build function for testing or programmatic use

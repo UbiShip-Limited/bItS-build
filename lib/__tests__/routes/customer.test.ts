@@ -65,6 +65,15 @@ describe('Customer Routes', () => {
     
     // Reset all mock implementations
     jest.resetAllMocks();
+    
+    // Setup explicit mock implementation for user auth check
+    mockPrismaClient.user.findUnique.mockImplementation((args) => {
+      return Promise.resolve({
+        id: mockUser.id,
+        email: mockUser.email,
+        role: mockUser.role
+      });
+    });
   });
   
   afterEach(async () => {
@@ -73,9 +82,14 @@ describe('Customer Routes', () => {
   
   describe('GET /customers', () => {
     it('should return a paginated list of customers', async () => {
-      // Setup mocks with proper typing
-      mockPrismaClient.customer.findMany.mockResolvedValue(mockCustomers);
-      mockPrismaClient.customer.count.mockResolvedValue(mockCustomers.length);
+      // Setup mocks with explicit implementation
+      mockPrismaClient.customer.findMany.mockImplementation(() => {
+        return Promise.resolve(mockCustomers);
+      });
+      
+      mockPrismaClient.customer.count.mockImplementation(() => {
+        return Promise.resolve(mockCustomers.length);
+      });
       
       const response = await authRequest
         .get('/customers')
@@ -101,9 +115,14 @@ describe('Customer Routes', () => {
     });
     
     it('should filter by search term', async () => {
-      // Setup mocks with proper typing
-      mockPrismaClient.customer.findMany.mockResolvedValue([mockCustomers[0]]);
-      mockPrismaClient.customer.count.mockResolvedValue(1);
+      // Setup mocks with explicit implementation
+      mockPrismaClient.customer.findMany.mockImplementation(() => {
+        return Promise.resolve([mockCustomers[0]]);
+      });
+      
+      mockPrismaClient.customer.count.mockImplementation(() => {
+        return Promise.resolve(1);
+      });
       
       const response = await authRequest
         .get('/customers?search=john')
@@ -159,8 +178,13 @@ describe('Customer Routes', () => {
         ]
       };
       
-      // Setup mock
-      mockPrismaClient.customer.findUnique.mockResolvedValue(customerWithRelations);
+      // Setup mock with explicit implementation
+      mockPrismaClient.customer.findUnique.mockImplementation((args) => {
+        if (args.where.id === 'customer1') {
+          return Promise.resolve(customerWithRelations);
+        }
+        return Promise.resolve(null);
+      });
       
       const response = await authRequest
         .get('/customers/customer1')
@@ -183,8 +207,10 @@ describe('Customer Routes', () => {
     });
     
     it('should return 404 if customer not found', async () => {
-      // Setup mock
-      mockPrismaClient.customer.findUnique.mockResolvedValue(null);
+      // Setup mock with explicit implementation
+      mockPrismaClient.customer.findUnique.mockImplementation((args) => {
+        return Promise.resolve(null);
+      });
       
       await authRequest
         .get('/customers/999')
@@ -210,10 +236,18 @@ describe('Customer Routes', () => {
         updatedAt: new Date()
       };
       
-      // Setup mocks
-      mockPrismaClient.customer.findUnique.mockResolvedValue(null);
-      mockPrismaClient.customer.create.mockResolvedValue(createdCustomer);
-      mockPrismaClient.auditLog.create.mockResolvedValue({ id: 'audit1' });
+      // Setup mocks with explicit implementation
+      mockPrismaClient.customer.findUnique.mockImplementation((args) => {
+        return Promise.resolve(null);
+      });
+      
+      mockPrismaClient.customer.create.mockImplementation((args) => {
+        return Promise.resolve(createdCustomer);
+      });
+      
+      mockPrismaClient.auditLog.create.mockImplementation((args) => {
+        return Promise.resolve({ id: 'audit1' });
+      });
       
       const response = await authRequest
         .post('/customers')
@@ -229,8 +263,13 @@ describe('Customer Routes', () => {
     });
     
     it('should return 409 if email already exists', async () => {
-      // Setup mock
-      mockPrismaClient.customer.findUnique.mockResolvedValue(mockCustomers[0]);
+      // Setup mock with explicit implementation
+      mockPrismaClient.customer.findUnique.mockImplementation((args) => {
+        if (args.where.email === 'john@example.com') {
+          return Promise.resolve(mockCustomers[0]);
+        }
+        return Promise.resolve(null);
+      });
       
       await authRequest
         .post('/customers')
@@ -260,10 +299,21 @@ describe('Customer Routes', () => {
         ...updateData
       };
       
-      // Setup mocks
-      mockPrismaClient.customer.findUnique.mockResolvedValue(mockCustomers[0]);
-      mockPrismaClient.customer.update.mockResolvedValue(updatedCustomer);
-      mockPrismaClient.auditLog.create.mockResolvedValue({ id: 'audit2' });
+      // Setup mocks with explicit implementation
+      mockPrismaClient.customer.findUnique.mockImplementation((args) => {
+        if (args.where.id === 'customer1') {
+          return Promise.resolve(mockCustomers[0]);
+        }
+        return Promise.resolve(null);
+      });
+      
+      mockPrismaClient.customer.update.mockImplementation((args) => {
+        return Promise.resolve(updatedCustomer);
+      });
+      
+      mockPrismaClient.auditLog.create.mockImplementation((args) => {
+        return Promise.resolve({ id: 'audit2' });
+      });
       
       const response = await authRequest
         .put('/customers/customer1')
@@ -280,10 +330,15 @@ describe('Customer Routes', () => {
     });
     
     it('should check email uniqueness when updating', async () => {
-      // Setup mocks
-      mockPrismaClient.customer.findUnique
-        .mockResolvedValueOnce(mockCustomers[0]) // For finding the original
-        .mockResolvedValueOnce(mockCustomers[1]); // For finding existing with same email
+      // Setup mocks with explicit implementation
+      mockPrismaClient.customer.findUnique.mockImplementation((args) => {
+        if (args.where.id === 'customer1') {
+          return Promise.resolve(mockCustomers[0]);
+        } else if (args.where.email === 'jane@example.com') {
+          return Promise.resolve(mockCustomers[1]); // For finding existing with same email
+        }
+        return Promise.resolve(null);
+      });
       
       await authRequest
         .put('/customers/customer1')

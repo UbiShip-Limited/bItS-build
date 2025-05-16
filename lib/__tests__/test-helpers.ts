@@ -3,6 +3,7 @@ import { FastifyInstance } from 'fastify';
 import { build } from '../server';
 import supertest from 'supertest';
 import { jest } from '@jest/globals';
+import { setPrismaClient } from '../plugins/prisma';
 
 // Import the auth middleware mocks
 import { dummyAuthMiddleware, mockAuthMiddleware } from './middleware-mock';
@@ -42,12 +43,15 @@ export const setupTestApp = () => {
   const setup = async () => {
     // Reset all mocks before each test
     jest.resetAllMocks();
+    
+    // Set the mock Prisma client before building the app
+    setPrismaClient(mockPrismaClient);
 
     // Build the Fastify app
     app = build();
     
-    // Add the auth middleware hook
-    app.addHook('onRequest', (req, reply, done) => {
+    // This should match the hook used in your routes ('preHandler' not 'onRequest')
+    app.addHook('preHandler', (req, reply, done) => {
       if (dummyAuthMiddleware.mock.calls.length) {
         dummyAuthMiddleware(req, reply, done);
       } else {

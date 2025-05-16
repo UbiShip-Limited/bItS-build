@@ -54,16 +54,24 @@ const createMockMethod = () => {
 // Create a simplified mock of the Prisma client
 const createMockPrismaClient = () => {
   // Create base CRUD methods for models
-  const createModelMethods = () => ({
-    findUnique: createMockMethod(),
-    findFirst: createMockMethod(),
-    findMany: createMockMethod(),
-    create: createMockMethod(),
-    update: createMockMethod(),
-    upsert: createMockMethod(),
-    delete: createMockMethod(),
-    count: createMockMethod(),
-  });
+  const createModelMethods = () => {
+    const findMany = jest.fn()
+      .mockImplementation((...args) => {
+        console.log('Mock findMany called with:', JSON.stringify(args));
+        return Promise.resolve([]);
+      });
+    
+    return {
+      findUnique: createMockMethod(),
+      findFirst: createMockMethod(),
+      findMany,
+      create: createMockMethod(),
+      update: createMockMethod(),
+      upsert: createMockMethod(),
+      delete: createMockMethod(),
+      count: createMockMethod(),
+    };
+  };
 
   // Create models based on your Prisma schema
   return {
@@ -97,6 +105,7 @@ const mockSupabase = {
     signOut: jest.fn(),
     onAuthStateChange: jest.fn(),
     getSession: jest.fn().mockReturnValue({ data: { session: null }, error: null }),
+    getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'test-user-id' } }, error: null })
   },
   from: jest.fn().mockReturnThis(),
   select: jest.fn().mockReturnThis(),
@@ -118,6 +127,7 @@ jest.mock('@prisma/client', () => ({
   PrismaClient: jest.fn(() => mockPrismaClient),
 }));
 
+// Fix the path to properly mock the supabase client
 jest.mock('./lib/supabase/supabaseClient', () => ({
   supabase: mockSupabase
 }));

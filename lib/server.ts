@@ -17,10 +17,14 @@ const build = (opts = {}): FastifyInstance => {
     try {
       // Access Prisma via the decorated fastify instance
       const users = await fastify.prisma.user.findMany();
-      reply.send(users);
+      
+      // Simple response without manual serialization
+      reply.type('application/json');
+      return users;
     } catch (error) {
       request.log.error(error, 'Error fetching users');
-      reply.status(500).send({ error: 'Failed to fetch users' });
+      reply.type('application/json').code(500);
+      return { error: 'Failed to fetch users' };
     }
   });
 

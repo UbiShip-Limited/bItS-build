@@ -33,6 +33,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
       fastify.prisma.tattooRequest.count({ where })
     ]);
     
+    reply.type('application/json');
     return {
       data: tattooRequests,
       pagination: {
@@ -68,6 +69,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
       return reply.status(404).send({ error: 'Tattoo request not found' });
     }
     
+    reply.type('application/json');
     return tattooRequest;
   });
   
@@ -124,6 +126,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
       }
     });
     
+    reply.type('application/json');
     return tattooRequest;
   });
   
@@ -173,6 +176,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
       }
     });
     
+    reply.type('application/json');
     return updated;
   });
 };

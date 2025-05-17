@@ -122,15 +122,15 @@ export function DynamicGallery() {
   }, [])
 
   return (
-    <div className="bg-[#0F0F0F] py-20 px-4 md:px-8 lg:px-16">
+    <div className="bg-white py-20 px-4 md:px-8 lg:px-16">
       <div className="container mx-auto">
         {/* Gallery Header */}
         <div className="mb-12 text-center">
-          <h2 className="font-gotham text-4xl md:text-5xl font-black text-white mb-4">
-            <span className="text-[#FF00FF]">ARTIST</span> GALLERY
+          <h2 className="font-heading text-4xl md:text-5xl font-bold text-[#080808] mb-4">
+            <span className="text-[#C9A449]">ARTIST</span> GALLERY
           </h2>
-          <div className="h-1 w-32 mx-auto bg-gradient-to-r from-[#FF00FF] to-[#00FFFF] mb-6"></div>
-          <p className="text-white/70 max-w-2xl mx-auto">
+          <div className="h-1 w-32 mx-auto bg-gradient-to-r from-[#C9A449] to-[#444444] mb-6"></div>
+          <p className="text-[#444444] max-w-2xl mx-auto font-body">
             Explore our diverse collection of tattoo artistry. Each piece represents our commitment to quality,
             creativity, and personal expression.
           </p>
@@ -164,18 +164,18 @@ export function DynamicGallery() {
                 />
 
                 {/* Overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0F0F0F] to-transparent opacity-60"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#080808] to-transparent opacity-60"></div>
 
                 {/* Hover overlay */}
                 <div
-                  className={`absolute inset-0 bg-gradient-to-t from-[#0F0F0F] via-[#0F0F0F]/70 to-transparent transition-opacity duration-300 ${
+                  className={`absolute inset-0 bg-gradient-to-t from-[#080808] via-[#080808]/70 to-transparent transition-opacity duration-300 ${
                     hoveredItem === item.id ? "opacity-80" : "opacity-0"
                   }`}
                 ></div>
 
                 {/* Frame elements */}
-                <div className="absolute -top-1 -left-1 h-6 w-6 border-t border-l border-[#FF00FF] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="absolute -bottom-1 -right-1 h-6 w-6 border-b border-r border-[#00FFFF] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute -top-1 -left-1 h-6 w-6 border-t border-l border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute -bottom-1 -right-1 h-6 w-6 border-b border-r border-[#444444] opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
                 {/* Info overlay */}
                 <div
@@ -185,10 +185,10 @@ export function DynamicGallery() {
                 >
                   <div className="flex justify-between items-end">
                     <div>
-                      <p className="text-white font-medium">{item.alt}</p>
-                      <p className="text-[#FF00FF] text-sm">{item.artist}</p>
+                      <p className="text-white font-medium font-body">{item.alt}</p>
+                      <p className="text-[#C9A449] text-sm font-body">{item.artist}</p>
                     </div>
-                    <div className="bg-[#00FFFF]/20 text-[#00FFFF] text-xs px-2 py-1 rounded">{item.style}</div>
+                    <div className="bg-[#444444]/20 text-[#C9A449] text-xs px-2 py-1 rounded font-body">{item.style}</div>
                   </div>
                 </div>
 
@@ -213,7 +213,7 @@ export function DynamicGallery() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#080808]/90"
             onClick={() => setSelectedItem(null)}
           >
             <motion.div
@@ -233,17 +233,17 @@ export function DynamicGallery() {
               <div className="absolute top-4 right-4">
                 <button
                   onClick={() => setSelectedItem(null)}
-                  className="bg-black/50 p-2 rounded-full hover:bg-[#FF00FF]/50 transition-colors"
+                  className="bg-black/50 p-2 rounded-full hover:bg-[#C9A449]/50 transition-colors"
                 >
                   <X size={20} className="text-white" />
                 </button>
               </div>
 
               <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black to-transparent">
-                <h3 className="text-white text-xl font-medium mb-1">{selectedItem.alt}</h3>
+                <h3 className="text-white text-xl font-medium mb-1 font-heading">{selectedItem.alt}</h3>
                 <div className="flex justify-between items-center">
-                  <p className="text-[#FF00FF]">Artist: {selectedItem.artist}</p>
-                  <div className="bg-[#00FFFF]/20 text-[#00FFFF] px-3 py-1 rounded">{selectedItem.style}</div>
+                  <p className="text-[#C9A449] font-body">Artist: {selectedItem.artist}</p>
+                  <div className="bg-[#444444]/20 text-[#C9A449] px-3 py-1 rounded font-body">{selectedItem.style}</div>
                 </div>
               </div>
             </motion.div>

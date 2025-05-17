@@ -36,63 +36,87 @@ model Customer {
   email     String?  @unique
   phone     String?
   notes     String?
+  squareId  String?  @unique @map("square_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
   
   appointments    Appointment[]
   tattooRequests  TattooRequest[]
+  payments        Payment[]
   
   @@map("customers")
 }
 
 model Appointment {
-  id         String   @id @default(uuid())
-  customerId String   @map("customer_id")
-  artistId   String?  @map("artist_id")
-  date       DateTime
-  duration   Int      // Duration in minutes
-  status     String   @default("pending") // pending, confirmed, completed, canceled
-  notes      String?
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @default(now()) @map("updated_at")
+  id              String    @id @default(uuid())
+  customerId      String    @map("customer_id")
+  artistId        String?   @map("artist_id")
+  date            DateTime?
+  startTime       DateTime? @map("start_time")
+  endTime         DateTime? @map("end_time")
+  duration        Int?      // Duration in minutes
+  status          String    @default("pending") // pending, confirmed, completed, canceled, scheduled, no_show
+  type            String?   // consultation, drawing_consultation, tattoo_session
+  notes           String?
+  priceQuote      Float?    @map("price_quote")
+  squareId        String?   @unique @map("square_id")
+  paymentId       String?   @map("payment_id")
+  tattooRequestId String?   @map("tattoo_request_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @map("updated_at")
   
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  artist     User?    @relation(fields: [artistId], references: [id], onDelete: SetNull)
-  invoices   Invoice[]
+  customer      Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  artist        User?          @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  payment       Payment?       @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  tattooRequest TattooRequest? @relation(fields: [tattooRequestId], references: [id], onDelete: SetNull)
+  invoices      Invoice[]
   
   @@map("appointments")
 }
 
 model TattooRequest {
-  id               String   @id @default(uuid())
-  customerId       String   @map("customer_id")
+  id               String        @id @default(uuid())
+  customerId       String        @map("customer_id")
   description      String
   placement        String?
   size             String?
-  colorPreference  String?  @map("color_preference")
+  colorPreference  String?       @map("color_preference")
   style            String?
-  referenceImages  Json     @default("[]") @map("reference_images")
-  status           String   @default("new") // new, reviewed, approved, rejected
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @default(now()) @map("updated_at")
+  referenceImages  Json          @default("[]") @map("reference_images")
+  status           String        @default("new") // new, reviewed, approved, rejected, deposit_paid, in_progress, completed
+  depositPaid      Boolean       @default(false) @map("deposit_paid")
+  depositAmount    Float?        @map("deposit_amount")
+  finalAmount      Float?        @map("final_amount")
+  paymentId        String?       @map("payment_id")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @default(now()) @map("updated_at")
   
-  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer         Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  payment          Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
   images           Image[]
+  appointments     Appointment[]
   
   @@map("tattoo_requests")
 }
 
 model Payment {
-  id             String   @id @default(uuid())
+  id             String        @id @default(uuid())
   amount         Float
-  status         String   @default("pending") // pending, completed, failed, refunded
-  paymentMethod  String?  @map("payment_method")
-  paymentDetails Json?    @map("payment_details")
-  squareId       String?  @unique @map("square_id")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @default(now()) @map("updated_at")
+  status         String        @default("pending") // pending, completed, failed, refunded
+  paymentMethod  String?       @map("payment_method")
+  paymentType    String?       @map("payment_type") // consultation, drawing_consultation, tattoo_deposit, tattoo_final
+  paymentDetails Json?         @map("payment_details")
+  squareId       String?       @unique @map("square_id")
+  customerId     String?       @map("customer_id")
+  bookingId      String?       @map("booking_id")
+  referenceId    String?       @map("reference_id")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @default(now()) @map("updated_at")
   
+  customer       Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
   invoices       Invoice[]
+  appointments   Appointment[]
+  tattooRequests TattooRequest[]
   
   @@map("payments")
 }
@@ -127,13 +151,14 @@ model Invoice {
 }
 
 model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String?  @map("user_id")
-  action    String
-  resource  String
-  resourceId String?  @map("resource_id")
-  details   Json?
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  action      String
+  resource    String
+  resourceId  String?  @map("resource_id")
+  resourceType String? @map("resource_type") // For identifying the type of resource (payment, appointment, etc.)
+  details     Json?
+  createdAt   DateTime @default(now()) @map("created_at")
   
   @@map("audit_logs")
 }

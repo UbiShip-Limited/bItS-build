@@ -1,9 +1,14 @@
 import Fastify, { FastifyInstance } from 'fastify';
+
 import prismaPlugin from './plugins/prisma'; // Path to your prisma plugin
 // import { User } from '@prisma/client'; // Example: Import Prisma types if needed
 import tattooRequestsRoutes from './routes/tattooRequest';
 import customerRoutes from './routes/customer';
 import paymentRoutes from './routes/payment';
+import appointmentRoutes from './routes/appointment';
+import auditRoutes from './routes/audit';
+import bookingRoutes from './routes/booking';
+
 
 // Initialize Fastify
 const build = (opts = {}): FastifyInstance => {
@@ -32,6 +37,9 @@ const build = (opts = {}): FastifyInstance => {
   fastify.register(tattooRequestsRoutes, { prefix: '/tattoo-requests' });
   fastify.register(customerRoutes, { prefix: '/customers' });
   fastify.register(paymentRoutes, { prefix: '/payments' });
+  fastify.register(appointmentRoutes, { prefix: '/appointments' });
+  fastify.register(auditRoutes, { prefix: '/audit-logs' });
+  fastify.register(bookingRoutes, { prefix: '/bookings' });
 
   // TODO: Register your other routes and plugins here
   return fastify;

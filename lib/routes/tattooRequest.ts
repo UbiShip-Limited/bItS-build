@@ -1,13 +1,11 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authenticate, authorize } from '../middleware/auth';
+import { authorize } from '../middleware/auth.js';
+import { UserRole } from '../types/auth.js';
 
 const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
-  // Apply authentication middleware to all routes in this plugin
-  fastify.addHook('preHandler', authenticate);
-  
   // GET /tattoo-requests - List tattoo requests (admin only)
   fastify.get('/', {
-    preHandler: authorize(['artist', 'admin']),
+    preHandler: authorize(['artist', 'admin'] as UserRole[]),
     schema: {
       querystring: {
         type: 'object',
@@ -47,7 +45,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
   
   // GET /tattoo-requests/:id - Get details of a specific tattoo request
   fastify.get('/:id', {
-    preHandler: authorize(['artist', 'admin']),
+    preHandler: authorize(['artist', 'admin'] as UserRole[]),
     schema: {
       params: {
         type: 'object',
@@ -132,7 +130,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
   
   // PUT /tattoo-requests/:id - Update a tattoo request
   fastify.put('/:id', {
-    preHandler: authorize(['artist', 'admin']),
+    preHandler: authorize(['artist', 'admin'] as UserRole[]),
     schema: {
       params: {
         type: 'object',

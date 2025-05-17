@@ -55,12 +55,15 @@ export default {
   
   // Simplify module resolution with ESM
   moduleNameMapper: {
-    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '(\\.\\.?/.*)\\.js$': '$1',
+    '^../../square$': '<rootDir>/lib/square/index.ts',
+    '^../square/index.js$': '<rootDir>/lib/square/index.ts',
+    '^../../square/index.js$': '<rootDir>/lib/square/index.ts',
   },
   
   // Handle node_modules dependencies
   transformIgnorePatterns: [
-    'node_modules/(?!(@prisma/client)/)'
+    'node_modules/(?!(@prisma/client|square)/)'
   ],
   
   // Logging and timeout settings

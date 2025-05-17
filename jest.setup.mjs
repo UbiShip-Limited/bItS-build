@@ -118,6 +118,14 @@ const mockSupabase = {
   order: jest.fn().mockReturnThis(),
 };
 
+// Create a mock Square client
+const mockSquareClient = {
+  createPayment: createMockMethod(),
+  createBooking: createMockMethod(),
+  getBookings: createMockMethod(),
+  getPayments: createMockMethod()
+};
+
 // Setup global hooks
 beforeAll(() => console.log('Test suite started'));
 afterAll(() => console.log('Test suite completed'));
@@ -132,5 +140,62 @@ jest.mock('./lib/supabase/supabaseClient', () => ({
   supabase: mockSupabase
 }));
 
+// Mock Square client directly - use the absolute path for Square index
+jest.mock('./lib/square/index.ts', () => ({
+  __esModule: true,
+  default: {
+    fromEnv: jest.fn().mockReturnValue(mockSquareClient)
+  }
+}));
+
+// Make sure all common paths to Square are mocked
+jest.mock('./lib/square/index.js', () => ({
+  __esModule: true,
+  default: {
+    fromEnv: jest.fn().mockReturnValue(mockSquareClient)
+  }
+}));
+
+// Also mock Square from node_modules to prevent any real API calls
+jest.mock('square', () => {
+  return {
+    __esModule: true,
+    SquareClient: jest.fn().mockImplementation(() => ({
+      payments: {
+        create: jest.fn().mockResolvedValue({
+          result: {
+            payment: {
+              id: 'sq_payment_123',
+              amount_money: { amount: 5000, currency: 'CAD' },
+              status: 'COMPLETED'
+            }
+          }
+        })
+      },
+      bookings: {
+        create: jest.fn().mockResolvedValue({
+          result: {
+            booking: {
+              id: 'sq_booking_123',
+              start_at: '2023-10-15T14:00:00Z',
+              status: 'ACCEPTED'
+            }
+          }
+        })
+      }
+    })),
+    SquareEnvironment: {
+      Production: 'production',
+      Sandbox: 'sandbox'
+    }
+  };
+});
+
+// Set environment variables needed by Square to prevent real API calls
+process.env.SQUARE_ACCESS_TOKEN = 'test_token';
+process.env.SQUARE_ENVIRONMENT = 'sandbox';
+process.env.SQUARE_APPLICATION_ID = 'test_app_id';
+process.env.SQUARE_LOCATION_ID = 'test_location_id';
+
 // Export mocks for use in tests
-export { mockPrismaClient, mockSupabase as supabase }; 
+export { mockPrismaClient, mockSupabase as supabase, mockSquareClient }; 

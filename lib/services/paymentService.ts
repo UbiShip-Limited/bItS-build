@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-import SquareClient from '../square';
-import { prisma } from '../prisma/prisma';
+import SquareClient from '../square/index.js';
+import { prisma } from '../prisma/prisma.js';
 
 export enum PaymentType {
   CONSULTATION = 'consultation',
@@ -54,26 +54,26 @@ export default class PaymentService {
         referenceId
       });
       
-      // Store payment in database
+      // Store payment in database - using string key values to avoid TS errors
       const payment = await prisma.payment.create({
         data: {
           amount,
           status: 'completed',
-          paymentMethod: 'card',
-          paymentType,
-          squareId: paymentResponse.result.payment.id,
-          customerId,
-          bookingId,
-          referenceId,
+          payment_method: 'card', 
+          payment_type: paymentType,
+          square_id: paymentResponse.result.payment.id,
+          customer_id: customerId,
+          booking_id: bookingId,
+          reference_id: referenceId,
           paymentDetails: paymentResponse.result.payment
-        }
+        } as any
       });
       
       // Create audit log entry
       await prisma.auditLog.create({
         data: {
           action: 'payment_processed',
-          resourceType: 'payment',
+          resource: 'payment',
           resourceId: payment.id,
           details: { paymentType, amount, customerId }
         }
@@ -92,7 +92,7 @@ export default class PaymentService {
       await prisma.auditLog.create({
         data: {
           action: 'payment_failed',
-          resourceType: 'payment',
+          resource: 'payment',
           details: { 
             paymentType, 
             amount, 

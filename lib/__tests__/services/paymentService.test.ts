@@ -49,12 +49,12 @@ describe('PaymentService', () => {
       id: 'payment123',
       amount: 50.0,
       status: 'completed',
-      paymentMethod: 'card',
-      paymentType: 'consultation',
-      squareId: 'sq_payment_123',
-      customerId: 'customer123',
-      bookingId: 'booking123',
-      referenceId: 'mocked-uuid-123',
+      payment_method: 'card',
+      payment_type: PaymentType.CONSULTATION,
+      square_id: 'sq_payment_123',
+      customer_id: 'customer123',
+      booking_id: 'booking123',
+      reference_id: 'mocked-uuid-123',
       paymentDetails: {
         id: 'sq_payment_123',
         amount_money: { amount: 5000, currency: 'CAD' },
@@ -107,12 +107,12 @@ describe('PaymentService', () => {
         data: {
           amount: 50.0,
           status: 'completed',
-          paymentMethod: 'card',
-          paymentType: PaymentType.CONSULTATION,
-          squareId: 'sq_payment_123',
-          customerId: 'customer123',
-          bookingId: 'booking123',
-          referenceId: 'booking123',
+          payment_method: 'card',
+          payment_type: PaymentType.CONSULTATION,
+          square_id: 'sq_payment_123',
+          customer_id: 'customer123',
+          booking_id: 'booking123',
+          reference_id: 'booking123',
           paymentDetails: expect.any(Object)
         }
       });
@@ -121,7 +121,7 @@ describe('PaymentService', () => {
       expect(mockPrismaClient.auditLog.create).toHaveBeenCalledWith({
         data: {
           action: 'payment_processed',
-          resourceType: 'payment',
+          resource: 'payment',
           resourceId: 'payment123',
           details: expect.objectContaining({
             paymentType: PaymentType.CONSULTATION,
@@ -147,12 +147,12 @@ describe('PaymentService', () => {
         id: 'payment123',
         amount: 75.0,
         status: 'completed',
-        paymentMethod: 'card',
-        paymentType: 'drawing_consultation',
-        squareId: 'sq_payment_123',
-        customerId: 'customer123',
-        bookingId: 'booking123',
-        referenceId: 'mocked-uuid-123',
+        payment_method: 'card',
+        payment_type: 'drawing_consultation',
+        square_id: 'sq_payment_123',
+        customer_id: 'customer123',
+        booking_id: 'booking123',
+        reference_id: 'mocked-uuid-123',
         paymentDetails: {
           id: 'sq_payment_123',
           amount_money: { amount: 7500, currency: 'CAD' },
@@ -184,12 +184,12 @@ describe('PaymentService', () => {
         id: 'payment123',
         amount: 100.0,
         status: 'completed',
-        paymentMethod: 'card',
-        paymentType: 'tattoo_deposit',
-        squareId: 'sq_payment_123',
-        customerId: 'customer123',
-        bookingId: 'booking123',
-        referenceId: 'mocked-uuid-123',
+        payment_method: 'card',
+        payment_type: 'tattoo_deposit',
+        square_id: 'sq_payment_123',
+        customer_id: 'customer123',
+        booking_id: 'booking123',
+        reference_id: 'mocked-uuid-123',
         paymentDetails: {
           id: 'sq_payment_123',
           amount_money: { amount: 10000, currency: 'CAD' },
@@ -225,7 +225,7 @@ describe('PaymentService', () => {
       expect(mockPrismaClient.auditLog.create).toHaveBeenCalledWith({
         data: {
           action: 'payment_failed',
-          resourceType: 'payment',
+          resource: 'payment',
           details: expect.objectContaining({
             paymentType: PaymentType.CONSULTATION,
             amount: 50.0,

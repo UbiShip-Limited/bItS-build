@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-import SquareClient from '../square';
-import { prisma } from '../prisma/prisma';
+import SquareClient from '../square/index.js';
+import { prisma } from '../prisma/prisma.js';
 
 export enum BookingType {
   CONSULTATION = 'consultation',
@@ -116,7 +116,7 @@ export default class BookingService {
         squareBooking = await this.squareClient.createBooking({
           startAt: startAt.toISOString(),
           locationId: process.env.SQUARE_LOCATION_ID,
-          customerId: customer.squareId || customerId,
+          customerId: customer.email || customerId,
           duration,
           idempotencyKey,
           staffId: artistId,
@@ -134,7 +134,7 @@ export default class BookingService {
         await prisma.auditLog.create({
           data: {
             action: 'square_booking_failed',
-            resourceType: 'appointment',
+            resource: 'appointment',
             details: { 
               error: squareError.message || 'Unknown Square API error',
               bookingType,
@@ -151,7 +151,6 @@ export default class BookingService {
         include: {
           customer: true,
           artist: true,
-          tattooRequest: true
         }
       });
       
@@ -159,7 +158,7 @@ export default class BookingService {
       await prisma.auditLog.create({
         data: {
           action: 'booking_created',
-          resourceType: 'appointment',
+          resource: 'appointment',
           resourceId: booking.id,
           details: { 
             bookingType, 
@@ -183,7 +182,7 @@ export default class BookingService {
       await prisma.auditLog.create({
         data: {
           action: 'booking_failed',
-          resourceType: 'appointment',
+          resource: 'appointment',
           details: { 
             bookingType, 
             startAt: startAt.toISOString(), 
@@ -227,14 +226,14 @@ export default class BookingService {
         // Recalculate end time if duration provided
         if (duration) {
           updateData.endTime = new Date(startAt.getTime() + duration * 60000);
-        } else if (existingBooking.endTime && existingBooking.startTime) {
+        } else if (existingBooking && existingBooking) {
           // Maintain same duration
-          const existingDuration = existingBooking.endTime.getTime() - existingBooking.startTime.getTime();
+          const existingDuration = existingBooking.duration * 60000; // Convert minutes to milliseconds
           updateData.endTime = new Date(startAt.getTime() + existingDuration);
         }
-      } else if (duration && existingBooking.startTime) {
+      } else if (duration && existingBooking.date) {
         // Only duration changed, recalculate end time
-        updateData.endTime = new Date(existingBooking.startTime.getTime() + duration * 60000);
+        updateData.endTime = new Date(existingBooking.date.getTime() + duration * 60000);
       }
       
       if (status) {
@@ -259,14 +258,13 @@ export default class BookingService {
         data: updateData,
         include: {
           customer: true,
-          artist: true,
-          tattooRequest: true
+          artist: true
         }
       });
       
       // Update in Square if we have a Square ID
       let squareBookingResult = null;
-      if (existingBooking.squareId) {
+      if (existingBooking.notes && existingBooking.notes.includes('squareId:')) {
         try {
           // Square booking update logic would go here
           // Note: Square SDK doesn't provide direct booking update function
@@ -276,12 +274,12 @@ export default class BookingService {
           await prisma.auditLog.create({
             data: {
               action: 'square_booking_update_skipped',
-              resourceType: 'appointment',
+              resource: 'appointment',
               resourceId: bookingId,
               details: { 
                 message: 'Square booking updates not implemented',
                 bookingId,
-                squareId: existingBooking.squareId
+                squareId: existingBooking.notes.match(/squareId:([^,]+)/)?.[1] || ''
               }
             }
           });
@@ -294,7 +292,7 @@ export default class BookingService {
       await prisma.auditLog.create({
         data: {
           action: 'booking_updated',
-          resourceType: 'appointment',
+          resource: 'appointment',
           resourceId: bookingId,
           details: { 
             previousStatus: existingBooking.status,

@@ -1,13 +1,12 @@
 import Fastify, { FastifyInstance } from 'fastify';
-
-import prismaPlugin from './plugins/prisma'; // Path to your prisma plugin
-// import { User } from '@prisma/client'; // Example: Import Prisma types if needed
 import tattooRequestsRoutes from './routes/tattooRequest';
+import prismaPlugin from './plugins/prisma'; // Path to your prisma plugin
 import customerRoutes from './routes/customer';
-import paymentRoutes from './routes/payment';
+import paymentRoutes from './routes/payments/index.js';
 import appointmentRoutes from './routes/appointment';
 import auditRoutes from './routes/audit';
 import bookingRoutes from './routes/booking';
+import cloudinaryRoutes from './routes/cloudinary'; // Import Cloudinary routes
 
 
 // Initialize Fastify
@@ -40,6 +39,7 @@ const build = (opts = {}): FastifyInstance => {
   fastify.register(appointmentRoutes, { prefix: '/appointments' });
   fastify.register(auditRoutes, { prefix: '/audit-logs' });
   fastify.register(bookingRoutes, { prefix: '/bookings' });
+  fastify.register(cloudinaryRoutes, { prefix: '/cloudinary' });
 
   // TODO: Register your other routes and plugins here
   return fastify;

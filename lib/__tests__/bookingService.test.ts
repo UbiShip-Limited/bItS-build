@@ -59,13 +59,13 @@ jest.mock('@square/client', () => ({
 }), { virtual: true });
 
 // Or if it's a local module in a different location:
-jest.mock('../square/index.js', () => ({
+jest.mock('../square/index', () => ({
   __esModule: true,
   default: mockSquareClient
 }), { virtual: true });
 
 // Mock the imports
-jest.mock('../prisma/prisma.js', () => ({
+jest.mock('../prisma/prisma', () => ({
   __esModule: true,
   prisma: mockPrisma
 }), { virtual: true });

@@ -13,7 +13,6 @@ interface SquareConfig {
 class SquareClient {
   private client: SquareSDKClient;
   private locationId: string;
-  private applicationId: string;
 
   constructor(config: SquareConfig) {
     this.client = new SquareSDKClient({
@@ -24,7 +23,6 @@ class SquareClient {
     });
     
     this.locationId = config.locationId;
-    this.applicationId = config.applicationId;
   }
 
   // Payment methods
@@ -72,6 +70,30 @@ class SquareClient {
       note,
       referenceId,
       locationId: this.locationId
+    });
+  }
+
+  // Create a refund for a payment
+  async createRefund(params: {
+    paymentId: string;
+    idempotencyKey: string;
+    amountMoney?: {
+      amount: number;
+      currency: string;
+    };
+    reason?: string;
+  }): Promise<SquareResponse> {
+    const { paymentId, idempotencyKey, amountMoney, reason } = params;
+    
+    // Direct refund API call
+    return this.client.refunds.refundPayment({
+      paymentId,
+      idempotencyKey,
+      amountMoney: amountMoney ? {
+        amount: BigInt(Math.round(amountMoney.amount * 100)),
+        currency: amountMoney.currency as Square.Currency
+      } : undefined,
+      reason
     });
   }
 

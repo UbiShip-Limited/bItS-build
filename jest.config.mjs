@@ -55,10 +55,21 @@ export default {
   
   // Simplify module resolution with ESM
   moduleNameMapper: {
-    '(\\.\\.?/.*)\\.js$': '$1',
+    // Pattern for .js extension handling
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+    
+    // Square mappings
     '^../../square$': '<rootDir>/lib/square/index.ts',
     '^../square/index.js$': '<rootDir>/lib/square/index.ts',
     '^../../square/index.js$': '<rootDir>/lib/square/index.ts',
+    
+    // Cloudinary mappings
+    '^../../cloudinary$': '<rootDir>/lib/cloudinary/index.ts',
+    '^../../cloudinary/index$': '<rootDir>/lib/cloudinary/index.ts',
+    '^../../cloudinary/index.js$': '<rootDir>/lib/cloudinary/index.ts',
+    
+    // Root imports fix
+    '^<rootDir>/(.*)$': '<rootDir>/$1'
   },
   
   // Handle node_modules dependencies

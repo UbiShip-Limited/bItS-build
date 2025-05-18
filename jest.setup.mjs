@@ -120,10 +120,56 @@ const mockSupabase = {
 
 // Create a mock Square client
 const mockSquareClient = {
-  createPayment: createMockMethod(),
+  createPayment: jest.fn().mockImplementation(params => {
+    return Promise.resolve({
+      result: {
+        payment: {
+          id: 'sq_payment_123',
+          amount_money: { amount: 5000, currency: 'CAD' },
+          status: 'COMPLETED',
+          source_type: 'CARD'
+        }
+      }
+    });
+  }),
   createBooking: createMockMethod(),
   getBookings: createMockMethod(),
-  getPayments: createMockMethod()
+  getPayments: createMockMethod(),
+  createRefund: jest.fn().mockImplementation(params => {
+    return Promise.resolve({
+      result: {
+        refund: {
+          id: 'ref_123',
+          status: 'COMPLETED',
+          payment_id: params.paymentId,
+          amount_money: { amount: 5000, currency: 'CAD' }
+        }
+      }
+    });
+  })
+};
+
+// Create a mock Cloudinary client
+const mockCloudinaryService = {
+  validateUploadResult: createMockMethod(),
+  generateUploadSignature: createMockMethod(),
+  uploadImage: createMockMethod(),
+  deleteImage: createMockMethod(),
+  getTransformedImageUrl: createMockMethod(),
+  cloudinary: {
+    config: jest.fn(),
+    api: {
+      resource: createMockMethod()
+    },
+    uploader: {
+      upload: createMockMethod(),
+      destroy: createMockMethod()
+    },
+    utils: {
+      api_sign_request: createMockMethod()
+    },
+    url: createMockMethod()
+  }
 };
 
 // Setup global hooks
@@ -156,6 +202,28 @@ jest.mock('./lib/square/index.js', () => ({
   }
 }));
 
+// Mock Cloudinary module
+jest.mock('./lib/cloudinary/index.ts', () => ({
+  __esModule: true,
+  validateUploadResult: jest.fn(),
+  generateUploadSignature: jest.fn(),
+  uploadImage: jest.fn(),
+  deleteImage: jest.fn(),
+  getTransformedImageUrl: jest.fn(),
+  default: mockCloudinaryService
+}));
+
+// Also mock the JS version for ESM compatibility
+jest.mock('./lib/cloudinary/index.js', () => ({
+  __esModule: true,
+  validateUploadResult: jest.fn(),
+  generateUploadSignature: jest.fn(),
+  uploadImage: jest.fn(),
+  deleteImage: jest.fn(),
+  getTransformedImageUrl: jest.fn(),
+  default: mockCloudinaryService
+}));
+
 // Also mock Square from node_modules to prevent any real API calls
 jest.mock('square', () => {
   return {
@@ -168,6 +236,18 @@ jest.mock('square', () => {
               id: 'sq_payment_123',
               amount_money: { amount: 5000, currency: 'CAD' },
               status: 'COMPLETED'
+            }
+          }
+        })
+      },
+      refunds: {
+        refundPayment: jest.fn().mockResolvedValue({
+          result: {
+            refund: {
+              id: 'ref_123',
+              status: 'COMPLETED',
+              payment_id: 'sq_payment_123',
+              amount_money: { amount: 5000, currency: 'CAD' }
             }
           }
         })
@@ -191,11 +271,36 @@ jest.mock('square', () => {
   };
 });
 
+// Mock Cloudinary package
+jest.mock('cloudinary', () => {
+  return {
+    v2: {
+      config: jest.fn(),
+      api: {
+        resource: jest.fn()
+      },
+      uploader: {
+        upload: jest.fn(),
+        destroy: jest.fn()
+      },
+      utils: {
+        api_sign_request: jest.fn()
+      },
+      url: jest.fn()
+    }
+  };
+});
+
 // Set environment variables needed by Square to prevent real API calls
 process.env.SQUARE_ACCESS_TOKEN = 'test_token';
 process.env.SQUARE_ENVIRONMENT = 'sandbox';
 process.env.SQUARE_APPLICATION_ID = 'test_app_id';
 process.env.SQUARE_LOCATION_ID = 'test_location_id';
 
+// Set cloudinary environment variables
+process.env.CLOUDINARY_CLOUD_NAME = 'test-cloud';
+process.env.CLOUDINARY_API_KEY = 'test-key';
+process.env.CLOUDINARY_API_SECRET = 'test-secret';
+
 // Export mocks for use in tests
-export { mockPrismaClient, mockSupabase as supabase, mockSquareClient }; 
+export { mockPrismaClient, mockSupabase as supabase, mockSquareClient, mockCloudinaryService }; 

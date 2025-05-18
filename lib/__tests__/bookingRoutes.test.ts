@@ -1,12 +1,12 @@
 import { jest } from '@jest/globals';
 import { FastifyInstance } from 'fastify';
-import bookingRoutes from '../routes/booking.js';
-import BookingService, { BookingType, BookingStatus } from '../services/bookingService.js';
-import { prisma } from '../prisma/prisma.js';
+import bookingRoutes from '../routes/booking';
+import BookingService, { BookingType, BookingStatus } from '../services/bookingService';
+import { prisma } from '../prisma/prisma';
 
 // Mock dependencies
-jest.mock('../services/bookingService.js');
-jest.mock('../prisma/prisma.js', () => {
+jest.mock('../services/bookingService');
+jest.mock('../prisma/prisma', () => {
   return {
     prisma: {
       customer: {
@@ -322,7 +322,7 @@ describe('Booking Routes', () => {
         where: { id: 'test-booking-id' },
         include: expect.objectContaining({
           customer: true,
-          staff: true
+          artist: true
         })
       });
     });
@@ -406,10 +406,11 @@ describe('Booking Routes', () => {
 });
 
 describe('Authorization and Permission Tests', () => {
+  let fastify: FastifyInstance;
+  
   beforeEach(async () => {
-    // Customize mock authentication to test different roles
     jest.clearAllMocks();
-    fastify = require('fastify')();
+    fastify = await setupTestServer();
     
     // Mock prisma responses similar to main tests
     (prisma.customer.findUnique as jest.Mock).mockResolvedValue({
@@ -436,8 +437,6 @@ describe('Authorization and Permission Tests', () => {
       done();
     });
     
-    await fastify.register(bookingRoutes, { prefix: '/bookings' });
-    
     const response = await fastify.inject({
       method: 'GET',
       url: '/bookings/test-booking-id'
@@ -452,8 +451,6 @@ describe('Authorization and Permission Tests', () => {
       request.user = { id: 'test-artist-id', role: 'artist' };
       done();
     });
-    
-    await fastify.register(bookingRoutes, { prefix: '/bookings' });
     
     const response = await fastify.inject({
       method: 'GET',
@@ -470,8 +467,6 @@ describe('Authorization and Permission Tests', () => {
       done();
     });
     
-    await fastify.register(bookingRoutes, { prefix: '/bookings' });
-    
     const response = await fastify.inject({
       method: 'GET',
       url: '/bookings/test-booking-id'
@@ -486,8 +481,6 @@ describe('Authorization and Permission Tests', () => {
       request.user = { id: 'different-user-id', role: 'customer' };
       done();
     });
-    
-    await fastify.register(bookingRoutes, { prefix: '/bookings' });
     
     const response = await fastify.inject({
       method: 'GET',
@@ -504,8 +497,6 @@ describe('Authorization and Permission Tests', () => {
       done();
     });
     
-    await fastify.register(bookingRoutes, { prefix: '/bookings' });
-    
     const response = await fastify.inject({
       method: 'GET',
       url: '/bookings'
@@ -520,8 +511,6 @@ describe('Authorization and Permission Tests', () => {
       request.user = { id: 'test-customer-id', role: 'customer' };
       done();
     });
-    
-    await fastify.register(bookingRoutes, { prefix: '/bookings' });
     
     const response = await fastify.inject({
       method: 'PUT',

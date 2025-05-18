@@ -30,20 +30,43 @@ export function TattooHero() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white text-[#080808]">
-      {/* Refined texture overlay with subtle gradient */}
-      <div className="absolute inset-0">
+    <div className="relative min-h-screen overflow-hidden bg-white text-[#080808] flex flex-col justify-center">
+      {/* Background layer - lowest z-index */}
+      <div className="absolute inset-0 z-0">
+        {/* Gradient background */}
         <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white/95"></div>
+        
+        {/* Texture pattern */}
         <div className="absolute inset-0 bg-[url('/images/victorian-pattern.png')] opacity-[0.03]"></div>
+        
+        {/* Island outline SVG in top left, coming down */}
+        <motion.div 
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 2, ease: "easeOut", delay: 0.6 }}
+          className="absolute left-[2%] top-[4%] w-[25%] pointer-events-none overflow-visible"
+        >
+          <div className="relative w-full aspect-square">
+            <Image
+              src="/images/bowen-outline.svg"
+              alt="Bowen Island Outline"
+              fill
+              className="object-contain object-left-top opacity-[0.16]"
+              priority
+              style={{ transform: "rotate(0deg) scale(0.85)" }}
+            />
+          </div>
+        </motion.div>
       </div>
 
-      {/* Central ornamental divider - moved and adjusted for screen height */}
+      {/* Central ornamental divider - middle z-index */}
       <div className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 z-10">
         <div className="h-full w-full bg-gradient-to-b from-transparent via-[#8B6F3A]/50 to-transparent"></div>
       </div>
 
-      <div className="relative z-20 mx-auto flex flex-col items-center justify-center px-8 md:px-12 py-6 md:py-10">
-        {/* Top ornamental element - refined */}
+      {/* Main content container - highest z-index */}
+      <div className="relative z-20 mx-auto flex flex-col items-center justify-center px-8 md:px-12 py-6 md:py-10 w-full h-full">
+        {/* Top ornamental element */}
         <div className="absolute top-6 md:top-8 left-1/2 -translate-x-1/2 w-full max-w-xs md:max-w-sm">
           <div className="relative mx-auto w-32 md:w-40 h-10">
             <div className="absolute top-1/2 left-0 w-full h-[0.5px] bg-gradient-to-r from-transparent via-[#8B6F3A]/80 to-transparent"></div>
@@ -53,28 +76,28 @@ export function TattooHero() {
 
         {/* Main content */}
         <motion.div
-          className="relative z-10 w-full max-w-5xl mx-auto text-center bg-white"
+          className="relative w-full max-w-5xl mx-auto text-center bg-white/75 px-4 py-6 rounded-lg backdrop-blur-sm"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {/* Logo - enlarged with SVG for better quality */}
+          {/* Logo */}
           <motion.div className="mb-3 md:mb-4 relative" variants={itemVariants}>
-            <div className="relative w-[280px] h-[280px] sm:w-[340px] sm:h-[340px] md:w-[400px] md:h-[400px] mx-auto">
+            <div className="relative w-[280px] h-[280px] sm:w-[380px] sm:h-[380px] md:w-[450px] md:h-[450px] lg:w-[520px] lg:h-[520px] mx-auto">
               <Image
-                src="/images/cougar.svg"
+                src="/images/cougar-color.png"
                 alt="Bowen Island Tattoo Logo"
                 fill
                 className="object-contain"
                 priority
               />
-              {/* Refined bottom shadow */}
+              {/* Bottom shadow */}
               <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[180px] md:w-[220px] h-[12px] bg-[#080808]/5 blur-xl rounded-full"></div>
             </div>
           </motion.div>
 
-          {/* Refined ornamental line */}
-          <motion.div className="mb-4 md:mb-6" variants={itemVariants}>
+          {/* Ornamental line */}
+          <motion.div className="mb-2 md:mb-4" variants={itemVariants}>
             <OrnamentalLine
               centerElement={
                 <div className="text-[#8B6F3A] text-xs md:text-sm">✦</div>
@@ -83,39 +106,39 @@ export function TattooHero() {
             />
           </motion.div>
 
-          {/* Title - refined typography */}
+          {/* Title */}
           <motion.h1
-            className="font-heading text-3xl sm:text-4xl md:text-6xl lg:text-7xl tracking-wide text-[#080808] mb-2 md:mb-3 uppercase"
+            className="font-heading text-2xl sm:text-3xl md:text-5xl lg:text-6xl tracking-wide text-[#080808] mb-2 md:mb-3 uppercase flex justify-center items-center flex-wrap gap-x-2 md:gap-x-3"
             variants={itemVariants}
           >
-            <span className="block mb-1 font-medium tracking-wide">Bowen</span>
-            <span className="block text-2xl sm:text-3xl md:text-4xl lg:text-5xl tracking-[0.3em] md:tracking-[0.4em] font-light text-[#080808]/90">
+            <span className="inline-block font-medium tracking-wide">Bowen</span>
+            <span className="inline-block text-xl sm:text-2xl md:text-3xl lg:text-4xl tracking-[0.2em] md:tracking-[0.3em] font-light text-[#080808]/90">
               Island
             </span>
-            <span className="block mt-1 font-medium tracking-wide">Tattoo</span>
+            <span className="inline-block font-medium tracking-wide">Tattoo</span>
           </motion.h1>
 
-          {/* Refined ornamental line */}
-          <motion.div className="my-4 md:my-6" variants={itemVariants}>
+          {/* Ornamental line */}
+          <motion.div className="my-2 md:my-4" variants={itemVariants}>
             <OrnamentalLine
               centerElement={
                 <div className="w-1.5 md:w-2 h-1.5 md:h-2 bg-[#8B6F3A]/70 rotate-45"></div>
               }
-              lineWidth="w-20 md:w-28"
+              lineWidth="w-16 md:w-24"
             />
           </motion.div>
 
-          {/* Tagline - refined typography */}
+          {/* Tagline */}
           <motion.p
-            className="font-body text-sm md:text-base lg:text-lg text-[#444444] max-w-md md:max-w-xl mx-auto mb-3 md:mb-5 italic leading-relaxed"
+            className="font-body text-lg md:text-xl text-[#444444] max-w-sm md:max-w-lg mx-auto mb-3 md:mb-4 italic leading-relaxed"
             variants={itemVariants}
           >
             Where artistry meets tranquility. A private studio experience unlike any other.
           </motion.p>
 
-          {/* CTA Buttons - refined styling */}
+          {/* CTA Buttons */}
           <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-6 mt-3 md:mt-5"
+            className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-6 mt-2 md:mt-4"
             variants={itemVariants}
           >
             <Button
@@ -140,7 +163,7 @@ export function TattooHero() {
           </motion.div>
         </motion.div>
 
-        {/* Bottom ornamental element - refined */}
+        {/* Bottom ornamental element */}
         <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 w-full max-w-xs md:max-w-sm">
           <div className="relative mx-auto w-32 md:w-40 h-10">
             <div className="absolute top-1/2 left-0 w-full h-[0.5px] bg-gradient-to-r from-transparent via-[#8B6F3A]/80 to-transparent"></div>
@@ -148,7 +171,7 @@ export function TattooHero() {
           </div>
         </div>
 
-        {/* Refined decorative corner elements - properly positioned */}
+        {/* Corner ornaments */}
         <CornerOrnament position="top-left" />
         <CornerOrnament position="top-right" />
         <CornerOrnament position="bottom-left" />
@@ -160,7 +183,7 @@ export function TattooHero() {
 
 interface OrnamentalLineProps {
   centerElement: React.ReactNode;
-  lineWidth?: string; // e.g., "w-14 md:w-20"
+  lineWidth?: string;
 }
 
 const OrnamentalLine: React.FC<OrnamentalLineProps> = ({
@@ -210,14 +233,14 @@ const CornerOrnament: React.FC<CornerOrnamentProps> = ({ position }) => {
       horizontalLineClasses =
         "absolute bottom-0 left-0 w-full h-[0.5px] bg-gradient-to-r from-[#8B6F3A]/70 to-transparent";
       verticalLineClasses =
-        "absolute bottom-0 left-0 h-full w-[0.5px] bg-gradient-to-t from-[#8B6F3A]/70 to-transparent"; // Note: to-t for bottom-left vertical
+        "absolute bottom-0 left-0 h-full w-[0.5px] bg-gradient-to-t from-[#8B6F3A]/70 to-transparent";
       break;
     case "bottom-right":
       positionClasses = "bottom-0 right-0";
       horizontalLineClasses =
         "absolute bottom-0 right-0 w-full h-[0.5px] bg-gradient-to-l from-[#8B6F3A]/70 to-transparent";
       verticalLineClasses =
-        "absolute bottom-0 right-0 h-full w-[0.5px] bg-gradient-to-t from-[#8B6F3A]/70 to-transparent"; // Note: to-t for bottom-right vertical
+        "absolute bottom-0 right-0 h-full w-[0.5px] bg-gradient-to-t from-[#8B6F3A]/70 to-transparent";
       break;
   }
 

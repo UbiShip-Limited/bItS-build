@@ -1,29 +1,52 @@
 "use client"
 
-import React from "react"
+import React, { useState, useEffect } from "react"
 import Image from "next/image"
 import { Button } from "./button"
 import { ChevronRight } from "lucide-react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 
 export function TattooHero() {
+  const [currentImage, setCurrentImage] = useState<"none" | "outline" | "cougar">("none")
+  
+  useEffect(() => {
+    // Simplified animation sequence with one timer
+    const sequence = async () => {
+      // Short delay before starting animations
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setCurrentImage("outline");
+      
+      // Transition from outline to cougar
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      setCurrentImage("cougar");
+    };
+    
+    sequence();
+    
+    return () => {
+      // No need for multiple cleanup functions
+    }
+  }, [])
+
+  // Simplified animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.2,
+        staggerChildren: 0.1, // Reduced stagger time for more subtle effect
+        duration: 0.5
       },
     },
   }
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 10 }, // Reduced y offset for subtler animation
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.6,
+        duration: 0.4, // Shorter duration for crisper animations
         ease: "easeOut",
       },
     },
@@ -33,30 +56,7 @@ export function TattooHero() {
     <div className="relative min-h-screen overflow-hidden bg-white text-[#080808] flex flex-col justify-center">
       {/* Background layer - lowest z-index */}
       <div className="absolute inset-0 z-0">
-        {/* Gradient background */}
         <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white/95"></div>
-        
-        {/* Texture pattern */}
-        <div className="absolute inset-0 bg-[url('/images/victorian-pattern.png')] opacity-[0.03]"></div>
-        
-        {/* Island outline SVG in top left, coming down */}
-        <motion.div 
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 2, ease: "easeOut", delay: 0.6 }}
-          className="absolute left-[2%] top-[4%] w-[25%] pointer-events-none overflow-visible"
-        >
-          <div className="relative w-full aspect-square">
-            <Image
-              src="/images/bowen-outline.svg"
-              alt="Bowen Island Outline"
-              fill
-              className="object-contain object-left-top opacity-[0.16]"
-              priority
-              style={{ transform: "rotate(0deg) scale(0.85)" }}
-            />
-          </div>
-        </motion.div>
       </div>
 
       {/* Central ornamental divider - middle z-index */}
@@ -65,118 +65,162 @@ export function TattooHero() {
       </div>
 
       {/* Main content container - highest z-index */}
-      <div className="relative z-20 mx-auto flex flex-col items-center justify-center px-8 md:px-12 py-6 md:py-10 w-full h-full">
-        {/* Top ornamental element */}
-        <div className="absolute top-6 md:top-8 left-1/2 -translate-x-1/2 w-full max-w-xs md:max-w-sm">
-          <div className="relative mx-auto w-32 md:w-40 h-10">
-            <div className="absolute top-1/2 left-0 w-full h-[0.5px] bg-gradient-to-r from-transparent via-[#8B6F3A]/80 to-transparent"></div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5 border border-[#8B6F3A]/70 rotate-45"></div>
-          </div>
-        </div>
-
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }} // Faster fade-in
+        className="relative z-20 flex flex-col items-center justify-start w-full h-full my-auto pt-6 pb-16 sm:pt-8 md:pt-10"
+        style={{ marginTop: "-2rem" }}
+      >
         {/* Main content */}
         <motion.div
-          className="relative w-full max-w-5xl mx-auto text-center bg-white/75 px-4 py-6 rounded-lg backdrop-blur-sm"
+          className="relative w-full max-w-5xl mx-auto text-center bg-white/75 px-4 sm:px-6 md:px-8 py-8 sm:py-10 md:py-12 rounded-lg backdrop-blur-sm flex flex-col items-center justify-center"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {/* Logo */}
-          <motion.div className="mb-3 md:mb-4 relative" variants={itemVariants}>
-            <div className="relative w-[280px] h-[280px] sm:w-[380px] sm:h-[380px] md:w-[450px] md:h-[450px] lg:w-[520px] lg:h-[520px] mx-auto">
-              <Image
-                src="/images/cougar-color.png"
-                alt="Bowen Island Tattoo Logo"
-                fill
-                className="object-contain"
-                priority
-              />
-              {/* Bottom shadow */}
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[180px] md:w-[220px] h-[12px] bg-[#080808]/5 blur-xl rounded-full"></div>
+          {/* Logo area - contains both images that fade in/out */}
+          <motion.div 
+            className="mb-10 sm:mb-10 md:mb-10 relative aspect-square" 
+            variants={itemVariants}
+            style={{ 
+              width: "min(450px, 95%)", 
+              height: "min(450px, 95%)",
+              maxWidth: "600px",
+              maxHeight: "600px"
+            }}
+          >
+            <div className="relative w-full h-full mx-auto">
+              {/* Simplified image transition using AnimatePresence */}
+              <AnimatePresence mode="sync">
+                {currentImage === "outline" && (
+                  <motion.div 
+                    key="outline"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.15 }} // Direct opacity control
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.7 }}
+                    className="absolute inset-0"
+                  >
+                    <Image
+                      src="/images/bowen-outline.svg"
+                      alt="Bowen Island Outline"
+                      fill
+                      className="object-contain"
+                      priority
+                    />
+                  </motion.div>
+                )}
+                
+                {currentImage === "cougar" && (
+                  <motion.div 
+                    key="cougar"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.7 }}
+                    className="absolute inset-0 scale-115" 
+                  >
+                    <Image
+                      src="/images/cougar.svg"
+                      alt="Bowen Island Tattoo Logo"
+                      fill
+                      className="object-contain"
+                      priority
+                    />
+                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-[280px] md:w-[320px] h-[20px] bg-[#080808]/5 blur-xl rounded-full"></div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
 
-          {/* Ornamental line */}
-          <motion.div className="mb-2 md:mb-4" variants={itemVariants}>
-            <OrnamentalLine
-              centerElement={
-                <div className="text-[#8B6F3A] text-xs md:text-sm">✦</div>
-              }
-              lineWidth="w-14 md:w-20"
-            />
+          {/* Ornamental line above title */}
+          <motion.div className="mb-5 sm:mb-6 md:mb-7 w-full" variants={itemVariants}>
+            <div className="relative">
+              <OrnamentalLine
+                centerElement={
+                  <div className="flex items-center justify-center w-6 md:w-6 h-6 md:h-6">
+                    <div className="w-4 md:w-4 h-4 md:h-4 border border-[#8B6F3A]/80 rotate-45"></div>
+                    <div className="absolute w-2 md:w-2 h-2 md:h-2 bg-[#8B6F3A]/30 rotate-45"></div>
+                  </div>
+                }
+                lineWidth="w-32 md:w-36"
+              />
+              {/* Horizontal line passing through */}
+              <div className="absolute top-1/2 left-0 w-full h-[0.5px] bg-gradient-to-r from-transparent via-[#8B6F3A]/40 to-transparent -translate-y-1/2"></div>
+            </div>
           </motion.div>
 
           {/* Title */}
           <motion.h1
-            className="font-heading text-2xl sm:text-3xl md:text-5xl lg:text-6xl tracking-wide text-[#080808] mb-2 md:mb-3 uppercase flex justify-center items-center flex-wrap gap-x-2 md:gap-x-3"
+            className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide text-[#080808] mb-3 sm:mb-4 md:mb-5 uppercase flex justify-center items-center flex-wrap gap-x-3 md:gap-x-3"
             variants={itemVariants}
           >
             <span className="inline-block font-medium tracking-wide">Bowen</span>
-            <span className="inline-block text-xl sm:text-2xl md:text-3xl lg:text-4xl tracking-[0.2em] md:tracking-[0.3em] font-light text-[#080808]/90">
+            <span className="inline-block text-2xl sm:text-3xl md:text-3xl lg:text-4xl tracking-[0.2em] md:tracking-[0.3em] font-light text-[#080808]/90">
               Island
             </span>
             <span className="inline-block font-medium tracking-wide">Tattoo</span>
           </motion.h1>
 
-          {/* Ornamental line */}
-          <motion.div className="my-2 md:my-4" variants={itemVariants}>
-            <OrnamentalLine
-              centerElement={
-                <div className="w-1.5 md:w-2 h-1.5 md:h-2 bg-[#8B6F3A]/70 rotate-45"></div>
-              }
-              lineWidth="w-16 md:w-24"
-            />
-          </motion.div>
-
           {/* Tagline */}
           <motion.p
-            className="font-body text-lg md:text-xl text-[#444444] max-w-sm md:max-w-lg mx-auto mb-3 md:mb-4 italic leading-relaxed"
+            className="font-body text-xl md:text-xl text-[#444444] max-w-sm md:max-w-lg mx-auto mb-5 sm:mb-6 md:mb-7 italic leading-relaxed"
             variants={itemVariants}
           >
             Where artistry meets tranquility. A private studio experience unlike any other.
           </motion.p>
 
+          {/* Ornamental line below tagline */}
+          <motion.div className="mb-6 sm:mb-7 md:mb-8 w-full" variants={itemVariants}>
+            <div className="relative">
+              <OrnamentalLine
+                centerElement={
+                  <div className="relative flex items-center justify-center">
+                    <span className="text-[#8B6F3A] text-sm md:text-sm z-10">✦</span>
+                    <span className="absolute -mt-0.5 transform scale-150 text-[#8B6F3A]/20 text-sm md:text-sm">✦</span>
+                  </div>
+                }
+                lineWidth="w-36 md:w-40"
+              />
+              {/* Horizontal line passing through */}
+              <div className="absolute top-1/2 left-0 w-full h-[0.5px] bg-gradient-to-r from-transparent via-[#8B6F3A]/40 to-transparent -translate-y-1/2"></div>
+            </div>
+          </motion.div>
+
           {/* CTA Buttons */}
           <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-6 mt-2 md:mt-4"
+            className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 w-full sm:w-auto"
             variants={itemVariants}
           >
             <Button
-              className="group relative overflow-hidden bg-transparent border border-[#8B6F3A]/70 text-[#080808] hover:bg-[#8B6F3A]/10 hover:border-[#8B6F3A] transition-colors duration-300 w-full sm:w-auto"
+              className="group relative overflow-hidden bg-transparent border border-[#8B6F3A]/70 text-[#080808] hover:bg-[#8B6F3A]/10 hover:border-[#8B6F3A] transition-all duration-300 w-full sm:w-auto px-6 h-14"
               size="lg"
             >
-              <span className="relative z-10 flex items-center font-body tracking-widest uppercase text-xs md:text-sm font-medium">
+              <span className="relative z-10 flex items-center font-body tracking-widest uppercase text-sm md:text-sm font-medium">
                 Book Your Session
-                <ChevronRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                <ChevronRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
               </span>
             </Button>
 
             <Button
               variant="outline"
-              className="border-[#444444]/20 bg-transparent text-[#080808] hover:bg-[#444444]/10 hover:text-[#080808] hover:border-[#444444]/40 transition-colors duration-300 w-full sm:w-auto"
+              className="border-[#444444]/20 bg-transparent text-[#080808] hover:bg-[#444444]/10 hover:text-[#080808] hover:border-[#444444]/40 transition-all duration-300 w-full sm:w-auto px-6 h-14"
               size="lg"
             >
-              <span className="font-body tracking-widest uppercase text-xs md:text-sm font-medium">
+              <span className="font-body tracking-widest uppercase text-sm md:text-sm font-medium">
                 Explore Gallery
               </span>
             </Button>
           </motion.div>
         </motion.div>
 
-        {/* Bottom ornamental element */}
-        <div className="absolute bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 w-full max-w-xs md:max-w-sm">
-          <div className="relative mx-auto w-32 md:w-40 h-10">
-            <div className="absolute top-1/2 left-0 w-full h-[0.5px] bg-gradient-to-r from-transparent via-[#8B6F3A]/80 to-transparent"></div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5 border border-[#8B6F3A]/70 rotate-45"></div>
-          </div>
-        </div>
-
-        {/* Corner ornaments */}
+        {/* Corner ornaments - carefully positioned */}
         <CornerOrnament position="top-left" />
         <CornerOrnament position="top-right" />
         <CornerOrnament position="bottom-left" />
         <CornerOrnament position="bottom-right" />
-      </div>
+      </motion.div>
     </div>
   )
 }
@@ -188,14 +232,14 @@ interface OrnamentalLineProps {
 
 const OrnamentalLine: React.FC<OrnamentalLineProps> = ({
   centerElement,
-  lineWidth = "w-14 md:w-20",
+  lineWidth = "w-16 md:w-20",
 }) => {
   return (
     <div className="flex items-center justify-center">
       <div
         className={`${lineWidth} h-[0.5px] bg-gradient-to-r from-transparent via-[#8B6F3A]/80 to-[#8B6F3A]/50`}
       ></div>
-      <div className="mx-3 md:mx-4">{centerElement}</div>
+      <div className="mx-4 md:mx-4">{centerElement}</div>
       <div
         className={`${lineWidth} h-[0.5px] bg-gradient-to-l from-transparent via-[#8B6F3A]/80 to-[#8B6F3A]/50`}
       ></div>

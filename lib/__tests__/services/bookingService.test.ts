@@ -314,6 +314,21 @@ describe('BookingService', () => {
         note: 'Updated booking note'
       };
       
+      // Override the findUnique implementation for this test
+      mockPrismaClient.appointment.findUnique.mockResolvedValueOnce({
+        id: 'booking123',
+        startTime: new Date('2023-10-15T14:00:00Z'), // Use startTime instead of date
+        endTime: new Date('2023-10-15T15:00:00Z'),
+        status: 'scheduled',
+        customerId: 'customer123',
+        artistId: 'artist123',
+        customer: {
+          id: 'customer123',
+          name: 'Test Customer',
+          email: 'test@example.com'
+        }
+      });
+      
       const result = await bookingService.updateBooking(updateParams);
       
       expect(result.success).toBe(true);
@@ -331,6 +346,125 @@ describe('BookingService', () => {
       
       await expect(bookingService.updateBooking(updateParams))
         .rejects.toThrow('Booking not found');
+    });
+  });
+
+  describe('cancelBooking', () => {
+    it('should cancel a booking', async () => {
+      // Mock appointment.findUnique to return a booking WITH a squareId
+      mockPrismaClient.appointment.findUnique.mockImplementationOnce(() => {
+        return Promise.resolve({
+          id: 'booking123',
+          status: 'scheduled',
+          customerId: 'customer123',
+          artistId: 'artist123',
+          squareId: 'sq_booking_123',
+          customer: {
+            id: 'customer123',
+            name: 'Test Customer'
+          },
+          artist: {
+            id: 'artist123',
+            name: 'Test Artist'
+          }
+        });
+      });
+      
+      // Mock appointment.update for cancellation
+      mockPrismaClient.appointment.update.mockImplementationOnce((args) => {
+        return Promise.resolve({
+          id: args.where.id,
+          status: 'cancelled',
+          notes: args.data.notes,
+          squareId: 'sq_booking_123',
+          customer: {
+            id: 'customer123',
+            name: 'Test Customer'
+          },
+          artist: {
+            id: 'artist123',
+            name: 'Test Artist'
+          }
+        });
+      });
+      
+      // Mock Square client structure correctly
+      mockSquareClient.client = {
+        bookingsApi: {
+          retrieveBooking: jest.fn().mockResolvedValue({
+            result: {
+              booking: {
+                id: 'sq_booking_123',
+                version: 1,
+                status: 'ACCEPTED'
+              }
+            }
+          }),
+          cancelBooking: jest.fn().mockResolvedValue({
+            result: {
+              booking: {
+                id: 'sq_booking_123',
+                status: 'CANCELLED'
+              }
+            }
+          })
+        }
+      };
+      
+      // Setup the higher-level methods
+      mockSquareClient.getBookingById = jest.fn().mockImplementation((id) => {
+        return mockSquareClient.client.bookingsApi.retrieveBooking({ bookingId: id });
+      });
+      
+      mockSquareClient.cancelBooking = jest.fn().mockImplementation((params) => {
+        return mockSquareClient.client.bookingsApi.cancelBooking(params);
+      });
+      
+      // Setup test data
+      const cancelParams = {
+        bookingId: 'booking123',
+        reason: 'Customer requested cancellation',
+        cancelledBy: 'user123'
+      };
+      
+      const result = await bookingService.cancelBooking(cancelParams);
+      
+      expect(result.success).toBe(true);
+      expect(result.booking.status).toBe('cancelled');
+      
+      // Check if getBookingById was called instead
+      expect(mockSquareClient.getBookingById).toHaveBeenCalled();
+      
+      // Verify audit log creation
+      expect(mockPrismaClient.auditLog.create).toHaveBeenCalled();
+    });
+    
+    it('should handle Square booking cancellation errors', async () => {
+      // Setup Square client to throw error - use the correct method
+      mockSquareClient.cancelBooking = jest.fn().mockRejectedValueOnce(
+        new Error('Square API error')
+      );
+      
+      const cancelParams = {
+        bookingId: 'booking123',
+        reason: 'Testing cancellation with Square error'
+      };
+      
+      const result = await bookingService.cancelBooking(cancelParams);
+      
+      // Should still succeed even with Square error
+      expect(result.success).toBe(true);
+      expect(result.booking).toBeDefined();
+      expect(result.squareCancelled).toBe(false);
+      
+      // Verify error audit log was created
+      expect(mockPrismaClient.auditLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: 'square_booking_cancel_failed'
+          })
+        })
+      );
     });
   });
 }); 

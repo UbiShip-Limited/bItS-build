@@ -50,7 +50,11 @@ export const setupTestApp = () => {
     // Build the Fastify app
     app = build();
     
-    // This should match the hook used in your routes ('preHandler' not 'onRequest')
+    // This will ensure the routes are actually registered
+    // Log which routes are registered to debug
+    console.log('Registered routes:', app.printRoutes());
+    
+    // Add the hook for auth
     app.addHook('preHandler', (req, reply, done) => {
       if (dummyAuthMiddleware.mock.calls.length) {
         dummyAuthMiddleware(req, reply, done);

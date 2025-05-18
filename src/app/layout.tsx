@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { Header } from "./components/layout/header";
+import { Footer } from "./components/layout/footer";
 
 export const metadata: Metadata = {
   title: "Bowen Island Tattoo",
@@ -14,7 +16,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        {children}
+        <Header />
+        <main className="pt-16 md:pt-20">
+          {children}
+        </main>
+        <Footer />
       </body>
     </html>
   );

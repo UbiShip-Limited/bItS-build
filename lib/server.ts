@@ -1,7 +1,13 @@
 import Fastify, { FastifyInstance } from 'fastify';
+import tattooRequestsRoutes from './routes/tattooRequest';
 import prismaPlugin from './plugins/prisma'; // Path to your prisma plugin
-// import { User } from '@prisma/client'; // Example: Import Prisma types if needed
-import { pathToFileURL } from 'url'; // <--- Add this import
+import customerRoutes from './routes/customer';
+import paymentRoutes from './routes/payments/index.js';
+import appointmentRoutes from './routes/appointment';
+import auditRoutes from './routes/audit';
+import bookingRoutes from './routes/booking';
+import cloudinaryRoutes from './routes/cloudinary'; // Import Cloudinary routes
+
 
 // Initialize Fastify
 const build = (opts = {}): FastifyInstance => {
@@ -15,12 +21,25 @@ const build = (opts = {}): FastifyInstance => {
     try {
       // Access Prisma via the decorated fastify instance
       const users = await fastify.prisma.user.findMany();
-      reply.send(users);
+      
+      // Simple response without manual serialization
+      reply.type('application/json');
+      return users;
     } catch (error) {
       request.log.error(error, 'Error fetching users');
-      reply.status(500).send({ error: 'Failed to fetch users' });
+      reply.type('application/json').code(500);
+      return { error: 'Failed to fetch users' };
     }
   });
+
+  // Register your routes
+  fastify.register(tattooRequestsRoutes, { prefix: '/tattoo-requests' });
+  fastify.register(customerRoutes, { prefix: '/customers' });
+  fastify.register(paymentRoutes, { prefix: '/payments' });
+  fastify.register(appointmentRoutes, { prefix: '/appointments' });
+  fastify.register(auditRoutes, { prefix: '/audit-logs' });
+  fastify.register(bookingRoutes, { prefix: '/bookings' });
+  fastify.register(cloudinaryRoutes, { prefix: '/cloudinary' });
 
   // TODO: Register your other routes and plugins here
   return fastify;
@@ -68,9 +87,17 @@ const main = async () => {
   await start(app);
 };
 
-// Start the server only if this file is run directly (not imported as a module)
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+// Only run the main function when directly executed, not when imported
+// Use a safer check that works in both ESM and CommonJS
+if (typeof require !== 'undefined' && require.main === module) {
   main();
+} else if (typeof process !== 'undefined' && process.argv.length > 1) {
+  // Simple check for ESM
+  const argv1 = process.argv[1];
+  const currentFile = __filename;
+  if (argv1 && currentFile && argv1.endsWith(currentFile)) {
+    main();
+  }
 }
 
 // Export the build function for testing or programmatic use

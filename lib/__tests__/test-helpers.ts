@@ -2,9 +2,15 @@ import { mockPrismaClient } from '../../jest.setup.mjs';
 import { FastifyInstance } from 'fastify';
 import { build } from '../server';
 import supertest from 'supertest';
+import { jest } from '@jest/globals';
+import { setPrismaClient } from '../plugins/prisma';
 
+// Import the auth middleware mocks
+import { dummyAuthMiddleware, mockAuthMiddleware } from './middleware-mock';
 
-// Types for common test data
+/**
+ * Interface for test users
+ */
 export interface TestUser {
   id: string;
   email: string;
@@ -14,7 +20,9 @@ export interface TestUser {
   updatedAt: Date;
 }
 
-// Mock data factory functions
+/**
+ * Creates mock test users
+ */
 export const createMockUsers = (count = 2): TestUser[] => {
   return Array.from({ length: count }, (_, i) => ({
     id: `${i + 1}`,
@@ -26,24 +34,35 @@ export const createMockUsers = (count = 2): TestUser[] => {
   }));
 };
 
-// Test app builder with setup and teardown
+/**
+ * Sets up a test Fastify app with authentication mocking
+ */
 export const setupTestApp = () => {
   let app: FastifyInstance;
 
   const setup = async () => {
-    // Reset prisma mocks
-    Object.values(mockPrismaClient).forEach(model => {
-      if (model && typeof model === 'object') {
-        Object.values(model).forEach(method => {
-          if (typeof method === 'function' && 'mockReset' in method) {
-            method.mockReset();
-          }
-        });
+    // Reset all mocks before each test
+    jest.resetAllMocks();
+    
+    // Set the mock Prisma client before building the app
+    setPrismaClient(mockPrismaClient);
+
+    // Build the Fastify app
+    app = build();
+    
+    // This will ensure the routes are actually registered
+    // Log which routes are registered to debug
+    console.log('Registered routes:', app.printRoutes());
+    
+    // Add the hook for auth
+    app.addHook('preHandler', (req, reply, done) => {
+      if (dummyAuthMiddleware.mock.calls.length) {
+        dummyAuthMiddleware(req, reply, done);
+      } else {
+        done();
       }
     });
-
-    // Build and initialize the app
-    app = build();
+    
     await app.ready();
     
     return {
@@ -64,7 +83,9 @@ export const setupTestApp = () => {
   };
 };
 
-// Helper to convert Date objects to ISO strings for comparison with API responses
+/**
+ * Converts Date objects to ISO strings recursively
+ */
 export const dateToISOStrings = <T extends object>(obj: T): T => {
   const result = { ...obj };
   
@@ -83,7 +104,9 @@ export const dateToISOStrings = <T extends object>(obj: T): T => {
   return result;
 };
 
-// Helper to create mock HTTP requests with authentication
+/**
+ * Creates authenticated request helpers
+ */
 export const createAuthRequest = (request: supertest.SuperTest<supertest.Test>, token: string) => {
   return {
     get: (url: string) => request.get(url).set('Authorization', `Bearer ${token}`),
@@ -92,4 +115,7 @@ export const createAuthRequest = (request: supertest.SuperTest<supertest.Test>, 
     delete: (url: string) => request.delete(url).set('Authorization', `Bearer ${token}`),
     patch: (url: string, body?: any) => request.patch(url).set('Authorization', `Bearer ${token}`).send(body),
   };
-}; 
+};
+
+// Export the auth middleware for use in tests
+export { mockAuthMiddleware };

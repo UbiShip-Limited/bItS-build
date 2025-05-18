@@ -8,7 +8,6 @@
  */
 
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { mockPrismaClient } from '../../jest.setup.mjs';
 import { setupTestApp } from './test-helpers';
 import supertest from 'supertest';
 

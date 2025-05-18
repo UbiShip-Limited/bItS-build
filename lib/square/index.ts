@@ -129,8 +129,14 @@ class SquareClient {
     idempotencyKey: string;
     staffId?: string;
     note?: string;
+    bookingType?: string;
   }): Promise<SquareResponse> {
     const locationId = params.locationId || this.locationId;
+    
+    // Add tattoo shop specific booking type to note if provided
+    const bookingNote = params.bookingType 
+      ? `${params.bookingType}${params.note ? ` - ${params.note}` : ''}`
+      : params.note;
     
     return this.client.bookings.create({
       idempotencyKey: params.idempotencyKey,
@@ -142,10 +148,91 @@ class SquareClient {
           {
             durationMinutes: params.duration,
             teamMemberId: params.staffId,
+            serviceVariationId: params.serviceId
           }
         ],
-        sellerNote: params.note
+        sellerNote: bookingNote
       }
+    });
+  }
+
+  // Update booking - Square doesn't provide direct update API, so we need to 
+  // cancel and recreate the booking
+  async updateBooking(params: {
+    bookingId: string;
+    startAt?: string;
+    customerId?: string;
+    serviceId?: string;
+    duration?: number;
+    idempotencyKey: string;
+    staffId?: string;
+    note?: string;
+    bookingType?: string;
+  }): Promise<SquareResponse> {
+    // First, get existing booking details to preserve unchanged values
+    const existingBookingResponse = await this.getBookingById(params.bookingId);
+    const existingBooking = existingBookingResponse.result?.booking;
+    
+    if (!existingBooking) {
+      throw new Error(`Booking with ID ${params.bookingId} not found`);
+    }
+    
+    // Create a cancellation request
+    const cancelResponse = await this.client.bookings.cancel({
+      bookingId: params.bookingId,
+      bookingVersion: existingBooking.version
+    });
+    
+    // Check if cancel operation failed
+    if (cancelResponse.errors && cancelResponse.errors.length > 0) {
+      throw new Error(`Failed to cancel existing booking: ${cancelResponse.errors[0]?.detail || 'Unknown error'}`);
+    }
+    
+    // Prepare data for the new booking, using existing data for any missing fields
+    const appointmentSegment = existingBooking.appointmentSegments?.[0] || {};
+    
+    // Add tattoo shop specific booking type to note if provided
+    const bookingNote = params.bookingType 
+      ? `${params.bookingType}${params.note ? ` - ${params.note}` : ''}`
+      : (params.note || existingBooking.sellerNote);
+    
+    // Create a new booking with updated information
+    return this.client.bookings.create({
+      idempotencyKey: params.idempotencyKey,
+      booking: {
+        startAt: params.startAt || existingBooking.startAt,
+        locationId: existingBooking.locationId,
+        customerId: params.customerId || existingBooking.customerId,
+        appointmentSegments: [
+          {
+            durationMinutes: params.duration || appointmentSegment.durationMinutes,
+            teamMemberId: params.staffId || appointmentSegment.teamMemberId,
+            serviceVariationId: params.serviceId || appointmentSegment.serviceVariationId
+          }
+        ],
+        sellerNote: bookingNote
+      }
+    });
+  }
+
+  // Cancel booking in Square
+  async cancelBooking(params: {
+    bookingId: string;
+    bookingVersion: number;
+    idempotencyKey?: string;
+  }): Promise<SquareResponse> {
+    return this.client.bookings.cancel({
+      bookingId: params.bookingId,
+      bookingVersion: params.bookingVersion,
+      idempotencyKey: params.idempotencyKey
+    });
+  }
+
+  // Get tattoo shop services from catalog
+  async getTattooServices(): Promise<SquareResponse> {
+    // Get catalog items filtered to service type
+    return this.client.catalog.list({
+      types: "ITEM"
     });
   }
 

@@ -307,20 +307,29 @@ const bookingRoutes: FastifyPluginAsync = async (fastify, options) => {
         properties: {
           startTime: { type: 'string' },
           endTime: { type: 'string' },
-          status: { type: 'string', enum: ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'] },
-          staffId: { type: 'string' },
-          notes: { type: 'string' }
+          duration: { type: 'integer', minimum: 15 },
+          status: { 
+            type: 'string', 
+            enum: Object.values(BookingStatus)
+          },
+          artistId: { type: 'string' },
+          notes: { type: 'string' },
+          priceQuote: { type: 'number' }
         }
       }
     }
   }, async (request, reply) => {
     const { id } = request.params as any;
-    const { startTime, endTime, status, staffId, notes } = request.body as any;
+    const { startTime, endTime, duration, status, artistId, notes, priceQuote } = request.body as any;
     
     try {
       // Get existing booking
       const existingBooking = await prisma.appointment.findUnique({
-        where: { id }
+        where: { id },
+        include: {
+          customer: true,
+          artist: true
+        }
       });
       
       if (!existingBooking) {
@@ -330,38 +339,15 @@ const bookingRoutes: FastifyPluginAsync = async (fastify, options) => {
         });
       }
       
-      // Update data object
-      const updateData = {} as any;
-      
-      if (startTime) {
-        updateData.startTime = new Date(startTime);
-      }
-      
-      if (endTime) {
-        updateData.endTime = new Date(endTime);
-      }
-      
-      if (status) {
-        updateData.status = status;
-      }
-      
-      if (staffId) {
-        updateData.staffId = staffId;
-      }
-      
-      if (notes !== undefined) {
-        updateData.notes = notes;
-      }
-      
-      // Update booking
-      const updatedBooking = await prisma.appointment.update({
-        where: { id },
-        data: updateData,
-        include: {
-          customer: true,
-          artist: true,
-          invoices: true
-        }
+      // Use our booking service for the update - this will handle both database and Square
+      const result = await bookingService.updateBooking({
+        bookingId: id,
+        startAt: startTime ? new Date(startTime) : undefined,
+        duration,
+        status: status as BookingStatus,
+        artistId,
+        note: notes,
+        priceQuote
       });
       
       // Create audit log entry
@@ -374,20 +360,150 @@ const bookingRoutes: FastifyPluginAsync = async (fastify, options) => {
           details: { 
             previousStatus: existingBooking.status,
             newStatus: status || existingBooking.status,
-            changes: updateData
+            changes: request.body
           }
         }
       });
       
       return {
         success: true,
-        booking: updatedBooking
+        booking: result.booking,
+        squareBookingUpdated: result.squareBookingUpdated
       };
     } catch (error) {
       request.log.error(error);
       return reply.code(500).send({ 
         success: false, 
         message: 'Error updating booking', 
+        error: error.message 
+      });
+    }
+  });
+  
+  // POST /bookings/:id/cancel - Cancel a booking
+  fastify.post('/:id/cancel', {
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        properties: {
+          reason: { type: 'string' },
+          notifyCustomer: { type: 'boolean', default: true }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params as any;
+    const { reason, notifyCustomer = true } = request.body as any;
+    
+    try {
+      // Get existing booking
+      const existingBooking = await prisma.appointment.findUnique({
+        where: { id },
+        include: {
+          customer: true,
+          artist: true
+        }
+      });
+      
+      if (!existingBooking) {
+        return reply.code(404).send({ 
+          success: false, 
+          message: 'Booking not found' 
+        });
+      }
+      
+      // Check permissions - only admin, the artist, or the customer can cancel
+      const user = request.user;
+      if (user.role !== 'admin' && 
+          existingBooking.artist?.id !== user.id && 
+          existingBooking.customerId !== user.id) {
+        return reply.code(403).send({ 
+          success: false, 
+          message: 'You do not have permission to cancel this booking' 
+        });
+      }
+      
+      // Update booking status to cancelled
+      const updatedBooking = await prisma.appointment.update({
+        where: { id },
+        data: {
+          status: BookingStatus.CANCELLED,
+          cancelReason: reason
+        },
+        include: {
+          customer: true,
+          artist: true
+        }
+      });
+      
+      // Cancel in Square if we have a Square ID
+      let squareResult = null;
+      if (existingBooking.squareId) {
+        try {
+          // Get Square booking to get version
+          const squareBooking = await bookingService.squareClient.getBookingById(existingBooking.squareId);
+          
+          if (squareBooking.result?.booking) {
+            // Cancel in Square
+            squareResult = await bookingService.squareClient.cancelBooking({
+              bookingId: existingBooking.squareId,
+              bookingVersion: squareBooking.result.booking.version,
+              idempotencyKey: `cancel-${id}-${Date.now()}`
+            });
+          }
+        } catch (squareError) {
+          request.log.error(`Error cancelling Square booking: ${squareError.message}`);
+          
+          // Log the error but continue with the cancellation
+          await prisma.auditLog.create({
+            data: {
+              action: 'square_booking_cancel_failed',
+              resource: 'appointment',
+              resourceId: id,
+              userId: request.user.id,
+              details: { 
+                error: squareError.message,
+                squareId: existingBooking.squareId
+              }
+            }
+          });
+        }
+      }
+      
+      // Create audit log entry
+      await prisma.auditLog.create({
+        data: {
+          action: 'booking_cancelled',
+          resource: 'appointment',
+          resourceId: id,
+          userId: request.user.id,
+          details: { 
+            previousStatus: existingBooking.status,
+            reason,
+            squareCancelled: squareResult?.result ? true : false
+          }
+        }
+      });
+      
+      // TODO: Implement customer notification via email or SMS if notifyCustomer is true
+      
+      return {
+        success: true,
+        booking: updatedBooking,
+        squareCancelled: squareResult?.result ? true : false
+      };
+    } catch (error) {
+      request.log.error(error);
+      return reply.code(500).send({ 
+        success: false, 
+        message: 'Error cancelling booking', 
         error: error.message 
       });
     }

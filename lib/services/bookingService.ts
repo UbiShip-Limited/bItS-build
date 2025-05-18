@@ -210,7 +210,10 @@ export default class BookingService {
     try {
       // Get existing booking
       const existingBooking = await prisma.appointment.findUnique({
-        where: { id: bookingId }
+        where: { id: bookingId },
+        include: {
+          customer: true
+        }
       });
       
       if (!existingBooking) {
@@ -264,27 +267,60 @@ export default class BookingService {
       
       // Update in Square if we have a Square ID
       let squareBookingResult = null;
-      if (existingBooking.notes && existingBooking.notes.includes('squareId:')) {
+      if (existingBooking.squareId) {
         try {
-          // Square booking update logic would go here
-          // Note: Square SDK doesn't provide direct booking update function
-          // This would require custom implementation or canceling/rebooking
+          // Generate unique idempotency key for this update
+          const idempotencyKey = uuidv4();
           
-          // For now, log that we can't update Square booking
+          // Update booking in Square by canceling and recreating
+          squareBookingResult = await this.squareClient.updateBooking({
+            bookingId: existingBooking.squareId,
+            startAt: startAt ? startAt.toISOString() : undefined,
+            customerId: existingBooking.customer?.email || existingBooking.customerId,
+            duration: duration || existingBooking.duration,
+            idempotencyKey,
+            staffId: artistId,
+            note: note,
+            bookingType: existingBooking.type
+          });
+          
+          // Update squareId if it changed (it will, since we cancel and recreate)
+          if (squareBookingResult?.result?.booking?.id) {
+            await prisma.appointment.update({
+              where: { id: bookingId },
+              data: { squareId: squareBookingResult.result.booking.id }
+            });
+          }
+          
+          // Log successful update
           await prisma.auditLog.create({
             data: {
-              action: 'square_booking_update_skipped',
+              action: 'square_booking_updated',
               resource: 'appointment',
               resourceId: bookingId,
               details: { 
-                message: 'Square booking updates not implemented',
-                bookingId,
-                squareId: existingBooking.notes.match(/squareId:([^,]+)/)?.[1] || ''
+                oldSquareId: existingBooking.squareId,
+                newSquareId: squareBookingResult?.result?.booking?.id,
+                bookingId
               }
             }
           });
         } catch (squareError) {
           console.error('Square booking update error:', squareError);
+          
+          // Log the error
+          await prisma.auditLog.create({
+            data: {
+              action: 'square_booking_update_failed',
+              resource: 'appointment',
+              resourceId: bookingId,
+              details: { 
+                error: squareError.message || 'Unknown Square API error',
+                squareId: existingBooking.squareId,
+                bookingId
+              }
+            }
+          });
         }
       }
       

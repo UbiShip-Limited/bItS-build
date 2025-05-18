@@ -27,9 +27,49 @@ const mockSquareCreateBooking = jest.fn<any, [any]>().mockResolvedValue({
   }
 });
 
+const mockSquareGetBookingById = jest.fn<any, [any]>().mockResolvedValue({
+  result: {
+    booking: {
+      id: 'test-square-booking-id',
+      startAt: '2023-06-15T14:00:00Z',
+      locationId: 'test-location-id',
+      customerId: 'test-customer-id',
+      status: 'ACCEPTED',
+      version: 1
+    }
+  }
+});
+
+const mockSquareUpdateBooking = jest.fn<any, [any]>().mockResolvedValue({
+  result: {
+    booking: {
+      id: 'updated-square-booking-id',
+      startAt: '2023-06-15T16:00:00Z',
+      locationId: 'test-location-id',
+      customerId: 'test-customer-id',
+      status: 'ACCEPTED'
+    }
+  }
+});
+
+const mockSquareCancelBooking = jest.fn<any, [any]>().mockResolvedValue({
+  result: {
+    booking: {
+      id: 'test-square-booking-id',
+      startAt: '2023-06-15T14:00:00Z',
+      locationId: 'test-location-id',
+      customerId: 'test-customer-id',
+      status: 'CANCELLED'
+    }
+  }
+});
+
 const mockSquareClient = {
   fromEnv: jest.fn().mockReturnValue({
-    createBooking: mockSquareCreateBooking
+    createBooking: mockSquareCreateBooking,
+    getBookingById: mockSquareGetBookingById,
+    updateBooking: mockSquareUpdateBooking,
+    cancelBooking: mockSquareCancelBooking
   })
 };
 
@@ -84,6 +124,9 @@ describe('BookingService', () => {
       mockAuditLogCreate.mockReset();
       mockTransaction.mockReset();
       mockSquareCreateBooking.mockReset();
+      mockSquareGetBookingById.mockReset();
+      mockSquareUpdateBooking.mockReset();
+      mockSquareCancelBooking.mockReset();
     }
     
     // Re-initialize mockTransaction
@@ -549,19 +592,48 @@ describe('BookingService', () => {
         endTime: new Date('2023-06-15T15:00:00Z'),
         status: 'scheduled',
         type: 'consultation',
-        squareId: 'test-square-booking-id'
+        squareId: 'test-square-booking-id',
+        customer: {
+          id: 'test-customer-id',
+          email: 'test@example.com'
+        }
       });
       
       const result = await bookingService.updateBooking({
         bookingId: 'test-booking-id',
+        startAt: new Date('2023-06-15T16:00:00Z'),
         status: BookingStatus.CONFIRMED
       });
       
-      // Verify we created an audit log for the Square update skipped
+      // Verify Square.getBookingById was called to get booking details
+      expect(mockSquareGetBookingById).toHaveBeenCalledWith('test-square-booking-id');
+      
+      // Verify Square.updateBooking was called
+      expect(mockSquareUpdateBooking).toHaveBeenCalledWith(
+        expect.objectContaining({
+          bookingId: 'test-square-booking-id',
+          startAt: expect.any(String),
+          customerId: 'test@example.com',
+          idempotencyKey: expect.any(String),
+          bookingType: 'consultation'
+        })
+      );
+      
+      // Verify we update our database with the new Square booking ID
+      expect(mockAppointmentUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'test-booking-id' },
+          data: expect.objectContaining({
+            squareId: 'updated-square-booking-id'
+          })
+        })
+      );
+      
+      // Verify we created an audit log for the successful Square update
       expect(mockAuditLogCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            action: 'square_booking_update_skipped'
+            action: 'square_booking_updated'
           })
         })
       );
@@ -574,55 +646,110 @@ describe('BookingService', () => {
           })
         })
       );
+      
+      // Verify the returned data includes the Square booking update info
+      expect(result).toEqual(
+        expect.objectContaining({
+          success: true,
+          booking: expect.any(Object),
+          squareBookingUpdated: expect.objectContaining({
+            result: expect.objectContaining({
+              booking: expect.objectContaining({
+                id: 'updated-square-booking-id'
+              })
+            })
+          })
+        })
+      );
     });
     
-    it('should handle errors during update', async () => {
-      // Set up booking lookup
+    it('should handle Square errors during booking update', async () => {
+      // Set up a booking with squareId
       mockAppointmentFindUnique.mockResolvedValueOnce({
         id: 'test-booking-id',
         customerId: 'test-customer-id',
         startTime: new Date('2023-06-15T14:00:00Z'),
         endTime: new Date('2023-06-15T15:00:00Z'),
-        status: 'scheduled'
+        status: 'scheduled',
+        type: 'consultation',
+        squareId: 'test-square-booking-id',
+        customer: {
+          id: 'test-customer-id',
+          email: 'test@example.com'
+        }
       });
       
-      // Mock update to throw error
-      mockAppointmentUpdate.mockRejectedValueOnce(
-        new Error('Update error')
+      // Mock Square update to fail
+      mockSquareUpdateBooking.mockRejectedValueOnce(
+        new Error('Square API error')
       );
       
-      await expect(
-        bookingService.updateBooking({
-          bookingId: 'test-booking-id',
-          status: BookingStatus.CANCELLED
-        })
-      ).rejects.toThrow('Update error');
-    });
-    
-    it('should update multiple fields at once', async () => {
-      const startAt = new Date('2023-06-15T16:00:00Z');
-      
-      await bookingService.updateBooking({
+      const result = await bookingService.updateBooking({
         bookingId: 'test-booking-id',
-        startAt,
-        duration: 90,
-        status: BookingStatus.CONFIRMED,
-        artistId: 'new-artist-id',
-        note: 'Updated notes',
-        priceQuote: 150
+        status: BookingStatus.CONFIRMED
       });
       
-      // Verify correct data in update call
-      expect(mockAppointmentUpdate).toHaveBeenCalledWith(
+      // Verify Square.getBookingById was called
+      expect(mockSquareGetBookingById).toHaveBeenCalledWith('test-square-booking-id');
+      
+      // Verify Square.updateBooking was called
+      expect(mockSquareUpdateBooking).toHaveBeenCalledWith(
+        expect.objectContaining({
+          bookingId: 'test-square-booking-id'
+        })
+      );
+      
+      // Verify we created an audit log for the failed Square update
+      expect(mockAuditLogCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            startTime: startAt,
-            endTime: new Date(startAt.getTime() + 90 * 60000),
-            status: 'confirmed',
-            artistId: 'new-artist-id',
-            notes: 'Updated notes',
-            priceQuote: 150
+            action: 'square_booking_update_failed'
           })
+        })
+      );
+      
+      // Verify we still updated our database
+      expect(mockAppointmentUpdate).toHaveBeenCalled();
+      
+      // Verify the returned data doesn't include Square booking info
+      expect(result).toEqual(
+        expect.objectContaining({
+          success: true,
+          booking: expect.any(Object),
+          squareBookingUpdated: null
+        })
+      );
+    });
+
+    it('should handle bookings without Square IDs properly', async () => {
+      // Set up a booking without squareId
+      mockAppointmentFindUnique.mockResolvedValueOnce({
+        id: 'test-booking-id',
+        customerId: 'test-customer-id',
+        startTime: new Date('2023-06-15T14:00:00Z'),
+        endTime: new Date('2023-06-15T15:00:00Z'),
+        status: 'scheduled',
+        type: 'consultation',
+        squareId: null
+      });
+      
+      const result = await bookingService.updateBooking({
+        bookingId: 'test-booking-id',
+        status: BookingStatus.CONFIRMED
+      });
+      
+      // Verify Square.updateBooking was not called
+      expect(mockSquareUpdateBooking).not.toHaveBeenCalled();
+      
+      // Verify we still updated our database
+      expect(mockAppointmentUpdate).toHaveBeenCalled();
+      
+      // Verify the returned data doesn't include Square booking info
+      expect(result).toEqual(
+        expect.objectContaining({
+          success: true,
+          booking: expect.any(Object),
+          squareBookingUpdated: null
         })
       );
     });

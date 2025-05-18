@@ -74,13 +74,38 @@ describe('Booking Routes', () => {
           booking: {
             id: 'test-booking-id',
             status: 'confirmed'
+          },
+          squareBookingUpdated: {
+            result: {
+              booking: {
+                id: 'updated-square-booking-id'
+              }
+            }
           }
         }),
         getBookingAvailability: jest.fn().mockResolvedValue({
           success: true,
           date: '2023-06-15',
           availableSlots: []
-        })
+        }),
+        squareClient: {
+          getBookingById: jest.fn().mockResolvedValue({
+            result: {
+              booking: {
+                id: 'test-square-booking-id',
+                version: 1
+              }
+            }
+          }),
+          cancelBooking: jest.fn().mockResolvedValue({
+            result: {
+              booking: {
+                id: 'test-square-booking-id',
+                status: 'CANCELLED'
+              }
+            }
+          })
+        }
       };
     });
     
@@ -350,8 +375,11 @@ describe('Booking Routes', () => {
         url: '/bookings/test-booking-id',
         payload: {
           startTime: '2023-06-15T16:00:00Z',
+          duration: 90,
           status: 'confirmed',
-          notes: 'Updated notes'
+          artistId: 'test-artist-id',
+          notes: 'Updated notes',
+          priceQuote: 150
         }
       });
       
@@ -360,25 +388,25 @@ describe('Booking Routes', () => {
       expect(response.statusCode).toBe(200);
       expect(result.success).toBe(true);
       expect(result.booking).toBeDefined();
+      expect(result.squareBookingUpdated).toBeDefined();
       
-      // Verify prisma update
-      expect(prisma.appointment.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { id: 'test-booking-id' },
-          data: expect.objectContaining({
-            startTime: expect.any(Date),
-            status: 'confirmed',
-            notes: 'Updated notes'
-          })
-        })
-      );
+      // Verify BookingService.updateBooking was called with correct parameters
+      const bookingServiceInstance = (BookingService as unknown as jest.Mock).mock.instances[0];
+      expect(bookingServiceInstance.updateBooking).toHaveBeenCalledWith({
+        bookingId: 'test-booking-id',
+        startAt: expect.any(Date),
+        duration: 90,
+        status: 'confirmed',
+        artistId: 'test-artist-id',
+        note: 'Updated notes',
+        priceQuote: 150
+      });
       
-      // Verify audit log
+      // Verify audit log entry was created
       expect(prisma.auditLog.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
             action: 'booking_updated',
-            resourceType: 'appointment',
             resourceId: 'test-booking-id'
           })
         })
@@ -401,6 +429,212 @@ describe('Booking Routes', () => {
       expect(response.statusCode).toBe(404);
       expect(result.success).toBe(false);
       expect(result.message).toBe('Booking not found');
+    });
+  });
+
+  describe('POST /bookings/:id/cancel', () => {
+    beforeEach(() => {
+      // Add a specific mock for appointment.update for cancellation
+      (prisma.appointment.update as jest.Mock).mockResolvedValue({
+        id: 'test-booking-id',
+        customerId: 'test-customer-id',
+        artistId: 'test-artist-id',
+        startTime: new Date('2023-06-15T14:00:00Z'),
+        endTime: new Date('2023-06-15T15:00:00Z'),
+        status: 'cancelled',
+        type: 'consultation',
+        cancelReason: 'Customer requested cancellation'
+      });
+    });
+    
+    it('should cancel a booking successfully', async () => {
+      // Mock appointment with Square ID
+      (prisma.appointment.findUnique as jest.Mock).mockResolvedValueOnce({
+        id: 'test-booking-id',
+        customerId: 'test-customer-id',
+        artistId: 'test-artist-id',
+        startTime: new Date('2023-06-15T14:00:00Z'),
+        endTime: new Date('2023-06-15T15:00:00Z'),
+        status: 'scheduled',
+        type: 'consultation',
+        squareId: 'test-square-booking-id'
+      });
+      
+      const response = await fastify.inject({
+        method: 'POST',
+        url: '/bookings/test-booking-id/cancel',
+        payload: {
+          reason: 'Customer requested cancellation',
+          notifyCustomer: true
+        }
+      });
+      
+      const result = JSON.parse(response.payload);
+      
+      expect(response.statusCode).toBe(200);
+      expect(result.success).toBe(true);
+      expect(result.booking).toBeDefined();
+      expect(result.squareCancelled).toBe(true);
+      
+      // Verify appointment was updated to cancelled status
+      expect(prisma.appointment.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'test-booking-id' },
+          data: expect.objectContaining({
+            status: 'cancelled',
+            cancelReason: 'Customer requested cancellation'
+          })
+        })
+      );
+      
+      // Verify Square booking was cancelled
+      const bookingServiceInstance = (BookingService as unknown as jest.Mock).mock.instances[0];
+      expect(bookingServiceInstance.squareClient.getBookingById).toHaveBeenCalledWith('test-square-booking-id');
+      expect(bookingServiceInstance.squareClient.cancelBooking).toHaveBeenCalledWith({
+        bookingId: 'test-square-booking-id',
+        bookingVersion: 1,
+        idempotencyKey: expect.any(String)
+      });
+      
+      // Verify audit log was created
+      expect(prisma.auditLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: 'booking_cancelled',
+            resourceId: 'test-booking-id'
+          })
+        })
+      );
+    });
+    
+    it('should cancel a booking without Square ID', async () => {
+      // Mock appointment without Square ID
+      (prisma.appointment.findUnique as jest.Mock).mockResolvedValueOnce({
+        id: 'test-booking-id',
+        customerId: 'test-customer-id',
+        artistId: 'test-artist-id',
+        startTime: new Date('2023-06-15T14:00:00Z'),
+        endTime: new Date('2023-06-15T15:00:00Z'),
+        status: 'scheduled',
+        type: 'consultation',
+        squareId: null
+      });
+      
+      const response = await fastify.inject({
+        method: 'POST',
+        url: '/bookings/test-booking-id/cancel',
+        payload: {
+          reason: 'Customer requested cancellation'
+        }
+      });
+      
+      const result = JSON.parse(response.payload);
+      
+      expect(response.statusCode).toBe(200);
+      expect(result.success).toBe(true);
+      expect(result.booking).toBeDefined();
+      expect(result.squareCancelled).toBe(false);
+      
+      // Verify appointment was updated to cancelled status
+      expect(prisma.appointment.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'test-booking-id' },
+          data: expect.objectContaining({
+            status: 'cancelled'
+          })
+        })
+      );
+      
+      // Verify Square booking methods were not called
+      const bookingServiceInstance = (BookingService as unknown as jest.Mock).mock.instances[0];
+      expect(bookingServiceInstance.squareClient.getBookingById).not.toHaveBeenCalled();
+      expect(bookingServiceInstance.squareClient.cancelBooking).not.toHaveBeenCalled();
+    });
+    
+    it('should handle Square cancellation errors', async () => {
+      // Mock appointment with Square ID
+      (prisma.appointment.findUnique as jest.Mock).mockResolvedValueOnce({
+        id: 'test-booking-id',
+        customerId: 'test-customer-id',
+        artistId: 'test-artist-id',
+        startTime: new Date('2023-06-15T14:00:00Z'),
+        endTime: new Date('2023-06-15T15:00:00Z'),
+        status: 'scheduled',
+        type: 'consultation',
+        squareId: 'test-square-booking-id'
+      });
+      
+      // Mock Square getBookingById to throw error
+      const bookingServiceInstance = (BookingService as unknown as jest.Mock).mock.instances[0];
+      bookingServiceInstance.squareClient.getBookingById.mockRejectedValueOnce(
+        new Error('Square API error')
+      );
+      
+      const response = await fastify.inject({
+        method: 'POST',
+        url: '/bookings/test-booking-id/cancel',
+        payload: {
+          reason: 'Customer requested cancellation'
+        }
+      });
+      
+      const result = JSON.parse(response.payload);
+      
+      expect(response.statusCode).toBe(200);
+      expect(result.success).toBe(true);
+      expect(result.booking).toBeDefined();
+      expect(result.squareCancelled).toBe(false);
+      
+      // Verify we still cancelled in our database
+      expect(prisma.appointment.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'test-booking-id' },
+          data: expect.objectContaining({
+            status: 'cancelled'
+          })
+        })
+      );
+      
+      // Verify an error audit log was created
+      expect(prisma.auditLog.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            action: 'square_booking_cancel_failed'
+          })
+        })
+      );
+    });
+    
+    it('should enforce permission checks for cancellation', async () => {
+      // Mock a different user
+      fastify.addHook('preHandler', (request, reply, done) => {
+        request.user = { id: 'different-user-id', role: 'customer' };
+        done();
+      });
+      
+      (prisma.appointment.findUnique as jest.Mock).mockResolvedValueOnce({
+        id: 'test-booking-id',
+        customerId: 'test-customer-id',
+        artistId: 'test-artist-id',
+        startTime: new Date('2023-06-15T14:00:00Z'),
+        endTime: new Date('2023-06-15T15:00:00Z'),
+        status: 'scheduled',
+        type: 'consultation'
+      });
+      
+      const response = await fastify.inject({
+        method: 'POST',
+        url: '/bookings/test-booking-id/cancel',
+        payload: {
+          reason: 'Cancellation reason'
+        }
+      });
+      
+      const result = JSON.parse(response.payload);
+      
+      expect(response.statusCode).toBe(403);
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('You do not have permission to cancel this booking');
     });
   });
 });
@@ -525,6 +759,8 @@ describe('Authorization and Permission Tests', () => {
 });
 
 describe('Error Handling Tests', () => {
+  let fastify: FastifyInstance;
+  
   beforeEach(async () => {
     jest.clearAllMocks();
     fastify = await setupTestServer();
@@ -552,6 +788,69 @@ describe('Error Handling Tests', () => {
     expect(result.success).toBe(false);
     expect(result.message).toBe('Error creating booking');
     expect(result.error).toBe('Service error');
+  });
+  
+  it('should handle service errors during booking update', async () => {
+    // Mock BookingService.updateBooking to throw an error
+    const mockBookingService = (BookingService as unknown as jest.Mock).mock.instances[0];
+    mockBookingService.updateBooking.mockRejectedValueOnce(new Error('Update service error'));
+    
+    const response = await fastify.inject({
+      method: 'PUT',
+      url: '/bookings/test-booking-id',
+      payload: {
+        status: 'confirmed'
+      }
+    });
+    
+    const result = JSON.parse(response.payload);
+    
+    expect(response.statusCode).toBe(500);
+    expect(result.success).toBe(false);
+    expect(result.message).toBe('Error updating booking');
+    expect(result.error).toBe('Update service error');
+  });
+  
+  it('should handle Square API errors gracefully during booking operations', async () => {
+    // Setup mock appointment
+    (prisma.appointment.findUnique as jest.Mock).mockResolvedValue({
+      id: 'test-booking-id',
+      customerId: 'test-customer-id',
+      startTime: new Date('2023-06-15T14:00:00Z'),
+      endTime: new Date('2023-06-15T15:00:00Z'),
+      status: 'scheduled',
+      type: 'consultation',
+      squareId: 'test-square-booking-id'
+    });
+    
+    // Mock BookingService instance with Square client error
+    const mockBookingService = (BookingService as unknown as jest.Mock).mock.instances[0];
+    mockBookingService.squareClient.getBookingById.mockRejectedValueOnce(
+      new Error('Square API connection error')
+    );
+    
+    const response = await fastify.inject({
+      method: 'POST',
+      url: '/bookings/test-booking-id/cancel',
+      payload: {
+        reason: 'Test cancellation'
+      }
+    });
+    
+    // Should still succeed even if Square fails
+    const result = JSON.parse(response.payload);
+    expect(response.statusCode).toBe(200);
+    expect(result.success).toBe(true);
+    expect(result.squareCancelled).toBe(false);
+    
+    // Verify audit log was created for the Square failure
+    expect(prisma.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: 'square_booking_cancel_failed'
+        })
+      })
+    );
   });
   
   it('should handle database errors when fetching bookings', async () => {

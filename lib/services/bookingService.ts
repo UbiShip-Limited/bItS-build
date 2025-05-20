@@ -20,7 +20,7 @@ export enum BookingStatus {
 interface CreateBookingParams {
   startAt: Date;
   duration: number; // minutes
-  customerId: string;
+  customerId?: string; // Made optional
   bookingType: BookingType;
   artistId?: string;
   customerEmail?: string;
@@ -29,6 +29,10 @@ interface CreateBookingParams {
   priceQuote?: number;
   status?: BookingStatus;
   tattooRequestId?: string;
+  // New params for anonymous requests
+  contactEmail?: string;
+  contactPhone?: string;
+  isAnonymous?: boolean;
 }
 
 interface UpdateBookingParams {
@@ -66,20 +70,58 @@ export default class BookingService {
       note,
       priceQuote,
       status = BookingStatus.SCHEDULED,
-      tattooRequestId
+      tattooRequestId,
+      contactEmail,
+      contactPhone,
+      isAnonymous = false
     } = params;
     
     // Generate unique identifier for this booking
     const idempotencyKey = uuidv4();
     
     try {
-      // First check if customer exists in our database
-      const customer = await prisma.customer.findUnique({
-        where: { id: customerId }
-      });
+      let customer = null;
       
-      if (!customer) {
-        throw new Error('Customer not found');
+      // If we have a customerId, verify it exists
+      if (customerId) {
+        customer = await prisma.customer.findUnique({
+          where: { id: customerId }
+        });
+        
+        if (!customer) {
+          throw new Error('Customer not found');
+        }
+      } 
+      // If this is an anonymous booking but we have contact info
+      else if (isAnonymous && contactEmail) {
+        // Create a temporary customer record if needed
+        let tempCustomer = await prisma.customer.findUnique({
+          where: { email: contactEmail }
+        });
+        
+        if (!tempCustomer) {
+          tempCustomer = await prisma.customer.create({
+            data: {
+              name: 'Anonymous Customer',
+              email: contactEmail,
+              phone: contactPhone
+            }
+          });
+          
+          // Log customer creation
+          await prisma.auditLog.create({
+            data: {
+              action: 'temporary_customer_created',
+              resource: 'Customer',
+              resourceId: tempCustomer.id,
+              details: { source: 'anonymous_booking' }
+            }
+          });
+        }
+        
+        customer = tempCustomer;
+      } else if (!isAnonymous && !customerId) {
+        throw new Error('Either customerId or contactEmail is required');
       }
       
       // Calculate end time
@@ -91,10 +133,14 @@ export default class BookingService {
         endTime,
         status,
         type: bookingType,
-        customerId,
         notes: note,
         priceQuote
       };
+      
+      // Add customer if we have one now
+      if (customer) {
+        bookingData.customerId = customer.id;
+      }
       
       // Add artist if provided
       if (artistId) {
@@ -118,20 +164,23 @@ export default class BookingService {
       let squareBooking;
       
       try {
-        // Create booking in Square
-        squareBooking = await this.squareClient.createBooking({
-          startAt: startAt.toISOString(),
-          locationId: process.env.SQUARE_LOCATION_ID,
-          customerId: customer.email || customerId,
-          duration,
-          idempotencyKey,
-          staffId: artistId,
-          note: `Booking type: ${bookingType}${note ? ` - ${note}` : ''}`
-        });
-        
-        // Add Square booking ID to our data
-        if (squareBooking?.result?.booking?.id) {
-          bookingData.squareId = squareBooking.result.booking.id;
+        // Only create Square booking if we have a customer
+        if (customer) {
+          // Create booking in Square
+          squareBooking = await this.squareClient.createBooking({
+            startAt: startAt.toISOString(),
+            locationId: process.env.SQUARE_LOCATION_ID,
+            customerId: customer.email || customer.id,
+            duration,
+            idempotencyKey,
+            staffId: artistId,
+            note: `Booking type: ${bookingType}${note ? ` - ${note}` : ''}`
+          });
+          
+          // Add Square booking ID to our data
+          if (squareBooking?.result?.booking?.id) {
+            bookingData.squareId = squareBooking.result.booking.id;
+          }
         }
       } catch (squareError) {
         // Log the error but continue with our database booking
@@ -145,7 +194,7 @@ export default class BookingService {
               error: squareError.message || 'Unknown Square API error',
               bookingType,
               startAt: startAt.toISOString(),
-              customerId
+              customerId: customer?.id
             }
           }
         });
@@ -163,7 +212,7 @@ export default class BookingService {
                 severity: 'high',
                 bookingType,
                 startAt: startAt.toISOString(),
-                customerId
+                customerId: customer?.id
               }
             }
           });
@@ -176,6 +225,7 @@ export default class BookingService {
         include: {
           customer: true,
           artist: true,
+          tattooRequest: true
         }
       });
       
@@ -184,12 +234,14 @@ export default class BookingService {
         data: {
           action: 'booking_created',
           resource: 'appointment',
+          resourceType: 'appointment',
           resourceId: booking.id,
           details: { 
             bookingType, 
             startAt: startAt.toISOString(), 
-            customerId,
-            squareId: bookingData.squareId 
+            customerId: customer?.id,
+            squareId: bookingData.squareId,
+            isAnonymous: isAnonymous
           }
         }
       });
@@ -208,11 +260,13 @@ export default class BookingService {
         data: {
           action: 'booking_failed',
           resource: 'appointment',
+          resourceType: 'appointment',
           details: { 
             bookingType, 
             startAt: startAt.toISOString(), 
             customerId,
-            error: error.message || 'Unknown error'
+            error: error.message || 'Unknown error',
+            isAnonymous: isAnonymous
           }
         }
       });
@@ -285,7 +339,8 @@ export default class BookingService {
         data: updateData,
         include: {
           customer: true,
-          artist: true
+          artist: true,
+          tattooRequest: true
         }
       });
       

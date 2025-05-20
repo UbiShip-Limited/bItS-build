@@ -20,17 +20,8 @@ export function DynamicGallery() {
   // Gallery items data
   const galleryItems: GalleryItem[] = [
     {
-      id: "1",
-      src: "/black-and-white-tattoo.png",
-      alt: "Black and white geometric tattoo",
-      artist: "Alex Mercer",
-      style: "Geometric",
-      width: 2,
-      height: 3,
-    },
-    {
       id: "2",
-      src: "/minimalist-tattoo.png",
+      src: "/gallery-images/image1.jpeg",
       alt: "Minimalist line art tattoo",
       artist: "Jamie Chen",
       style: "Minimalist",
@@ -39,7 +30,7 @@ export function DynamicGallery() {
     },
     {
       id: "3",
-      src: "/floral-tattoo.png",
+      src: "/gallery-images/image2.jpeg",
       alt: "Colorful floral sleeve tattoo",
       artist: "Morgan Lee",
       style: "Floral",
@@ -48,7 +39,7 @@ export function DynamicGallery() {
     },
     {
       id: "4",
-      src: "/abstract-tattoo-art.png",
+      src: "/gallery-images/image3.jpeg",
       alt: "Abstract watercolor style tattoo",
       artist: "Alex Mercer",
       style: "Watercolor",
@@ -57,7 +48,7 @@ export function DynamicGallery() {
     },
     {
       id: "5",
-      src: "/japanese-tattoo.png",
+      src: "/gallery-images/image4.jpeg",
       alt: "Traditional Japanese style tattoo",
       artist: "Kai Tanaka",
       style: "Traditional",
@@ -66,7 +57,7 @@ export function DynamicGallery() {
     },
     {
       id: "6",
-      src: "/placeholder.svg?key=0eebh",
+      src: "/gallery-images/image5.jpeg",
       alt: "Blackwork tattoo with fine details",
       artist: "Jamie Chen",
       style: "Blackwork",
@@ -75,31 +66,14 @@ export function DynamicGallery() {
     },
     {
       id: "7",
-      src: "/placeholder.svg?key=1eebh",
+      src: "/gallery-images/image6.jpeg",
       alt: "Neo-traditional portrait tattoo",
       artist: "Morgan Lee",
       style: "Neo-Traditional",
       width: 2,
       height: 3,
     },
-    {
-      id: "8",
-      src: "/placeholder.svg?key=2eebh",
-      alt: "Dotwork mandala tattoo",
-      artist: "Kai Tanaka",
-      style: "Dotwork",
-      width: 1,
-      height: 1,
-    },
-    {
-      id: "9",
-      src: "/placeholder.svg?key=3eebh",
-      alt: "Surrealist tattoo design",
-      artist: "Alex Mercer",
-      style: "Surrealism",
-      width: 1,
-      height: 2,
-    },
+ 
   ]
 
   // State for modal and hover

@@ -49,7 +49,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
             }
           }
         },
-        orderBy: { date: 'asc' },
+        orderBy: { startTime: 'asc' },
         skip: (page - 1) * limit,
         take: limit
       }),
@@ -127,7 +127,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
       data: {
         customerId,
         artistId: artistId || request.user?.id,
-        date: new Date(date),
+        startTime: new Date(date),
         duration: duration,
         status,
         notes
@@ -173,7 +173,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
     }
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const updateData: any = request.body;
+    const updateData: any = { ...(request.body as any) }; // Clone to avoid modifying original request body
     
     // Get original for audit log
     const original = await fastify.prisma.appointment.findUnique({
@@ -191,7 +191,8 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
     
     // Convert date to Date object if provided
     if (updateData.date) {
-      updateData.date = new Date(updateData.date);
+      updateData.startTime = new Date(updateData.date);
+      delete updateData.date; // Remove the ambiguous 'date' field
     }
     
     const updated = await fastify.prisma.appointment.update({

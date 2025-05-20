@@ -1,3 +1,7 @@
+import 'dotenv/config';
+// For specifically loading .env.local
+import { config } from 'dotenv';
+config({ path: '.env.local' });
 import Fastify, { FastifyInstance } from 'fastify';
 import tattooRequestsRoutes from './routes/tattooRequest';
 import prismaPlugin from './plugins/prisma'; // Path to your prisma plugin
@@ -7,6 +11,7 @@ import appointmentRoutes from './routes/appointment';
 import auditRoutes from './routes/audit';
 import bookingRoutes from './routes/booking';
 import cloudinaryRoutes from './routes/cloudinary'; // Import Cloudinary routes
+import cors from '@fastify/cors';
 
 
 // Initialize Fastify
@@ -40,6 +45,12 @@ const build = (opts = {}): FastifyInstance => {
   fastify.register(auditRoutes, { prefix: '/audit-logs' });
   fastify.register(bookingRoutes, { prefix: '/bookings' });
   fastify.register(cloudinaryRoutes, { prefix: '/cloudinary' });
+
+  // Register cors plugin
+  fastify.register(cors, {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true
+  });
 
   // TODO: Register your other routes and plugins here
   return fastify;

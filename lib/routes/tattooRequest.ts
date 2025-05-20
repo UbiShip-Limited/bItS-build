@@ -1,6 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
 import { authorize } from '../middleware/auth.js';
 import { UserRole } from '../types/auth.js';
+import { v4 as uuidv4 } from 'uuid';
+import { Prisma } from '@prisma/client';
 
 const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
   // GET /tattoo-requests - List tattoo requests (admin only)
@@ -76,9 +78,11 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
     schema: {
       body: {
         type: 'object',
-        required: ['customerId', 'description'],
+        required: ['description'],
         properties: {
           customerId: { type: 'string' },
+          contactEmail: { type: 'string', format: 'email' },
+          contactPhone: { type: 'string' },
           description: { type: 'string' },
           placement: { type: 'string' },
           size: { type: 'string' },
@@ -94,23 +98,53 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
               }
             }
           }
-        }
+        },
+        // Either customerId OR contactEmail must be provided
+        oneOf: [
+          { required: ['customerId'] },
+          { required: ['contactEmail'] }
+        ]
       }
     }
   }, async (request, reply) => {
-    const { customerId, description, placement, size, colorPreference, style, referenceImages } = request.body as any;
+    const { 
+      customerId, 
+      contactEmail,
+      contactPhone,
+      description, 
+      placement, 
+      size, 
+      colorPreference, 
+      style, 
+      referenceImages 
+    } = request.body as any;
+    
+    // Generate tracking token for anonymous requests
+    const trackingToken = !customerId ? uuidv4() : null;
+    
+    // Create the tattoo request with the right structure
+    const tattooRequestData: any = {
+      description,
+      placement,
+      size,
+      colorPreference,
+      style,
+      referenceImages: referenceImages || []
+    };
+    
+    // Add either customer ID or anonymous fields
+    if (customerId) {
+      tattooRequestData.customerId = customerId;
+    } else {
+      // Add anonymous request fields
+      if (contactEmail) tattooRequestData.contactEmail = contactEmail;
+      if (contactPhone) tattooRequestData.contactPhone = contactPhone;
+      if (trackingToken) tattooRequestData.trackingToken = trackingToken;
+    }
     
     // Create the tattoo request
     const tattooRequest = await fastify.prisma.tattooRequest.create({
-      data: {
-        customerId,
-        description,
-        placement,
-        size,
-        colorPreference,
-        style,
-        referenceImages: referenceImages || []
-      }
+      data: tattooRequestData
     });
     
     // Log the audit
@@ -120,7 +154,10 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
         action: 'CREATE',
         resource: 'TattooRequest',
         resourceId: tattooRequest.id,
-        details: { tattooRequest }
+        details: { 
+          tattooRequest,
+          isAnonymous: !customerId
+        }
       }
     });
     

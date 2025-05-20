@@ -3,6 +3,7 @@
 import { useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import Image from "next/image"
+import Link from "next/link"
 
 export function HorizontalSplitParallax() {
   // Ref for the split section
@@ -39,6 +40,20 @@ export function HorizontalSplitParallax() {
           
           {/* Dark overlay for text readability */}
           <div className="absolute inset-0 bg-[#080808]/40"></div>
+            {/* Faded Bowen logo in background */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="relative w-full max-w-xl aspect-square opacity-10">
+              <Image 
+                src="/images/bowen-logo.svg" 
+                alt="Bowen Island Tattoo Logo" 
+                fill
+                className="object-contain"
+                style={{ 
+                  filter: "invert(70%) sepia(38%) saturate(789%) hue-rotate(12deg) brightness(92%) contrast(88%)" 
+                }}
+              />
+            </div>
+          </div>
           
           {/* Text content that fades in */}
           <motion.div 
@@ -55,7 +70,7 @@ export function HorizontalSplitParallax() {
                 Our invitation-only private studio offers an unparalleled tattooing experience for discerning clients. 
                 No walk-ins, no distractions—just you and our master artists creating something extraordinary in absolute comfort and luxury.
               </p>
-              
+            
               {/* Victorian Gothic frame elements - tucked in */}
               <div className="absolute top-4 left-4 h-6 w-6 border-t border-l border-[#C9A449]"></div>
               <div className="absolute top-4 right-4 h-6 w-6 border-t border-r border-[#C9A449]"></div>

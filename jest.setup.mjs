@@ -29,23 +29,33 @@ const createMockMethod = () => {
   
   // Properly type all the mock methods to handle any value
   mockFn.mockResolvedValue = function(value) {
-    return jest.fn().mockImplementation(() => Promise.resolve(value));
+    mockFn.mockImplementation(() => Promise.resolve(value));
+    return mockFn;
   };
   
   mockFn.mockResolvedValueOnce = function(value) {
-    return jest.fn().mockImplementationOnce(() => Promise.resolve(value));
+    mockFn.mockImplementationOnce(() => Promise.resolve(value));
+    return mockFn;
   };
   
   mockFn.mockRejectedValue = function(value) {
-    return jest.fn().mockImplementation(() => Promise.reject(value));
+    mockFn.mockImplementation(() => Promise.reject(value));
+    return mockFn;
+  };
+  
+  mockFn.mockRejectedValueOnce = function(value) {
+    mockFn.mockImplementationOnce(() => Promise.reject(value));
+    return mockFn;
   };
   
   mockFn.mockReturnValue = function(value) {
-    return jest.fn().mockImplementation(() => value);
+    mockFn.mockImplementation(() => value);
+    return mockFn;
   };
   
   mockFn.mockReturnValueOnce = function(value) {
-    return jest.fn().mockImplementationOnce(() => value);
+    mockFn.mockImplementationOnce(() => value);
+    return mockFn;
   };
   
   return mockFn;
@@ -171,6 +181,72 @@ const mockCloudinaryService = {
     url: createMockMethod()
   }
 };
+
+// Create mock BookingService
+const mockBookingService = {
+  createBooking: jest.fn().mockResolvedValue({
+    success: true,
+    booking: {
+      id: 'test-booking-id',
+      startTime: new Date('2023-06-15T14:00:00Z'),
+      endTime: new Date('2023-06-15T15:00:00Z'),
+      status: 'scheduled',
+      type: 'consultation',
+      customerId: 'test-customer-id'
+    },
+    squareBooking: {
+      id: 'test-square-booking-id'
+    }
+  }),
+  updateBooking: jest.fn().mockResolvedValue({
+    success: true,
+    booking: {
+      id: 'test-booking-id',
+      status: 'confirmed'
+    },
+    squareBookingUpdated: {
+      result: {
+        booking: {
+          id: 'updated-square-booking-id'
+        }
+      }
+    }
+  }),
+  getBookingAvailability: jest.fn().mockResolvedValue({
+    success: true,
+    date: '2023-06-15',
+    availableSlots: []
+  }),
+  cancelBooking: jest.fn().mockResolvedValue({
+    success: true,
+    booking: {
+      id: 'test-booking-id',
+      status: 'cancelled'
+    },
+    squareCancelled: true
+  })
+};
+
+// Mock BookingService module
+jest.mock('./lib/services/bookingService', () => {
+  return {
+    __esModule: true,
+    default: jest.fn().mockImplementation(() => mockBookingService),
+    BookingType: {
+      CONSULTATION: 'consultation',
+      DRAWING_CONSULTATION: 'drawing_consultation',
+      TATTOO_SESSION: 'tattoo_session'
+    },
+    BookingStatus: {
+      PENDING: 'pending',
+      SCHEDULED: 'scheduled',
+      CONFIRMED: 'confirmed',
+      COMPLETED: 'completed',
+      CANCELLED: 'cancelled',
+      NO_SHOW: 'no_show'
+    }
+  };
+});
 
 // Setup global hooks
 beforeAll(() => console.log('Test suite started'));
@@ -298,9 +374,10 @@ process.env.SQUARE_APPLICATION_ID = 'test_app_id';
 process.env.SQUARE_LOCATION_ID = 'test_location_id';
 
 // Set cloudinary environment variables
-process.env.CLOUDINARY_CLOUD_NAME = 'test-cloud';
+process.env.CLOUDINARY_CLOUD_NAME = 'TEST_cloud_name';
 process.env.CLOUDINARY_API_KEY = 'test-key';
 process.env.CLOUDINARY_API_SECRET = 'test-secret';
+process.env.CLOUDINARY_URL = 'cloudinary://test-key:test-secret@TEST_cloud_name';
 
 // Export mocks for use in tests
-export { mockPrismaClient, mockSupabase as supabase, mockSquareClient, mockCloudinaryService }; 
+export { mockPrismaClient, mockSupabase as supabase, mockSquareClient, mockCloudinaryService, mockBookingService }; 

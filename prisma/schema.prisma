@@ -62,6 +62,8 @@ model Appointment {
   squareId        String?   @unique @map("square_id")
   paymentId       String?   @map("payment_id")
   tattooRequestId String?   @map("tattoo_request_id")
+  contactEmail    String?   @map("contact_email")
+  contactPhone    String?   @map("contact_phone")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @default(now()) @map("updated_at")
   
@@ -76,7 +78,10 @@ model Appointment {
 
 model TattooRequest {
   id               String        @id @default(uuid())
-  customerId       String        @map("customer_id")
+  customerId       String?       @map("customer_id")
+  contactEmail     String?       @map("contact_email")
+  contactPhone     String?       @map("contact_phone")
+  trackingToken    String?       @unique @map("tracking_token")
   description      String
   placement        String?
   size             String?
@@ -91,7 +96,7 @@ model TattooRequest {
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @default(now()) @map("updated_at")
   
-  customer         Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer         Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
   payment          Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
   images           Image[]
   appointments     Appointment[]

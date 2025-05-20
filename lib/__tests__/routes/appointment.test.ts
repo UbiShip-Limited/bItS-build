@@ -15,10 +15,14 @@ const mockAppointments = [
     id: '1',
     customerId: 'customer1',
     artistId: 'artist1',
-    date: new Date('2023-08-15T14:00:00Z'),
+    date: new Date('2023-08-15T00:00:00Z'),
+    startTime: new Date('2023-08-15T14:00:00Z'),
+    endTime: new Date('2023-08-15T16:00:00Z'),
     duration: 120,
     status: 'confirmed',
     notes: 'First session for dragon tattoo',
+    contactEmail: null,
+    contactPhone: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     customer: {
@@ -40,10 +44,14 @@ const mockAppointments = [
     id: '2',
     customerId: 'customer2',
     artistId: 'artist1',
-    date: new Date('2023-08-20T10:00:00Z'),
+    date: new Date('2023-08-20T00:00:00Z'),
+    startTime: new Date('2023-08-20T10:00:00Z'),
+    endTime: new Date('2023-08-20T11:00:00Z'),
     duration: 60,
     status: 'pending',
     notes: 'Consultation for flower tattoo',
+    contactEmail: 'anonymous@test.com',
+    contactPhone: '1234567890',
     createdAt: new Date(),
     updatedAt: new Date(),
     customer: {
@@ -96,7 +104,7 @@ describe('Appointment Routes', () => {
       mockPrismaClient.appointment.findUnique.mockReset();
       mockPrismaClient.appointment.findUnique.mockImplementation(({ where }) => {
         const appointment = mockAppointments.find(a => a.id === where.id);
-        return Promise.resolve(appointment || null);
+        return Promise.resolve(appointment ? { ...appointment } : null);
       });
       
       mockPrismaClient.appointment.create.mockReset();
@@ -104,6 +112,9 @@ describe('Appointment Routes', () => {
         const newAppointment = {
           id: '3',
           ...data,
+          startTime: new Date(data.startTime),
+          contactEmail: data.contactEmail || null,
+          contactPhone: data.contactPhone || null,
           createdAt: new Date(),
           updatedAt: new Date(),
           customer: {
@@ -116,14 +127,15 @@ describe('Appointment Routes', () => {
             updatedAt: new Date()
           }
         };
-        return Promise.resolve(newAppointment);
+        return Promise.resolve(newAppointment as any);
       });
       
       mockPrismaClient.appointment.update.mockReset();
       mockPrismaClient.appointment.update.mockImplementation(({ where, data }) => {
-        const appointment = mockAppointments.find(a => a.id === where.id);
-        if (!appointment) return Promise.resolve(null);
-        return Promise.resolve({ ...appointment, ...data });
+        const appointmentIndex = mockAppointments.findIndex(a => a.id === where.id);
+        if (appointmentIndex === -1) return Promise.resolve(null);
+        const updatedAppointment = { ...mockAppointments[appointmentIndex], ...data as any };
+        return Promise.resolve(updatedAppointment);
       });
       
       mockPrismaClient.auditLog.create.mockReset();
@@ -215,7 +227,7 @@ describe('Appointment Routes', () => {
 
   describe('POST /appointments', () => {
     it('should create a new appointment', async () => {
-      const newAppointment = {
+      const newAppointmentPayload = {
         customerId: 'customer3',
         artistId: 'artist1',
         date: '2023-09-01T15:00:00Z',
@@ -223,11 +235,16 @@ describe('Appointment Routes', () => {
         notes: 'New small tattoo'
       };
       
-      const createdAppointment = {
+      const createdAppointmentMock = {
         id: '3',
-        ...newAppointment,
-        date: new Date(newAppointment.date),
+        customerId: newAppointmentPayload.customerId,
+        artistId: newAppointmentPayload.artistId,
+        startTime: new Date(newAppointmentPayload.date),
+        duration: newAppointmentPayload.duration,
+        notes: newAppointmentPayload.notes,
         status: 'pending',
+        contactEmail: null,
+        contactPhone: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         customer: {
@@ -241,15 +258,27 @@ describe('Appointment Routes', () => {
         }
       };
       
-      // Force the mock to return the created appointment
-      mockPrismaClient.appointment.create.mockResolvedValue(createdAppointment);
+      mockPrismaClient.appointment.create.mockResolvedValue(createdAppointmentMock as any);
       
-      await authRequest
+      const response = await authRequest
         .post('/appointments')
-        .send(newAppointment)
+        .send(newAppointmentPayload)
         .expect(200);
       
-      expect(mockPrismaClient.appointment.create).toHaveBeenCalled();
+      expect(response.body.id).toBe(createdAppointmentMock.id);
+      expect(response.body.contactEmail).toBeNull();
+      expect(response.body.contactPhone).toBeNull();
+      expect(new Date(response.body.startTime).toISOString()).toBe(createdAppointmentMock.startTime.toISOString());
+      
+      expect(mockPrismaClient.appointment.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          customerId: newAppointmentPayload.customerId,
+          artistId: newAppointmentPayload.artistId,
+          startTime: new Date(newAppointmentPayload.date),
+          duration: newAppointmentPayload.duration,
+          notes: newAppointmentPayload.notes,
+        })
+      }));
       expect(mockPrismaClient.auditLog.create).toHaveBeenCalled();
     });
     
@@ -268,22 +297,29 @@ describe('Appointment Routes', () => {
         notes: 'Updated notes'
       };
       
-      const updatedAppointment = {
-        ...mockAppointments[0],
-        ...updateData
+      const originalAppointment = { ...mockAppointments[0] };
+      const updatedAppointmentMock = {
+        ...originalAppointment,
+        ...updateData,
+        updatedAt: new Date()
       };
       
-      // First call to findUnique needs to return the appointment
-      mockPrismaClient.appointment.findUnique.mockResolvedValue(mockAppointments[0]);
-      // Then update needs to return the updated appointment
-      mockPrismaClient.appointment.update.mockResolvedValue(updatedAppointment);
+      mockPrismaClient.appointment.findUnique.mockResolvedValue(originalAppointment);
+      mockPrismaClient.appointment.update.mockResolvedValue(updatedAppointmentMock as any);
       
-      await authRequest
+      const response = await authRequest
         .put('/appointments/1')
         .send(updateData)
         .expect(200);
+
+      expect(response.body.status).toBe(updateData.status);
+      expect(response.body.notes).toBe(updateData.notes);
+      expect(response.body.contactEmail).toBe(originalAppointment.contactEmail);
+      expect(response.body.contactPhone).toBe(originalAppointment.contactPhone);
       
-      expect(mockPrismaClient.appointment.update).toHaveBeenCalled();
+      expect(mockPrismaClient.appointment.update).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining(updateData)
+      }));
       expect(mockPrismaClient.auditLog.create).toHaveBeenCalled();
     });
     

@@ -51,11 +51,11 @@ export function Header() {
         <Link href="/" className="relative z-10">
           <div className="flex items-center">
             <Image 
-              src="/logo.svg" 
+              src="/images/bowen-logo.svg" 
               alt="Bowen Island Tattoo" 
-              width={44} 
-              height={44}
-              className="mr-3"
+              width={64} 
+              height={64}
+              className="mr-4 transform hover:scale-105 transition-transform duration-300"
             />
             <div className="font-heading text-xl text-[#080808]">
               <span className="block">Bowen Island</span>

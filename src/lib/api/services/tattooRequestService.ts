@@ -1,4 +1,4 @@
-import { apiClient } from '../apiClient';
+import { ApiClient } from '../apiClient';
 
 // Types for TattooRequest
 export interface TattooRequest {
@@ -53,12 +53,48 @@ export interface UpdateTattooRequestPayload {
   notes?: string;
 }
 
+export interface TattooRequestFormData {
+  contactEmail: string;
+  contactPhone?: string;
+  description: string;
+  placement: string;
+  size: string;
+  colorPreference: string;
+  style: string;
+  referenceImages?: Array<{
+    url: string;
+    publicId: string;
+  }>;
+  customerId?: string;
+}
+
+export interface TattooRequestResponse {
+  id: string;
+  description: string;
+  placement: string;
+  size: string;
+  colorPreference: string;
+  style: string;
+  status: 'new' | 'reviewed' | 'approved' | 'rejected';
+  createdAt: string;
+  trackingToken?: string;
+  referenceImages: Array<{
+    url: string;
+    publicId: string;
+  }>;
+}
+
 /**
  * Service for tattoo request operations
  */
 export class TattooRequestService {
-  private BASE_PATH = '/tattoo-requests';
-  
+  private client: ApiClient;
+  private baseUrl = '/api/tattoo-requests';
+
+  constructor(apiClient: ApiClient) {
+    this.client = apiClient;
+  }
+
   /**
    * Get all tattoo requests with optional filtering
    */
@@ -84,30 +120,45 @@ export class TattooRequestService {
     }
     
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
-    return apiClient.get<TattooRequestsResponse>(`${this.BASE_PATH}${queryString}`);
+    return this.client.get<TattooRequestsResponse>(`${this.baseUrl}${queryString}`);
   }
   
   /**
    * Get a single tattoo request by ID
    */
   public async getById(id: string): Promise<TattooRequest> {
-    return apiClient.get<TattooRequest>(`${this.BASE_PATH}/${id}`);
+    return this.client.get<TattooRequest>(`${this.baseUrl}/${id}`);
   }
   
   /**
    * Create a new tattoo request
    */
   public async create(payload: CreateTattooRequestPayload): Promise<TattooRequest> {
-    return apiClient.post<TattooRequest>(this.BASE_PATH, payload);
+    return this.client.post<TattooRequest>(this.baseUrl, payload);
   }
   
   /**
    * Update an existing tattoo request
    */
   public async update(id: string, payload: UpdateTattooRequestPayload): Promise<TattooRequest> {
-    return apiClient.put<TattooRequest>(`${this.BASE_PATH}/${id}`, payload);
+    return this.client.put<TattooRequest>(`${this.baseUrl}/${id}`, payload);
+  }
+
+  /**
+   * Submit a new tattoo request
+   */
+  async submitTattooRequest(formData: TattooRequestFormData): Promise<TattooRequestResponse> {
+    const response = await this.client.post<TattooRequestResponse>(this.baseUrl, formData);
+    return response;
+  }
+
+  /**
+   * Get a tattoo request by ID
+   */
+  async getTattooRequestById(id: string): Promise<TattooRequestResponse> {
+    const response = await this.client.get<TattooRequestResponse>(`${this.baseUrl}/${id}`);
+    return response;
   }
 }
 
-// Export a singleton instance
-export const tattooRequestService = new TattooRequestService(); 
+export default TattooRequestService; 

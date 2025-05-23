@@ -55,7 +55,7 @@ model Appointment {
   startTime       DateTime? @map("start_time")
   endTime         DateTime? @map("end_time")
   duration        Int?      // Duration in minutes
-  status          String    @default("pending") // pending, confirmed, completed, canceled, scheduled, no_show
+  status          String    @default("pending") // pending, scheduled, confirmed, completed, cancelled, no_show
   type            String?   // consultation, drawing_consultation, tattoo_session
   notes           String?
   priceQuote      Float?    @map("price_quote")

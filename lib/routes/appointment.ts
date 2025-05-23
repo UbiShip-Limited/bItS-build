@@ -1,8 +1,17 @@
 import { FastifyPluginAsync } from 'fastify';
 import { authorize } from '../middleware/auth';
 import { UserRole } from '../types/auth';
+import BookingService, { BookingStatus, BookingType } from '../services/bookingService.js';
 
 const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
+  // Initialize BookingService
+  const bookingService = new BookingService();
+  
+  // Decorate fastify instance so handlers can access it
+  if (!fastify.hasDecorator('bookingService')) {
+    fastify.decorate('bookingService', bookingService);
+  }
+
   // GET /appointments - List all appointments
   fastify.get('/', {
     preHandler: authorize(['artist', 'admin'] as UserRole[]),
@@ -10,7 +19,10 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
       querystring: {
         type: 'object',
         properties: {
-          status: { type: 'string', enum: ['pending', 'confirmed', 'completed', 'canceled'] },
+          status: { 
+            type: 'string', 
+            enum: Object.values(BookingStatus)
+          },
           customerId: { type: 'string' },
           artistId: { type: 'string' },
           from: { type: 'string', format: 'date-time' },
@@ -103,53 +115,68 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
     return appointment;
   });
   
-  // POST /appointments - Create a new appointment
+  // POST /appointments - Create a new appointment (using BookingService)
   fastify.post('/', {
     preHandler: authorize(['artist', 'admin'] as UserRole[]),
     schema: {
       body: {
         type: 'object',
-        required: ['customerId', 'date', 'duration'],
+        required: ['customerId', 'startAt', 'duration'],
         properties: {
           customerId: { type: 'string' },
           artistId: { type: 'string' },
-          date: { type: 'string', format: 'date-time' },
+          startAt: { type: 'string', format: 'date-time' },
           duration: { type: 'integer', minimum: 30 }, // Duration in minutes
-          status: { type: 'string', enum: ['pending', 'confirmed', 'completed', 'canceled'] },
-          notes: { type: 'string' }
+          bookingType: { 
+            type: 'string', 
+            enum: Object.values(BookingType),
+            default: BookingType.TATTOO_SESSION
+          },
+          status: { 
+            type: 'string', 
+            enum: Object.values(BookingStatus),
+            default: BookingStatus.SCHEDULED
+          },
+          note: { type: 'string' },
+          priceQuote: { type: 'number' },
+          tattooRequestId: { type: 'string' }
         }
       }
     }
   }, async (request, reply) => {
-    const { customerId, artistId, date, duration, status = 'pending', notes } = request.body as any;
-    
-    const appointment = await fastify.prisma.appointment.create({
-      data: {
+    const { 
+      customerId, 
+      artistId, 
+      startAt, 
+      duration, 
+      bookingType = BookingType.TATTOO_SESSION,
+      status = BookingStatus.SCHEDULED, 
+      note, 
+      priceQuote,
+      tattooRequestId
+    } = request.body as any;
+
+    try {
+      const result = await bookingService.createBooking({
         customerId,
         artistId: artistId || request.user?.id,
-        startTime: new Date(date),
-        duration: duration,
+        startAt: new Date(startAt),
+        duration,
+        bookingType,
         status,
-        notes
-      },
-      include: { customer: true }
-    });
-    
-    // Log audit
-    await fastify.prisma.auditLog.create({
-      data: {
-        userId: request.user?.id,
-        action: 'CREATE',
-        resource: 'Appointment',
-        resourceId: appointment.id,
-        details: { appointment }
-      }
-    });
-    
-    return appointment;
+        note,
+        priceQuote,
+        tattooRequestId
+      });
+      
+      return result;
+    } catch (error) {
+      request.log.error(error);
+      return reply.status(400).send({ error: error.message });
+    }
   });
   
-  // PUT /appointments/:id - Update an appointment
+  // PUT /appointments/:id - Update an appointment (using BookingService)
   fastify.put('/:id', {
     preHandler: authorize(['artist', 'admin'] as UserRole[]),
     schema: {
@@ -164,58 +191,51 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
         type: 'object',
         properties: {
           artistId: { type: 'string' },
-          date: { type: 'string', format: 'date-time' },
+          startAt: { type: 'string', format: 'date-time' },
           duration: { type: 'integer', minimum: 30 },
-          status: { type: 'string', enum: ['pending', 'confirmed', 'completed', 'canceled'] },
-          notes: { type: 'string' }
+          status: { 
+            type: 'string', 
+            enum: Object.values(BookingStatus)
+          },
+          note: { type: 'string' },
+          priceQuote: { type: 'number' }
         }
       }
     }
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const updateData: any = { ...(request.body as any) }; // Clone to avoid modifying original request body
+    const { 
+      artistId, 
+      startAt, 
+      duration, 
+      status, 
+      note, 
+      priceQuote 
+    } = request.body as any;
     
-    // Get original for audit log
-    const original = await fastify.prisma.appointment.findUnique({
-      where: { id }
-    });
-    
-    if (!original) {
-      return reply.status(404).send({ error: 'Appointment not found' });
-    }
-    
-    // Convert duration to interval if provided
-    if (updateData.duration) {
-      updateData.duration = `${updateData.duration} minutes`;
-    }
-    
-    // Convert date to Date object if provided
-    if (updateData.date) {
-      updateData.startTime = new Date(updateData.date);
-      delete updateData.date; // Remove the ambiguous 'date' field
-    }
-    
-    const updated = await fastify.prisma.appointment.update({
-      where: { id },
-      data: updateData
-    });
-    
-    // Log audit
-    await fastify.prisma.auditLog.create({
-      data: {
-        userId: request.user?.id,
-        action: 'UPDATE',
-        resource: 'Appointment',
-        resourceId: id,
-        details: { before: original, after: updated }
+    try {
+      const result = await bookingService.updateBooking({
+        bookingId: id,
+        artistId,
+        startAt: startAt ? new Date(startAt) : undefined,
+        duration,
+        status,
+        note,
+        priceQuote
+      });
+      
+      return result;
+    } catch (error) {
+      request.log.error(error);
+      if (error.message === 'Booking not found') {
+        return reply.status(404).send({ error: 'Appointment not found' });
       }
-    });
-    
-    return updated;
+      return reply.status(400).send({ error: error.message });
+    }
   });
   
-  // DELETE (soft delete) /appointments/:id - Cancel an appointment
-  fastify.delete('/:id', {
+  // POST /appointments/:id/cancel - Cancel an appointment (using BookingService)
+  fastify.post('/:id/cancel', {
     preHandler: authorize(['artist', 'admin'] as UserRole[]),
     schema: {
       params: {
@@ -224,37 +244,33 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
         properties: {
           id: { type: 'string' }
         }
+      },
+      body: {
+        type: 'object',
+        properties: {
+          reason: { type: 'string' }
+        }
       }
     }
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
+    const { reason } = request.body as any;
     
-    const appointment = await fastify.prisma.appointment.findUnique({
-      where: { id }
-    });
-    
-    if (!appointment) {
-      return reply.status(404).send({ error: 'Appointment not found' });
-    }
-    
-    // Instead of hard delete, we update status to 'canceled'
-    const canceled = await fastify.prisma.appointment.update({
-      where: { id },
-      data: { status: 'canceled' }
-    });
-    
-    // Log audit
-    await fastify.prisma.auditLog.create({
-      data: {
-        userId: request.user?.id,
-        action: 'CANCEL',
-        resource: 'Appointment',
-        resourceId: id,
-        details: { before: appointment, after: canceled }
+    try {
+      const result = await bookingService.cancelBooking({
+        bookingId: id,
+        reason,
+        cancelledBy: request.user?.id
+      });
+      
+      return result;
+    } catch (error) {
+      request.log.error(error);
+      if (error.message === 'Booking not found') {
+        return reply.status(404).send({ error: 'Appointment not found' });
       }
-    });
-    
-    return { success: true, message: 'Appointment canceled successfully' };
+      return reply.status(400).send({ error: error.message });
+    }
   });
 };
 

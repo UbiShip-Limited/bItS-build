@@ -170,7 +170,7 @@ export default class BookingService {
           squareBooking = await this.squareClient.createBooking({
             startAt: startAt.toISOString(),
             locationId: process.env.SQUARE_LOCATION_ID,
-            customerId: customer.email || customer.id,
+            customerId: customer?.email || customer?.id,
             duration,
             idempotencyKey,
             staffId: artistId,
@@ -194,7 +194,8 @@ export default class BookingService {
               error: squareError.message || 'Unknown Square API error',
               bookingType,
               startAt: startAt.toISOString(),
-              customerId: customer?.id
+              customerId: customer?.id || 'anonymous',
+              isAnonymous: isAnonymous
             }
           }
         });
@@ -212,11 +213,18 @@ export default class BookingService {
                 severity: 'high',
                 bookingType,
                 startAt: startAt.toISOString(),
-                customerId: customer?.id
+                customerId: customer?.id || 'anonymous',
+                isAnonymous: isAnonymous
               }
             }
           });
         }
+      }
+      
+      // If this is an anonymous booking without a customer, add contact info directly
+      if (isAnonymous && contactEmail && !customer) {
+        bookingData.contactEmail = contactEmail;
+        bookingData.contactPhone = contactPhone;
       }
       
       // Store booking in database

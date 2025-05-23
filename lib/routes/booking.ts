@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { authenticate, authorize } from '../middleware/auth.js';
-import BookingService from '../services/bookingService.js';
-// Import handlers
+import BookingService, { BookingStatus, BookingType } from '../services/bookingService.js';
+// Import handlers with updated schemas
 import { createBookingSchema, createBookingHandler } from './bookingHandlers/createBookingHandler.js';
 import { createAnonymousBookingSchema, createAnonymousBookingHandler } from './bookingHandlers/createAnonymousBookingHandler.js';
 import { listBookingsSchema, listBookingsHandler } from './bookingHandlers/listBookingsHandler.js';
@@ -9,6 +9,8 @@ import { getBookingByIdSchema, getBookingByIdHandler } from './bookingHandlers/g
 import { updateBookingSchema, updateBookingHandler } from './bookingHandlers/updateBookingHandler.js';
 import { cancelBookingSchema, cancelBookingHandler } from './bookingHandlers/cancelBookingHandler.js';
 
+// NOTE: This route is being maintained for backward compatibility
+// In the future, we should consolidate all booking/appointment operations through the appointment routes
 const bookingRoutes: FastifyPluginAsync = async (fastify, options) => {
   // Initialize booking service
   const bookingService = new BookingService();
@@ -57,6 +59,15 @@ const bookingRoutes: FastifyPluginAsync = async (fastify, options) => {
     preHandler: authenticate, // Apply authentication
     schema: cancelBookingSchema,
     handler: cancelBookingHandler
+  });
+  
+  // Add deprecation notice middleware for this route
+  fastify.addHook('onRequest', (request, reply, done) => {
+    if (process.env.NODE_ENV === 'development') {
+      // Only show deprecation warning in development
+      fastify.log.warn('The /bookings routes are being deprecated in favor of /appointments. Please update your code.');
+    }
+    done();
   });
 };
 

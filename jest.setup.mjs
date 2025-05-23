@@ -3,6 +3,7 @@ import { jest, beforeAll, afterAll } from '@jest/globals';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import dotenv from 'dotenv';
+import { TextEncoder, TextDecoder } from 'util';
 
 // ESM compatibility for __filename and __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -19,13 +20,19 @@ process.env.NODE_ENV = 'test';
 // Setup global test utilities
 global.waitFor = async (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Add TextEncoder and TextDecoder to global scope
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
 /**
  * Creates a more flexible mock method that solves TypeScript 'never' type issues
  * by properly implementing common Jest mock methods
  */
 const createMockMethod = () => {
-  // Start with a basic mock function
-  const mockFn = jest.fn();
+  // Start with a basic mock function with any type
+  const mockFn = jest.fn().mockImplementation(() => {
+    return Promise.resolve({}); // Default implementation returns empty object
+  });
   
   // Properly type all the mock methods to handle any value
   mockFn.mockResolvedValue = function(value) {
@@ -72,14 +79,14 @@ const createMockPrismaClient = () => {
       });
     
     return {
-      findUnique: createMockMethod(),
-      findFirst: createMockMethod(),
-      findMany,
-      create: createMockMethod(),
-      update: createMockMethod(),
-      upsert: createMockMethod(),
-      delete: createMockMethod(),
-      count: createMockMethod(),
+      findUnique: jest.fn().mockImplementation(() => Promise.resolve(null)),
+      findFirst: jest.fn().mockImplementation(() => Promise.resolve(null)),
+      findMany: jest.fn().mockImplementation(() => Promise.resolve([])),
+      create: jest.fn().mockImplementation((args) => Promise.resolve({ id: 'mock-id', ...args.data })),
+      update: jest.fn().mockImplementation((args) => Promise.resolve({ id: args.where.id, ...args.data })),
+      upsert: jest.fn().mockImplementation((args) => Promise.resolve({ id: 'mock-id', ...args.create })),
+      delete: jest.fn().mockImplementation(() => Promise.resolve({ id: 'mock-id' })),
+      count: jest.fn().mockImplementation(() => Promise.resolve(0)),
     };
   };
 
@@ -184,19 +191,42 @@ const mockCloudinaryService = {
 
 // Create mock BookingService
 const mockBookingService = {
-  createBooking: jest.fn().mockResolvedValue({
-    success: true,
-    booking: {
-      id: 'test-booking-id',
-      startTime: new Date('2023-06-15T14:00:00Z'),
-      endTime: new Date('2023-06-15T15:00:00Z'),
-      status: 'scheduled',
-      type: 'consultation',
-      customerId: 'test-customer-id'
-    },
-    squareBooking: {
-      id: 'test-square-booking-id'
+  createBooking: jest.fn().mockImplementation((params) => {
+    // Check if it's an anonymous booking
+    if (params.isAnonymous) {
+      return Promise.resolve({
+        success: true,
+        booking: {
+          id: 'test-anonymous-booking-id',
+          startTime: new Date(params.startAt),
+          endTime: new Date(new Date(params.startAt).getTime() + params.duration * 60000),
+          status: params.status || 'scheduled',
+          type: params.bookingType,
+          contactEmail: params.contactEmail,
+          contactPhone: params.contactPhone,
+          note: params.note || '',
+        },
+        squareBooking: null  // Square booking might be null for anonymous bookings
+      });
     }
+    
+    // Return regular booking response for non-anonymous bookings
+    return Promise.resolve({
+      success: true,
+      booking: {
+        id: 'test-booking-id',
+        startTime: new Date(params.startAt),
+        endTime: new Date(new Date(params.startAt).getTime() + params.duration * 60000),
+        status: params.status || 'scheduled',
+        type: params.bookingType,
+        customerId: params.customerId,
+        artistId: params.artistId || 'test-artist-id',
+        note: params.note || '',
+      },
+      squareBooking: {
+        id: 'test-square-booking-id'
+      }
+    });
   }),
   updateBooking: jest.fn().mockResolvedValue({
     success: true,
@@ -228,34 +258,50 @@ const mockBookingService = {
 };
 
 // Mock BookingService module
-jest.mock('./lib/services/bookingService', () => {
-  return {
-    __esModule: true,
-    default: jest.fn().mockImplementation(() => mockBookingService),
-    BookingType: {
-      CONSULTATION: 'consultation',
-      DRAWING_CONSULTATION: 'drawing_consultation',
-      TATTOO_SESSION: 'tattoo_session'
-    },
-    BookingStatus: {
-      PENDING: 'pending',
-      SCHEDULED: 'scheduled',
-      CONFIRMED: 'confirmed',
-      COMPLETED: 'completed',
-      CANCELLED: 'cancelled',
-      NO_SHOW: 'no_show'
-    }
-  };
-});
+jest.mock('./lib/services/bookingService.ts', () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => mockBookingService),
+  BookingType: {
+    CONSULTATION: 'consultation',
+    DRAWING_CONSULTATION: 'drawing_consultation',
+    TATTOO_SESSION: 'tattoo_session'
+  },
+  BookingStatus: {
+    PENDING: 'pending',
+    SCHEDULED: 'scheduled',
+    CONFIRMED: 'confirmed',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled',
+    NO_SHOW: 'no_show'
+  }
+}));
+
+// Also mock the JS version for ESM compatibility
+jest.mock('./lib/services/bookingService.js', () => ({
+  __esModule: true,
+  default: jest.fn().mockImplementation(() => mockBookingService),
+  BookingType: {
+    CONSULTATION: 'consultation',
+    DRAWING_CONSULTATION: 'drawing_consultation',
+    TATTOO_SESSION: 'tattoo_session'
+  },
+  BookingStatus: {
+    PENDING: 'pending',
+    SCHEDULED: 'scheduled',
+    CONFIRMED: 'confirmed',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled',
+    NO_SHOW: 'no_show'
+  }
+}));
 
 // Setup global hooks
 beforeAll(() => console.log('Test suite started'));
 afterAll(() => console.log('Test suite completed'));
 
-// Mock modules
-jest.mock('@prisma/client', () => ({
-  PrismaClient: jest.fn(() => mockPrismaClient),
-}));
+// We're already mocking Prisma through moduleNameMapper in jest.config.mjs
+// This is only here to explicitly acknowledge the mock
+jest.mock('@prisma/client');
 
 // Fix the path to properly mock the supabase client
 jest.mock('./lib/supabase/supabaseClient', () => ({

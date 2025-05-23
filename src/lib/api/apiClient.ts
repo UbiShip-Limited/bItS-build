@@ -14,79 +14,50 @@ export interface ApiError {
  * API Client for interacting with the backend
  */
 export class ApiClient {
-  private client: AxiosInstance;
+  private axiosInstance: AxiosInstance;
+  private baseURL: string;
   
-  constructor() {
-    // Create an axios instance with default config
-    this.client = axios.create({
-      baseURL: API_URL,
+  constructor(baseURL: string = '/api') {
+    this.baseURL = baseURL;
+    this.axiosInstance = axios.create({
+      baseURL,
       headers: {
         'Content-Type': 'application/json',
       },
-      timeout: 15000, // 15 seconds timeout
     });
     
-    // Configure request interceptors
-    this.client.interceptors.request.use(
-      (config) => this.handleRequest(config),
+    // Add request interceptor for auth tokens
+    this.axiosInstance.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
       (error) => Promise.reject(error)
     );
     
-    // Configure response interceptors
-    this.client.interceptors.response.use(
+    // Add response interceptor for error handling
+    this.axiosInstance.interceptors.response.use(
       (response) => response,
-      (error) => this.handleError(error)
+      (error) => {
+        // Handle errors (401, 403, etc.)
+        if (error.response?.status === 401) {
+          // Handle unauthorized
+          localStorage.removeItem('authToken');
+          // Redirect to login if needed
+        }
+        return Promise.reject(error);
+      }
     );
-  }
-  
-  /**
-   * Handle request configuration, including auth tokens
-   */
-  private handleRequest(config: InternalAxiosRequestConfig): InternalAxiosRequestConfig {
-    // Get token from wherever it's stored (localStorage, cookies, etc.)
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
-    
-    // If token exists, add it to headers
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    
-    return config;
-  }
-  
-  /**
-   * Handle API errors
-   */
-  private handleError(error: AxiosError): Promise<ApiError> {
-    // Default error structure
-    const apiError: ApiError = {
-      status: error.response?.status || 500,
-      message: 'An unexpected error occurred',
-      details: null,
-    };
-    
-    // If we have a response, extract error details
-    if (error.response?.data) {
-      const errorData = error.response.data as any;
-      apiError.message = errorData.message || errorData.error || apiError.message;
-      apiError.details = errorData.details || null;
-    }
-    
-    // Handle 401 errors (unauthorized) - could trigger logout or token refresh
-    if (apiError.status === 401 && typeof window !== 'undefined') {
-      // Could dispatch logout action or refresh token here
-      console.log('Authentication error - redirecting to login');
-      // Example: window.location.href = '/auth/login';
-    }
-    
-    return Promise.reject(apiError);
   }
   
   /**
    * GET request
    */
   public async get<T>(path: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.get<T>(path, config);
+    const response: AxiosResponse<T> = await this.axiosInstance.get(path, config);
     return response.data;
   }
   
@@ -94,7 +65,7 @@ export class ApiClient {
    * POST request
    */
   public async post<T>(path: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.post<T>(path, data, config);
+    const response: AxiosResponse<T> = await this.axiosInstance.post(path, data, config);
     return response.data;
   }
   
@@ -102,7 +73,7 @@ export class ApiClient {
    * PUT request
    */
   public async put<T>(path: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.put<T>(path, data, config);
+    const response: AxiosResponse<T> = await this.axiosInstance.put(path, data, config);
     return response.data;
   }
   
@@ -110,10 +81,10 @@ export class ApiClient {
    * DELETE request
    */
   public async delete<T>(path: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.delete<T>(path, config);
+    const response: AxiosResponse<T> = await this.axiosInstance.delete(path, config);
     return response.data;
   }
 }
 
-// Export a singleton instance
+// Create a singleton instance
 export const apiClient = new ApiClient(); 

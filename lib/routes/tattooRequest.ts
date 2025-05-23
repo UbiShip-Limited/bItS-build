@@ -3,8 +3,17 @@ import { authorize } from '../middleware/auth.js';
 import { UserRole } from '../types/auth.js';
 import { v4 as uuidv4 } from 'uuid';
 import { Prisma } from '@prisma/client';
+import BookingService, { BookingType, BookingStatus } from '../services/bookingService.js';
 
 const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
+  // Initialize BookingService
+  const bookingService = new BookingService();
+  
+  // Decorate fastify instance
+  if (!fastify.hasDecorator('bookingService')) {
+    fastify.decorate('bookingService', bookingService);
+  }
+
   // GET /tattoo-requests - List tattoo requests (admin only)
   fastify.get('/', {
     preHandler: authorize(['artist', 'admin'] as UserRole[]),
@@ -213,6 +222,113 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
     
     reply.type('application/json');
     return updated;
+  });
+
+  // POST /tattoo-requests/:id/convert-to-appointment - Convert an approved tattoo request to an appointment
+  fastify.post('/:id/convert-to-appointment', {
+    preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['startAt', 'duration'],
+        properties: {
+          startAt: { type: 'string', format: 'date-time' },
+          duration: { type: 'integer', minimum: 30 }, // Duration in minutes
+          artistId: { type: 'string' },
+          bookingType: { 
+            type: 'string', 
+            enum: Object.values(BookingType),
+            default: BookingType.TATTOO_SESSION
+          },
+          priceQuote: { type: 'number' },
+          note: { type: 'string' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { 
+      startAt, 
+      duration, 
+      artistId = request.user?.id, 
+      bookingType = BookingType.TATTOO_SESSION,
+      priceQuote,
+      note
+    } = request.body as any;
+    
+    // Get the tattoo request
+    const tattooRequest = await fastify.prisma.tattooRequest.findUnique({
+      where: { id }
+    });
+    
+    if (!tattooRequest) {
+      return reply.status(404).send({ error: 'Tattoo request not found' });
+    }
+    
+    // Check if tattoo request is in a valid state to convert
+    if (tattooRequest.status !== 'approved' && tattooRequest.status !== 'deposit_paid') {
+      return reply.status(400).send({ 
+        error: 'Tattoo request must be approved or have deposit paid to convert to appointment' 
+      });
+    }
+    
+    try {
+      // Create the appointment using BookingService
+      const result = await bookingService.createBooking({
+        startAt: new Date(startAt),
+        duration,
+        customerId: tattooRequest.customerId || undefined,
+        bookingType,
+        artistId,
+        note,
+        priceQuote,
+        tattooRequestId: id,
+        contactEmail: tattooRequest.contactEmail || undefined,
+        contactPhone: tattooRequest.contactPhone || undefined,
+        isAnonymous: !tattooRequest.customerId,
+      });
+      
+      // Update the tattoo request status if needed
+      if (tattooRequest.status === 'approved') {
+        await fastify.prisma.tattooRequest.update({
+          where: { id },
+          data: { status: 'in_progress' }
+        });
+      }
+      
+      // Log the conversion
+      await fastify.prisma.auditLog.create({
+        data: {
+          userId: request.user?.id,
+          action: 'tattoo_request_converted',
+          resource: 'TattooRequest',
+          resourceId: id,
+          resourceType: 'tattoo_request',
+          details: { 
+            appointmentId: result.booking.id,
+            bookingType,
+            squareBookingId: result.squareBooking?.id
+          }
+        }
+      });
+      
+      return {
+        success: true,
+        message: 'Tattoo request converted to appointment',
+        appointment: result.booking,
+        squareBooking: result.squareBooking
+      };
+    } catch (error) {
+      request.log.error(error);
+      return reply.status(400).send({ error: error.message });
+    }
   });
 };
 

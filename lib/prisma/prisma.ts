@@ -5,18 +5,16 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-// Use a real client in development/production and a mock in test
+// For tests, Jest will automatically use the mocked version
+// from the moduleNameMapper defined in jest.config.mjs
 export const prisma =
-  process.env.NODE_ENV === 'test'
-    ? // For tests, the mock will be loaded from @prisma/client
-      new PrismaClient()
-    : // For dev and prod, use normal singleton pattern
-      global.prisma ||
-      new PrismaClient({
-        // Optional: log: ['query', 'info', 'warn', 'error'],
-      });
+  global.prisma ||
+  new PrismaClient({
+    // Optional logging, can be enabled as needed
+    // log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['error'],
+  });
 
-// Only store in global in dev
-if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+// Only store in global in dev mode for hot reloading without connections
+if (process.env.NODE_ENV === 'development') {
   global.prisma = prisma;
 }

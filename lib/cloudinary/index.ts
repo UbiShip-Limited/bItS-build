@@ -2,9 +2,9 @@ import { v2 as cloudinary } from 'cloudinary';
 
 // Configure Cloudinary with environment variables
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'demo',
+  api_key: process.env.CLOUDINARY_API_KEY || '123456789012345',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'abcdefghijklmnopqrstuvwxyz',
   secure: true, // Use HTTPS for all requests
 });
 
@@ -58,17 +58,22 @@ export const generateUploadSignature = (
   // Add timestamp to params if not provided
   const paramsToSign = { ...params, timestamp };
   
+  // For development/testing without real credentials
+  const apiSecret = process.env.CLOUDINARY_API_SECRET || 'abcdefghijklmnopqrstuvwxyz';
+  const apiKey = process.env.CLOUDINARY_API_KEY || '123456789012345';
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'demo';
+  
   // Generate signature
   const signature = cloudinary.utils.api_sign_request(
     paramsToSign,
-    process.env.CLOUDINARY_API_SECRET as string
+    apiSecret
   );
   
   return { 
     signature, 
     timestamp,
-    apiKey: process.env.CLOUDINARY_API_KEY as string,
-    cloudName: process.env.CLOUDINARY_CLOUD_NAME as string 
+    apiKey,
+    cloudName 
   };
 };
 

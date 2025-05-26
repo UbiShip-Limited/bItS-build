@@ -11,7 +11,7 @@ import customerRoutes from './routes/customer';
 import paymentRoutes from './routes/payments/index.js';
 import appointmentRoutes from './routes/appointment';
 import auditRoutes from './routes/audit';
-// import cloudinaryRoutes from './routes/cloudinary'; // Import Cloudinary routes
+import cloudinaryRoutes from './routes/cloudinary.js'; // Import Cloudinary routes
 import cors from '@fastify/cors';
 
 
@@ -50,7 +50,7 @@ const build = (opts = {}): FastifyInstance => {
   fastify.register(paymentRoutes, { prefix: '/payments' });
   fastify.register(appointmentRoutes, { prefix: '/appointments' });
   fastify.register(auditRoutes, { prefix: '/audit-logs' });
-  // fastify.register(cloudinaryRoutes, { prefix: '/cloudinary' });
+  fastify.register(cloudinaryRoutes, { prefix: '/cloudinary' });
 
   // TODO: Register your other routes and plugins here
   return fastify;

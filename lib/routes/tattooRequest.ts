@@ -182,11 +182,12 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
       
       reply.type('application/json');
       return tattooRequest;
-    } catch (error) {
+    } catch (error: any) {
       fastify.log.error(error, 'Error creating tattoo request');
       return reply.status(500).send({ 
-        error: 'Failed to create tattoo request',
-        message: error.message 
+        error: 'Failed to submit tattoo request',
+        message: error.message || 'Unknown error',
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       });
     }
   });

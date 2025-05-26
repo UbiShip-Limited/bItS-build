@@ -17,7 +17,7 @@ export const useCloudinaryUpload = () => {
     
     try {
       // First, get upload signature from backend
-      const signatureResponse = await fetch('/api/cloudinary/signature', {
+      const signatureResponse = await fetch('/api/cloudinary/signature/public', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

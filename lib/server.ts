@@ -1,6 +1,8 @@
 import 'dotenv/config';
 // For specifically loading .env.local
 import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 config({ path: '.env.local' });
 import Fastify, { FastifyInstance } from 'fastify';
 import tattooRequestsRoutes from './routes/tattooRequest';
@@ -9,14 +11,19 @@ import customerRoutes from './routes/customer';
 import paymentRoutes from './routes/payments/index.js';
 import appointmentRoutes from './routes/appointment';
 import auditRoutes from './routes/audit';
-import bookingRoutes from './routes/booking';
-import cloudinaryRoutes from './routes/cloudinary'; // Import Cloudinary routes
+// import cloudinaryRoutes from './routes/cloudinary'; // Import Cloudinary routes
 import cors from '@fastify/cors';
 
 
 // Initialize Fastify
 const build = (opts = {}): FastifyInstance => {
   const fastify = Fastify(opts);
+
+  // Register cors plugin FIRST before other plugins
+  fastify.register(cors, {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true
+  });
 
   // Register Prisma plugin
   fastify.register(prismaPlugin);
@@ -43,14 +50,7 @@ const build = (opts = {}): FastifyInstance => {
   fastify.register(paymentRoutes, { prefix: '/payments' });
   fastify.register(appointmentRoutes, { prefix: '/appointments' });
   fastify.register(auditRoutes, { prefix: '/audit-logs' });
-  fastify.register(bookingRoutes, { prefix: '/bookings' });
-  fastify.register(cloudinaryRoutes, { prefix: '/cloudinary' });
-
-  // Register cors plugin
-  fastify.register(cors, {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true
-  });
+  // fastify.register(cloudinaryRoutes, { prefix: '/cloudinary' });
 
   // TODO: Register your other routes and plugins here
   return fastify;
@@ -99,16 +99,15 @@ const main = async () => {
 };
 
 // Only run the main function when directly executed, not when imported
-// Use a safer check that works in both ESM and CommonJS
-if (typeof require !== 'undefined' && require.main === module) {
+// Use import.meta.url for ESM module detection
+const isMainModule = () => {
+  const modulePath = fileURLToPath(import.meta.url);
+  const mainPath = resolve(process.argv[1]);
+  return modulePath === mainPath;
+};
+
+if (isMainModule()) {
   main();
-} else if (typeof process !== 'undefined' && process.argv.length > 1) {
-  // Simple check for ESM
-  const argv1 = process.argv[1];
-  const currentFile = __filename;
-  if (argv1 && currentFile && argv1.endsWith(currentFile)) {
-    main();
-  }
 }
 
 // Export the build function for testing or programmatic use

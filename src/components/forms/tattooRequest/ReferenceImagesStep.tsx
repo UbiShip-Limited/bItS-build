@@ -25,8 +25,8 @@ const ReferenceImagesStep: React.FC<ReferenceImagesStepProps> = ({
   return (
     <div className="space-y-6">
       <div className="form-control">
-        <label className="label">
-          <span className="label-text text-[#080808] font-medium">Reference Images</span>
+        <label className="label pb-2">
+          <span className="label-text text-[#080808] font-semibold text-sm">Reference Images</span>
           <div className="relative inline-block">
             <button 
               type="button"
@@ -56,14 +56,14 @@ const ReferenceImagesStep: React.FC<ReferenceImagesStepProps> = ({
         )}
       </div>
       <div className="form-control">
-        <label className="label">
-          <span className="label-text text-[#080808] font-medium">Additional Notes</span>
+        <label className="label pb-2">
+          <span className="label-text text-[#080808] font-semibold text-sm">Additional Notes</span>
         </label>
         <textarea
           name="additionalNotes"
           value={formData.additionalNotes || ''}
           onChange={handleInputChange}
-          className="textarea textarea-bordered border-[#444444]/30 focus:border-[#C9A449] focus:ring-1 focus:ring-[#C9A449] h-24 w-full resize-none text-sm"
+          className="textarea textarea-bordered w-full bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 h-24 rounded-md text-[#080808] resize-none"
           placeholder="Any other details you'd like to share..."
         />
       </div>

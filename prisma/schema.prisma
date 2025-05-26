@@ -49,7 +49,7 @@ model Customer {
 
 model Appointment {
   id              String    @id @default(uuid())
-  customerId      String    @map("customer_id")
+  customerId      String?   @map("customer_id")
   artistId        String?   @map("artist_id")
   date            DateTime?
   startTime       DateTime? @map("start_time")
@@ -67,7 +67,7 @@ model Appointment {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @default(now()) @map("updated_at")
   
-  customer      Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer      Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
   artist        User?          @relation(fields: [artistId], references: [id], onDelete: SetNull)
   payment       Payment?       @relation(fields: [paymentId], references: [id], onDelete: SetNull)
   tattooRequest TattooRequest? @relation(fields: [tattooRequestId], references: [id], onDelete: SetNull)
@@ -95,6 +95,11 @@ model TattooRequest {
   paymentId        String?       @map("payment_id")
   createdAt        DateTime      @default(now()) @map("created_at")
   updatedAt        DateTime      @default(now()) @map("updated_at")
+  purpose          String?       // new_tattoo, cover_up, touch_up, consultation
+  preferredArtist  String?       @map("preferred_artist")
+  timeframe        String?
+  contactPreference String?      @map("contact_preference") // email, phone, either
+  additionalNotes  String?       @map("additional_notes")
   
   customer         Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
   payment          Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)

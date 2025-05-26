@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { TattooRequestService, TattooRequestResponse } from '../lib/api/services/tattooRequestService';
+import TattooRequestService from '../lib/api/services/TattooRequestService';
 import { ImageUploadService } from '../lib/api/services/ImageUploadService';
 import { apiClient } from '../lib/api/apiClient';
+import { useCloudinaryUpload } from './useCloudinaryUpload';
 
-// Initialize the services
+// Initialize the services ONCE
 const tattooRequestService = new TattooRequestService(apiClient);
 const imageUploadService = new ImageUploadService(apiClient);
 
@@ -100,6 +101,8 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
   const [response, setResponse] = useState<ResponseData | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors | null>(null);
   
+  const { uploadToCloudinary, isUploading: isCloudinaryUploading } = useCloudinaryUpload();
+  
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
     
@@ -152,29 +155,16 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
     setError(null);
     
     try {
-      const formData = new FormData();
-      files.forEach(file => {
-        formData.append('files', file);
-      });
+      const uploadedImages = await uploadToCloudinary(files);
       
-      const response = await fetch('/tattoo-requests/upload-images', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to upload images');
-      }
-      
-      const data = await response.json();
-      
+      // Update form data with uploaded images
       setFormData(prev => ({
         ...prev,
         referenceImages: [
           ...prev.referenceImages,
-          ...data.images.map((img: any) => ({
+          ...uploadedImages.map((img, index) => ({
             url: img.url,
-            file: files.find(f => f.name === img.originalName) || files[0],
+            file: files[index],
             publicId: img.publicId
           }))
         ]
@@ -190,48 +180,34 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
     setIsLoading(true);
     setError(null);
     
-    // Validate form before submission
     if (!validateForm()) {
       setIsLoading(false);
       return;
     }
     
     try {
-      // Convert the form data to match the TattooRequest model in Prisma
       const requestData = {
         contactEmail: formData.contactEmail,
         contactPhone: formData.contactPhone,
         description: formData.description,
         placement: formData.placement,
         size: formData.size,
-        colorPreference: formData.colorPreference || undefined,
-        style: formData.style || undefined,
+        colorPreference: formData.colorPreference,
+        style: formData.style,
         purpose: formData.purpose,
-        preferredArtist: formData.preferredArtist || undefined,
-        timeframe: formData.timeframe || undefined,
-        contactPreference: formData.contactPreference || 'email',
-        additionalNotes: formData.additionalNotes || undefined,
-        referenceImages: formData.referenceImages.map(img => ({
-          url: img.url,
-          publicId: img.publicId
-        }))
+        preferredArtist: formData.preferredArtist,
+        timeframe: formData.timeframe,
+        contactPreference: formData.contactPreference,
+        additionalNotes: formData.additionalNotes,
+        referenceImages: formData.referenceImages
+          .filter(img => img.publicId)
+          .map(img => ({
+            url: img.url,
+            publicId: img.publicId!
+          }))
       };
       
-      // Submit tattoo request
-      const response = await fetch('/tattoo-requests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to submit request');
-      }
-      
-      const tattooRequestData = await response.json();
+      const tattooRequestData = await tattooRequestService.submitTattooRequest(requestData);
       setSuccess(true);
       setResponse(tattooRequestData);
     } catch (err: any) {

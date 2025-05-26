@@ -24,7 +24,7 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
           value={formData.purpose || ''}
           onChange={handleInputChange}
           required
-          className={`select select-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md ${
+          className={`select select-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808] ${
             validationErrors?.purpose ? 'border-red-500' : ''
           }`}
         >
@@ -49,7 +49,7 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
           name="preferredArtist"
           value={formData.preferredArtist || ''}
           onChange={handleInputChange}
-          className="input input-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md"
+          className="input input-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808]"
           placeholder="Leave blank if no preference"
         />
       </div>
@@ -62,7 +62,7 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
           name="timeframe"
           value={formData.timeframe || ''}
           onChange={handleInputChange}
-          className="select select-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md"
+          className="select select-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808]"
         >
           <option value="">Select timeframe...</option>
           {TIMEFRAMES.map((timeframe) => (
@@ -84,7 +84,7 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
             value={formData.contactEmail || ''}
             onChange={handleInputChange}
             required
-            className={`input input-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md ${
+            className={`input input-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808] ${
               validationErrors?.contactEmail ? 'border-red-500' : ''
             }`}
             placeholder="your.email@example.com"
@@ -103,7 +103,7 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
             name="contactPhone"
             value={formData.contactPhone || ''}
             onChange={handleInputChange}
-            className="input input-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md"
+            className="input input-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808]"
             placeholder="(123) 456-7890"
           />
         </div>

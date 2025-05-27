@@ -46,7 +46,7 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
           value={formData.description || ''}
           onChange={handleInputChange}
           required
-          className={`textarea textarea-bordered w-full bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 h-40 rounded-md ${
+          className={`textarea textarea-bordered w-full bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 h-40 rounded-md text-[#080808] ${
             validationErrors?.description ? 'border-red-500' : ''
           }`}
           placeholder="Describe your tattoo idea in detail..."
@@ -82,7 +82,7 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
             value={formData.placement || ''}
             onChange={handleInputChange}
             required
-            className={`input input-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md ${
+            className={`input input-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808] ${
               validationErrors?.placement ? 'border-red-500' : ''
             }`}
             placeholder="Forearm, back, shoulder, etc."
@@ -101,7 +101,7 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
             value={formData.size || ''}
             onChange={handleInputChange}
             required
-            className={`select select-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md ${
+            className={`select select-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808] ${
               validationErrors?.size ? 'border-red-500' : ''
             }`}
           >
@@ -127,7 +127,7 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
             name="colorPreference"
             value={formData.colorPreference || ''}
             onChange={handleInputChange}
-            className="select select-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md"
+            className="select select-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808]"
           >
             <option value="">Select color preference...</option>
             {COLOR_PREFERENCES.map((color) => (
@@ -146,7 +146,7 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
             name="style"
             value={formData.style || ''}
             onChange={handleInputChange}
-            className="select select-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md"
+            className="select select-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808]"
           >
             <option value="">Select style...</option>
             {TATTOO_STYLES.map((style) => (
@@ -166,7 +166,7 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
           name="additionalNotes"
           value={formData.additionalNotes || ''}
           onChange={handleInputChange}
-          className="textarea textarea-bordered w-full bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 h-36 rounded-md px-4 py-3"
+          className="textarea textarea-bordered w-full bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 h-36 rounded-md text-[#080808]"
           placeholder="Any other details you'd like to share..."
         />
         <p className="text-xs text-[#444444]/70 mt-3 ml-1">

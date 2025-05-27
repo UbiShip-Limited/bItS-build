@@ -1,9 +1,9 @@
-import { DynamicGallery } from "./components/gallery/dynamic-Gallery";
-import { ParallaxSections } from "./components/ui/parallax-section";
-import { TattooHero } from "./components/ui/Hero";
-import { HorizontalSplitParallax } from "./components/ui/horizontal-split";
-import { ArtistShowcase } from "./components/ui/ArtistShowcase";
-import { CtaSection } from "./components/ui/CtaSection";
+import { DynamicGallery } from "@/src/components/gallery/dynamic-gallery";
+import { ParallaxSections } from "@/src/components/ui/parrallax-section";
+import { TattooHero } from "@/src/components/ui/Hero";
+import { HorizontalSplitParallax } from "@/src/components/ui/horiztonal-split";
+import { ArtistShowcase } from "@/src/components/ui/ArtistShowcase";
+import { CtaSection } from "@/src/components/ui/CtaSection";
 
 export default function Home() {
   return (

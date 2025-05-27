@@ -138,19 +138,26 @@ class SquareClient {
       ? `${params.bookingType}${params.note ? ` - ${params.note}` : ''}`
       : params.note;
     
+    // Build appointment segment with only defined values
+    const appointmentSegment: any = {
+      durationMinutes: params.duration
+    };
+    
+    if (params.staffId) {
+      appointmentSegment.teamMemberId = params.staffId;
+    }
+    
+    if (params.serviceId) {
+      appointmentSegment.serviceVariationId = params.serviceId;
+    }
+    
     return this.client.bookings.create({
       idempotencyKey: params.idempotencyKey,
       booking: {
         startAt: params.startAt,
         locationId: locationId,
         customerId: params.customerId,
-        appointmentSegments: [
-          {
-            durationMinutes: params.duration,
-            teamMemberId: params.staffId,
-            serviceVariationId: params.serviceId
-          }
-        ],
+        appointmentSegments: [appointmentSegment],
         sellerNote: bookingNote
       }
     });
@@ -196,6 +203,21 @@ class SquareClient {
       ? `${params.bookingType}${params.note ? ` - ${params.note}` : ''}`
       : (params.note || existingBooking.sellerNote);
     
+    // Build appointment segment with only defined values
+    const newAppointmentSegment: any = {
+      durationMinutes: params.duration || appointmentSegment.durationMinutes
+    };
+    
+    const teamMemberId = params.staffId || appointmentSegment.teamMemberId;
+    if (teamMemberId) {
+      newAppointmentSegment.teamMemberId = teamMemberId;
+    }
+    
+    const serviceVariationId = params.serviceId || appointmentSegment.serviceVariationId;
+    if (serviceVariationId) {
+      newAppointmentSegment.serviceVariationId = serviceVariationId;
+    }
+    
     // Create a new booking with updated information
     return this.client.bookings.create({
       idempotencyKey: params.idempotencyKey,
@@ -203,13 +225,7 @@ class SquareClient {
         startAt: params.startAt || existingBooking.startAt,
         locationId: existingBooking.locationId,
         customerId: params.customerId || existingBooking.customerId,
-        appointmentSegments: [
-          {
-            durationMinutes: params.duration || appointmentSegment.durationMinutes,
-            teamMemberId: params.staffId || appointmentSegment.teamMemberId,
-            serviceVariationId: params.serviceId || appointmentSegment.serviceVariationId
-          }
-        ],
+        appointmentSegments: [newAppointmentSegment],
         sellerNote: bookingNote
       }
     });
@@ -274,6 +290,230 @@ class SquareClient {
       types: types?.join(',')
     });
     return { objects: response.data || [] };
+  }
+
+  // Payment Link methods
+  async createPaymentLink(params: {
+    idempotencyKey: string;
+    quickPay: {
+      name: string;
+      priceMoney: {
+        amount: number;
+        currency: string;
+      };
+      locationId?: string;
+    };
+    checkoutOptions?: {
+      allowTipping?: boolean;
+      customFields?: Array<{
+        title: string;
+      }>;
+      redirectUrl?: string;
+      merchantSupportEmail?: string;
+      askForShippingAddress?: boolean;
+    };
+    prePopulatedData?: {
+      buyerEmail?: string;
+      buyerPhoneNumber?: string;
+      buyerAddress?: any;
+    };
+    paymentNote?: string;
+  }): Promise<SquareResponse> {
+    const { idempotencyKey, quickPay, checkoutOptions, prePopulatedData, paymentNote } = params;
+    
+    return this.client.checkout.createPaymentLink({
+      idempotencyKey,
+      quickPay: {
+        name: quickPay.name,
+        priceMoney: {
+          amount: BigInt(Math.round(quickPay.priceMoney.amount * 100)),
+          currency: quickPay.priceMoney.currency as Square.Currency
+        },
+        locationId: quickPay.locationId || this.locationId
+      },
+      checkoutOptions,
+      prePopulatedData,
+      paymentNote
+    });
+  }
+
+  // Get payment link
+  async getPaymentLink(id: string): Promise<SquareResponse> {
+    return this.client.checkout.retrievePaymentLink({ id });
+  }
+
+  // Update payment link
+  async updatePaymentLink(params: {
+    id: string;
+    paymentLink: {
+      version: number;
+      checkoutOptions?: any;
+      quickPay?: any;
+    };
+  }): Promise<SquareResponse> {
+    return this.client.checkout.updatePaymentLink({
+      id: params.id,
+      paymentLink: params.paymentLink
+    });
+  }
+
+  // Delete payment link
+  async deletePaymentLink(id: string): Promise<SquareResponse> {
+    return this.client.checkout.deletePaymentLink({ id });
+  }
+
+  // List payment links
+  async listPaymentLinks(params?: {
+    cursor?: string;
+    limit?: number;
+  }): Promise<SquareResponse> {
+    return this.client.checkout.listPaymentLinks(params);
+  }
+
+  // Create checkout for more complex payment scenarios
+  async createCheckout(params: {
+    idempotencyKey: string;
+    order: {
+      locationId?: string;
+      referenceId?: string;
+      customerId?: string;
+      lineItems: Array<{
+        name: string;
+        quantity: string;
+        basePriceMoney: {
+          amount: number;
+          currency: string;
+        };
+        note?: string;
+      }>;
+    };
+    askForShippingAddress?: boolean;
+    merchantSupportEmail?: string;
+    prePopulateBuyerEmail?: string;
+    prePopulateShippingAddress?: any;
+    redirectUrl?: string;
+    additionalRecipients?: any[];
+  }): Promise<SquareResponse> {
+    const { idempotencyKey, order, ...checkoutOptions } = params;
+    
+    // Transform line items to match Square's format
+    const transformedLineItems = order.lineItems.map(item => ({
+      name: item.name,
+      quantity: item.quantity,
+      basePriceMoney: {
+        amount: BigInt(Math.round(item.basePriceMoney.amount * 100)),
+        currency: item.basePriceMoney.currency as Square.Currency
+      },
+      note: item.note
+    }));
+    
+    return this.client.checkout.createCheckout({
+      idempotencyKey,
+      checkout: {
+        order: {
+          locationId: order.locationId || this.locationId,
+          referenceId: order.referenceId,
+          customerId: order.customerId,
+          lineItems: transformedLineItems
+        },
+        ...checkoutOptions
+      }
+    });
+  }
+
+  // Create invoice for payment scheduling
+  async createInvoice(params: {
+    invoice: {
+      locationId?: string;
+      deliveryMethod: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY';
+      paymentRequests: Array<{
+        requestMethod: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY';
+        requestType: 'BALANCE' | 'DEPOSIT' | 'INSTALLMENT';
+        dueDate?: string;
+        tippingEnabled?: boolean;
+        percentageRequested?: number;
+        fixedAmountRequestedMoney?: {
+          amount: number;
+          currency: string;
+        };
+      }>;
+      invoiceNumber?: string;
+      title?: string;
+      description?: string;
+      scheduledAt?: string;
+      acceptedPaymentMethods?: {
+        card?: boolean;
+        squareGiftCard?: boolean;
+        bankAccount?: boolean;
+        buyNowPayLater?: boolean;
+      };
+      primaryRecipient: {
+        customerId: string;
+      };
+    };
+    idempotencyKey: string;
+  }): Promise<SquareResponse> {
+    const { invoice, idempotencyKey } = params;
+    
+    // Transform payment requests to handle money amounts
+    const transformedPaymentRequests = invoice.paymentRequests.map(request => {
+      const transformed: any = {
+        requestMethod: request.requestMethod,
+        requestType: request.requestType,
+        dueDate: request.dueDate,
+        tippingEnabled: request.tippingEnabled,
+        percentageRequested: request.percentageRequested
+      };
+      
+      if (request.fixedAmountRequestedMoney) {
+        transformed.fixedAmountRequestedMoney = {
+          amount: BigInt(Math.round(request.fixedAmountRequestedMoney.amount * 100)),
+          currency: request.fixedAmountRequestedMoney.currency as Square.Currency
+        };
+      }
+      
+      return transformed;
+    });
+    
+    return this.client.invoices.createInvoice({
+      invoice: {
+        ...invoice,
+        locationId: invoice.locationId || this.locationId,
+        paymentRequests: transformedPaymentRequests
+      },
+      idempotencyKey
+    });
+  }
+
+  // Send invoice
+  async sendInvoice(params: {
+    invoiceId: string;
+    requestMethod?: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY';
+  }): Promise<SquareResponse> {
+    return this.client.invoices.sendInvoice({
+      invoiceId: params.invoiceId,
+      body: {
+        requestMethod: params.requestMethod || 'EMAIL'
+      }
+    });
+  }
+
+  // Get invoice
+  async getInvoice(invoiceId: string): Promise<SquareResponse> {
+    return this.client.invoices.getInvoice({ invoiceId });
+  }
+
+  // List invoices
+  async listInvoices(params?: {
+    locationId?: string;
+    cursor?: string;
+    limit?: number;
+  }): Promise<SquareResponse> {
+    return this.client.invoices.listInvoices({
+      locationId: params?.locationId || this.locationId,
+      cursor: params?.cursor,
+      limit: params?.limit
+    });
   }
 
   // Helper to initialize from environment variables

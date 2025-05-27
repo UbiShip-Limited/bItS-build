@@ -3,17 +3,24 @@ import { ApiClient } from '../apiClient';
 // Types for TattooRequest
 export interface TattooRequest {
   id: string;
-  customerId: string;
+  customerId?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  trackingToken?: string;
   description: string;
   placement?: string;
   size?: string;
   colorPreference?: string;
   style?: string;
-  status: 'new' | 'reviewed' | 'approved' | 'rejected';
-  notes?: string;
+  status: string;
+  purpose?: string;
+  preferredArtist?: string;
+  timeframe?: string;
+  contactPreference?: string;
+  additionalNotes?: string;
+  referenceImages: ReferenceImage[];
   createdAt: string;
   updatedAt: string;
-  referenceImages?: ReferenceImage[];
   customer?: Customer;
 }
 
@@ -25,7 +32,7 @@ export interface ReferenceImage {
 export interface Customer {
   id: string;
   name: string;
-  email: string;
+  email?: string;
 }
 
 export interface TattooRequestsResponse {
@@ -39,17 +46,24 @@ export interface TattooRequestsResponse {
 }
 
 export interface CreateTattooRequestPayload {
-  customerId: string;
+  customerId?: string;
+  contactEmail?: string;
+  contactPhone?: string;
   description: string;
   placement?: string;
   size?: string;
   colorPreference?: string;
   style?: string;
+  purpose?: string;
+  preferredArtist?: string;
+  timeframe?: string;
+  contactPreference?: string;
+  additionalNotes?: string;
   referenceImages?: ReferenceImage[];
 }
 
 export interface UpdateTattooRequestPayload {
-  status?: 'new' | 'reviewed' | 'approved' | 'rejected';
+  status?: string;
   notes?: string;
 }
 
@@ -61,6 +75,11 @@ export interface TattooRequestFormData {
   size: string;
   colorPreference: string;
   style: string;
+  purpose?: string;
+  preferredArtist?: string;
+  timeframe?: string;
+  contactPreference?: string;
+  additionalNotes?: string;
   referenceImages?: Array<{
     url: string;
     publicId: string;
@@ -68,20 +87,8 @@ export interface TattooRequestFormData {
   customerId?: string;
 }
 
-export interface TattooRequestResponse {
-  id: string;
-  description: string;
-  placement: string;
-  size: string;
-  colorPreference: string;
-  style: string;
-  status: 'new' | 'reviewed' | 'approved' | 'rejected';
-  createdAt: string;
-  trackingToken?: string;
-  referenceImages: Array<{
-    url: string;
-    publicId: string;
-  }>;
+export interface TattooRequestResponse extends TattooRequest {
+  // Response is the same as TattooRequest
 }
 
 /**
@@ -89,7 +96,7 @@ export interface TattooRequestResponse {
  */
 export class TattooRequestService {
   private client: ApiClient;
-  private baseUrl = '/api/tattoo-requests';
+  private baseUrl = '/tattoo-requests';
 
   constructor(apiClient: ApiClient) {
     this.client = apiClient;
@@ -100,7 +107,7 @@ export class TattooRequestService {
    */
   public async getAll(
     options?: {
-      status?: 'new' | 'reviewed' | 'approved' | 'rejected';
+      status?: string;
       page?: number;
       limit?: number;
     }
@@ -145,7 +152,7 @@ export class TattooRequestService {
   }
 
   /**
-   * Submit a new tattoo request
+   * Submit a new tattoo request (anonymous)
    */
   async submitTattooRequest(formData: TattooRequestFormData): Promise<TattooRequestResponse> {
     const response = await this.client.post<TattooRequestResponse>(this.baseUrl, formData);

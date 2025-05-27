@@ -7,7 +7,7 @@ export interface ImageUploadResponse {
 
 export class ImageUploadService {
   private client: ApiClient;
-  private baseUrl = '/api/upload';
+  private baseUrl = '/upload';
 
   constructor(apiClient: ApiClient) {
     this.client = apiClient;

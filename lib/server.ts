@@ -1,7 +1,11 @@
 import 'dotenv/config';
 // For specifically loading .env.local
 import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 config({ path: '.env.local' });
+
+
 import Fastify, { FastifyInstance } from 'fastify';
 import tattooRequestsRoutes from './routes/tattooRequest';
 import prismaPlugin from './plugins/prisma'; // Path to your prisma plugin
@@ -9,14 +13,20 @@ import customerRoutes from './routes/customer';
 import paymentRoutes from './routes/payments/index.js';
 import appointmentRoutes from './routes/appointment';
 import auditRoutes from './routes/audit';
-import bookingRoutes from './routes/booking';
-import cloudinaryRoutes from './routes/cloudinary'; // Import Cloudinary routes
+import cloudinaryRoutes from './routes/cloudinary.js'; // Import Cloudinary routes
+import webhookRoutes from './routes/webhooks/index.js'; // Import webhook routes
 import cors from '@fastify/cors';
 
 
 // Initialize Fastify
 const build = (opts = {}): FastifyInstance => {
   const fastify = Fastify(opts);
+
+  // Register cors plugin FIRST before other plugins
+  fastify.register(cors, {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true
+  });
 
   // Register Prisma plugin
   fastify.register(prismaPlugin);
@@ -43,16 +53,20 @@ const build = (opts = {}): FastifyInstance => {
   fastify.register(paymentRoutes, { prefix: '/payments' });
   fastify.register(appointmentRoutes, { prefix: '/appointments' });
   fastify.register(auditRoutes, { prefix: '/audit-logs' });
-  fastify.register(bookingRoutes, { prefix: '/bookings' });
   fastify.register(cloudinaryRoutes, { prefix: '/cloudinary' });
-
-  // Register cors plugin
-  fastify.register(cors, {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true
-  });
+  fastify.register(webhookRoutes, { prefix: '/webhooks' });
 
   // TODO: Register your other routes and plugins here
+
+  // Set default Cloudinary URL if not provided to prevent initialization errors
+  if (!process.env.CLOUDINARY_URL) {
+    console.warn('CLOUDINARY_URL not set, using demo values. This should not be used in production.');
+    process.env.CLOUDINARY_URL = 'cloudinary://123456789012345:abcdefghijklmnopqrstuvwxyz@demo';
+    process.env.CLOUDINARY_CLOUD_NAME = 'demo';
+    process.env.CLOUDINARY_API_KEY = '123456789012345';
+    process.env.CLOUDINARY_API_SECRET = 'abcdefghijklmnopqrstuvwxyz';
+  }
+
   return fastify;
 };
 
@@ -61,7 +75,7 @@ const start = async (fastifyInstance: FastifyInstance) => {
   try {
     const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001; // Default to port 3001 for the backend
     await fastifyInstance.listen({ port, host: '0.0.0.0' }); // Listen on all available network interfaces
-    // fastifyInstance.log.info(`Backend server listening on port ${port}`); // logger might not be set yet if not passed in build opts
+     fastifyInstance.log.info(`Backend server listening on port ${port}`); // logger might not be set yet if not passed in build opts
   } catch (err) {
     fastifyInstance.log.error(err);
     process.exit(1);
@@ -99,16 +113,15 @@ const main = async () => {
 };
 
 // Only run the main function when directly executed, not when imported
-// Use a safer check that works in both ESM and CommonJS
-if (typeof require !== 'undefined' && require.main === module) {
+// Use import.meta.url for ESM module detection
+const isMainModule = () => {
+  const modulePath = fileURLToPath(import.meta.url);
+  const mainPath = resolve(process.argv[1]);
+  return modulePath === mainPath;
+};
+
+if (isMainModule()) {
   main();
-} else if (typeof process !== 'undefined' && process.argv.length > 1) {
-  // Simple check for ESM
-  const argv1 = process.argv[1];
-  const currentFile = __filename;
-  if (argv1 && currentFile && argv1.endsWith(currentFile)) {
-    main();
-  }
 }
 
 // Export the build function for testing or programmatic use

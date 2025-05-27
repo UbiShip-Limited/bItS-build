@@ -18,9 +18,10 @@ export class ApiClient {
   private baseURL: string;
   
   constructor(baseURL: string = '/api') {
+    // Always use /api which will be proxied to the backend
     this.baseURL = baseURL;
     this.axiosInstance = axios.create({
-      baseURL,
+      baseURL: baseURL,
       headers: {
         'Content-Type': 'application/json',
       },

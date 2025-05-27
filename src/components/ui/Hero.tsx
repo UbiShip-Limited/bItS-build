@@ -53,15 +53,15 @@ export function TattooHero() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-white text-[#080808] flex flex-col justify-center">
+    <div className="relative min-h-screen overflow-hidden bg-[#080808] text-white flex flex-col justify-center">
       {/* Background layer - lowest z-index */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white/95"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#080808] via-[#080808] to-[#080808]/95"></div>
       </div>
 
       {/* Central ornamental divider - middle z-index */}
       <div className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 z-10">
-        <div className="h-full w-full bg-gradient-to-b from-transparent via-[#8B6F3A]/50 to-transparent"></div>
+        <div className="h-full w-full bg-gradient-to-b from-transparent via-[#C9A449]/50 to-transparent"></div>
       </div>
 
       {/* Main content container - highest z-index */}
@@ -74,14 +74,14 @@ export function TattooHero() {
       >
         {/* Main content */}
         <motion.div
-          className="relative w-full max-w-5xl mx-auto text-center bg-white/75 px-4 sm:px-6 md:px-8 py-8 sm:py-10 md:py-12 rounded-lg backdrop-blur-sm flex flex-col items-center justify-center"
+          className="relative w-full max-w-5xl mx-auto text-center bg-[#080808]/75 px-4 sm:px-6 md:px-8 py-8 sm:py-10 md:py-12 rounded-lg backdrop-blur-sm flex flex-col items-center justify-center border border-white/10"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* Logo area - contains both images that fade in/out */}
           <motion.div 
-            className="mb-10 sm:mb-10 md:mb-10 relative aspect-square" 
+            className="mt-5 sm:mt-5 md:mt-5 relative aspect-square" 
             variants={itemVariants}
             style={{ 
               width: "min(450px, 95%)", 
@@ -103,10 +103,10 @@ export function TattooHero() {
                     className="absolute inset-0"
                   >
                     <Image
-                      src="/images/bowen-outline.svg"
+                      src="/images/bowen-logo.svg"
                       alt="Bowen Island Outline"
                       fill
-                      className="object-contain"
+                      className="object-contain brightness-0 invert"
                       priority
                     />
                   </motion.div>
@@ -124,10 +124,10 @@ export function TattooHero() {
                       src="/images/cougar.svg"
                       alt="Bowen Island Tattoo Logo"
                       fill
-                      className="object-contain"
+                      className="object-contain brightness-0 invert"
                       priority
                     />
-                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-[280px] md:w-[320px] h-[20px] bg-[#080808]/5 blur-xl rounded-full"></div>
+                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-[280px] md:w-[320px] h-[20px] bg-white/5 blur-xl rounded-full"></div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -135,29 +135,29 @@ export function TattooHero() {
           </motion.div>
 
           {/* Ornamental line above title */}
-          <motion.div className="mb-5 sm:mb-6 md:mb-7 w-full" variants={itemVariants}>
+          <motion.div className="mt-5 sm:mt-5 md:mt-5 w-full" variants={itemVariants}>
             <div className="relative">
               <OrnamentalLine
                 centerElement={
                   <div className="flex items-center justify-center w-6 md:w-6 h-6 md:h-6">
-                    <div className="w-4 md:w-4 h-4 md:h-4 border border-[#8B6F3A]/80 rotate-45"></div>
-                    <div className="absolute w-2 md:w-2 h-2 md:h-2 bg-[#8B6F3A]/30 rotate-45"></div>
+                    <div className="w-4 md:w-4 h-4 md:h-4 border border-[#C9A449]/80 rotate-45"></div>
+                    <div className="absolute w-2 md:w-2 h-2 md:h-2 bg-[#C9A449]/30 rotate-45"></div>
                   </div>
                 }
                 lineWidth="w-32 md:w-36"
               />
               {/* Horizontal line passing through */}
-              <div className="absolute top-1/2 left-0 w-full h-[0.5px] bg-gradient-to-r from-transparent via-[#8B6F3A]/40 to-transparent -translate-y-1/2"></div>
+              <div className="absolute top-1/2 left-0 w-full h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/40 to-transparent -translate-y-1/2"></div>
             </div>
           </motion.div>
 
           {/* Title */}
           <motion.h1
-            className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide text-[#080808] mb-3 sm:mb-4 md:mb-5 uppercase flex justify-center items-center flex-wrap gap-x-3 md:gap-x-3"
+            className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-6xl tracking-wide text-white mb-3 sm:mb-4 md:mb-5 uppercase flex justify-center items-center flex-wrap gap-x-3 md:gap-x-3"
             variants={itemVariants}
           >
             <span className="inline-block font-medium tracking-wide">Bowen</span>
-            <span className="inline-block text-2xl sm:text-3xl md:text-3xl lg:text-4xl tracking-[0.2em] md:tracking-[0.3em] font-light text-[#080808]/90">
+            <span className="inline-block text-2xl sm:text-3xl md:text-3xl lg:text-4xl tracking-[0.2em] md:tracking-[0.3em] font-light text-white/90">
               Island
             </span>
             <span className="inline-block font-medium tracking-wide">Tattoo</span>
@@ -165,7 +165,7 @@ export function TattooHero() {
 
           {/* Tagline */}
           <motion.p
-            className="font-body text-xl md:text-xl text-[#444444] max-w-sm md:max-w-lg mx-auto mb-5 sm:mb-6 md:mb-7 italic leading-relaxed"
+            className="font-body text-xl md:text-xl text-[#FFFFFF]/80 max-w-sm md:max-w-lg mx-auto mb-5 sm:mb-6 md:mb-7 italic leading-relaxed"
             variants={itemVariants}
           >
             Where artistry meets tranquility. A private studio experience unlike any other.
@@ -177,14 +177,14 @@ export function TattooHero() {
               <OrnamentalLine
                 centerElement={
                   <div className="relative flex items-center justify-center">
-                    <span className="text-[#8B6F3A] text-sm md:text-sm z-10">✦</span>
-                    <span className="absolute -mt-0.5 transform scale-150 text-[#8B6F3A]/20 text-sm md:text-sm">✦</span>
+                    <span className="text-[#C9A449] text-sm md:text-sm z-10">✦</span>
+                    <span className="absolute -mt-0.5 transform scale-150 text-[#C9A449]/20 text-sm md:text-sm">✦</span>
                   </div>
                 }
                 lineWidth="w-36 md:w-40"
               />
               {/* Horizontal line passing through */}
-              <div className="absolute top-1/2 left-0 w-full h-[0.5px] bg-gradient-to-r from-transparent via-[#8B6F3A]/40 to-transparent -translate-y-1/2"></div>
+              <div className="absolute top-1/2 left-0 w-full h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/40 to-transparent -translate-y-1/2"></div>
             </div>
           </motion.div>
 
@@ -194,7 +194,7 @@ export function TattooHero() {
             variants={itemVariants}
           >
             <Button
-              className="group relative overflow-hidden bg-transparent border border-[#8B6F3A]/70 text-[#080808] hover:bg-[#8B6F3A]/10 hover:border-[#8B6F3A] transition-all duration-300 w-full sm:w-auto px-6 h-14"
+              className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 w-full sm:w-auto px-6 h-14"
               size="lg"
             >
               <span className="relative z-10 flex items-center font-body tracking-widest uppercase text-sm md:text-sm font-medium">
@@ -205,7 +205,7 @@ export function TattooHero() {
 
             <Button
               variant="outline"
-              className="border-[#444444]/20 bg-transparent text-[#080808] hover:bg-[#444444]/10 hover:text-[#080808] hover:border-[#444444]/40 transition-all duration-300 w-full sm:w-auto px-6 h-14"
+              className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white hover:border-white/40 transition-all duration-300 w-full sm:w-auto px-6 h-14"
               size="lg"
             >
               <span className="font-body tracking-widest uppercase text-sm md:text-sm font-medium">
@@ -237,11 +237,11 @@ const OrnamentalLine: React.FC<OrnamentalLineProps> = ({
   return (
     <div className="flex items-center justify-center">
       <div
-        className={`${lineWidth} h-[0.5px] bg-gradient-to-r from-transparent via-[#8B6F3A]/80 to-[#8B6F3A]/50`}
+        className={`${lineWidth} h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/80 to-[#C9A449]/50`}
       ></div>
       <div className="mx-4 md:mx-4">{centerElement}</div>
       <div
-        className={`${lineWidth} h-[0.5px] bg-gradient-to-l from-transparent via-[#8B6F3A]/80 to-[#8B6F3A]/50`}
+        className={`${lineWidth} h-[0.5px] bg-gradient-to-l from-transparent via-[#C9A449]/80 to-[#C9A449]/50`}
       ></div>
     </div>
   );
@@ -261,30 +261,30 @@ const CornerOrnament: React.FC<CornerOrnamentProps> = ({ position }) => {
     case "top-left":
       positionClasses = "top-0 left-0";
       horizontalLineClasses =
-        "absolute top-0 left-0 w-full h-[0.5px] bg-gradient-to-r from-[#8B6F3A]/70 to-transparent";
+        "absolute top-0 left-0 w-full h-[0.5px] bg-gradient-to-r from-[#C9A449]/70 to-transparent";
       verticalLineClasses =
-        "absolute top-0 left-0 h-full w-[0.5px] bg-gradient-to-b from-[#8B6F3A]/70 to-transparent";
+        "absolute top-0 left-0 h-full w-[0.5px] bg-gradient-to-b from-[#C9A449]/70 to-transparent";
       break;
     case "top-right":
       positionClasses = "top-0 right-0";
       horizontalLineClasses =
-        "absolute top-0 right-0 w-full h-[0.5px] bg-gradient-to-l from-[#8B6F3A]/70 to-transparent";
+        "absolute top-0 right-0 w-full h-[0.5px] bg-gradient-to-l from-[#C9A449]/70 to-transparent";
       verticalLineClasses =
-        "absolute top-0 right-0 h-full w-[0.5px] bg-gradient-to-b from-[#8B6F3A]/70 to-transparent";
+        "absolute top-0 right-0 h-full w-[0.5px] bg-gradient-to-b from-[#C9A449]/70 to-transparent";
       break;
     case "bottom-left":
       positionClasses = "bottom-0 left-0";
       horizontalLineClasses =
-        "absolute bottom-0 left-0 w-full h-[0.5px] bg-gradient-to-r from-[#8B6F3A]/70 to-transparent";
+        "absolute bottom-0 left-0 w-full h-[0.5px] bg-gradient-to-r from-[#C9A449]/70 to-transparent";
       verticalLineClasses =
-        "absolute bottom-0 left-0 h-full w-[0.5px] bg-gradient-to-t from-[#8B6F3A]/70 to-transparent";
+        "absolute bottom-0 left-0 h-full w-[0.5px] bg-gradient-to-t from-[#C9A449]/70 to-transparent";
       break;
     case "bottom-right":
       positionClasses = "bottom-0 right-0";
       horizontalLineClasses =
-        "absolute bottom-0 right-0 w-full h-[0.5px] bg-gradient-to-l from-[#8B6F3A]/70 to-transparent";
+        "absolute bottom-0 right-0 w-full h-[0.5px] bg-gradient-to-l from-[#C9A449]/70 to-transparent";
       verticalLineClasses =
-        "absolute bottom-0 right-0 h-full w-[0.5px] bg-gradient-to-t from-[#8B6F3A]/70 to-transparent";
+        "absolute bottom-0 right-0 h-full w-[0.5px] bg-gradient-to-t from-[#C9A449]/70 to-transparent";
       break;
   }
 

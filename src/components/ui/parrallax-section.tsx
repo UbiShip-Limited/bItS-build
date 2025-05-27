@@ -72,7 +72,7 @@ export function ParallaxSections() {
       {/* Section 2 - Text on left, image on right */}
       <div
         ref={section2Ref}
-        className="min-h-screen flex flex-col md:flex-row-reverse items-center py-20 px-8 md:px-16 lg:px-24 bg-white/90"
+        className="min-h-screen flex flex-col md:flex-row-reverse items-center py-20 px-8 md:px-16 lg:px-24 bg-black"
       >
         <div className="w-full md:w-1/2 mb-10 md:mb-0 overflow-hidden">
           <motion.div
@@ -89,15 +89,15 @@ export function ParallaxSections() {
         </div>
 
         <div className="w-full md:w-1/2 md:pr-16">
-          <h2 className="font-heading text-4xl md:text-5xl mb-6 text-[#080808] drop-shadow-[0_0_8px_rgba(201,164,73,0.3)]">
+          <h2 className="font-heading text-4xl md:text-5xl mb-6 text-[#C9A449] drop-shadow-[0_0_8px_rgba(201,164,73,0.3)]">
             MODERN EXPRESSION
           </h2>
           <div className="h-1 w-24 bg-[#C9A449] mb-6"></div>
-          <p className="font-body text-[#080808]/90 mb-6 text-xl">
+          <p className="font-body text-white mb-6 text-xl">
             Push the boundaries of conventional tattoo art with our innovative approach to modern designs. Our studio
             embraces contemporary techniques that create bold, distinctive pieces that stand the test of time.
           </p>
-          <p className="font-body text-[#080808]/90 text-xl">
+          <p className="font-body text-white text-xl">
             From minimalist line work to vibrant color realism, our artists are versed in a diverse range of styles that
             cater to your aesthetic preferences. We stay at the forefront of tattoo evolution while maintaining the
             highest standards of quality and execution.
@@ -108,7 +108,7 @@ export function ParallaxSections() {
       {/* Section 3 - Image on left, text on right */}
       <div
         ref={section3Ref}
-        className="min-h-screen flex flex-col md:flex-row items-center py-20 px-8 md:px-16 lg:px-24 "
+        className="min-h-screen flex flex-col md:flex-row items-center py-20 px-8 md:px-16 lg:px-24 bg-black"
       >
         <div className="w-full md:w-1/2 mb-10 md:mb-0 overflow-hidden">
           <motion.div

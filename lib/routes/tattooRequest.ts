@@ -209,13 +209,14 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
         type: 'object',
         properties: {
           status: { type: 'string', enum: ['new', 'reviewed', 'approved', 'rejected'] },
-          notes: { type: 'string' }
+          notes: { type: 'string' },
+          customerId: { type: 'string' }
         }
       }
     }
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { status, notes } = request.body as any;
+    const { status, notes, customerId } = request.body as any;
     
     if (status) {
       const updated = await tattooRequestService.updateStatus(id, status, request.user?.id);
@@ -225,6 +226,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
     // If not updating status, handle other updates
     const updateData: any = {};
     if (notes !== undefined) updateData.notes = notes;
+    if (customerId !== undefined) updateData.customerId = customerId;
     
     const original = await fastify.prisma.tattooRequest.findUnique({ where: { id } });
     

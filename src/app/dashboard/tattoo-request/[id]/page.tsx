@@ -17,10 +17,13 @@ import {
   Image as ImageIcon,
   CheckCircle,
   XCircle,
-  MessageSquare
+  MessageSquare,
+  UserPlus
 } from 'lucide-react';
 import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/TattooRequestService';
 import { apiClient } from '@/src/lib/api/apiClient';
+import Modal from '@/src/components/ui/Modal';
+import CustomerForm from '@/src/components/forms/CustomerForm';
 
 export default function TattooRequestDetailPage() {
   const params = useParams();
@@ -29,6 +32,7 @@ export default function TattooRequestDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
 
   const tattooRequestService = new TattooRequestService(apiClient);
 
@@ -397,6 +401,17 @@ export default function TattooRequestDetailPage() {
                       </div>
                     </div>
                   )}
+                  
+                  {/* Create Customer Button for Anonymous Requests */}
+                  <div className="pt-3 mt-3 border-t">
+                    <button
+                      onClick={() => setShowCreateCustomerModal(true)}
+                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      Create Customer Profile
+                    </button>
+                  </div>
                 </>
               )}
               
@@ -431,6 +446,23 @@ export default function TattooRequestDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Create Customer Modal */}
+      <Modal
+        isOpen={showCreateCustomerModal}
+        onClose={() => setShowCreateCustomerModal(false)}
+        title="Create Customer Profile"
+      >
+        <CustomerForm
+          tattooRequestId={request.id}
+          fromTattooRequest={true}
+          onSuccess={() => {
+            setShowCreateCustomerModal(false);
+            loadTattooRequest(request.id);
+          }}
+          onCancel={() => setShowCreateCustomerModal(false)}
+        />
+      </Modal>
     </div>
   );
 }

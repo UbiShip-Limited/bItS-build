@@ -54,6 +54,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </li>
             <li>
               <Link 
+                href="/dashboard/payments" 
+                className="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-200"
+              >
+                <span className="mr-3">💳</span>
+                <span>Payments</span>
+              </Link>
+            </li>
+            <li>
+              <Link 
                 href="/dashboard/settings" 
                 className="flex items-center p-2 text-gray-700 rounded-lg hover:bg-gray-200"
               >

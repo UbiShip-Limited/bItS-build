@@ -5,13 +5,7 @@ import { fileURLToPath } from 'url';
 import { resolve } from 'path';
 config({ path: '.env.local' });
 
-// Set default Cloudinary URL if not provided to prevent initialization errors
-if (!process.env.CLOUDINARY_URL) {
-  process.env.CLOUDINARY_URL = 'cloudinary://123456789012345:abcdefghijklmnopqrstuvwxyz@demo';
-  process.env.CLOUDINARY_CLOUD_NAME = 'demo';
-  process.env.CLOUDINARY_API_KEY = '123456789012345';
-  process.env.CLOUDINARY_API_SECRET = 'abcdefghijklmnopqrstuvwxyz';
-}
+
 import Fastify, { FastifyInstance } from 'fastify';
 import tattooRequestsRoutes from './routes/tattooRequest';
 import prismaPlugin from './plugins/prisma'; // Path to your prisma plugin
@@ -20,6 +14,7 @@ import paymentRoutes from './routes/payments/index.js';
 import appointmentRoutes from './routes/appointment';
 import auditRoutes from './routes/audit';
 import cloudinaryRoutes from './routes/cloudinary.js'; // Import Cloudinary routes
+import webhookRoutes from './routes/webhooks/index.js'; // Import webhook routes
 import cors from '@fastify/cors';
 
 
@@ -59,8 +54,19 @@ const build = (opts = {}): FastifyInstance => {
   fastify.register(appointmentRoutes, { prefix: '/appointments' });
   fastify.register(auditRoutes, { prefix: '/audit-logs' });
   fastify.register(cloudinaryRoutes, { prefix: '/cloudinary' });
+  fastify.register(webhookRoutes, { prefix: '/webhooks' });
 
   // TODO: Register your other routes and plugins here
+
+  // Set default Cloudinary URL if not provided to prevent initialization errors
+  if (!process.env.CLOUDINARY_URL) {
+    console.warn('CLOUDINARY_URL not set, using demo values. This should not be used in production.');
+    process.env.CLOUDINARY_URL = 'cloudinary://123456789012345:abcdefghijklmnopqrstuvwxyz@demo';
+    process.env.CLOUDINARY_CLOUD_NAME = 'demo';
+    process.env.CLOUDINARY_API_KEY = '123456789012345';
+    process.env.CLOUDINARY_API_SECRET = 'abcdefghijklmnopqrstuvwxyz';
+  }
+
   return fastify;
 };
 
@@ -69,7 +75,7 @@ const start = async (fastifyInstance: FastifyInstance) => {
   try {
     const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001; // Default to port 3001 for the backend
     await fastifyInstance.listen({ port, host: '0.0.0.0' }); // Listen on all available network interfaces
-    // fastifyInstance.log.info(`Backend server listening on port ${port}`); // logger might not be set yet if not passed in build opts
+     fastifyInstance.log.info(`Backend server listening on port ${port}`); // logger might not be set yet if not passed in build opts
   } catch (err) {
     fastifyInstance.log.error(err);
     process.exit(1);

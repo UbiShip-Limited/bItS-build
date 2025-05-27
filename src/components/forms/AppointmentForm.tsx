@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookingType, BookingStatus } from '@/src/lib/api/services/appointmentService';
-import { apiClient } from '@/src/lib/api/apiClient';
-import { CustomerService } from '@/src/lib/api/services/customerService';
+import { BookingType, BookingStatus } from '@/lib/api/services/appointmentService';
+import { apiClient } from '@/lib/api/apiClient';
+import CustomerSelector from '@/components/ui/CustomerSelector';
+import Modal from '@/components/ui/Modal';
+import CustomerForm from '@/components/forms/CustomerForm';
 
 interface AppointmentFormProps {
   appointment?: any;
@@ -22,8 +24,7 @@ export default function AppointmentForm({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [searchingCustomer, setSearchingCustomer] = useState(false);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
   
   const [formData, setFormData] = useState({
     customerId: customerId || appointment?.customerId || '',
@@ -37,21 +38,6 @@ export default function AppointmentForm({
     priceQuote: appointment?.priceQuote || '',
     isAnonymous: false
   });
-
-  // Load customers for selection
-  useEffect(() => {
-    loadCustomers();
-  }, []);
-
-  const loadCustomers = async () => {
-    try {
-      const customerService = new CustomerService(apiClient);
-      const response = await customerService.getCustomers({ limit: 100 });
-      setCustomers(response.data);
-    } catch (err) {
-      console.error('Failed to load customers:', err);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,9 +61,9 @@ export default function AppointmentForm({
       } else if (formData.customerId) {
         appointmentData.customerId = formData.customerId;
       } else {
-        // Create appointment with customer details (will create customer if needed)
-        appointmentData.customerEmail = formData.contactEmail;
-        appointmentData.customerPhone = formData.contactPhone;
+        setError('Please select a customer or choose anonymous booking');
+        setLoading(false);
+        return;
       }
 
       let response;
@@ -105,221 +91,220 @@ export default function AppointmentForm({
     }
   };
 
-  const handleCustomerSearch = async (searchTerm: string) => {
-    if (searchTerm.length < 2) return;
-    
-    setSearchingCustomer(true);
-    try {
-      const customerService = new CustomerService(apiClient);
-      const response = await customerService.searchCustomers(searchTerm);
-      setCustomers(response.data);
-    } catch (err) {
-      console.error('Customer search failed:', err);
-    } finally {
-      setSearchingCustomer(false);
-    }
+  const handleCustomerCreated = () => {
+    setShowCustomerModal(false);
+    // The customer list will be refreshed when the selector searches again
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
-        </div>
-      )}
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
 
-      {/* Customer Selection */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Customer Type
-        </label>
-        <div className="space-y-2">
-          <label className="flex items-center">
-            <input
-              type="radio"
-              checked={!formData.isAnonymous}
-              onChange={() => setFormData({ ...formData, isAnonymous: false })}
-              className="mr-2"
-            />
-            <span>Existing or New Customer</span>
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              checked={formData.isAnonymous}
-              onChange={() => setFormData({ ...formData, isAnonymous: true })}
-              className="mr-2"
-            />
-            <span>Anonymous Booking (Consultation Only)</span>
-          </label>
-        </div>
-      </div>
-
-      {!formData.isAnonymous && (
+        {/* Customer Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Select Customer
+            Customer Type
           </label>
-          <select
-            value={formData.customerId}
-            onChange={(e) => setFormData({ ...formData, customerId: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          >
-            <option value="">-- Create New Customer --</option>
-            {customers.map((customer) => (
-              <option key={customer.id} value={customer.id}>
-                {customer.name} ({customer.email})
-              </option>
-            ))}
-          </select>
+          <div className="space-y-2">
+            <label className="flex items-center">
+              <input
+                type="radio"
+                checked={!formData.isAnonymous}
+                onChange={() => setFormData({ ...formData, isAnonymous: false })}
+                className="mr-2"
+              />
+              <span>Existing Customer</span>
+            </label>
+            <label className="flex items-center">
+              <input
+                type="radio"
+                checked={formData.isAnonymous}
+                onChange={() => setFormData({ ...formData, isAnonymous: true, customerId: '' })}
+                className="mr-2"
+              />
+              <span>Anonymous Booking (Consultation Only)</span>
+            </label>
+          </div>
         </div>
-      )}
 
-      {/* Contact Information */}
-      {(formData.isAnonymous || !formData.customerId) && (
-        <>
+        {!formData.isAnonymous && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email *
+              Select Customer
+            </label>
+            <CustomerSelector
+              value={formData.customerId}
+              onChange={(customerId) => setFormData({ ...formData, customerId: customerId || '' })}
+              onCreateNew={() => setShowCustomerModal(true)}
+              required={!formData.isAnonymous}
+              disabled={formData.isAnonymous}
+            />
+          </div>
+        )}
+
+        {/* Contact Information for Anonymous */}
+        {formData.isAnonymous && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email *
+              </label>
+              <input
+                type="email"
+                required
+                value={formData.contactEmail}
+                onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone
+              </label>
+              <input
+                type="tel"
+                value={formData.contactPhone}
+                onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </>
+        )}
+
+        {/* Appointment Details */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date & Time *
             </label>
             <input
-              type="email"
+              type="datetime-local"
               required
-              value={formData.contactEmail}
-              onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              value={formData.startAt}
+              onChange={(e) => setFormData({ ...formData, startAt: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Phone
+              Duration (minutes) *
             </label>
             <input
-              type="tel"
-              value={formData.contactPhone}
-              onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              type="number"
+              required
+              min="30"
+              step="30"
+              value={formData.duration}
+              onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-        </>
-      )}
+        </div>
 
-      {/* Appointment Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Date & Time *
-          </label>
-          <input
-            type="datetime-local"
-            required
-            value={formData.startAt}
-            onChange={(e) => setFormData({ ...formData, startAt: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Booking Type *
+            </label>
+            <select
+              required
+              value={formData.bookingType}
+              onChange={(e) => setFormData({ ...formData, bookingType: e.target.value as BookingType })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={formData.isAnonymous}
+            >
+              <option value={BookingType.CONSULTATION}>Consultation</option>
+              <option value={BookingType.DRAWING_CONSULTATION}>Drawing Consultation</option>
+              {!formData.isAnonymous && (
+                <option value={BookingType.TATTOO_SESSION}>Tattoo Session</option>
+              )}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Status
+            </label>
+            <select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value as BookingStatus })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value={BookingStatus.PENDING}>Pending</option>
+              <option value={BookingStatus.SCHEDULED}>Scheduled</option>
+              <option value={BookingStatus.CONFIRMED}>Confirmed</option>
+              <option value={BookingStatus.COMPLETED}>Completed</option>
+              <option value={BookingStatus.CANCELLED}>Cancelled</option>
+              <option value={BookingStatus.NO_SHOW}>No Show</option>
+            </select>
+          </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Duration (minutes) *
+            Price Quote
           </label>
           <input
             type="number"
-            required
-            min="30"
-            step="30"
-            value={formData.duration}
-            onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            step="0.01"
+            value={formData.priceQuote}
+            onChange={(e) => setFormData({ ...formData, priceQuote: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="0.00"
           />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Booking Type *
-          </label>
-          <select
-            required
-            value={formData.bookingType}
-            onChange={(e) => setFormData({ ...formData, bookingType: e.target.value as BookingType })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-            disabled={formData.isAnonymous}
-          >
-            <option value={BookingType.CONSULTATION}>Consultation</option>
-            <option value={BookingType.DRAWING_CONSULTATION}>Drawing Consultation</option>
-            {!formData.isAnonymous && (
-              <option value={BookingType.TATTOO_SESSION}>Tattoo Session</option>
-            )}
-          </select>
-        </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Status
+            Notes
           </label>
-          <select
-            value={formData.status}
-            onChange={(e) => setFormData({ ...formData, status: e.target.value as BookingStatus })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          >
-            <option value={BookingStatus.PENDING}>Pending</option>
-            <option value={BookingStatus.SCHEDULED}>Scheduled</option>
-            <option value={BookingStatus.CONFIRMED}>Confirmed</option>
-            <option value={BookingStatus.COMPLETED}>Completed</option>
-            <option value={BookingStatus.CANCELLED}>Cancelled</option>
-            <option value={BookingStatus.NO_SHOW}>No Show</option>
-          </select>
+          <textarea
+            rows={4}
+            value={formData.note}
+            onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Any additional notes about the appointment..."
+          />
         </div>
-      </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Price Quote
-        </label>
-        <input
-          type="number"
-          step="0.01"
-          value={formData.priceQuote}
-          onChange={(e) => setFormData({ ...formData, priceQuote: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          placeholder="0.00"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Notes
-        </label>
-        <textarea
-          rows={4}
-          value={formData.note}
-          onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md"
-          placeholder="Any additional notes about the appointment..."
-        />
-      </div>
-
-      <div className="flex justify-end space-x-4">
-        {onCancel && (
+        <div className="flex justify-end space-x-4">
+          {onCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+          )}
           <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            type="submit"
+            disabled={loading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
           >
-            Cancel
+            {loading ? 'Saving...' : appointment ? 'Update Appointment' : 'Create Appointment'}
           </button>
-        )}
-        <button
-          type="submit"
-          disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? 'Saving...' : appointment ? 'Update Appointment' : 'Create Appointment'}
-        </button>
-      </div>
-    </form>
+        </div>
+      </form>
+
+      {/* Create Customer Modal */}
+      <Modal
+        isOpen={showCustomerModal}
+        onClose={() => setShowCustomerModal(false)}
+        title="New Customer"
+      >
+        <CustomerForm
+          onSuccess={handleCustomerCreated}
+          onCancel={() => setShowCustomerModal(false)}
+        />
+      </Modal>
+    </>
   );
 } 

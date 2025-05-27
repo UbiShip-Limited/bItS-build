@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { BookingStatus, BookingType, type AppointmentData } from '@/src/lib/api/services/appointmentService';
+import { BookingStatus, BookingType, type AppointmentData } from '@/lib/api/services/appointmentService';
 
 interface AppointmentCalendarProps {
   appointments: AppointmentData[];

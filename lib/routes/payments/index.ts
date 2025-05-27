@@ -5,6 +5,7 @@ import coreRoutes from './core.js';
 import consultationRoutes from './consultation.js';
 import tattooRoutes from './tattoo.js';
 import refundRoutes from './refunds.js';
+import paymentLinkRoutes from './paymentLinks.js';
 
 const paymentRoutes: FastifyPluginAsync = async (fastify, options) => {
   // Apply authentication middleware to all routes in this plugin
@@ -16,6 +17,7 @@ const paymentRoutes: FastifyPluginAsync = async (fastify, options) => {
   fastify.register(consultationRoutes, { prefix: '/' });
   fastify.register(tattooRoutes, { prefix: '/' });
   fastify.register(refundRoutes, { prefix: '/' });
+  fastify.register(paymentLinkRoutes, { prefix: '/' });
 };
 
 export default paymentRoutes;

@@ -56,23 +56,23 @@ export class CustomerService {
     }
     
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
-    const response = await this.apiClient.get(`/customers${queryString}`) as { data: CustomerListResponse };
-    return response.data;
+    const response = await this.apiClient.get<CustomerListResponse>(`/customers${queryString}`);
+    return response;
   }
 
   async getCustomer(id: string): Promise<Customer> {
-    const response = await this.apiClient.get(`/customers/${id}`) as { data: Customer };
-    return response.data;
+    const response = await this.apiClient.get<Customer>(`/customers/${id}`);
+    return response;
   }
 
   async createCustomer(data: CreateCustomerRequest): Promise<Customer> {
-    const response = await this.apiClient.post('/customers', data) as { data: Customer };
-    return response.data;
+    const response = await this.apiClient.post<Customer>('/customers', data);
+    return response;
   }
 
   async updateCustomer(id: string, data: UpdateCustomerRequest): Promise<Customer> {
-    const response = await this.apiClient.put(`/customers/${id}`, data) as { data: Customer };
-    return response.data;
+    const response = await this.apiClient.put<Customer>(`/customers/${id}`, data);
+    return response;
   }
 
   async deleteCustomer(id: string): Promise<void> {

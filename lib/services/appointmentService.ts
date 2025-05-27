@@ -1,4 +1,4 @@
-import { prisma } from '../prisma/prisma.js';
+import { prisma } from '../prisma/prisma';
 import { BookingStatus, BookingType } from '../types/booking.js';
 import { AppointmentError, ValidationError, NotFoundError } from './errors.js';
 import type { Appointment, Prisma } from '@prisma/client';

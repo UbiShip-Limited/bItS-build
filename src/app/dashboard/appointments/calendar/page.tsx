@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, List } from 'lucide-react';
-import { AppointmentService, type AppointmentData } from '@/src/lib/api/services/appointmentService';
-import { apiClient } from '@/src/lib/api/apiClient';
-import AppointmentCalendar from '@/src/components/ui/AppointmentCalendar';
-import Modal from '@/src/components/ui/Modal';
-import AppointmentForm from '@/src/components/forms/AppointmentForm';
+import { AppointmentService, type AppointmentData } from '@/lib/api/services/appointmentService';
+import { apiClient } from '@/lib/api/apiClient';
+import AppointmentCalendar from '@/components/ui/AppointmentCalendar';
+import Modal from '@/components/ui/Modal';
+import AppointmentForm from '@/components/forms/AppointmentForm';
 
 export default function AppointmentCalendarPage() {
   const router = useRouter();

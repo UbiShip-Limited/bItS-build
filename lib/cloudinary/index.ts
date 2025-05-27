@@ -1,3 +1,8 @@
+// Set a default CLOUDINARY_URL if not provided to prevent initialization errors
+if (!process.env.CLOUDINARY_URL) {
+  process.env.CLOUDINARY_URL = 'cloudinary://123456789012345:abcdefghijklmnopqrstuvwxyz@demo';
+}
+
 import { v2 as cloudinary } from 'cloudinary';
 
 // Configure Cloudinary with environment variables

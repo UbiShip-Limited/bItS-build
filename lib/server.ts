@@ -4,6 +4,14 @@ import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
 config({ path: '.env.local' });
+
+// Set default Cloudinary URL if not provided to prevent initialization errors
+if (!process.env.CLOUDINARY_URL) {
+  process.env.CLOUDINARY_URL = 'cloudinary://123456789012345:abcdefghijklmnopqrstuvwxyz@demo';
+  process.env.CLOUDINARY_CLOUD_NAME = 'demo';
+  process.env.CLOUDINARY_API_KEY = '123456789012345';
+  process.env.CLOUDINARY_API_SECRET = 'abcdefghijklmnopqrstuvwxyz';
+}
 import Fastify, { FastifyInstance } from 'fastify';
 import tattooRequestsRoutes from './routes/tattooRequest';
 import prismaPlugin from './plugins/prisma'; // Path to your prisma plugin

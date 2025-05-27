@@ -99,18 +99,18 @@ export class AppointmentService {
       });
     }
 
-    const response = await this.apiClient.get(`/appointments?${params.toString()}`) as { data: AppointmentListResponse };
-    return response.data;
+    const response = await this.apiClient.get(`/appointments?${params.toString()}`) as AppointmentListResponse;
+    return response;
   }
 
   async getAppointment(id: string): Promise<AppointmentData> {
-    const response = await this.apiClient.get(`/appointments/${id}`) as { data: AppointmentData };
-    return response.data;
+    const response = await this.apiClient.get(`/appointments/${id}`) as AppointmentData;
+    return response;
   }
 
   async createAppointment(data: CreateAppointmentRequest): Promise<AppointmentData> {
-    const response = await this.apiClient.post('/appointments', data) as { data: AppointmentData };
-    return response.data;
+    const response = await this.apiClient.post('/appointments', data) as { appointment: AppointmentData };
+    return response.appointment;
   }
 
   // Create appointment for existing customer
@@ -161,13 +161,13 @@ export class AppointmentService {
   }
 
   async updateAppointment(id: string, data: UpdateAppointmentRequest): Promise<AppointmentData> {
-    const response = await this.apiClient.put(`/appointments/${id}`, data) as { data: AppointmentData };
-    return response.data;
+    const response = await this.apiClient.put(`/appointments/${id}`, data) as { appointment: AppointmentData };
+    return response.appointment;
   }
 
   async cancelAppointment(id: string, reason?: string): Promise<AppointmentData> {
-    const response = await this.apiClient.post(`/appointments/${id}/cancel`, { reason }) as { data: AppointmentData };
-    return response.data;
+    const response = await this.apiClient.post(`/appointments/${id}/cancel`, { reason }) as { appointment: AppointmentData };
+    return response.appointment;
   }
 
   // Helper method to create appointment from tattoo request

@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authorize } from '../../middleware/auth.js';
-import PaymentLinkService from '../../services/paymentLinkService.js';
-import { PaymentType } from '../../services/paymentService.js';
+import { authorize } from '../../middleware/auth';
+import PaymentLinkService from '../../services/paymentLinkService';
+import { PaymentType } from '../../services/paymentService';
 
 const paymentLinkRoutes: FastifyPluginAsync = async (fastify, options) => {
   const paymentLinkService = new PaymentLinkService();

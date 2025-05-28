@@ -74,7 +74,7 @@ export default class PaymentService {
         sourceId,
         amount, // Square client will convert to cents internally
         currency: 'CAD',
-        customerId: customer.squareId,
+        customerId: customer.squareId || undefined,
         note,
         idempotencyKey,
         referenceId

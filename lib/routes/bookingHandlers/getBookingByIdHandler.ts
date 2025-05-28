@@ -50,12 +50,13 @@ export async function getBookingByIdHandler(request: FastifyRequest<{ Params: Ge
       success: true,
       booking
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     request.log.error(error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return reply.code(500).send({
       success: false,
       message: 'Error fetching booking',
-      error: error.message
+      error: errorMessage
     });
   }
 } 

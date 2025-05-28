@@ -1,7 +1,7 @@
-import { prisma } from '../prisma/prisma.js';
-import { NotFoundError, ValidationError } from './errors.js';
-import { AppointmentService } from './appointmentService.js';
-import { BookingType } from '../types/booking.js';
+import { prisma } from '../prisma/prisma';
+import { NotFoundError, ValidationError } from './errors';
+import { AppointmentService } from './appointmentService';
+import { BookingType } from '../types/booking';
 import type { TattooRequest, Prisma } from '@prisma/client';
 
 export interface ConvertToAppointmentData {

@@ -1,10 +1,10 @@
 import { FastifyPluginAsync } from 'fastify';
 import multipart from '@fastify/multipart';
-import { authorize } from '../middleware/auth.js';
-import { UserRole } from '../types/auth.js';
+import { authorize } from '../middleware/auth';
+import { UserRole } from '../types/auth';
 import { v4 as uuidv4 } from 'uuid';
-import { TattooRequestService } from '../services/tattooRequestService.js';
-import { BookingType } from '../types/booking.js';
+import { TattooRequestService } from '../services/tattooRequestService';
+import { BookingType } from '../types/booking';
 // import cloudinaryService from '../cloudinary/index.js';
 import { pipeline } from 'stream/promises';
 import fs from 'fs';

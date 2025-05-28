@@ -52,7 +52,12 @@ interface CreateBookingBody {
   tattooRequestId?: string;
 }
 
-export async function createBookingHandler(this: any, request: FastifyRequest<{ Body: CreateBookingBody }>, reply: FastifyReply) {
+// Add proper typing for fastify instance with bookingService
+interface FastifyInstanceWithBookingService {
+  bookingService: BookingService;
+}
+
+export async function createBookingHandler(this: FastifyInstanceWithBookingService, request: FastifyRequest<{ Body: CreateBookingBody }>, reply: FastifyReply) {
   const {
     startAt,
     duration,
@@ -104,24 +109,25 @@ export async function createBookingHandler(this: any, request: FastifyRequest<{ 
       booking: result.booking,
       squareBooking: result.squareBooking
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     request.log.error(error);
-    if (error.message.includes('not found')) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (errorMessage.includes('not found')) {
       return reply.code(404).send({
         success: false,
-        message: error.message
+        message: errorMessage
       });
     }
-    if (error.message === 'Tattoo request does not belong to this customer') {
+    if (errorMessage === 'Tattoo request does not belong to this customer') {
       return reply.code(400).send({
         success: false,
-        message: error.message
+        message: errorMessage
       });
     }
     return reply.code(500).send({
       success: false,
       message: 'Error creating booking',
-      error: error.message
+      error: errorMessage
     });
   }
 } 

@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
-import PaymentService, { PaymentType } from '../../services/paymentService.js';
-import BookingService, { BookingType } from '../../services/bookingService.js';
+import PaymentService, { PaymentType } from '../../services/paymentService';
+import BookingService, { BookingType } from '../../services/bookingService';
 
 const tattooRoutes: FastifyPluginAsync = async (fastify, options) => {
   // Initialize services

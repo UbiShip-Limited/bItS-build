@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import crypto from 'crypto';
-import { prisma } from '../../prisma/prisma.js';
+import { prisma } from '../../prisma/prisma';
 
 const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
   // POST /webhooks/square - Handle Square webhook events
@@ -24,7 +24,7 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
     try {
       // Verify webhook signature
       const signature = request.headers['x-square-hmacsha256-signature'] as string;
-      const body = request.rawBody;
+      const body = (request as any).rawBody;
       const webhookSignatureKey = process.env.SQUARE_WEBHOOK_SIGNATURE_KEY;
       
       if (!webhookSignatureKey) {

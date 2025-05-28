@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authenticate, authorize } from '../middleware/auth';
+//import { authenticate, authorize } from '../middleware/auth';
 
 const customerRoutes: FastifyPluginAsync = async (fastify, options) => {
   // Apply authentication to all routes

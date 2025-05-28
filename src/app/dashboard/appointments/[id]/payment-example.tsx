@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import PaymentButton, { PaymentDropdown } from '@/components/payments/PaymentButton';
-import { PaymentType } from '@/lib/api/services/paymentService';
+import PaymentButton, { PaymentDropdown } from '@/src/components/payments/PaymentButton';
+import { PaymentType } from '@/src/lib/api/services/paymentService';
 
 // Example of how to integrate payment functionality into appointment details
 export default function AppointmentPaymentExample() {

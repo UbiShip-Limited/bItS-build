@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authorize } from '../../middleware/auth.js';
-import PaymentService from '../../services/paymentService.js';
+import { authorize } from '../../middleware/auth';
+import PaymentService from '../../services/paymentService';
 
 const refundRoutes: FastifyPluginAsync = async (fastify, options) => {
   // Initialize services

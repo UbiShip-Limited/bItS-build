@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CustomerService, type CreateCustomerRequest, type UpdateCustomerRequest, type Customer } from '@/lib/api/services/customerService';
-import { TattooRequestService, type TattooRequest } from '@/lib/api/services/TattooRequestService';
-import { apiClient } from '@/lib/api/apiClient';
+import { CustomerService, type CreateCustomerRequest, type UpdateCustomerRequest, type Customer } from '@/src/lib/api/services/customerService';
+import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/TattooRequestService';
+import { apiClient } from '@/src/lib/api/apiClient';
 import { Search, Link as LinkIcon } from 'lucide-react';
 
 interface CustomerFormProps {

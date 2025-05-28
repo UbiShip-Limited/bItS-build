@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-import SquareClient from '../square/index.js';
-import { prisma } from '../prisma/prisma.js';
-import { SquareIntegrationError } from './errors.js';
+import SquareClient from '../square/index';
+import { prisma } from '../prisma/prisma';
 import type { Appointment } from '@prisma/client';
 
 export class SquareIntegrationService {

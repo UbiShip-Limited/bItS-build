@@ -3,7 +3,6 @@
 import { useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import Image from "next/image"
-import Link from "next/link"
 
 export function HorizontalSplitParallax() {
   // Ref for the split section

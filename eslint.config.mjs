@@ -11,6 +11,25 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    ignores: [
+      "src/generated/**/*",
+      "**/*.js",
+      "**/*.cjs",
+      "**/*.mjs",
+      "node_modules/**/*",
+      ".next/**/*",
+      "build/**/*",
+      "dist/**/*",
+      "coverage/**/*",
+      "jest.*.js",
+      "jest.*.mjs",
+      "jest.setup.mjs",
+      "tailwind.config.js",
+      "postcss.config.mjs",
+      "next.config.cjs"
+    ]
+  }
 ];
 
 export default eslintConfig;

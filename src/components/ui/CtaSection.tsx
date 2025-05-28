@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, useAnimation } from "framer-motion";
-import { Button } from "./button";
 import Link from "next/link";
 import Image from "next/image";
 

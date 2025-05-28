@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authorize } from '../middleware/auth.js';
-import { UserRole } from '../types/auth.js';
+import { authorize } from '../middleware/auth';
+import { UserRole } from '../types/auth';
 
 // Use mock service if no Cloudinary credentials are set
 const useMock = !process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET;

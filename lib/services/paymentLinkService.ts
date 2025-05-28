@@ -66,8 +66,7 @@ export default class PaymentLinkService {
     try {
       // Get customer details
       const customer = await this.prisma.customer.findUnique({
-        where: { id: customerId },
-        include: { user: true }
+        where: { id: customerId }
       });
       
       if (!customer) {
@@ -94,8 +93,8 @@ export default class PaymentLinkService {
           merchantSupportEmail: process.env.MERCHANT_SUPPORT_EMAIL
         },
         prePopulatedData: {
-          buyerEmail: customer.user?.email,
-          buyerPhoneNumber: customer.phone
+          buyerEmail: customer.email || undefined,
+          buyerPhoneNumber: customer.phone || undefined
         },
         paymentNote: description || `Payment for ${paymentType}`
       });
@@ -329,7 +328,7 @@ export default class PaymentLinkService {
         },
         askForShippingAddress: false,
         merchantSupportEmail: process.env.MERCHANT_SUPPORT_EMAIL,
-        prePopulateBuyerEmail: customer.user?.email,
+        prePopulateBuyerEmail: customer.email || undefined,
         redirectUrl: params.redirectUrl
       });
       

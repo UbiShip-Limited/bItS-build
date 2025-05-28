@@ -1,7 +1,7 @@
-import { v4 as uuidv4 } from 'uuid';
-import { AppointmentService } from './appointmentService.js';
-import { SquareIntegrationService } from './squareIntegrationService.js';
-import { AppointmentError } from './errors.js';
+
+import { AppointmentService } from './appointmentService';
+import { SquareIntegrationService } from './squareIntegrationService';
+
 
 export enum BookingType {
   CONSULTATION = 'consultation',
@@ -101,7 +101,7 @@ export default class BookingService {
       });
       
       // Try to sync with Square if we have a customer
-      let squareBooking = null;
+      const squareBooking = null;
       if (appointment.customerId) {
         const squareResult = await this.squareService.syncAppointmentToSquare(appointment);
         if (squareResult.squareId) {

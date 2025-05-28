@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { BookingStatus, BookingType, type AppointmentData } from '@/lib/api/services/appointmentService';
+import { BookingStatus, type AppointmentData } from '@/src/lib/api/services/appointmentService';
 
 interface AppointmentCalendarProps {
   appointments: AppointmentData[];
@@ -34,7 +34,7 @@ export default function AppointmentCalendar({
     // Adjust to end on Saturday
     endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
 
-    const days = [];
+    const days: Date[] = [];
     const current = new Date(startDate);
 
     while (current <= endDate) {

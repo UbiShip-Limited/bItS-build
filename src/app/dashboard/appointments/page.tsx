@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Calendar, Clock, DollarSign, User, Filter, Plus } from 'lucide-react';
-import { AppointmentService, BookingStatus, BookingType, type AppointmentData } from '@/lib/api/services/appointmentService';
-import { apiClient } from '@/lib/api/apiClient';
-import Modal from '@/components/ui/Modal';
-import AppointmentForm from '@/components/forms/AppointmentForm';
+import { AppointmentService, BookingStatus, BookingType, type AppointmentData } from '@/src/lib/api/services/appointmentService';
+import { apiClient } from '@/src/lib/api/apiClient';
+import Modal from '@/src/components/ui/Modal';
+import AppointmentForm from '@/src/components/forms/AppointmentForm';
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<AppointmentData[]>([]);

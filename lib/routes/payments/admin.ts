@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authorize } from '../../middleware/auth.js';
-import SquareClient from '../../square/index.js';
+import { authorize } from '../../middleware/auth';
+import SquareClient from '../../square/index';
 
 const adminRoutes: FastifyPluginAsync = async (fastify, options) => {
   // Initialize Square client

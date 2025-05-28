@@ -81,11 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const userData = await userResponse.json();
               setUser({ ...session.user, role: userData.role });
             } else {
-              setUser(session.user);
+              setUser(session.user as UserWithRole);
             }
           } catch (err) {
             console.error('Error fetching user data:', err);
-            setUser(session.user);
+            setUser(session.user as UserWithRole);
           }
         }
         
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (_event, session) => {
             setSession(session);
-            setUser(session?.user || null);
+            setUser(session?.user as UserWithRole || null);
             
             // Also update token in localStorage for the API client
             if (session?.access_token) {

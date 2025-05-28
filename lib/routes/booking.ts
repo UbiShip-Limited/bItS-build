@@ -1,17 +1,17 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authenticate, authorize } from '../middleware/auth.js';
-import BookingService, { BookingStatus, BookingType } from '../services/bookingService.js';
+import { authenticate, authorize } from '../middleware/auth';
+import BookingService from '../services/bookingService';
 // Import handlers with updated schemas
-import { createBookingSchema, createBookingHandler } from './bookingHandlers/createBookingHandler.js';
-import { createAnonymousBookingSchema, createAnonymousBookingHandler } from './bookingHandlers/createAnonymousBookingHandler.js';
-import { listBookingsSchema, listBookingsHandler } from './bookingHandlers/listBookingsHandler.js';
-import { getBookingByIdSchema, getBookingByIdHandler } from './bookingHandlers/getBookingByIdHandler.js';
-import { updateBookingSchema, updateBookingHandler } from './bookingHandlers/updateBookingHandler.js';
-import { cancelBookingSchema, cancelBookingHandler } from './bookingHandlers/cancelBookingHandler.js';
+import { createBookingSchema, createBookingHandler } from './bookingHandlers/createBookingHandler';
+import { createAnonymousBookingSchema, createAnonymousBookingHandler } from './bookingHandlers/createAnonymousBookingHandler';
+import { listBookingsSchema, listBookingsHandler } from './bookingHandlers/listBookingsHandler';
+import { getBookingByIdSchema, getBookingByIdHandler } from './bookingHandlers/getBookingByIdHandler';
+import { updateBookingSchema, updateBookingHandler } from './bookingHandlers/updateBookingHandler';
+import { cancelBookingSchema, cancelBookingHandler } from './bookingHandlers/cancelBookingHandler';
 
 // NOTE: This route is being maintained for backward compatibility
 // In the future, we should consolidate all booking/appointment operations through the appointment routes
-const bookingRoutes: FastifyPluginAsync = async (fastify, options) => {
+const bookingRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize booking service
   const bookingService = new BookingService();
   // Decorate fastify instance so handlers can access it via this.bookingService

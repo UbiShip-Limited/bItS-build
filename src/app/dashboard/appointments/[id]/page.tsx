@@ -18,8 +18,8 @@ import {
 } from 'lucide-react';
 import { AppointmentService, BookingStatus, BookingType, type AppointmentData } from '@/src/lib/api/services/appointmentService';
 import { apiClient } from '@/src/lib/api/apiClient';
-import Modal from '@/components/ui/Modal';
-import AppointmentForm from '@/components/forms/AppointmentForm';
+import Modal from '@/src/components/ui/Modal';
+import AppointmentForm from '@/src/components/forms/AppointmentForm';
 
 export default function AppointmentDetailPage() {
   const params = useParams();

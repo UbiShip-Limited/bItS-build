@@ -15,14 +15,14 @@ jest.mock('../../../../lib/api/apiClient', () => {
 
 describe('ImageUploadService', () => {
   let service: ImageUploadService;
-  let mockApiClient: any;
+  let mockApiClient: jest.Mocked<ApiClient>;
 
   beforeEach(() => {
     // Clear all mocks
     jest.clearAllMocks();
     
     // Create a mock API client
-    mockApiClient = new ApiClient();
+    mockApiClient = new ApiClient() as jest.Mocked<ApiClient>;
     
     // Create a new service instance with the mock client
     service = new ImageUploadService(mockApiClient);

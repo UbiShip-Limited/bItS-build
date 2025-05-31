@@ -59,7 +59,7 @@ export class AppointmentService {
     const endTime = new Date(data.startAt.getTime() + data.duration * 60000);
     
     // Create appointment data
-    const appointmentData: any = {
+    const appointmentData: Prisma.AppointmentCreateInput = {
       startTime: data.startAt,
       endTime,
       duration: data.duration,
@@ -273,5 +273,12 @@ export class AppointmentService {
         pages: Math.ceil(total / limit)
       }
     };
+  }
+
+  static async validateAppointmentData(data: Record<string, unknown>): Promise<void> {
+    // Validate required fields
+    if (!data.customerId || typeof data.customerId !== 'string') {
+      throw new AppointmentError('customerId is required and must be a string', 'INVALID_CUSTOMER_ID');
+    }
   }
 }

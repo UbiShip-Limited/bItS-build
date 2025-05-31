@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import TattooRequestService from '../lib/api/services/TattooRequestService';
+import { TattooRequestService } from '../lib/api/services/tattooRequestService';
 import { ImageUploadService } from '../lib/api/services/ImageUploadService';
 import { apiClient } from '../lib/api/apiClient';
 import { useCloudinaryUpload } from './useCloudinaryUpload';

@@ -1,7 +1,17 @@
 import { SquareClient as SquareSDKClient, SquareEnvironment, Square } from "square";
-
-// Use a proper type for SquareResponse
-type SquareResponse = any; // Can be refined based on Square's types
+import type { 
+  SquareApiResponse,
+  SquarePaymentResponse,
+  SquareBookingResponse,
+  SquareCustomerResponse,
+  SquareCatalogResponse,
+  SquareOrderResponse,
+  SquareInvoiceResponse,
+  SquareRefundResponse,
+  AppointmentSegment,
+  RefundRequest,
+  PaymentLinkResponse
+} from '../types/square';
 
 interface SquareConfig {
   accessToken: string;
@@ -31,7 +41,7 @@ class SquareClient {
     endTime?: string, 
     cursor?: string, 
     limit?: number
-  ): Promise<SquareResponse> {
+  ): Promise<SquarePaymentResponse> {
     return this.client.payments.list({
       beginTime,
       endTime,
@@ -41,7 +51,7 @@ class SquareClient {
     });
   }
 
-  async getPaymentById(paymentId: string): Promise<SquareResponse> {
+  async getPaymentById(paymentId: string): Promise<SquarePaymentResponse> {
     return this.client.payments.get({
       paymentId
     });
@@ -56,7 +66,7 @@ class SquareClient {
     note?: string;
     idempotencyKey: string;
     referenceId?: string;
-  }): Promise<SquareResponse> {
+  }): Promise<SquarePaymentResponse> {
     const { sourceId, amount, currency, customerId, note, idempotencyKey, referenceId } = params;
     
     return this.client.payments.create({
@@ -82,11 +92,11 @@ class SquareClient {
       currency: string;
     };
     reason?: string;
-  }): Promise<SquareResponse> {
+  }): Promise<SquareRefundResponse> {
     const { paymentId, idempotencyKey, amountMoney, reason } = params;
     
     // Build the refund request
-    const refundRequest: any = {
+    const refundRequest: RefundRequest = {
       paymentId,
       idempotencyKey,
       reason
@@ -110,7 +120,7 @@ class SquareClient {
     limit?: number,
     startAtMin?: string,
     startAtMax?: string
-  ): Promise<SquareResponse> {
+  ): Promise<SquareBookingResponse> {
     return this.client.bookings.list({
       cursor,
       limit,
@@ -120,7 +130,7 @@ class SquareClient {
     });
   }
 
-  async getBookingById(bookingId: string): Promise<SquareResponse> {
+  async getBookingById(bookingId: string): Promise<SquareBookingResponse> {
     return this.client.bookings.get({
       bookingId
     });
@@ -137,7 +147,7 @@ class SquareClient {
     staffId?: string;
     note?: string;
     bookingType?: string;
-  }): Promise<SquareResponse> {
+  }): Promise<SquareBookingResponse> {
     const locationId = params.locationId || this.locationId;
     
     // Add tattoo shop specific booking type to note if provided
@@ -146,7 +156,7 @@ class SquareClient {
       : params.note;
     
     // Build appointment segment with only defined values
-    const appointmentSegment: any = {
+    const appointmentSegment: AppointmentSegment = {
       durationMinutes: params.duration
     };
     
@@ -182,7 +192,7 @@ class SquareClient {
     staffId?: string;
     note?: string;
     bookingType?: string;
-  }): Promise<SquareResponse> {
+  }): Promise<SquareBookingResponse> {
     // First, get existing booking details to preserve unchanged values
     const existingBookingResponse = await this.getBookingById(params.bookingId);
     const existingBooking = existingBookingResponse.result?.booking;
@@ -211,7 +221,7 @@ class SquareClient {
       : (params.note || existingBooking.sellerNote);
     
     // Build appointment segment with only defined values
-    const newAppointmentSegment: any = {
+    const newAppointmentSegment: AppointmentSegment = {
       durationMinutes: params.duration || appointmentSegment.durationMinutes
     };
     
@@ -243,7 +253,7 @@ class SquareClient {
     bookingId: string;
     bookingVersion: number;
     idempotencyKey?: string;
-  }): Promise<SquareResponse> {
+  }): Promise<SquareBookingResponse> {
     return this.client.bookings.cancel({
       bookingId: params.bookingId,
       bookingVersion: params.bookingVersion,
@@ -252,7 +262,7 @@ class SquareClient {
   }
 
   // Get tattoo shop services from catalog
-  async getTattooServices(): Promise<SquareResponse> {
+  async getTattooServices(): Promise<SquareCatalogResponse> {
     // Get catalog items filtered to service type
     return this.client.catalog.list({
       types: "ITEM"
@@ -265,7 +275,7 @@ class SquareClient {
     limit?: number,
     sortField?: string,
     sortOrder?: string
-  ): Promise<SquareResponse> {
+  ): Promise<SquareCustomerResponse> {
     return this.client.customers.list({
       cursor,
       limit,
@@ -281,7 +291,7 @@ class SquareClient {
     emailAddress?: string;
     phoneNumber?: string;
     idempotencyKey: string;
-  }): Promise<SquareResponse> {
+  }): Promise<SquareCustomerResponse> {
     return this.client.customers.create({
       givenName: params.givenName,
       familyName: params.familyName,
@@ -292,7 +302,7 @@ class SquareClient {
   }
 
   // Catalog methods - useful for services, items, etc.
-  async getCatalog(types?: string[]): Promise<{ objects: SquareResponse[] }> {
+  async getCatalog(types?: string[]): Promise<{ objects: Square.CatalogObject[] }> {
     const response = await this.client.catalog.list({
       types: types?.join(',')
     });
@@ -314,7 +324,7 @@ class SquareClient {
     customerId?: string;
     idempotencyKey: string;
     referenceId?: string;
-  }): Promise<SquareResponse> {
+  }): Promise<SquareOrderResponse> {
     const { locationId, lineItems, customerId, idempotencyKey, referenceId } = params;
     
     // Transform line items to match Square's format
@@ -369,7 +379,7 @@ class SquareClient {
       buyNowPayLater?: boolean;
       cashAppPay?: boolean;
     };
-  }): Promise<SquareResponse> {
+  }): Promise<SquareInvoiceResponse> {
     return this.client.invoices.create({
       invoice: {
         orderId: params.orderId,
@@ -396,7 +406,7 @@ class SquareClient {
   async publishInvoice(params: {
     invoiceId: string;
     version: number;
-  }): Promise<SquareResponse> {
+  }): Promise<SquareInvoiceResponse> {
     return this.client.invoices.publish({
       invoiceId: params.invoiceId,
       version: params.version
@@ -404,7 +414,7 @@ class SquareClient {
   }
 
   // Get invoice
-  async getInvoice(invoiceId: string): Promise<SquareResponse> {
+  async getInvoice(invoiceId: string): Promise<SquareInvoiceResponse> {
     return this.client.invoices.get({ invoiceId });
   }
 
@@ -413,7 +423,7 @@ class SquareClient {
     locationId?: string;
     cursor?: string;
     limit?: number;
-  }): Promise<SquareResponse> {
+  }): Promise<SquareInvoiceResponse> {
     return this.client.invoices.list({
       locationId: params?.locationId || this.locationId,
       cursor: params?.cursor,
@@ -425,19 +435,19 @@ class SquareClient {
   async updateInvoice(params: {
     invoiceId: string;
     version: number;
-    paymentRequests?: Array<any>;
-    primaryRecipient?: any;
+    paymentRequests?: Array<Square.InvoicePaymentRequest>;
+    primaryRecipient?: Square.InvoiceRecipient;
     deliveryMethod?: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY';
-    acceptedPaymentMethods?: any;
-    customFields?: Array<any>;
-  }): Promise<SquareResponse> {
+    acceptedPaymentMethods?: Square.InvoiceAcceptedPaymentMethods;
+    customFields?: Array<Square.InvoiceCustomField>;
+  }): Promise<SquareInvoiceResponse> {
     return this.client.invoices.update({
       invoiceId: params.invoiceId,
       invoice: {
         version: params.version,
         paymentRequests: params.paymentRequests,
         primaryRecipient: params.primaryRecipient,
-        deliveryMethod: params.deliveryMethod as any,
+        deliveryMethod: params.deliveryMethod as Square.InvoiceDeliveryMethod,
         acceptedPaymentMethods: params.acceptedPaymentMethods,
         customFields: params.customFields
       }
@@ -448,7 +458,7 @@ class SquareClient {
   async cancelInvoice(params: {
     invoiceId: string;
     version: number;
-  }): Promise<SquareResponse> {
+  }): Promise<SquareInvoiceResponse> {
     return this.client.invoices.cancel({
       invoiceId: params.invoiceId,
       version: params.version
@@ -456,14 +466,14 @@ class SquareClient {
   }
 
   // Payment Links - using Orders API + external URLs (Square doesn't have direct payment link API)
-  async createPaymentLink(params: {
+  async createPaymentLink(_params: {
     orderId: string;
     checkoutOptions?: {
       allowTipping?: boolean;
       redirectUrl?: string;
       merchantSupportEmail?: string;
     };
-  }): Promise<{ success: boolean; paymentUrl: string; order: any }> {
+  }): Promise<PaymentLinkResponse> {
     // For payment links, we would typically:
     // 1. Create/update an order
     // 2. Generate a checkout URL using Square's online checkout
@@ -501,6 +511,11 @@ class SquareClient {
       applicationId: SQUARE_APPLICATION_ID,
       locationId: SQUARE_LOCATION_ID
     });
+  }
+
+  async deleteInvoice(_invoiceId: string, _version: number, _params?: { draft?: boolean }): Promise<SquareApiResponse<Record<string, never>>> {
+    // Implementation of deleteInvoice method
+    throw new Error('deleteInvoice method not implemented');
   }
 }
 

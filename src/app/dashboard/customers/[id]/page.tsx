@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ArrowLeft, Edit, Calendar, FileText, DollarSign, Clock, Mail, Phone, User } from 'lucide-react';
 import { CustomerService, type Customer } from '@/src/lib/api/services/customerService';
 import { AppointmentService, type AppointmentData } from '@/src/lib/api/services/appointmentService';
-import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/TattooRequestService';
+import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '../../../../components/ui/Modal';
 import CustomerForm from '../../../../components/forms/CustomerForm';

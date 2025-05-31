@@ -35,7 +35,12 @@ interface CreateAnonymousBookingBody {
   tattooRequestId?: string;
 }
 
-export async function createAnonymousBookingHandler(this: any, request: FastifyRequest<{ Body: CreateAnonymousBookingBody }>, reply: FastifyReply) {
+// Add proper typing for fastify instance with bookingService
+interface FastifyInstanceWithBookingService {
+  bookingService: BookingService;
+}
+
+export async function createAnonymousBookingHandler(this: FastifyInstanceWithBookingService, request: FastifyRequest<{ Body: CreateAnonymousBookingBody }>, reply: FastifyReply) {
   const {
     startAt,
     duration,
@@ -68,8 +73,8 @@ export async function createAnonymousBookingHandler(this: any, request: FastifyR
         });
       }
 
-      // Assuming tattooRequest might have contactEmail for anonymous requests
-      if ((tattooRequest as any).contactEmail && (tattooRequest as any).contactEmail !== contactEmail) {
+      // Check if tattoo request has contactEmail for anonymous requests
+      if (tattooRequest.contactEmail && tattooRequest.contactEmail !== contactEmail) {
         return reply.code(400).send({
           success: false,
           message: 'Email does not match the tattoo request contact email'
@@ -94,18 +99,19 @@ export async function createAnonymousBookingHandler(this: any, request: FastifyR
       booking: result.booking,
       trackingCode: result.booking.id // Use booking ID as tracking code
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     request.log.error(error);
-    if (error.message.includes('not found')) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (errorMessage.includes('not found')) {
       return reply.code(404).send({
         success: false,
-        message: error.message
+        message: errorMessage
       });
     }
     return reply.code(500).send({
       success: false,
       message: 'Error creating anonymous booking',
-      error: error.message
+      error: errorMessage
     });
   }
 } 

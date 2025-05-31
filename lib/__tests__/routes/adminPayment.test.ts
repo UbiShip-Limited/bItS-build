@@ -1,7 +1,7 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { mockPrismaClient, mockSquareClient } from '../../../jest.setup.mjs';
+import { mockPrismaClient } from '../../../jest.setup.mjs';
 import { setupTestApp, createAuthRequest, mockAuthMiddleware } from '../test-helpers';
-import SquareClient from '../../square/index';
+import { mockSquareClient } from '../square/square-test-helpers';
 import supertest from 'supertest';
 
 // Mock JWT token and user (admin role needed)
@@ -13,10 +13,9 @@ const mockUser = {
 };
 
 describe('Admin Payment Routes', () => {
-  const testApp = setupTestApp();
+  let _app: Awaited<ReturnType<typeof setupTestApp>>;
   let request: supertest.SuperTest<supertest.Test>;
   let authRequest: ReturnType<typeof createAuthRequest>;
-  let app;
   
   // Mock data
   const mockPayments = [
@@ -60,10 +59,9 @@ describe('Admin Payment Routes', () => {
   ];
   
   beforeEach(async () => {
-    // Setup test app and request
-    const setup = await testApp.setup();
-    app = setup.app; // Get the Fastify app instance
-    request = setup.request;
+    // Setup test app and get supertest instance
+    _app = await setupTestApp();
+    request = _app.request;
     authRequest = createAuthRequest(request, mockToken);
     
     // Setup auth middleware for this test
@@ -108,7 +106,7 @@ describe('Admin Payment Routes', () => {
   });
   
   afterEach(async () => {
-    await testApp.teardown();
+    await _app.teardown();
   });
   
   describe('GET /payments', () => {

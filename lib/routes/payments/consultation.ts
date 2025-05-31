@@ -2,7 +2,17 @@ import { FastifyPluginAsync } from 'fastify';
 import PaymentService, { PaymentType } from '../../services/paymentService';
 import BookingService, { BookingType } from '../../services/bookingService';
 
-const consultationRoutes: FastifyPluginAsync = async (fastify, options) => {
+// Type definitions for request bodies
+interface ConsultationPaymentBody {
+  sourceId: string;
+  amount: number;
+  customerId: string;
+  note?: string;
+  consultationDate?: string;
+  duration?: number;
+}
+
+const consultationRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize services
   const paymentService = new PaymentService();
   const bookingService = new BookingService();
@@ -24,7 +34,7 @@ const consultationRoutes: FastifyPluginAsync = async (fastify, options) => {
       }
     }
   }, async (request, reply) => {
-    const { sourceId, amount, customerId, note, consultationDate, duration } = request.body as any;
+    const { sourceId, amount, customerId, note, consultationDate, duration } = request.body as ConsultationPaymentBody;
     
     try {
       // Create booking first if date is provided
@@ -65,10 +75,11 @@ const consultationRoutes: FastifyPluginAsync = async (fastify, options) => {
       };
     } catch (error) {
       request.log.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return reply.code(500).send({ 
         success: false, 
         message: 'Failed to process consultation payment', 
-        error: error.message 
+        error: errorMessage
       });
     }
   });
@@ -90,7 +101,7 @@ const consultationRoutes: FastifyPluginAsync = async (fastify, options) => {
       }
     }
   }, async (request, reply) => {
-    const { sourceId, amount, customerId, note, consultationDate, duration } = request.body as any;
+    const { sourceId, amount, customerId, note, consultationDate, duration } = request.body as ConsultationPaymentBody;
     
     try {
       // Create booking first if date is provided
@@ -131,10 +142,11 @@ const consultationRoutes: FastifyPluginAsync = async (fastify, options) => {
       };
     } catch (error) {
       request.log.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return reply.code(500).send({ 
         success: false, 
         message: 'Failed to process drawing consultation payment', 
-        error: error.message 
+        error: errorMessage
       });
     }
   });

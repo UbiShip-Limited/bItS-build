@@ -8,8 +8,11 @@ const mockUsers = createMockUsers(2);
 const mockUsersWithDateStrings = mockUsers.map(user => dateToISOStrings(user));
 
 // Type guard for mocked functions
-const isMockFunction = (fn: any): fn is jest.Mock => 
-  fn && typeof fn === 'function' && typeof fn.mockReset === 'function';
+const isMockFunction = (fn: unknown): fn is jest.Mock => 
+  fn !== null && 
+  typeof fn === 'function' && 
+  'mockReset' in fn &&
+  typeof (fn as jest.Mock).mockReset === 'function';
 
 describe('Server', () => {
   const testApp = setupTestApp();

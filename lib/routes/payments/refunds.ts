@@ -2,7 +2,7 @@ import { FastifyPluginAsync } from 'fastify';
 import { authorize } from '../../middleware/auth';
 import PaymentService from '../../services/paymentService';
 
-const refundRoutes: FastifyPluginAsync = async (fastify, options) => {
+const refundRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize services
   const paymentService = new PaymentService();
 
@@ -50,10 +50,11 @@ const refundRoutes: FastifyPluginAsync = async (fastify, options) => {
       };
     } catch (error) {
       request.log.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return reply.code(500).send({ 
         success: false, 
         message: 'Failed to process refund', 
-        error: error.message 
+        error: errorMessage
       });
     }
   });

@@ -152,7 +152,7 @@ export class SquareIntegrationService {
     }
   }
   
-  private async logSquareError(action: string, appointmentId: string, error: any) {
+  private async logSquareError(action: string, appointmentId: string, error: Error | unknown) {
     try {
       await prisma.auditLog.create({
         data: {
@@ -161,8 +161,8 @@ export class SquareIntegrationService {
           resourceId: appointmentId,
           resourceType: 'appointment',
           details: {
-            error: error.message || 'Unknown Square API error',
-            errorDetails: error.errors || error.toString(),
+            error: error instanceof Error ? error.message : 'Unknown Square API error',
+            errorDetails: error instanceof Error && 'errors' in error ? (error as { errors: unknown }).errors : String(error),
             severity: process.env.NODE_ENV === 'production' ? 'high' : 'medium'
           }
         }

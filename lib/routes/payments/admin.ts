@@ -2,7 +2,23 @@ import { FastifyPluginAsync } from 'fastify';
 import { authorize } from '../../middleware/auth';
 import SquareClient from '../../square/index';
 
-const adminRoutes: FastifyPluginAsync = async (fastify, options) => {
+// Type definitions for request queries
+interface PaymentQueryParams {
+  status?: 'pending' | 'completed' | 'failed' | 'refunded';
+  page?: number;
+  limit?: number;
+  beginTime?: string;
+  endTime?: string;
+  includeSquare?: boolean;
+}
+
+interface SyncQueryParams {
+  beginTime?: string;
+  endTime?: string;
+  limit?: number;
+}
+
+const adminRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize Square client
   const squareClient = SquareClient.fromEnv();
 
@@ -23,7 +39,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify, options) => {
       }
     }
   }, async (request, reply) => {
-    const { status, page = 1, limit = 20, beginTime, endTime, includeSquare = false } = request.query as any;
+    const { status, page = 1, limit = 20, beginTime, endTime, includeSquare = false } = request.query as PaymentQueryParams;
     
     // If Square integration requested, fetch from Square API
     if (includeSquare) {
@@ -131,7 +147,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify, options) => {
       }
     }
   }, async (request, reply) => {
-    const { beginTime, endTime, limit = 20 } = request.query as any;
+    const { beginTime, endTime, limit = 20 } = request.query as SyncQueryParams;
     
     try {
       // Get payments from Square

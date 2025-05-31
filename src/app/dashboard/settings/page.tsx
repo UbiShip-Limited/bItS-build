@@ -60,7 +60,7 @@ export default function SettingsPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="mb-6">
               <h2 className="text-lg font-medium mb-2">Shop Profile</h2>
-              <p className="text-sm text-gray-600">Update your shop's basic information</p>
+              <p className="text-sm text-gray-600">Update your shop&apos;s basic information</p>
             </div>
 
             <form>

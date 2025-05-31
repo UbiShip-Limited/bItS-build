@@ -11,7 +11,75 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
+// Type definitions for request bodies and queries
+interface TattooRequestQueryParams {
+  status?: 'new' | 'reviewed' | 'approved' | 'rejected';
+  page?: number;
+  limit?: number;
+}
+
+interface CreateTattooRequestBody {
+  customerId?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  description: string;
+  placement?: string;
+  size?: string;
+  colorPreference?: string;
+  style?: string;
+  purpose?: string;
+  preferredArtist?: string;
+  timeframe?: string;
+  contactPreference?: string;
+  additionalNotes?: string;
+  referenceImages?: Array<{
+    url: string;
+    publicId: string;
+  }>;
+}
+
+interface TattooRequestData {
+  description: string;
+  placement?: string;
+  size?: string;
+  colorPreference?: string;
+  style?: string;
+  purpose?: string;
+  preferredArtist?: string;
+  timeframe?: string;
+  contactPreference?: string;
+  additionalNotes?: string;
+  referenceImages: Array<{
+    url: string;
+    publicId: string;
+  }>;
+  customerId?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  trackingToken?: string;
+}
+
+interface UpdateTattooRequestBody {
+  status?: 'new' | 'reviewed' | 'approved' | 'rejected';
+  notes?: string;
+  customerId?: string;
+}
+
+interface UpdateTattooRequestData {
+  notes?: string;
+  customerId?: string;
+}
+
+interface ConvertToAppointmentBody {
+  startAt: string;
+  duration: number;
+  artistId?: string;
+  bookingType?: BookingType;
+  priceQuote?: number;
+  note?: string;
+}
+
+const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
   // Register multipart support for this route context
   await fastify.register(multipart, {
     limits: {
@@ -42,8 +110,8 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
-    const { status, page = 1, limit = 20 } = request.query as any;
+  }, async (request) => {
+    const { status, page = 1, limit = 20 } = request.query as TattooRequestQueryParams;
     
     const result = await tattooRequestService.list({
       status,
@@ -67,7 +135,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { id } = request.params as { id: string };
     const tattooRequest = await tattooRequestService.findById(id);
     return tattooRequest;
@@ -128,13 +196,13 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
         contactPreference,
         additionalNotes,
         referenceImages 
-      } = request.body as any;
+      } = request.body as CreateTattooRequestBody;
       
       // Generate tracking token for anonymous requests
       const trackingToken = !customerId ? uuidv4() : null;
       
       // Create the tattoo request with the right structure
-      const tattooRequestData: any = {
+      const tattooRequestData: TattooRequestData = {
         description,
         placement,
         size,
@@ -184,12 +252,14 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
       
       reply.type('application/json');
       return tattooRequest;
-    } catch (error: any) {
+    } catch (error: unknown) {
       fastify.log.error(error, 'Error creating tattoo request');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
       return reply.status(500).send({ 
         error: 'Failed to submit tattoo request',
-        message: error.message || 'Unknown error',
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        message: errorMessage,
+        details: process.env.NODE_ENV === 'development' ? errorStack : undefined
       });
     }
   });
@@ -216,7 +286,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
     }
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const { status, notes, customerId } = request.body as any;
+    const { status, notes, customerId } = request.body as UpdateTattooRequestBody;
     
     if (status) {
       const updated = await tattooRequestService.updateStatus(id, status, request.user?.id);
@@ -224,7 +294,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
     }
     
     // If not updating status, handle other updates
-    const updateData: any = {};
+    const updateData: UpdateTattooRequestData = {};
     if (notes !== undefined) updateData.notes = notes;
     if (customerId !== undefined) updateData.customerId = customerId;
     
@@ -291,7 +361,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
       bookingType = BookingType.TATTOO_SESSION,
       priceQuote,
       note
-    } = request.body as any;
+    } = request.body as ConvertToAppointmentBody;
     
     try {
       const result = await tattooRequestService.convertToAppointment(
@@ -310,7 +380,8 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
       return result;
     } catch (error) {
       request.log.error(error);
-      return reply.status(400).send({ error: error.message });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return reply.status(400).send({ error: errorMessage });
     }
   });
 
@@ -380,7 +451,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
       for (const tempFile of tempFiles) {
         try {
           await fs.promises.unlink(tempFile);
-        } catch (err) {
+        } catch {
           // Log but don't throw - file cleanup is not critical
           fastify.log.warn(`Failed to delete temp file: ${tempFile}`);
         }
@@ -392,15 +463,16 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify, options) => {
       for (const tempFile of tempFiles) {
         try {
           await fs.promises.unlink(tempFile);
-        } catch (err) {
+        } catch {
           // Ignore cleanup errors
         }
       }
       
       fastify.log.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return reply.status(500).send({ 
         error: 'Failed to upload images',
-        message: error.message 
+        message: errorMessage
       });
     }
   });

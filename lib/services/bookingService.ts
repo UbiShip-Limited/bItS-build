@@ -1,7 +1,5 @@
-
 import { AppointmentService } from './appointmentService';
 import { SquareIntegrationService } from './squareIntegrationService';
-
 
 export enum BookingType {
   CONSULTATION = 'consultation',
@@ -52,6 +50,12 @@ interface CancelBookingParams {
   cancelledBy?: string;
 }
 
+interface SquareBookingUpdateResult {
+  success: boolean;
+  squareId?: string;
+  error?: string;
+}
+
 /**
  * @deprecated This service is deprecated. Use AppointmentService and SquareIntegrationService directly.
  * This is maintained only for backward compatibility.
@@ -80,7 +84,6 @@ export default class BookingService {
       tattooRequestId,
       contactEmail,
       contactPhone,
-      isAnonymous = false
     } = params;
     
     try {
@@ -144,7 +147,7 @@ export default class BookingService {
       });
       
       // Try to update in Square
-      let squareBookingUpdated: any = null;
+      let squareBookingUpdated: SquareBookingUpdateResult | null = null;
       if (appointment.customerId) {
         const squareResult = await this.squareService.updateSquareBooking(appointment);
         squareBookingUpdated = squareResult.success ? squareResult : null;
@@ -161,7 +164,7 @@ export default class BookingService {
     }
   }
   
-  async getBookingAvailability(date: Date, artistId?: string) {
+  async getBookingAvailability(date: Date, _artistId?: string) {
     // Implementation for checking available slots
     // Will be implemented in future PR
     return {

@@ -104,7 +104,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { status, customerId, artistId, from, to, page = 1, limit = 20 } = request.query as AppointmentQueryParams;
     
     const result = await appointmentService.list(
@@ -135,7 +135,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { id } = request.params as { id: string };
     const appointment = await appointmentService.findById(id);
     return appointment;
@@ -174,7 +174,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
         ]
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { 
       customerId, 
       contactEmail,
@@ -244,7 +244,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { id } = request.params as { id: string };
     const { 
       artistId, 
@@ -344,7 +344,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { 
       contactEmail,
       contactPhone,

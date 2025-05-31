@@ -1,7 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import SquareClient from '../square/index.js';
 import { prisma } from '../prisma/prisma.js';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+import type { Square } from 'square';
 
 export enum PaymentType {
   CONSULTATION = 'consultation',
@@ -18,7 +19,7 @@ const MINIMUM_PAYMENT_AMOUNTS = {
   [PaymentType.TATTOO_FINAL]: 100
 };
 
-interface ProcessPaymentParams {
+export interface ProcessPaymentParams {
   sourceId: string;
   amount: number;
   customerId: string;
@@ -33,12 +34,16 @@ export default class PaymentService {
   private squareClient: ReturnType<typeof SquareClient.fromEnv>;
   private prisma: PrismaClient;
   
-  constructor(prismaClient?: PrismaClient, squareClient?: any) {
+  constructor(prismaClient?: PrismaClient, squareClient?: ReturnType<typeof SquareClient.fromEnv>) {
     this.squareClient = squareClient || SquareClient.fromEnv();
     this.prisma = prismaClient || prisma;
   }
   
-  async processPayment(params: ProcessPaymentParams): Promise<{ success: boolean; payment: any; squarePayment: any }> {
+  async processPayment(params: ProcessPaymentParams): Promise<{ 
+    success: boolean; 
+    payment: Prisma.PaymentGetPayload<Record<string, never>>; 
+    squarePayment: Square.Payment | undefined 
+  }> {
     const { 
       sourceId, 
       amount, 
@@ -46,7 +51,6 @@ export default class PaymentService {
       paymentType,
       bookingId,
       note,
-      customerEmail
     } = params;
     
     // Validate minimum payment amount
@@ -55,20 +59,20 @@ export default class PaymentService {
       throw new Error(`Minimum payment amount for ${paymentType} is $${minimumAmount} CAD`);
     }
     
+    // Find customer to get Square ID
+    const customer = await this.prisma.customer.findUnique({
+      where: { id: customerId }
+    });
+    
+    if (!customer) {
+      throw new Error(`Customer ${customerId} not found`);
+    }
+    
     // Generate unique reference for this payment
     const idempotencyKey = uuidv4();
     const referenceId = bookingId || uuidv4();
     
     try {
-      // Find customer to get Square ID
-      const customer = await this.prisma.customer.findUnique({
-        where: { id: customerId }
-      });
-      
-      if (!customer) {
-        throw new Error(`Customer ${customerId} not found`);
-      }
-      
       // Process Square payment
       const squareResponse = await this.squareClient.createPayment({
         sourceId,
@@ -163,8 +167,8 @@ export default class PaymentService {
         where: { id: paymentId },
         data: {
           status: amount && amount < payment.amount ? 'partially_refunded' : 'refunded',
-          refundDetails: refundResponse.result.refund
-        } as any
+          refundDetails: refundResponse.result.refund as Prisma.InputJsonValue
+        }
       });
       
       // Create audit log entry

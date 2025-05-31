@@ -11,7 +11,7 @@ export interface MockUserRequest extends FastifyRequest {
     id: string;
     email: string;
     role: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 

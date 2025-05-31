@@ -10,7 +10,7 @@ export class AppointmentError extends Error {
 }
 
 export class SquareIntegrationError extends AppointmentError {
-  constructor(message: string, public originalError?: any) {
+  constructor(message: string, public originalError?: Error | unknown) {
     super(message, 'SQUARE_ERROR', 500);
     this.name = 'SquareIntegrationError';
   }

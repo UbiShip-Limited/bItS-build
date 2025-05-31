@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Filter, FileText, User, Calendar, DollarSign } from 'lucide-react';
-import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/TattooRequestService';
+import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
 import { apiClient } from '@/src/lib/api/apiClient';
 
 export default function TattooRequestsPage() {

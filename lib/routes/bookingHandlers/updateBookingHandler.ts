@@ -49,12 +49,6 @@ interface FastifyInstanceWithBookingService {
   bookingService: BookingService;
 }
 
-interface AuditLogDetails {
-  previousStatus: string;
-  newStatus: string;
-  changes: UpdateBookingBody;
-}
-
 export async function updateBookingHandler(this: FastifyInstanceWithBookingService, request: FastifyRequest<{ Params: UpdateBookingParams, Body: UpdateBookingBody }>, reply: FastifyReply) {
   const { id } = request.params;
   const { startTime, duration, status, artistId, notes, priceQuote } = request.body; // Remove unused endTime

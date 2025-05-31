@@ -7,7 +7,7 @@ import tattooRoutes from './tattoo';
 import refundRoutes from './refunds';
 import paymentLinkRoutes from './paymentLinks';
 
-const paymentRoutes: FastifyPluginAsync = async (fastify, options) => {
+const paymentRoutes: FastifyPluginAsync = async (fastify) => {
   // Apply authentication middleware to all routes in this plugin
   fastify.addHook('preHandler', authenticate);
 

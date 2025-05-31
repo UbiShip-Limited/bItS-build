@@ -20,7 +20,7 @@ import {
   MessageSquare,
   UserPlus
 } from 'lucide-react';
-import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/TattooRequestService';
+import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '@/src/components/ui/Modal';
 import CustomerForm from '@/src/components/forms/CustomerForm';

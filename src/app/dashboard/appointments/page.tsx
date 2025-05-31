@@ -53,8 +53,9 @@ export default function AppointmentsPage() {
       
       setAppointments(response.data);
       setPagination(response.pagination);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load appointments');
+    } catch (error) {
+      console.error('Failed to load appointments:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load appointments');
     } finally {
       setLoading(false);
     }
@@ -72,8 +73,9 @@ export default function AppointmentsPage() {
     try {
       await appointmentService.cancelAppointment(id, 'Cancelled by admin');
       loadAppointments();
-    } catch (err: any) {
-      alert(err.message || 'Failed to cancel appointment');
+    } catch (error) {
+      console.error('Failed to cancel appointment:', error);
+      setError(error instanceof Error ? error.message : 'Failed to cancel appointment');
     }
   };
 

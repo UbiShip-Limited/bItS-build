@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import { authorize } from '../middleware/auth';
 import { UserRole } from '../types/auth';
+import { CloudinarySignatureBody } from '../types/api';
 
 // Use mock service if no Cloudinary credentials are set
 const useMock = !process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET;
@@ -12,7 +13,7 @@ if (useMock) {
   console.log('⚠️  Using mock Cloudinary service - set CLOUDINARY_* env vars for real uploads');
 }
 
-const cloudinaryRoutes: FastifyPluginAsync = async (fastify, options) => {
+const cloudinaryRoutes: FastifyPluginAsync = async (fastify, _options) => {
   // Public endpoint for tattoo request image uploads (no auth required)
   fastify.post('/signature/public', {
     schema: {
@@ -25,7 +26,7 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify, options) => {
       }
     }
   }, async (request, reply) => {
-    const { folder = 'tattoo-requests', tags = ['tattoo-request', 'public-upload'] } = request.body as any;
+    const { folder = 'tattoo-requests', tags = ['tattoo-request', 'public-upload'] } = request.body as CloudinarySignatureBody;
     
     // Generate a signature with folder and tags pre-defined
     // This locks the upload to only go to the specified folder
@@ -54,7 +55,7 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify, options) => {
       }
     }
   }, async (request, reply) => {
-    const { folder = 'tattoo-requests', tags = [] } = request.body as any;
+    const { folder = 'tattoo-requests', tags = [] } = request.body as CloudinarySignatureBody;
     
     // Generate a signature with folder and tags pre-defined
     // This locks the upload to only go to the specified folder

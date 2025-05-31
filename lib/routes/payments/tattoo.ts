@@ -2,7 +2,43 @@ import { FastifyPluginAsync } from 'fastify';
 import PaymentService, { PaymentType } from '../../services/paymentService';
 import BookingService, { BookingType } from '../../services/bookingService';
 
-const tattooRoutes: FastifyPluginAsync = async (fastify, options) => {
+// Type definitions for request bodies
+interface TattooDepositPaymentBody {
+  sourceId: string;
+  amount: number;
+  customerId: string;
+  tattooRequestId: string;
+  sessionDate?: string;
+  duration?: number;
+  note?: string;
+  staffId?: string;
+}
+
+interface TattooFinalPaymentBody {
+  sourceId: string;
+  amount: number;
+  customerId: string;
+  tattooRequestId: string;
+  note?: string;
+  staffId?: string;
+}
+
+// Interface for Prisma tattoo request update data
+interface TattooRequestDepositUpdate {
+  deposit_paid: boolean;
+  deposit_amount: number;
+  payment_id: string;
+  status: string;
+}
+
+interface TattooRequestFinalUpdate {
+  final_paid: boolean;
+  final_amount: number;
+  final_payment_id: string;
+  status: string;
+}
+
+const tattooRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize services
   const paymentService = new PaymentService();
   const bookingService = new BookingService();
@@ -35,7 +71,7 @@ const tattooRoutes: FastifyPluginAsync = async (fastify, options) => {
       duration, 
       note,
       staffId 
-    } = request.body as any;
+    } = request.body as TattooDepositPaymentBody;
     
     try {
       // Create booking if session date is provided
@@ -63,14 +99,16 @@ const tattooRoutes: FastifyPluginAsync = async (fastify, options) => {
       });
       
       // Update tattoo request with deposit info
+      const updateData: TattooRequestDepositUpdate = {
+        deposit_paid: true,
+        deposit_amount: amount,
+        payment_id: paymentResult.payment.id,
+        status: 'deposit_paid'
+      };
+      
       await fastify.prisma.tattooRequest.update({
         where: { id: tattooRequestId },
-        data: { 
-          deposit_paid: true,
-          deposit_amount: amount,
-          payment_id: paymentResult.payment.id,
-          status: 'deposit_paid'
-        } as any
+        data: updateData
       });
       
       // If we have a booking, link it to the tattoo request
@@ -88,10 +126,11 @@ const tattooRoutes: FastifyPluginAsync = async (fastify, options) => {
       };
     } catch (error) {
       request.log.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return reply.code(500).send({ 
         success: false, 
         message: 'Failed to process tattoo deposit payment', 
-        error: error.message 
+        error: errorMessage
       });
     }
   });
@@ -117,10 +156,8 @@ const tattooRoutes: FastifyPluginAsync = async (fastify, options) => {
       sourceId, 
       amount, 
       customerId, 
-      tattooRequestId, 
-      note,
-      staffId 
-    } = request.body as any;
+      tattooRequestId
+    } = request.body as TattooFinalPaymentBody;
     
     try {
       // Process payment
@@ -133,14 +170,16 @@ const tattooRoutes: FastifyPluginAsync = async (fastify, options) => {
       });
       
       // Update tattoo request with final payment info
+      const updateData: TattooRequestFinalUpdate = {
+        final_paid: true,
+        final_amount: amount,
+        final_payment_id: paymentResult.payment.id,
+        status: 'completed'
+      };
+      
       await fastify.prisma.tattooRequest.update({
         where: { id: tattooRequestId },
-        data: { 
-          final_paid: true,
-          final_amount: amount,
-          final_payment_id: paymentResult.payment.id,
-          status: 'completed'
-        } as any
+        data: updateData
       });
       
       return {
@@ -149,10 +188,11 @@ const tattooRoutes: FastifyPluginAsync = async (fastify, options) => {
       };
     } catch (error) {
       request.log.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return reply.code(500).send({ 
         success: false, 
         message: 'Failed to process final tattoo payment', 
-        error: error.message 
+        error: errorMessage
       });
     }
   });

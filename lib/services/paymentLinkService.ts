@@ -3,6 +3,11 @@ import SquareClient from '../square/index.js';
 import { prisma } from '../prisma/prisma.js';
 import { PrismaClient } from '@prisma/client';
 import { PaymentType } from './paymentService.js';
+import type { Square } from 'square';
+import type {
+  SquareApiResponse,
+  PaymentLinkResponse,
+} from '../types/square';
 
 export interface PaymentLinkParams {
   amount: number;
@@ -37,7 +42,7 @@ export default class PaymentLinkService {
   private squareClient: ReturnType<typeof SquareClient.fromEnv>;
   private prisma: PrismaClient;
   
-  constructor(prismaClient?: PrismaClient, squareClient?: any) {
+  constructor(prismaClient?: PrismaClient, squareClient?: ReturnType<typeof SquareClient.fromEnv>) {
     this.squareClient = squareClient || SquareClient.fromEnv();
     this.prisma = prismaClient || prisma;
   }
@@ -47,7 +52,7 @@ export default class PaymentLinkService {
    */
   async createPaymentLink(params: PaymentLinkParams): Promise<{
     success: boolean;
-    paymentLink: any;
+    paymentLink: Square.PaymentLink;
     url: string;
   }> {
     const { 
@@ -148,7 +153,7 @@ export default class PaymentLinkService {
    */
   async createInvoice(params: InvoiceParams): Promise<{
     success: boolean;
-    invoice: any;
+    invoice: Square.Invoice;
     publicUrl?: string;
   }> {
     const {
@@ -366,21 +371,21 @@ export default class PaymentLinkService {
   async listPaymentLinks(params?: {
     cursor?: string;
     limit?: number;
-  }): Promise<any> {
+  }): Promise<SquareApiResponse<{ paymentLinks?: Square.PaymentLink[] }>> {
     return this.squareClient.listPaymentLinks(params);
   }
   
   /**
    * Get payment link details
    */
-  async getPaymentLink(id: string): Promise<any> {
+  async getPaymentLink(id: string): Promise<SquareApiResponse<{ paymentLink?: Square.PaymentLink }>> {
     return this.squareClient.getPaymentLink(id);
   }
   
   /**
    * Delete a payment link
    */
-  async deletePaymentLink(id: string): Promise<any> {
+  async deletePaymentLink(id: string): Promise<SquareApiResponse<Record<string, never>>> {
     const response = await this.squareClient.deletePaymentLink(id);
     
     // Create audit log

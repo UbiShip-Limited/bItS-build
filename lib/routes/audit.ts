@@ -49,7 +49,7 @@ const auditRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { userId, action, resource, resourceId, from, to, page = 1, limit = 20 } = request.query as AuditLogQueryParams;
     
     // Build where clause based on query parameters
@@ -132,7 +132,7 @@ const auditRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { resource } = request.params as { resource: string };
     const { page = 1, limit = 20 } = request.query as PaginationQueryParams;
     
@@ -177,7 +177,7 @@ const auditRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { resource, resourceId } = request.params as { resource: string, resourceId: string };
     const { page = 1, limit = 20 } = request.query as PaginationQueryParams;
     

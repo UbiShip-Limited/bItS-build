@@ -54,15 +54,15 @@ export default function TattooRequestsPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      'new': 'bg-gray-100 text-gray-800',
-      'reviewed': 'bg-blue-100 text-blue-800',
-      'approved': 'bg-green-100 text-green-800',
-      'rejected': 'bg-red-100 text-red-800',
-      'deposit_paid': 'bg-yellow-100 text-yellow-800',
-      'in_progress': 'bg-purple-100 text-purple-800',
-      'completed': 'bg-indigo-100 text-indigo-800'
+      'new': 'bg-white text-black border-gray-400',
+      'reviewed': 'bg-black text-white border-black',
+      'approved': 'bg-gray-800 text-white border-gray-800',
+      'rejected': 'bg-white text-red-600 border-red-300',
+      'deposit_paid': 'bg-gray-600 text-white border-gray-600',
+      'in_progress': 'bg-gray-300 text-black border-gray-400',
+      'completed': 'bg-gray-100 text-black border-gray-300'
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-gray-100 text-black border-gray-300';
   };
 
   const formatDate = (dateString: string) => {
@@ -75,26 +75,26 @@ export default function TattooRequestsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-8 pb-6 border-b-2 border-gray-200">
         <div>
-          <h1 className="text-2xl font-bold">Tattoo Requests</h1>
-          <p className="text-gray-600">Manage all tattoo requests</p>
+          <h1 className="text-3xl font-bold text-black mb-2">Tattoo Requests</h1>
+          <p className="text-gray-600 text-lg">Manage all tattoo requests</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-4 h-4 text-gray-500" />
-          <span className="font-medium">Filters</span>
+      <div className="bg-white border-2 border-gray-200 rounded-lg shadow-md p-6 mb-6 hover:border-black transition-colors duration-200">
+        <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-200">
+          <Filter className="w-5 h-5 text-black" />
+          <span className="font-semibold text-black text-lg">Filters</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="block text-sm font-semibold text-black mb-2">Status</label>
             <select 
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-              className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
+              className="block w-full px-3 py-2 bg-white border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition-colors duration-200"
             >
               <option value="">All Statuses</option>
               <option value="new">New</option>
@@ -107,7 +107,7 @@ export default function TattooRequestsPage() {
           <div className="flex items-end">
             <button
               onClick={() => setFilters({ status: '', page: 1, limit: 20 })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              className="w-full px-3 py-2 border-2 border-gray-300 text-black rounded-lg hover:border-black hover:bg-gray-50 font-medium transition-colors duration-200"
             >
               Clear Filters
             </button>
@@ -116,59 +116,61 @@ export default function TattooRequestsPage() {
       </div>
 
       {/* Tattoo Requests Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white border-2 border-gray-200 rounded-lg shadow-md overflow-hidden hover:border-black transition-colors duration-200">
         {loading ? (
           <div className="p-8 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
             <p className="mt-2 text-gray-600">Loading tattoo requests...</p>
           </div>
         ) : error ? (
-          <div className="p-8 text-center text-red-600">
-            <p>{error}</p>
-            <button 
-              onClick={loadTattooRequests}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Retry
-            </button>
+          <div className="p-8 text-center">
+            <div className="bg-white border-2 border-red-300 text-red-600 px-6 py-4 rounded-lg">
+              <p className="font-medium">{error}</p>
+              <button 
+                onClick={loadTattooRequests}
+                className="mt-4 px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         ) : requests.length === 0 ? (
           <div className="p-8 text-center text-gray-600">
             <FileText className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <p>No tattoo requests found</p>
+            <p className="text-lg font-medium">No tattoo requests found</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y-2 divide-black">
+                <thead className="bg-black">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
                       Request
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
                       Contact
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
                       Details
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
                       Style
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {requests.map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={request.id} className="hover:bg-gray-50 transition-colors duration-150">
+                      <td className="px-6 py-4 whitespace-nowrap border-r border-gray-100">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded overflow-hidden">
+                          <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded overflow-hidden border-2 border-gray-300">
                             {request.referenceImages && request.referenceImages.length > 0 ? (
                               <img 
                                 src={request.referenceImages[0].url} 
@@ -176,24 +178,24 @@ export default function TattooRequestsPage() {
                                 className="h-full w-full object-cover"
                               />
                             ) : (
-                              <div className="h-full w-full flex items-center justify-center text-gray-500">
+                              <div className="h-full w-full flex items-center justify-center text-black">
                                 <FileText className="w-5 h-5" />
                               </div>
                             )}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-semibold text-black">
                               Request #{request.id.slice(-6)}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              <Calendar className="w-3 h-3 inline mr-1" />
+                            <div className="text-sm text-gray-600 flex items-center">
+                              <Calendar className="w-3 h-3 mr-1" />
                               {formatDate(request.createdAt)}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap border-r border-gray-100">
+                        <div className="text-sm font-medium text-black">
                           {request.customer ? (
                             <>
                               <User className="w-3 h-3 inline mr-1" />
@@ -203,30 +205,30 @@ export default function TattooRequestsPage() {
                             'Anonymous'
                           )}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-600">
                           {request.customer?.email || request.contactEmail || 'No email'}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 max-w-xs truncate">
+                      <td className="px-6 py-4 border-r border-gray-100">
+                        <div className="text-sm font-medium text-black max-w-xs truncate">
                           {request.description}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-600">
                           {request.placement} • {request.size}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(request.status)}`}>
+                      <td className="px-6 py-4 whitespace-nowrap border-r border-gray-100">
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${getStatusColor(request.status)}`}>
                           {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-black font-medium border-r border-gray-100">
                         {request.style || 'Not specified'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Link 
                           href={`/dashboard/tattoo-request/${request.id}`} 
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-black hover:underline font-medium px-2 py-1"
                         >
                           View
                         </Link>
@@ -238,30 +240,30 @@ export default function TattooRequestsPage() {
             </div>
             
             {/* Pagination */}
-            <div className="bg-white px-4 py-3 border-t border-gray-200">
+            <div className="bg-gray-50 border-t-2 border-black px-6 py-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
-                    <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
-                    <span className="font-medium">{pagination.total}</span> results
+                  <p className="text-sm text-black font-medium">
+                    Showing <span className="font-bold">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
+                    <span className="font-bold">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
+                    <span className="font-bold">{pagination.total}</span> results
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
                     disabled={filters.page === 1}
-                    className="px-3 py-1 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="px-4 py-2 border-2 border-gray-300 text-black rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:border-black font-medium transition-colors duration-200"
                   >
                     Previous
                   </button>
-                  <span className="px-3 py-1 text-sm">
+                  <span className="px-4 py-2 text-sm font-medium text-black">
                     Page {pagination.page} of {pagination.pages}
                   </span>
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
                     disabled={filters.page === pagination.pages}
-                    className="px-3 py-1 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="px-4 py-2 border-2 border-gray-300 text-black rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:border-black font-medium transition-colors duration-200"
                   >
                     Next
                   </button>

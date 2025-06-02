@@ -9,7 +9,7 @@ export type {
 // Square API Response wrapper types
 export interface SquareApiResponse<T> {
   result?: T;
-  errors?: Square.Error[];
+  errors?: Square.Error_[];
   cursor?: string;
 }
 
@@ -84,8 +84,46 @@ export interface InvoiceUpdateParams {
 }
 
 // Payment Link response
-export interface PaymentLinkResponse {
-  success: boolean;
-  paymentUrl: string;
-  order: Square.Order;
-} 
+export interface PaymentLinkResponse extends SquareApiResponse<{
+  payment_link?: {
+    id: string;
+    version: number;
+    order_id: string;
+    url: string;
+    long_url?: string;
+    created_at: string;
+    updated_at?: string;
+    description?: string;
+    payment_note?: string;
+    checkout_options?: {
+      allow_tipping?: boolean;
+      custom_fields?: Array<{ title: string }>;
+      redirect_url?: string;
+      merchant_support_email?: string;
+      ask_for_shipping_address?: boolean;
+      accepted_payment_methods?: {
+        apple_pay?: boolean;
+        google_pay?: boolean;
+        cash_app_pay?: boolean;
+        afterpay_clearpay?: boolean;
+      };
+    };
+    pre_populated_data?: {
+      buyer_email?: string;
+      buyer_phone_number?: string;
+      buyer_address?: any;
+    };
+  };
+  payment_links?: Array<{
+    id: string;
+    version: number;
+    order_id: string;
+    url: string;
+    long_url?: string;
+    created_at: string;
+    updated_at?: string;
+  }>;
+  related_resources?: {
+    orders?: any[];
+  };
+}> {} 

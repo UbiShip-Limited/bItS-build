@@ -1,51 +1,69 @@
+import { format } from 'date-fns';
 import Link from 'next/link';
-import { getTimeAgo } from '@/src/lib/utils/dateFormatters';
-import { getStatusColor } from '@/src/lib/utils/statusHelpers';
 
 interface TattooRequest {
   id: string;
+  clientName: string;
+  style: string;
+  size: string;
   placement: string;
-  style?: string;
-  status: string;
   createdAt: string;
+  status: 'new' | 'reviewing' | 'quoted' | 'approved';
 }
 
 interface RecentRequestsProps {
   requests: TattooRequest[];
 }
 
-export function RecentRequests({ requests }: RecentRequestsProps) {
+export default function RecentRequests({ requests }: RecentRequestsProps) {
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      new: 'badge-primary',
+      reviewing: 'badge-secondary',
+      quoted: 'badge-accent',
+      approved: 'badge-success',
+    };
+    return statusConfig[status as keyof typeof statusConfig] || 'badge-ghost';
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Recent Requests</h2>
-        <Link href="/dashboard/tattoo-request" className="text-blue-600 text-sm hover:underline">
-          View All
-        </Link>
-      </div>
-      <div className="space-y-4">
-        {requests.length === 0 ? (
-          <p className="text-gray-500 text-sm">No new requests</p>
-        ) : (
-          requests.map((request) => (
-            <div key={request.id} className="border-b pb-3 last:border-0">
-              <div className="flex justify-between">
-                <div>
-                  <p className="font-medium">Request #{request.id.slice(0, 8)}</p>
-                  <p className="text-sm text-gray-500">
-                    {request.placement}, {request.style || 'No style specified'}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm">{getTimeAgo(request.createdAt)}</p>
-                  <span className={`inline-block px-2 py-1 text-xs rounded-full ${getStatusColor(request.status)}`}>
-                    {request.status}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
+    <div className="card bg-smoke-100 shadow-smoke hover:shadow-smoke-lg transition-all duration-300 border border-smoke-200">
+      <div className="card-body">
+        <h2 className="card-title flex justify-between items-center text-smoke-900">
+          <span>Recent Tattoo Requests</span>
+          <Link href="/dashboard/tattoo-request" className="btn btn-ghost btn-sm text-smoke-600 hover:text-smoke-900 hover:bg-smoke-200">
+            View All →
+          </Link>
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="table">
+            <thead>
+              <tr className="border-smoke-300">
+                <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Client</th>
+                <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Style</th>
+                <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Details</th>
+                <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map((request) => (
+                <tr key={request.id} className="hover:bg-smoke-50 transition-colors border-smoke-200">
+                  <td className="font-medium text-smoke-700">{request.clientName}</td>
+                  <td className="text-smoke-600">{request.style}</td>
+                  <td className="text-smoke-600">
+                    <div className="text-sm">{request.size} • {request.placement}</div>
+                    <div className="text-xs text-smoke-500">{format(new Date(request.createdAt), 'MMM dd')}</div>
+                  </td>
+                  <td>
+                    <span className={`badge ${getStatusBadge(request.status)} badge-sm`}>
+                      {request.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

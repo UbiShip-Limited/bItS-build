@@ -68,55 +68,55 @@ export default function PaymentsPage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Payment Management</h1>
-        <p className="text-gray-600 mt-1">Create and manage payment links and invoices</p>
+    <div>
+      <div className="mb-8 pb-6 border-b-2 border-gray-200">
+        <h1 className="text-3xl font-bold text-black mb-2">Payment Management</h1>
+        <p className="text-gray-600 text-lg">Create and manage payment links and invoices</p>
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <button
           onClick={() => setShowPaymentLinkModal(true)}
-          className="flex items-center justify-center gap-3 p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+          className="flex items-center justify-center gap-4 p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-black hover:bg-gray-50 transition-all duration-200 transform hover:-translate-y-1 shadow-md"
         >
-          <Link className="w-6 h-6 text-blue-600" />
+          <Link className="w-8 h-8 text-black" />
           <div className="text-left">
-            <h3 className="font-semibold text-gray-900">Create Payment Link</h3>
-            <p className="text-sm text-gray-600">Quick payment collection</p>
+            <h3 className="font-semibold text-black text-lg">Create Payment Link</h3>
+            <p className="text-sm text-gray-600 mt-1">Quick payment collection</p>
           </div>
         </button>
 
         <button
           onClick={() => setShowInvoiceModal(true)}
-          className="flex items-center justify-center gap-3 p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors"
+          className="flex items-center justify-center gap-4 p-6 bg-white border-2 border-gray-300 rounded-lg hover:border-black hover:bg-gray-50 transition-all duration-200 transform hover:-translate-y-1 shadow-md"
         >
-          <FileText className="w-6 h-6 text-green-600" />
+          <FileText className="w-8 h-8 text-black" />
           <div className="text-left">
-            <h3 className="font-semibold text-gray-900">Create Invoice</h3>
-            <p className="text-sm text-gray-600">Detailed billing with schedules</p>
+            <h3 className="font-semibold text-black text-lg">Create Invoice</h3>
+            <p className="text-sm text-gray-600 mt-1">Detailed billing with schedules</p>
           </div>
         </button>
 
         <button
-          className="flex items-center justify-center gap-3 p-6 bg-white border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-colors opacity-50 cursor-not-allowed"
+          className="flex items-center justify-center gap-4 p-6 bg-white border-2 border-gray-300 rounded-lg opacity-50 cursor-not-allowed shadow-md"
           disabled
         >
-          <CreditCard className="w-6 h-6 text-purple-600" />
+          <CreditCard className="w-8 h-8 text-gray-400" />
           <div className="text-left">
-            <h3 className="font-semibold text-gray-900">Checkout Session</h3>
-            <p className="text-sm text-gray-600">Coming soon</p>
+            <h3 className="font-semibold text-gray-400 text-lg">Checkout Session</h3>
+            <p className="text-sm text-gray-400 mt-1">Coming soon</p>
           </div>
         </button>
       </div>
 
       {/* Payment Links Table */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900">Recent Payment Links</h2>
+      <div className="bg-white border-2 border-gray-200 rounded-lg shadow-md hover:border-black transition-colors duration-200">
+        <div className="px-6 py-4 border-b-2 border-gray-200 flex justify-between items-center">
+          <h2 className="text-xl font-semibold text-black">Recent Payment Links</h2>
           <button
             onClick={handleRefresh}
-            className={`p-2 text-gray-600 hover:bg-gray-100 rounded-md ${refreshing ? 'animate-spin' : ''}`}
+            className={`p-2 text-black hover:bg-gray-100 rounded-lg border border-gray-300 hover:border-black transition-colors duration-200 ${refreshing ? 'animate-spin' : ''}`}
             disabled={refreshing}
           >
             <RefreshCw className="w-5 h-5" />
@@ -125,94 +125,96 @@ export default function PaymentsPage() {
 
         {loading ? (
           <div className="p-12 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
             <p className="mt-2 text-gray-600">Loading payment links...</p>
           </div>
         ) : error ? (
           <div className="p-12 text-center">
-            <p className="text-red-600">{error}</p>
-            <button
-              onClick={fetchPaymentLinks}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-            >
-              Retry
-            </button>
+            <div className="bg-white border-2 border-red-300 text-red-600 px-6 py-4 rounded-lg inline-block">
+              <p className="font-medium">{error}</p>
+              <button
+                onClick={fetchPaymentLinks}
+                className="mt-4 px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         ) : paymentLinks.length === 0 ? (
           <div className="p-12 text-center">
             <Link className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600">No payment links created yet</p>
+            <p className="text-gray-600 text-lg font-medium mb-4">No payment links created yet</p>
             <button
               onClick={() => setShowPaymentLinkModal(true)}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium"
             >
               Create First Link
             </button>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
+            <table className="w-full divide-y-2 divide-black">
+              <thead className="bg-black">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
                     Title
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
                     Amount
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
                     Created
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {paymentLinks.map((link) => (
-                  <tr key={link.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{link.title || 'Untitled'}</div>
+                  <tr key={link.id} className="hover:bg-gray-50 transition-colors duration-150">
+                    <td className="px-6 py-4 whitespace-nowrap border-r border-gray-100">
+                      <div className="text-sm font-semibold text-black">{link.title || 'Untitled'}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">${link.amount?.toFixed(2) || '0.00'}</div>
+                    <td className="px-6 py-4 whitespace-nowrap border-r border-gray-100">
+                      <div className="text-sm font-medium text-black">${link.amount?.toFixed(2) || '0.00'}</div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    <td className="px-6 py-4 whitespace-nowrap border-r border-gray-100">
+                      <span className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full border ${
                         link.status === 'active' 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-gray-100 text-gray-800'
+                          ? 'bg-black text-white border-black' 
+                          : 'bg-gray-100 text-black border-gray-300'
                       }`}>
                         {link.status || 'Active'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-black font-medium border-r border-gray-100">
                       {formatDate(link.createdAt)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-3">
                         <a
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-black hover:text-gray-600 p-1"
                           title="Open link"
                         >
                           <ExternalLink className="w-4 h-4" />
                         </a>
                         <button
                           onClick={() => copyToClipboard(link.url)}
-                          className="text-gray-600 hover:text-gray-900"
+                          className="text-black hover:text-gray-600 p-1"
                           title="Copy link"
                         >
                           <Copy className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteLink(link.id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="text-red-600 hover:text-red-800 p-1"
                           title="Delete link"
                         >
                           <Trash2 className="w-4 h-4" />

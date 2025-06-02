@@ -20,6 +20,8 @@ import { AppointmentService, BookingStatus, BookingType, type AppointmentData } 
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '@/src/components/ui/Modal';
 import AppointmentForm from '@/src/components/forms/AppointmentForm';
+import PaymentButton, { PaymentDropdown } from '@/src/components/payments/PaymentButton';
+import { PaymentType } from '@/src/lib/api/services/paymentService';
 
 export default function AppointmentDetailPage() {
   const params = useParams();
@@ -381,17 +383,56 @@ export default function AppointmentDetailPage() {
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-lg font-semibold mb-4">Payment Information</h2>
             
-            {appointment.priceQuote ? (
-              <div className="flex items-center">
-                <DollarSign className="w-5 h-5 text-gray-400 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-600">Price Quote</p>
-                  <p className="font-medium text-lg">${appointment.priceQuote.toFixed(2)}</p>
-                </div>
+            {appointment.priceQuote && (
+              <div className="mb-4">
+                <p className="text-sm text-gray-600">Quote Amount</p>
+                <p className="text-2xl font-bold">${appointment.priceQuote.toFixed(2)}</p>
               </div>
-            ) : (
-              <p className="text-gray-500">No price quote set</p>
             )}
+            
+            <div className="space-y-3">
+              {/* Quick Payment Button */}
+              {appointment.customerId && (
+                <PaymentButton
+                  customerId={appointment.customerId}
+                  customerName={appointment.customer?.name}
+                  appointmentId={appointment.id}
+                  defaultAmount={appointment.priceQuote || 0}
+                  defaultType={
+                    appointment.type === BookingType.CONSULTATION ? PaymentType.CONSULTATION :
+                    appointment.type === BookingType.TATTOO_SESSION ? PaymentType.TATTOO_FINAL :
+                    PaymentType.TATTOO_DEPOSIT
+                  }
+                  buttonText="Request Payment"
+                  onSuccess={() => {
+                    // Refresh appointment data or show success message
+                    console.log('Payment link created successfully');
+                  }}
+                />
+              )}
+              
+              {/* Payment Options Dropdown (for invoices) */}
+              {appointment.priceQuote && appointment.priceQuote > 200 && appointment.customerId && (
+                <PaymentDropdown
+                  customerId={appointment.customerId}
+                  customerName={appointment.customer?.name}
+                  appointmentId={appointment.id}
+                  defaultAmount={appointment.priceQuote}
+                  defaultType={PaymentType.TATTOO_DEPOSIT}
+                  buttonText="Payment Options"
+                  showInvoiceOption={true}
+                  onSuccess={() => {
+                    console.log('Payment created successfully');
+                  }}
+                />
+              )}
+            </div>
+            
+            {/* Payment History */}
+            <div className="mt-6 pt-6 border-t">
+              <h3 className="font-medium mb-3">Payment History</h3>
+              <p className="text-sm text-gray-500">No payments recorded yet</p>
+            </div>
           </div>
 
           {/* Related Information */}

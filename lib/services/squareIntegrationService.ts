@@ -134,7 +134,7 @@ export class SquareIntegrationService {
       // Cancel in Square
       const result = await this.squareClient.cancelBooking({
         bookingId: squareId,
-        bookingVersion: squareBooking.result.booking.version,
+        bookingVersion: squareBooking.result.booking.version || 0,
         idempotencyKey: `cancel-${squareId}-${Date.now()}`
       });
       
@@ -160,11 +160,11 @@ export class SquareIntegrationService {
           resource: 'appointment',
           resourceId: appointmentId,
           resourceType: 'appointment',
-          details: {
+          details: JSON.stringify({
             error: error instanceof Error ? error.message : 'Unknown Square API error',
             errorDetails: error instanceof Error && 'errors' in error ? (error as { errors: unknown }).errors : String(error),
             severity: process.env.NODE_ENV === 'production' ? 'high' : 'medium'
-          }
+          })
         }
       });
     } catch (logError) {

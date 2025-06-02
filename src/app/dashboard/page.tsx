@@ -1,26 +1,62 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import Link from 'next/link';
-import { Calendar, FileText, MessageCircle, DollarSign } from 'lucide-react';
-import { AppointmentService, type AppointmentData, BookingStatus } from '@/src/lib/api/services/appointmentService';
+import { AppointmentService, type AppointmentData, BookingStatus, BookingType } from '@/src/lib/api/services/appointmentService';
 import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
-import { formatDateTime, getTimeAgo } from '@/src/lib/utils/dateFormatters';
-import { getStatusColor } from '@/src/lib/utils/statusHelpers';
 import { apiClient } from '@/src/lib/api/apiClient';
 
+// Component imports
+import StatsGrid from '@/src/components/dashboard/StatsGrid';
+import AppointmentsTable from '@/src/components/dashboard/AppointmentsTable';
+import TattooRequestsTable from '@/src/components/dashboard/TattooRequestsTable';
+import CustomersTable from '@/src/components/dashboard/CustomersTable';
+
+interface DashboardStats {
+  todayAppointments: number;
+  weeklyRevenue: number;
+  activeCustomers: number;
+  pendingRequests: number;
+}
+
+interface Appointment {
+  id: string;
+  clientName: string;
+  date: string;
+  time: string;
+  service: string;
+  status: 'confirmed' | 'pending' | 'completed';
+}
+
+interface DashboardTattooRequest {
+  id: string;
+  clientName: string;
+  design: string;
+  submittedAt: string;
+  status: 'new' | 'reviewing' | 'quoted' | 'approved';
+}
+
+interface RecentCustomer {
+  id: string;
+  name: string;
+  email: string;
+  lastVisit: string;
+  totalSpent: number;
+}
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [stats, setStats] = useState({
-    upcomingAppointments: 0,
+  const [stats, setStats] = useState<DashboardStats>({
+    todayAppointments: 0,
+    weeklyRevenue: 0,
+    activeCustomers: 0,
     pendingRequests: 0,
-    unreadMessages: 0,
-    monthlyRevenue: 0
   });
-  const [recentAppointments, setRecentAppointments] = useState<AppointmentData[]>([]);
-  const [recentRequests, setRecentRequests] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [customers, setCustomers] = useState<RecentCustomer[]>([]);
+  const [requests, setRequests] = useState<DashboardTattooRequest[]>([]);
 
   const appointmentService = new AppointmentService(apiClient);
   const tattooRequestService = new TattooRequestService(apiClient);
@@ -50,7 +86,7 @@ export default function DashboardPage() {
       ).length;
       
       // Get recent appointments
-      setRecentAppointments(appointmentsResponse.data.slice(0, 3));
+      const recentAppointments = appointmentsResponse.data.slice(0, 3);
       
       // Load tattoo requests
       const requestsResponse = await tattooRequestService.getAll({
@@ -58,7 +94,7 @@ export default function DashboardPage() {
         limit: 10
       });
       
-      setRecentRequests(requestsResponse.data.slice(0, 3) as unknown as TattooRequest[]);
+      const recentRequests = requestsResponse.data.slice(0, 3) as unknown as TattooRequest[];
       
       // Calculate monthly revenue (from completed appointments)
       const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -74,11 +110,60 @@ export default function DashboardPage() {
       );
       
       setStats({
-        upcomingAppointments: upcomingCount,
+        todayAppointments: upcomingCount,
+        weeklyRevenue: monthlyRevenue,
+        activeCustomers: completedAppointments.data.length, // Based on actual completed appointments
         pendingRequests: requestsResponse.pagination.total,
-        unreadMessages: 0, // TODO: Integrate with communications API
-        monthlyRevenue
       });
+
+      // Convert appointments to the new format
+      const formattedAppointments = recentAppointments.map((appointment) => ({
+        id: appointment.id,
+        clientName: appointment.customer?.name || 'Anonymous',
+        date: format(new Date(appointment.startTime), 'MMM dd'),
+        time: format(new Date(appointment.startTime), 'h:mm a'),
+        service: appointment.type.replace('_', ' '),
+        status: appointment.status as 'confirmed' | 'pending' | 'completed'
+      }));
+
+      // Convert requests to the new format
+      const formattedRequests = recentRequests.map((request: any) => ({
+        id: request.id,
+        clientName: request.clientName || 'Anonymous',
+        design: request.style || request.placement || 'Custom Design',
+        submittedAt: request.createdAt || new Date().toISOString(),
+        status: (request.status || 'new') as 'new' | 'reviewing' | 'quoted' | 'approved'
+      }));
+
+      // Get customers from appointments
+      const customerMap = new Map<string, RecentCustomer>();
+      completedAppointments.data.forEach((apt) => {
+        if (apt.customer?.id) {
+          const existing = customerMap.get(apt.customer.id);
+          if (!existing) {
+            customerMap.set(apt.customer.id, {
+              id: apt.customer.id,
+              name: apt.customer.name || 'Anonymous',
+              email: apt.customer.email || 'N/A',
+              lastVisit: apt.startTime,
+              totalSpent: apt.priceQuote || 0
+            });
+          } else {
+            existing.totalSpent += apt.priceQuote || 0;
+            if (new Date(apt.startTime) > new Date(existing.lastVisit)) {
+              existing.lastVisit = apt.startTime;
+            }
+          }
+        }
+      });
+      
+      const formattedCustomers = Array.from(customerMap.values())
+        .sort((a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime())
+        .slice(0, 2);
+
+      setAppointments(formattedAppointments);
+      setCustomers(formattedCustomers);
+      setRequests(formattedRequests);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       setError(error instanceof Error ? error.message : 'Failed to load dashboard data');
@@ -89,165 +174,107 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600">Loading dashboard...</p>
+      <div className="flex items-center justify-center min-h-[600px]">
+        <div className="text-center space-y-4">
+          <span className="loading loading-spinner loading-lg text-[#5F6368]"></span>
+          <p className="text-[#5F6368] text-lg">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[600px]">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-[#171717]">Unable to Load Dashboard</h2>
+          <p className="text-[#5F6368]">{error}</p>
+          <button 
+            onClick={loadDashboardData} 
+            className="mt-4 bg-gradient-to-r from-[#3C4043] to-[#202124] text-[#F7F8FA] border border-[#5F6368] px-6 py-3 rounded-[10px] font-semibold transition-all duration-300 hover:bg-gradient-to-r hover:from-[#5F6368] hover:to-[#3C4043] hover:transform hover:-translate-y-[2px] hover:shadow-[0_6px_16px_rgba(32,33,36,0.3)]"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div>
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-          <p>Failed to load dashboard data. Please try refreshing the page.</p>
+    <div className="min-h-screen bg-[#F7F8FA]">
+      <div className="max-w-7xl mx-auto p-8">
+        {/* Page Header - Following dashboardstyle.md */}
+        <div className="mb-8 pb-5 border-b border-[#DADCE0] bg-gradient-to-r from-[rgba(247,248,250,0.8)] to-[rgba(232,234,237,0.4)] rounded-xl p-6">
+          <h1 className="text-[28px] font-bold text-[#171717] mb-2">Dashboard Overview</h1>
+          <p className="text-base text-[#5F6368]">Welcome back! Here's what's happening at your shop today.</p>
         </div>
-      )}
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-gray-600">Welcome to your tattoo shop admin dashboard</p>
-      </div>
+        {/* Stats Grid with Professional Spacing */}
+        <div className="mb-10">
+          <StatsGrid stats={stats} />
+        </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <SummaryCard 
-          title="Appointments" 
-          value={stats.upcomingAppointments.toString()} 
-          description="Upcoming this week" 
-          linkHref="/dashboard/appointments"
-          icon={<Calendar className="w-6 h-6 text-blue-600" />}
-        />
-        <SummaryCard 
-          title="New Requests" 
-          value={stats.pendingRequests.toString()} 
-          description="Pending tattoo requests" 
-          linkHref="/dashboard/tattoo-request"
-          icon={<FileText className="w-6 h-6 text-purple-600" />}
-        />
-        <SummaryCard 
-          title="Messages" 
-          value={stats.unreadMessages.toString()} 
-          description="Unread messages" 
-          linkHref="/dashboard/communications"
-          icon={<MessageCircle className="w-6 h-6 text-green-600" />}
-        />
-        <SummaryCard 
-          title="Revenue" 
-          value={`$${stats.monthlyRevenue.toFixed(0)}`} 
-          description="This month" 
-          linkHref="/dashboard/settings"
-          icon={<DollarSign className="w-6 h-6 text-yellow-600" />}
-        />
-      </div>
-
-      {/* Recent Activity Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Appointments */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Recent Appointments</h2>
-            <Link href="/dashboard/appointments" className="text-blue-600 text-sm hover:underline">
-              View All
-            </Link>
-          </div>
-          <div className="space-y-4">
-            {recentAppointments.length === 0 ? (
-              <p className="text-gray-500 text-sm">No upcoming appointments</p>
-            ) : (
-              recentAppointments.map((appointment) => (
-                <div key={appointment.id} className="border-b pb-3 last:border-0">
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium">
-                        {appointment.customer?.name || 'Anonymous'}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {appointment.type.replace('_', ' ')}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-gray-500">
-                        {formatDateTime(appointment.startTime)}
-                      </p>
-                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${getStatusColor(appointment.status)}`}>
-                        {appointment.status}
-                      </span>
-                    </div>
-                  </div>
+        {/* Main Content Grid with Enhanced Layout */}
+        <div className="space-y-8">
+          {/* Row 1: Appointments and Requests */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Today's Appointments Card */}
+            <div className="bg-[#E8EAED] border border-[#DADCE0] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,36,0.08)] transition-all duration-300 hover:border-[#9AA0A6] hover:shadow-[0_8px_24px_rgba(32,33,36,0.12)] hover:transform hover:-translate-y-[2px] hover:bg-gradient-to-br hover:from-[#E8EAED] hover:to-[#F1F3F4] backdrop-blur-[10px]">
+              <div className="mb-5 pb-4 border-b border-[#D2D4D7]">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-semibold text-[#171717]">Today's Appointments</h2>
+                  <Link 
+                    href="/dashboard/appointments" 
+                    className="text-sm text-[#3C4043] font-medium transition-colors duration-200 hover:text-[#202124] hover:underline"
+                  >
+                    View details →
+                  </Link>
                 </div>
-              ))
-            )}
-          </div>
-        </div>
+              </div>
+              <div>
+                <AppointmentsTable appointments={appointments} />
+              </div>
+            </div>
 
-        {/* Recent Tattoo Requests */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-semibold">Recent Requests</h2>
-            <Link href="/dashboard/tattoo-request" className="text-blue-600 text-sm hover:underline">
-              View All
-            </Link>
-          </div>
-          <div className="space-y-4">
-            {recentRequests.length === 0 ? (
-              <p className="text-gray-500 text-sm">No new requests</p>
-            ) : (
-              recentRequests.map((request) => (
-                <div key={request.id} className="border-b pb-3 last:border-0">
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium">Request #{request.id.slice(0, 8)}</p>
-                      <p className="text-sm text-gray-500">
-                        {request.placement}, {request.style || 'No style specified'}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm">{getTimeAgo(request.createdAt)}</p>
-                      <span className={`inline-block px-2 py-1 text-xs rounded-full ${getStatusColor(request.status)}`}>
-                        {request.status}
-                      </span>
-                    </div>
-                  </div>
+            {/* Recent Tattoo Requests Card */}
+            <div className="bg-[#E8EAED] border border-[#DADCE0] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,36,0.08)] transition-all duration-300 hover:border-[#9AA0A6] hover:shadow-[0_8px_24px_rgba(32,33,36,0.12)] hover:transform hover:-translate-y-[2px] hover:bg-gradient-to-br hover:from-[#E8EAED] hover:to-[#F1F3F4] backdrop-blur-[10px]">
+              <div className="mb-5 pb-4 border-b border-[#D2D4D7]">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-semibold text-[#171717]">Recent Tattoo Requests</h2>
+                  <Link 
+                    href="/dashboard/tattoo-request" 
+                    className="text-sm text-[#3C4043] font-medium transition-colors duration-200 hover:text-[#202124] hover:underline"
+                  >
+                    View details →
+                  </Link>
                 </div>
-              ))
-            )}
+              </div>
+              <div>
+                <TattooRequestsTable requests={requests} />
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Recent Customers - Full Width */}
+          <div className="bg-[#E8EAED] border border-[#DADCE0] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,36,0.08)] transition-all duration-300 hover:border-[#9AA0A6] hover:shadow-[0_8px_24px_rgba(32,33,36,0.12)] hover:transform hover:-translate-y-[2px] hover:bg-gradient-to-br hover:from-[#E8EAED] hover:to-[#F1F3F4] backdrop-blur-[10px]">
+            <div className="mb-5 pb-4 border-b border-[#D2D4D7]">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold text-[#171717]">Recent Customers</h2>
+                <Link 
+                  href="/dashboard/customers" 
+                  className="text-sm text-[#3C4043] font-medium transition-colors duration-200 hover:text-[#202124] hover:underline"
+                >
+                  View details →
+                </Link>
+              </div>
+            </div>
+            <div>
+              <CustomersTable customers={customers} />
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-// Summary Card Component
-function SummaryCard({ 
-  title, 
-  value, 
-  description, 
-  linkHref, 
-  icon 
-}: { 
-  title: string; 
-  value: string; 
-  description: string; 
-  linkHref: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-medium text-gray-700">{title}</h3>
-        {icon}
-      </div>
-      <div className="mb-2">
-        <p className="text-3xl font-bold">{value}</p>
-        <p className="text-sm text-gray-500">{description}</p>
-      </div>
-      <Link href={linkHref} className="text-sm text-blue-600 hover:underline">
-        View details →
-      </Link>
     </div>
   );
 }

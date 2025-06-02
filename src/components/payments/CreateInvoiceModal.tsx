@@ -11,6 +11,7 @@ interface CreateInvoiceModalProps {
   customerName?: string;
   appointmentId?: string;
   tattooRequestId?: string;
+  defaultItems?: Array<{ description: string; amount: number }>;
   onSuccess?: (invoice: any) => void;
 }
 
@@ -32,23 +33,20 @@ export default function CreateInvoiceModal({
   customerName,
   appointmentId,
   tattooRequestId,
+  defaultItems = [],
   onSuccess
 }: CreateInvoiceModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
+  const [invoiceData, setInvoiceData] = useState<any>(null);
   
-  const [items, setItems] = useState<InvoiceItem[]>([
-    { description: '', amount: 0 }
-  ]);
+  const [items, setItems] = useState<InvoiceItem[]>(
+    defaultItems.length > 0 ? defaultItems : [{ description: '', amount: 0 }]
+  );
   
-  const [usePaymentSchedule, setUsePaymentSchedule] = useState(false);
-  const [paymentSchedule, setPaymentSchedule] = useState<PaymentScheduleItem[]>([
-    { amount: 0, dueDate: '', type: 'DEPOSIT' },
-    { amount: 0, dueDate: '', type: 'BALANCE' }
-  ]);
-  
+  const [paymentSchedule, setPaymentSchedule] = useState<PaymentScheduleItem[]>([]);
+  const [useSchedule, setUseSchedule] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState<'EMAIL' | 'SMS' | 'SHARE_MANUALLY'>('EMAIL');
 
   const addItem = () => {
@@ -56,7 +54,9 @@ export default function CreateInvoiceModal({
   };
 
   const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+    if (items.length > 1) {
+      setItems(items.filter((_, i) => i !== index));
+    }
   };
 
   const updateItem = (index: number, field: keyof InvoiceItem, value: string | number) => {
@@ -65,18 +65,34 @@ export default function CreateInvoiceModal({
     setItems(newItems);
   };
 
-  const updateSchedule = (index: number, field: keyof PaymentScheduleItem, value: any) => {
+  const addPaymentScheduleItem = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setPaymentSchedule([
+      ...paymentSchedule,
+      { amount: 0, dueDate: tomorrow.toISOString().split('T')[0], type: 'DEPOSIT' }
+    ]);
+  };
+
+  const removePaymentScheduleItem = (index: number) => {
+    setPaymentSchedule(paymentSchedule.filter((_, i) => i !== index));
+  };
+
+  const updatePaymentScheduleItem = (index: number, field: keyof PaymentScheduleItem, value: any) => {
     const newSchedule = [...paymentSchedule];
     newSchedule[index] = { ...newSchedule[index], [field]: value };
     setPaymentSchedule(newSchedule);
   };
 
-  const getTotalAmount = () => {
+  const calculateTotal = () => {
     return items.reduce((sum, item) => sum + (item.amount || 0), 0);
   };
 
-  const getScheduleTotal = () => {
-    return paymentSchedule.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const validateScheduleTotal = () => {
+    if (!useSchedule || paymentSchedule.length === 0) return true;
+    const scheduleTotal = paymentSchedule.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const itemsTotal = calculateTotal();
+    return Math.abs(scheduleTotal - itemsTotal) < 0.01; // Allow for small rounding differences
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,16 +104,12 @@ export default function CreateInvoiceModal({
       // Validate items
       const validItems = items.filter(item => item.description && item.amount > 0);
       if (validItems.length === 0) {
-        throw new Error('Please add at least one item');
+        throw new Error('Please add at least one item with description and amount');
       }
 
       // Validate payment schedule if used
-      if (usePaymentSchedule) {
-        const scheduleTotal = getScheduleTotal();
-        const itemsTotal = getTotalAmount();
-        if (Math.abs(scheduleTotal - itemsTotal) > 0.01) {
-          throw new Error('Payment schedule total must match items total');
-        }
+      if (useSchedule && paymentSchedule.length > 0 && !validateScheduleTotal()) {
+        throw new Error('Payment schedule total must equal items total');
       }
 
       const params: CreateInvoiceParams = {
@@ -105,15 +117,15 @@ export default function CreateInvoiceModal({
         appointmentId,
         tattooRequestId,
         items: validItems,
-        deliveryMethod,
-        paymentSchedule: usePaymentSchedule ? paymentSchedule.filter(s => s.amount > 0) : undefined
+        paymentSchedule: useSchedule ? paymentSchedule : undefined,
+        deliveryMethod
       };
 
       const response = await paymentService.createInvoice(params);
       
       if (response.success) {
         setSuccess(true);
-        setInvoiceUrl(response.data.publicUrl || null);
+        setInvoiceData(response.data);
         if (onSuccess) {
           onSuccess(response.data);
         }
@@ -127,15 +139,12 @@ export default function CreateInvoiceModal({
 
   const handleClose = () => {
     setItems([{ description: '', amount: 0 }]);
-    setPaymentSchedule([
-      { amount: 0, dueDate: '', type: 'DEPOSIT' },
-      { amount: 0, dueDate: '', type: 'BALANCE' }
-    ]);
-    setUsePaymentSchedule(false);
+    setPaymentSchedule([]);
+    setUseSchedule(false);
     setDeliveryMethod('EMAIL');
     setError(null);
     setSuccess(false);
-    setInvoiceUrl(null);
+    setInvoiceData(null);
     onClose();
   };
 
@@ -143,8 +152,8 @@ export default function CreateInvoiceModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
+        <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-xl font-semibold">Create Invoice</h2>
           <button
             onClick={handleClose}
@@ -155,151 +164,168 @@ export default function CreateInvoiceModal({
         </div>
 
         {!success ? (
-          <form onSubmit={handleSubmit} className="p-6">
+          <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
             {customerName && (
               <div className="mb-4">
                 <p className="text-sm text-gray-600">Customer: <span className="font-medium">{customerName}</span></p>
               </div>
             )}
 
-            <div className="space-y-6">
-              {/* Invoice Items */}
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-lg font-medium">Invoice Items</h3>
-                  <button
-                    type="button"
-                    onClick={addItem}
-                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Item
-                  </button>
+            {/* Invoice Items */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-lg font-medium">Invoice Items</h3>
+                <button
+                  type="button"
+                  onClick={addItem}
+                  className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Item
+                </button>
+              </div>
+              
+              {items.map((item, index) => (
+                <div key={index} className="flex gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={item.description}
+                    onChange={(e) => updateItem(index, 'description', e.target.value)}
+                    placeholder="Description"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={item.amount}
+                      onChange={(e) => updateItem(index, 'amount', parseFloat(e.target.value) || 0)}
+                      placeholder="Amount"
+                      className="w-32 pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required
+                    />
+                  </div>
+                  {items.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
-                
-                <div className="space-y-3">
-                  {items.map((item, index) => (
-                    <div key={index} className="flex gap-3">
-                      <input
-                        type="text"
-                        value={item.description}
-                        onChange={(e) => updateItem(index, 'description', e.target.value)}
-                        placeholder="Description"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                      <div className="relative w-32">
+              ))}
+              
+              <div className="mt-3 text-right">
+                <p className="text-lg font-semibold">Total: ${calculateTotal().toFixed(2)}</p>
+              </div>
+            </div>
+
+            {/* Payment Schedule */}
+            <div className="mb-6">
+              <label className="flex items-center mb-3">
+                <input
+                  type="checkbox"
+                  checked={useSchedule}
+                  onChange={(e) => setUseSchedule(e.target.checked)}
+                  className="mr-2"
+                />
+                <span className="font-medium">Set up payment schedule</span>
+              </label>
+              
+              {useSchedule && (
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <p className="text-sm text-gray-600">Split payment into multiple installments</p>
+                    <button
+                      type="button"
+                      onClick={addPaymentScheduleItem}
+                      className="text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Payment
+                    </button>
+                  </div>
+                  
+                  {paymentSchedule.map((schedule, index) => (
+                    <div key={index} className="flex gap-2 mb-2">
+                      <select
+                        value={schedule.type}
+                        onChange={(e) => updatePaymentScheduleItem(index, 'type', e.target.value)}
+                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="DEPOSIT">Deposit</option>
+                        <option value="BALANCE">Balance</option>
+                      </select>
+                      <div className="relative">
                         <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
                           type="number"
                           step="0.01"
                           min="0"
-                          value={item.amount}
-                          onChange={(e) => updateItem(index, 'amount', parseFloat(e.target.value) || 0)}
-                          className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          value={schedule.amount}
+                          onChange={(e) => updatePaymentScheduleItem(index, 'amount', parseFloat(e.target.value) || 0)}
+                          placeholder="Amount"
+                          className="w-32 pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           required
                         />
                       </div>
-                      {items.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeItem(index)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-md"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="date"
+                          value={schedule.dueDate}
+                          onChange={(e) => updatePaymentScheduleItem(index, 'dueDate', e.target.value)}
+                          className="pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          required
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removePaymentScheduleItem(index)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
                     </div>
                   ))}
+                  
+                  {!validateScheduleTotal() && (
+                    <p className="text-sm text-red-600 mt-2">
+                      Schedule total must equal invoice total (${calculateTotal().toFixed(2)})
+                    </p>
+                  )}
                 </div>
-                
-                <div className="mt-3 text-right">
-                  <p className="text-sm text-gray-600">
-                    Total: <span className="font-semibold">${getTotalAmount().toFixed(2)}</span>
-                  </p>
-                </div>
-              </div>
+              )}
+            </div>
 
-              {/* Payment Schedule */}
-              <div>
-                <label className="flex items-center mb-3">
-                  <input
-                    type="checkbox"
-                    checked={usePaymentSchedule}
-                    onChange={(e) => setUsePaymentSchedule(e.target.checked)}
-                    className="mr-2"
-                  />
-                  <span className="text-sm font-medium">Use Payment Schedule</span>
-                </label>
-                
-                {usePaymentSchedule && (
-                  <div className="space-y-3 pl-6">
-                    {paymentSchedule.map((schedule, index) => (
-                      <div key={index} className="flex gap-3 items-center">
-                        <select
-                          value={schedule.type}
-                          onChange={(e) => updateSchedule(index, 'type', e.target.value)}
-                          className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="DEPOSIT">Deposit</option>
-                          <option value="BALANCE">Balance</option>
-                        </select>
-                        <div className="relative w-32">
-                          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <input
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            value={schedule.amount}
-                            onChange={(e) => updateSchedule(index, 'amount', parseFloat(e.target.value) || 0)}
-                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        <div className="relative flex-1">
-                          <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                          <input
-                            type="date"
-                            value={schedule.dueDate}
-                            onChange={(e) => updateSchedule(index, 'dueDate', e.target.value)}
-                            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required={usePaymentSchedule}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                    <div className="text-right">
-                      <p className="text-sm text-gray-600">
-                        Schedule Total: <span className="font-semibold">${getScheduleTotal().toFixed(2)}</span>
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Delivery Method */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Delivery Method
-                </label>
-                <select
-                  value={deliveryMethod}
-                  onChange={(e) => setDeliveryMethod(e.target.value as any)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="EMAIL">Email</option>
-                  <option value="SMS">SMS</option>
-                  <option value="SHARE_MANUALLY">Share Manually</option>
-                </select>
-              </div>
+            {/* Delivery Method */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Delivery Method
+              </label>
+              <select
+                value={deliveryMethod}
+                onChange={(e) => setDeliveryMethod(e.target.value as any)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="EMAIL">Email</option>
+                <option value="SMS">SMS</option>
+                <option value="SHARE_MANUALLY">Share Manually</option>
+              </select>
             </div>
 
             {error && (
-              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
 
-            <div className="mt-6 flex gap-3">
+            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={handleClose}
@@ -311,7 +337,7 @@ export default function CreateInvoiceModal({
               <button
                 type="submit"
                 className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-                disabled={loading}
+                disabled={loading || (useSchedule && !validateScheduleTotal())}
               >
                 {loading ? 'Creating...' : 'Create Invoice'}
               </button>
@@ -327,23 +353,22 @@ export default function CreateInvoiceModal({
               </div>
               <h3 className="text-lg font-semibold mb-2">Invoice Created!</h3>
               <p className="text-sm text-gray-600">
-                {deliveryMethod === 'SHARE_MANUALLY' 
-                  ? 'The invoice has been created. You can share it manually.'
-                  : `The invoice has been sent via ${deliveryMethod.toLowerCase()}.`}
+                {deliveryMethod === 'EMAIL' ? 'Invoice has been emailed to the customer.' :
+                 deliveryMethod === 'SMS' ? 'Invoice has been sent via SMS to the customer.' :
+                 'Invoice created. Share the link with the customer.'}
               </p>
             </div>
 
-            {invoiceUrl && (
+            {invoiceData && (
               <div className="bg-gray-50 p-4 rounded-md mb-4">
-                <p className="text-xs text-gray-500 mb-2">Invoice URL:</p>
-                <a 
-                  href={invoiceUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-600 hover:underline break-all"
-                >
-                  {invoiceUrl}
-                </a>
+                <p className="text-xs text-gray-500 mb-1">Invoice Number:</p>
+                <p className="font-medium">{invoiceData.invoiceNumber}</p>
+                {invoiceData.publicUrl && (
+                  <>
+                    <p className="text-xs text-gray-500 mb-1 mt-3">Public URL:</p>
+                    <p className="text-sm break-all font-mono">{invoiceData.publicUrl}</p>
+                  </>
+                )}
               </div>
             )}
 

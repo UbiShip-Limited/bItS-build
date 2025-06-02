@@ -81,14 +81,14 @@ export default function AppointmentsPage() {
 
   const getStatusColor = (status: string) => {
     const colors = {
-      [BookingStatus.PENDING]: 'bg-yellow-100 text-yellow-800',
-      [BookingStatus.SCHEDULED]: 'bg-blue-100 text-blue-800',
-      [BookingStatus.CONFIRMED]: 'bg-green-100 text-green-800',
-      [BookingStatus.COMPLETED]: 'bg-gray-100 text-gray-800',
-      [BookingStatus.CANCELLED]: 'bg-red-100 text-red-800',
-      [BookingStatus.NO_SHOW]: 'bg-orange-100 text-orange-800'
+      [BookingStatus.PENDING]: 'badge-warning',
+      [BookingStatus.SCHEDULED]: 'badge-info',
+      [BookingStatus.CONFIRMED]: 'badge-success',
+      [BookingStatus.COMPLETED]: 'badge-accent',
+      [BookingStatus.CANCELLED]: 'badge-error',
+      [BookingStatus.NO_SHOW]: 'badge-ghost'
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'badge-ghost';
   };
 
   const getBookingTypeLabel = (type: string) => {
@@ -117,23 +117,24 @@ export default function AppointmentsPage() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-8">
+      {/* Page Header */}
+      <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold">Appointments</h1>
-          <p className="text-gray-600">Manage all your appointments</p>
+          <h1 className="text-3xl font-bold text-smoke-900 mb-2">Appointments</h1>
+          <p className="text-smoke-500 text-lg">Manage all your appointments</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <Link
             href="/dashboard/appointments/calendar"
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
+            className="btn btn-outline btn-sm text-smoke-600 border-smoke-300 hover:bg-smoke-100 hover:border-smoke-400"
           >
             <Calendar className="w-4 h-4" />
             Calendar View
           </Link>
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className="btn btn-primary btn-sm"
           >
             <Plus className="w-4 h-4" />
             New Appointment
@@ -142,184 +143,186 @@ export default function AppointmentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-4 h-4 text-gray-500" />
-          <span className="font-medium">Filters</span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-            <select 
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-              className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
-            >
-              <option value="">All Statuses</option>
-              {Object.values(BookingStatus).map(status => (
-                <option key={status} value={status}>
-                  {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
-                </option>
-              ))}
-            </select>
+      <div className="card bg-smoke-100 shadow-smoke hover:shadow-smoke-lg transition-all duration-300 border border-smoke-200 mb-6">
+        <div className="card-body">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-5 h-5 text-smoke-700" />
+            <span className="font-semibold text-smoke-900 text-lg">Filters</span>
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">From Date</label>
-            <input 
-              type="date"
-              value={filters.from}
-              onChange={(e) => setFilters({ ...filters, from: e.target.value, page: 1 })}
-              className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
-            <input 
-              type="date"
-              value={filters.to}
-              onChange={(e) => setFilters({ ...filters, to: e.target.value, page: 1 })}
-              className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
-            />
-          </div>
-          
-          <div className="flex items-end">
-            <button
-              onClick={() => setFilters({ status: '', from: '', to: '', page: 1, limit: 20 })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
-            >
-              Clear Filters
-            </button>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-smoke-700 font-medium">Status</span>
+              </label>
+              <select 
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
+                className="select select-bordered bg-smoke-50 border-smoke-300 text-smoke-700 focus:border-smoke-500"
+              >
+                <option value="">All Statuses</option>
+                {Object.values(BookingStatus).map(status => (
+                  <option key={status} value={status}>
+                    {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-smoke-700 font-medium">From Date</span>
+              </label>
+              <input 
+                type="date"
+                value={filters.from}
+                onChange={(e) => setFilters({ ...filters, from: e.target.value, page: 1 })}
+                className="input input-bordered bg-smoke-50 border-smoke-300 text-smoke-700 focus:border-smoke-500"
+              />
+            </div>
+            
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text text-smoke-700 font-medium">To Date</span>
+              </label>
+              <input 
+                type="date"
+                value={filters.to}
+                onChange={(e) => setFilters({ ...filters, to: e.target.value, page: 1 })}
+                className="input input-bordered bg-smoke-50 border-smoke-300 text-smoke-700 focus:border-smoke-500"
+              />
+            </div>
+            
+            <div className="form-control justify-end">
+              <button
+                onClick={() => setFilters({ status: '', from: '', to: '', page: 1, limit: 20 })}
+                className="btn btn-ghost btn-block text-smoke-600 hover:bg-smoke-200"
+              >
+                Clear Filters
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Appointments Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="card bg-smoke-100 shadow-smoke hover:shadow-smoke-lg transition-all duration-300 border border-smoke-200 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-gray-600">Loading appointments...</p>
+            <span className="loading loading-spinner loading-lg text-smoke-500"></span>
+            <p className="mt-2 text-smoke-500">Loading appointments...</p>
           </div>
         ) : error ? (
-          <div className="p-8 text-center text-red-600">
-            <p>{error}</p>
-            <button 
-              onClick={loadAppointments}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Retry
-            </button>
+          <div className="p-8 text-center">
+            <div className="alert alert-error">
+              <span>{error}</span>
+              <button 
+                onClick={loadAppointments}
+                className="btn btn-sm btn-ghost"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         ) : appointments.length === 0 ? (
-          <div className="p-8 text-center text-gray-600">
-            <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <p>No appointments found</p>
+          <div className="p-8 text-center text-smoke-500">
+            <Calendar className="w-12 h-12 mx-auto mb-4 text-smoke-400" />
+            <p className="text-lg font-medium">No appointments found</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Client
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date & Time
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Price
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
+              <table className="table">
+                <thead>
+                  <tr className="border-smoke-300">
+                    <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Client</th>
+                    <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Date & Time</th>
+                    <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Type</th>
+                    <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Status</th>
+                    <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Price</th>
+                    <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody>
                   {appointments.map((appointment) => {
                     const { date, time } = formatDateTime(appointment.startTime);
                     return (
-                      <tr key={appointment.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <User className="w-8 h-8 text-gray-400 mr-3" />
+                      <tr key={appointment.id} className="hover:bg-smoke-50 transition-colors border-smoke-200">
+                        <td>
+                          <div className="flex items-center gap-3">
+                            <div className="avatar placeholder">
+                              <div className="bg-smoke-300 text-smoke-700 rounded-full w-10">
+                                <User className="w-5 h-5" />
+                              </div>
+                            </div>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="font-bold text-smoke-900">
                                 {appointment.customer?.name || 'Anonymous'}
                               </div>
-                              <div className="text-sm text-gray-500">
+                              <div className="text-sm opacity-75 text-smoke-500">
                                 {appointment.customer?.email || appointment.contactEmail || 'No email'}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center text-sm">
-                            <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                        <td>
+                          <div className="flex items-center gap-2 text-smoke-700">
+                            <Calendar className="w-4 h-4 text-smoke-600" />
                             <div>
-                              <div className="text-gray-900">{date}</div>
-                              <div className="text-gray-500 flex items-center">
-                                <Clock className="w-3 h-3 mr-1" />
+                              <div className="font-medium">{date}</div>
+                              <div className="text-sm opacity-75 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
                                 {time}
                               </div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {getBookingTypeLabel(appointment.type)}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {appointment.duration} minutes
+                        <td>
+                          <div className="text-smoke-700">
+                            <div className="font-medium">{getBookingTypeLabel(appointment.type)}</div>
+                            <div className="text-sm opacity-75">{appointment.duration} minutes</div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(appointment.status)}`}>
+                        <td>
+                          <span className={`badge ${getStatusColor(appointment.status)} badge-sm`}>
                             {appointment.status.replace('_', ' ')}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td>
                           {appointment.priceQuote ? (
-                            <div className="flex items-center">
-                              <DollarSign className="w-4 h-4 text-gray-400 mr-1" />
+                            <div className="flex items-center font-medium text-smoke-800">
+                              <DollarSign className="w-4 h-4 mr-1" />
                               {appointment.priceQuote.toFixed(2)}
                             </div>
                           ) : (
-                            <span className="text-gray-400">-</span>
+                            <span className="text-smoke-400">-</span>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <Link 
-                            href={`/dashboard/appointments/${appointment.id}`} 
-                            className="text-blue-600 hover:text-blue-900 mr-4"
-                          >
-                            View
-                          </Link>
-                          <button 
-                            onClick={() => {
-                              setSelectedAppointment(appointment);
-                              setShowCreateModal(true);
-                            }}
-                            className="text-gray-600 hover:text-gray-900 mr-4"
-                          >
-                            Edit
-                          </button>
-                          {appointment.status !== BookingStatus.CANCELLED && (
-                            <button 
-                              onClick={() => handleCancelAppointment(appointment.id)}
-                              className="text-red-600 hover:text-red-900"
+                        <td>
+                          <div className="flex justify-end gap-2">
+                            <Link 
+                              href={`/dashboard/appointments/${appointment.id}`} 
+                              className="btn btn-ghost btn-xs text-smoke-600 hover:text-smoke-900"
                             >
-                              Cancel
+                              View
+                            </Link>
+                            <button 
+                              onClick={() => {
+                                setSelectedAppointment(appointment);
+                                setShowCreateModal(true);
+                              }}
+                              className="btn btn-ghost btn-xs text-smoke-600 hover:text-smoke-900"
+                            >
+                              Edit
                             </button>
-                          )}
+                            {appointment.status !== BookingStatus.CANCELLED && (
+                              <button 
+                                onClick={() => handleCancelAppointment(appointment.id)}
+                                className="btn btn-ghost btn-xs text-error"
+                              >
+                                Cancel
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -329,30 +332,30 @@ export default function AppointmentsPage() {
             </div>
             
             {/* Pagination */}
-            <div className="bg-white px-4 py-3 border-t border-gray-200">
+            <div className="bg-smoke-50 border-t border-smoke-300 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
-                    <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
-                    <span className="font-medium">{pagination.total}</span> results
+                  <p className="text-sm text-smoke-700">
+                    Showing <span className="font-bold">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
+                    <span className="font-bold">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
+                    <span className="font-bold">{pagination.total}</span> results
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="join">
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
                     disabled={filters.page === 1}
-                    className="px-3 py-1 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="join-item btn btn-sm"
                   >
                     Previous
                   </button>
-                  <span className="px-3 py-1 text-sm">
+                  <button className="join-item btn btn-sm btn-active">
                     Page {pagination.page} of {pagination.pages}
-                  </span>
+                  </button>
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
                     disabled={filters.page === pagination.pages}
-                    className="px-3 py-1 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="join-item btn btn-sm"
                   >
                     Next
                   </button>

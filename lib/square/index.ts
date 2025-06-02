@@ -42,13 +42,21 @@ class SquareClient {
     cursor?: string, 
     limit?: number
   ): Promise<SquarePaymentResponse> {
-    return this.client.payments.list({
+    const response = await this.client.payments.list({
       beginTime,
       endTime,
       cursor,
       locationId: this.locationId,
       limit
-    });
+    }) as any;
+    
+    return {
+      result: {
+        payments: response.data || []
+      },
+      cursor: response.cursor,
+      errors: []
+    };
   }
 
   async getPaymentById(paymentId: string): Promise<SquarePaymentResponse> {
@@ -95,8 +103,8 @@ class SquareClient {
   }): Promise<SquareRefundResponse> {
     const { paymentId, idempotencyKey, amountMoney, reason } = params;
     
-    // Build the refund request
-    const refundRequest: RefundRequest = {
+    // Build the refund request - ensure proper typing
+    const refundRequest: any = {
       paymentId,
       idempotencyKey,
       reason
@@ -121,13 +129,21 @@ class SquareClient {
     startAtMin?: string,
     startAtMax?: string
   ): Promise<SquareBookingResponse> {
-    return this.client.bookings.list({
+    const response = await this.client.bookings.list({
       cursor,
       limit,
       locationId: this.locationId,
       startAtMin,
       startAtMax
-    });
+    }) as any;
+    
+    return {
+      result: {
+        bookings: response.data || []
+      },
+      cursor: response.cursor,
+      errors: []
+    };
   }
 
   async getBookingById(bookingId: string): Promise<SquareBookingResponse> {
@@ -155,18 +171,12 @@ class SquareClient {
       ? `${params.bookingType}${params.note ? ` - ${params.note}` : ''}`
       : params.note;
     
-    // Build appointment segment with only defined values
-    const appointmentSegment: AppointmentSegment = {
-      durationMinutes: params.duration
+    // Build appointment segment - use Square's type directly
+    const appointmentSegment: any = {
+      durationMinutes: params.duration,
+      teamMemberId: params.staffId || 'any',
+      serviceVariationId: params.serviceId || 'any'
     };
-    
-    if (params.staffId) {
-      appointmentSegment.teamMemberId = params.staffId;
-    }
-    
-    if (params.serviceId) {
-      appointmentSegment.serviceVariationId = params.serviceId;
-    }
     
     return this.client.bookings.create({
       idempotencyKey: params.idempotencyKey,
@@ -212,28 +222,24 @@ class SquareClient {
       throw new Error(`Failed to cancel existing booking: ${cancelResponse.errors[0]?.detail || 'Unknown error'}`);
     }
     
-    // Prepare data for the new booking, using existing data for any missing fields
-    const appointmentSegment = existingBooking.appointmentSegments?.[0] || {};
+    // Build appointment segment with proper typing
+    const appointmentSegment = existingBooking.appointmentSegments?.[0] || {
+      durationMinutes: 60,
+      teamMemberId: 'any',
+      serviceVariationId: 'any'
+    };
     
     // Add tattoo shop specific booking type to note if provided
     const bookingNote = params.bookingType 
       ? `${params.bookingType}${params.note ? ` - ${params.note}` : ''}`
       : (params.note || existingBooking.sellerNote);
     
-    // Build appointment segment with only defined values
-    const newAppointmentSegment: AppointmentSegment = {
-      durationMinutes: params.duration || appointmentSegment.durationMinutes
+    // Build appointment segment with Square's expected structure
+    const newAppointmentSegment: any = {
+      durationMinutes: params.duration || appointmentSegment.durationMinutes || 60,
+      teamMemberId: params.staffId || appointmentSegment.teamMemberId || 'any',
+      serviceVariationId: params.serviceId || appointmentSegment.serviceVariationId || 'any'
     };
-    
-    const teamMemberId = params.staffId || appointmentSegment.teamMemberId;
-    if (teamMemberId) {
-      newAppointmentSegment.teamMemberId = teamMemberId;
-    }
-    
-    const serviceVariationId = params.serviceId || appointmentSegment.serviceVariationId;
-    if (serviceVariationId) {
-      newAppointmentSegment.serviceVariationId = serviceVariationId;
-    }
     
     // Create a new booking with updated information
     return this.client.bookings.create({
@@ -264,9 +270,17 @@ class SquareClient {
   // Get tattoo shop services from catalog
   async getTattooServices(): Promise<SquareCatalogResponse> {
     // Get catalog items filtered to service type
-    return this.client.catalog.list({
+    const response = await this.client.catalog.list({
       types: "ITEM"
-    });
+    }) as any;
+    
+    return {
+      result: {
+        objects: response.data || []
+      },
+      cursor: response.cursor,
+      errors: []
+    };
   }
 
   // Customer methods
@@ -276,12 +290,20 @@ class SquareClient {
     sortField?: string,
     sortOrder?: string
   ): Promise<SquareCustomerResponse> {
-    return this.client.customers.list({
+    const response = await this.client.customers.list({
       cursor,
       limit,
       sortField: sortField as Square.CustomerSortField,
       sortOrder: sortOrder as Square.SortOrder
-    });
+    }) as any;
+    
+    return {
+      result: {
+        customers: response.data || []
+      },
+      cursor: response.cursor,
+      errors: []
+    };
   }
 
   // Create a customer method
@@ -424,11 +446,19 @@ class SquareClient {
     cursor?: string;
     limit?: number;
   }): Promise<SquareInvoiceResponse> {
-    return this.client.invoices.list({
+    const response = await this.client.invoices.list({
       locationId: params?.locationId || this.locationId,
       cursor: params?.cursor,
       limit: params?.limit
-    });
+    }) as any;
+    
+    return {
+      result: {
+        invoices: response.data || []
+      },
+      cursor: response.cursor,
+      errors: []
+    };
   }
 
   // Update invoice
@@ -465,23 +495,342 @@ class SquareClient {
     });
   }
 
-  // Payment Links - using Orders API + external URLs (Square doesn't have direct payment link API)
-  async createPaymentLink(_params: {
-    orderId: string;
+  // Payment Links - Using Square's Checkout API
+  async createPaymentLink(params: {
+    idempotencyKey: string;
+    description?: string;
+    quickPay?: {
+      name: string;
+      priceMoney: {
+        amount: number;
+        currency: string;
+      };
+      locationId?: string;
+    };
+    order?: {
+      orderId: string;
+    };
     checkoutOptions?: {
       allowTipping?: boolean;
+      customFields?: Array<{
+        title: string;
+      }>;
       redirectUrl?: string;
       merchantSupportEmail?: string;
+      askForShippingAddress?: boolean;
+      acceptedPaymentMethods?: {
+        applePay?: boolean;
+        googlePay?: boolean;
+        cashAppPay?: boolean;
+        afterpayClearpay?: boolean;
+      };
+    };
+    prePopulatedData?: {
+      buyerEmail?: string;
+      buyerPhoneNumber?: string;
+      buyerAddress?: {
+        addressLine1?: string;
+        addressLine2?: string;
+        locality?: string;
+        administrativeDistrictLevel1?: string;
+        postalCode?: string;
+        country?: string;
+        firstName?: string;
+        lastName?: string;
+      };
+    };
+    paymentNote?: string;
+  }): Promise<PaymentLinkResponse> {
+    const requestBody: any = {
+      idempotency_key: params.idempotencyKey
+    };
+
+    if (params.description) {
+      requestBody.description = params.description;
+    }
+
+    if (params.quickPay) {
+      requestBody.quick_pay = {
+        name: params.quickPay.name,
+        price_money: {
+          amount: Math.round(params.quickPay.priceMoney.amount * 100),
+          currency: params.quickPay.priceMoney.currency
+        },
+        location_id: params.quickPay.locationId || this.locationId
+      };
+    }
+
+    if (params.order) {
+      requestBody.order = {
+        order_id: params.order.orderId
+      };
+    }
+
+    if (params.checkoutOptions) {
+      requestBody.checkout_options = {
+        allow_tipping: params.checkoutOptions.allowTipping,
+        custom_fields: params.checkoutOptions.customFields,
+        redirect_url: params.checkoutOptions.redirectUrl,
+        merchant_support_email: params.checkoutOptions.merchantSupportEmail,
+        ask_for_shipping_address: params.checkoutOptions.askForShippingAddress,
+        accepted_payment_methods: params.checkoutOptions.acceptedPaymentMethods
+      };
+    }
+
+    if (params.prePopulatedData) {
+      requestBody.pre_populated_data = {
+        buyer_email: params.prePopulatedData.buyerEmail,
+        buyer_phone_number: params.prePopulatedData.buyerPhoneNumber,
+        buyer_address: params.prePopulatedData.buyerAddress
+      };
+    }
+
+    if (params.paymentNote) {
+      requestBody.payment_note = params.paymentNote;
+    }
+
+    // Use the Square API directly since the SDK might not have this method yet
+    const response = await fetch(
+      `${this.getApiUrl()}/v2/online-checkout/payment-links`,
+      {
+        method: 'POST',
+        headers: {
+          'Square-Version': '2025-05-21',
+          'Authorization': `Bearer ${this.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`Square API error: ${JSON.stringify(data)}`);
+    }
+
+    return {
+      result: data,
+      errors: []
+    };
+  }
+
+  // List payment links
+  async listPaymentLinks(params?: {
+    cursor?: string;
+    limit?: number;
+  }): Promise<PaymentLinkResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.cursor) queryParams.append('cursor', params.cursor);
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const response = await fetch(
+      `${this.getApiUrl()}/v2/online-checkout/payment-links?${queryParams}`,
+      {
+        method: 'GET',
+        headers: {
+          'Square-Version': '2025-05-21',
+          'Authorization': `Bearer ${this.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`Square API error: ${JSON.stringify(data)}`);
+    }
+
+    return {
+      result: data,
+      errors: []
+    };
+  }
+
+  // Get payment link
+  async getPaymentLink(id: string): Promise<PaymentLinkResponse> {
+    const response = await fetch(
+      `${this.getApiUrl()}/v2/online-checkout/payment-links/${id}`,
+      {
+        method: 'GET',
+        headers: {
+          'Square-Version': '2025-05-21',
+          'Authorization': `Bearer ${this.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`Square API error: ${JSON.stringify(data)}`);
+    }
+
+    return {
+      result: data,
+      errors: []
+    };
+  }
+
+  // Update payment link
+  async updatePaymentLink(params: {
+    id: string;
+    paymentLink: {
+      version: number;
+      description?: string;
+      checkoutOptions?: {
+        allowTipping?: boolean;
+        customFields?: Array<{
+          title: string;
+        }>;
+        redirectUrl?: string;
+        merchantSupportEmail?: string;
+        askForShippingAddress?: boolean;
+        acceptedPaymentMethods?: {
+          applePay?: boolean;
+          googlePay?: boolean;
+          cashAppPay?: boolean;
+          afterpayClearpay?: boolean;
+        };
+      };
+      prePopulatedData?: {
+        buyerEmail?: string;
+        buyerPhoneNumber?: string;
+        buyerAddress?: {
+          addressLine1?: string;
+          addressLine2?: string;
+          locality?: string;
+          administrativeDistrictLevel1?: string;
+          postalCode?: string;
+          country?: string;
+          firstName?: string;
+          lastName?: string;
+        };
+      };
     };
   }): Promise<PaymentLinkResponse> {
-    // For payment links, we would typically:
-    // 1. Create/update an order
-    // 2. Generate a checkout URL using Square's online checkout
-    // 3. Return the URL for the customer
+    const requestBody: any = {
+      payment_link: {
+        version: params.paymentLink.version
+      }
+    };
+
+    if (params.paymentLink.description !== undefined) {
+      requestBody.payment_link.description = params.paymentLink.description;
+    }
+
+    if (params.paymentLink.checkoutOptions) {
+      requestBody.payment_link.checkout_options = {
+        allow_tipping: params.paymentLink.checkoutOptions.allowTipping,
+        custom_fields: params.paymentLink.checkoutOptions.customFields,
+        redirect_url: params.paymentLink.checkoutOptions.redirectUrl,
+        merchant_support_email: params.paymentLink.checkoutOptions.merchantSupportEmail,
+        ask_for_shipping_address: params.paymentLink.checkoutOptions.askForShippingAddress,
+        accepted_payment_methods: params.paymentLink.checkoutOptions.acceptedPaymentMethods
+      };
+    }
+
+    if (params.paymentLink.prePopulatedData) {
+      requestBody.payment_link.pre_populated_data = {
+        buyer_email: params.paymentLink.prePopulatedData.buyerEmail,
+        buyer_phone_number: params.paymentLink.prePopulatedData.buyerPhoneNumber,
+        buyer_address: params.paymentLink.prePopulatedData.buyerAddress
+      };
+    }
+
+    const response = await fetch(
+      `${this.getApiUrl()}/v2/online-checkout/payment-links/${params.id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Square-Version': '2025-05-21',
+          'Authorization': `Bearer ${this.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`Square API error: ${JSON.stringify(data)}`);
+    }
+
+    return {
+      result: data,
+      errors: []
+    };
+  }
+
+  // Delete payment link
+  async deletePaymentLink(id: string): Promise<SquareApiResponse<Record<string, never>>> {
+    const response = await fetch(
+      `${this.getApiUrl()}/v2/online-checkout/payment-links/${id}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Square-Version': '2025-05-21',
+          'Authorization': `Bearer ${this.getAccessToken()}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`Square API error: ${JSON.stringify(data)}`);
+    }
+
+    return {
+      result: {},
+      errors: []
+    };
+  }
+
+  // Send invoice
+  async sendInvoice(params: {
+    invoiceId: string;
+    requestMethod?: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY';
+  }): Promise<SquareInvoiceResponse> {
+    // Square SDK v35+ uses a different approach for sending invoices
+    // First, we need to publish the invoice if it's not already published
+    const invoice = await this.getInvoice(params.invoiceId);
     
-    // This is a simplified implementation - in practice you'd integrate with
-    // Square's online checkout or use a third-party solution
-    throw new Error('Payment Links require Square Online Checkout integration - implement based on your specific needs');
+    if (invoice.result?.invoice?.status === 'DRAFT') {
+      // Publish the invoice first
+      await this.publishInvoice({
+        invoiceId: params.invoiceId,
+        version: invoice.result.invoice.version || 0
+      });
+    }
+    
+    // Return the updated invoice with the public URL
+    return this.getInvoice(params.invoiceId);
+  }
+
+  // Delete invoice
+  async deleteInvoice(invoiceId: string, version: number): Promise<SquareApiResponse<Record<string, never>>> {
+    return this.client.invoices.delete({
+      invoiceId,
+      version
+    });
+  }
+
+  // Helper methods for API access
+  private getApiUrl(): string {
+    const env = (this.client as any).config.environment;
+    return env === SquareEnvironment.Production 
+      ? 'https://connect.squareup.com'
+      : 'https://connect.squareupsandbox.com';
+  }
+
+  private getAccessToken(): string {
+    // Access the token from the client configuration
+    return (this.client as any).config.accessToken;
   }
 
   // Helper to initialize from environment variables
@@ -511,11 +860,6 @@ class SquareClient {
       applicationId: SQUARE_APPLICATION_ID,
       locationId: SQUARE_LOCATION_ID
     });
-  }
-
-  async deleteInvoice(_invoiceId: string, _version: number, _params?: { draft?: boolean }): Promise<SquareApiResponse<Record<string, never>>> {
-    // Implementation of deleteInvoice method
-    throw new Error('deleteInvoice method not implemented');
   }
 }
 

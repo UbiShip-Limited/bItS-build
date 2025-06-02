@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { DollarSign, Link, FileText } from 'lucide-react';
+import { DollarSign, Link, FileText, Send, Loader } from 'lucide-react';
 import CreatePaymentLinkModal from './CreatePaymentLinkModal';
 import CreateInvoiceModal from './CreateInvoiceModal';
 import { PaymentType } from '@/src/lib/api/services/paymentService';
@@ -14,9 +14,10 @@ interface PaymentButtonProps {
   defaultAmount?: number;
   defaultType?: PaymentType;
   buttonText?: string;
-  buttonVariant?: 'primary' | 'secondary' | 'ghost';
+  buttonVariant?: 'primary' | 'secondary' | 'ghost' | 'outline';
   showIcon?: boolean;
-  onSuccess?: () => void;
+  onSuccess?: (paymentLink: any) => void;
+  disabled?: boolean;
 }
 
 export default function PaymentButton({
@@ -24,31 +25,28 @@ export default function PaymentButton({
   customerName,
   appointmentId,
   tattooRequestId,
-  defaultAmount,
-  defaultType,
+  defaultAmount = 0,
+  defaultType = PaymentType.CONSULTATION,
   buttonText = 'Request Payment',
   buttonVariant = 'primary',
   showIcon = true,
-  onSuccess
+  onSuccess,
+  disabled = false
 }: PaymentButtonProps) {
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState<'link' | 'invoice'>('link');
-
-  const handleClick = () => {
-    setModalType('link');
-    setShowModal(true);
-  };
 
   const getButtonClasses = () => {
-    const base = 'inline-flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors';
+    const base = 'inline-flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors disabled:opacity-50';
     
     switch (buttonVariant) {
       case 'primary':
         return `${base} bg-blue-600 text-white hover:bg-blue-700`;
       case 'secondary':
-        return `${base} bg-gray-100 text-gray-700 hover:bg-gray-200`;
+        return `${base} bg-gray-600 text-white hover:bg-gray-700`;
       case 'ghost':
         return `${base} text-gray-600 hover:bg-gray-100`;
+      case 'outline':
+        return `${base} border border-gray-300 text-gray-700 hover:bg-gray-50`;
       default:
         return base;
     }
@@ -57,44 +55,30 @@ export default function PaymentButton({
   return (
     <>
       <button
-        onClick={handleClick}
+        onClick={() => setShowModal(true)}
         className={getButtonClasses()}
+        disabled={disabled}
       >
         {showIcon && <DollarSign className="w-4 h-4" />}
         {buttonText}
       </button>
 
-      {modalType === 'link' && (
-        <CreatePaymentLinkModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          customerId={customerId}
-          customerName={customerName}
-          appointmentId={appointmentId}
-          tattooRequestId={tattooRequestId}
-          defaultAmount={defaultAmount}
-          defaultType={defaultType}
-          onSuccess={(link) => {
-            setShowModal(false);
-            if (onSuccess) onSuccess();
-          }}
-        />
-      )}
-
-      {modalType === 'invoice' && (
-        <CreateInvoiceModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          customerId={customerId}
-          customerName={customerName}
-          appointmentId={appointmentId}
-          tattooRequestId={tattooRequestId}
-          onSuccess={(invoice) => {
-            setShowModal(false);
-            if (onSuccess) onSuccess();
-          }}
-        />
-      )}
+      <CreatePaymentLinkModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        customerId={customerId}
+        customerName={customerName}
+        appointmentId={appointmentId}
+        tattooRequestId={tattooRequestId}
+        defaultAmount={defaultAmount}
+        defaultType={defaultType}
+        onSuccess={(paymentLink) => {
+          setShowModal(false);
+          if (onSuccess) {
+            onSuccess(paymentLink);
+          }
+        }}
+      />
     </>
   );
 }
@@ -105,95 +89,88 @@ interface PaymentDropdownProps extends PaymentButtonProps {
 }
 
 export function PaymentDropdown({
-  showInvoiceOption = true,
-  ...props
+  customerId,
+  customerName,
+  appointmentId,
+  tattooRequestId,
+  defaultAmount = 0,
+  defaultType = PaymentType.CONSULTATION,
+  buttonText = 'Payment Options',
+  onSuccess,
+  disabled = false,
+  showInvoiceOption = true
 }: PaymentDropdownProps) {
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState<'link' | 'invoice'>('link');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleOptionClick = (type: 'link' | 'invoice') => {
-    setModalType(type);
-    setShowModal(true);
+  const handleCreateInvoice = async () => {
+    setLoading(true);
+    // TODO: Implement invoice creation
+    setLoading(false);
     setShowDropdown(false);
   };
 
   return (
-    <>
-      <div className="relative">
-        <button
-          onClick={() => setShowDropdown(!showDropdown)}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium"
-        >
+    <div className="relative">
+      <button
+        onClick={() => setShowDropdown(!showDropdown)}
+        className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+        disabled={disabled || loading}
+      >
+        {loading ? (
+          <Loader className="w-4 h-4 animate-spin" />
+        ) : (
           <DollarSign className="w-4 h-4" />
-          Payment Options
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </button>
-
-        {showDropdown && (
-          <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-10">
-            <div className="py-1">
-              <button
-                onClick={() => handleOptionClick('link')}
-                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-              >
-                <Link className="w-4 h-4" />
-                <div className="text-left">
-                  <div className="font-medium">Payment Link</div>
-                  <div className="text-xs text-gray-500">Quick payment collection</div>
-                </div>
-              </button>
-              
-              {showInvoiceOption && (
-                <button
-                  onClick={() => handleOptionClick('invoice')}
-                  className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                >
-                  <FileText className="w-4 h-4" />
-                  <div className="text-left">
-                    <div className="font-medium">Invoice</div>
-                    <div className="text-xs text-gray-500">Detailed billing with schedule</div>
-                  </div>
-                </button>
-              )}
-            </div>
-          </div>
         )}
-      </div>
+        {buttonText}
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
-      {modalType === 'link' && (
-        <CreatePaymentLinkModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          customerId={props.customerId}
-          customerName={props.customerName}
-          appointmentId={props.appointmentId}
-          tattooRequestId={props.tattooRequestId}
-          defaultAmount={props.defaultAmount}
-          defaultType={props.defaultType}
-          onSuccess={(link) => {
-            setShowModal(false);
-            if (props.onSuccess) props.onSuccess();
-          }}
-        />
+      {showDropdown && (
+        <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-50 border">
+          <div className="py-1">
+            <button
+              onClick={() => {
+                setShowModal(true);
+                setShowDropdown(false);
+              }}
+              className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+            >
+              <Send className="w-4 h-4" />
+              Create Payment Link
+            </button>
+            {showInvoiceOption && (
+              <button
+                onClick={handleCreateInvoice}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+              >
+                <DollarSign className="w-4 h-4" />
+                Create Invoice
+              </button>
+            )}
+          </div>
+        </div>
       )}
 
-      {modalType === 'invoice' && (
-        <CreateInvoiceModal
-          isOpen={showModal}
-          onClose={() => setShowModal(false)}
-          customerId={props.customerId}
-          customerName={props.customerName}
-          appointmentId={props.appointmentId}
-          tattooRequestId={props.tattooRequestId}
-          onSuccess={(invoice) => {
-            setShowModal(false);
-            if (props.onSuccess) props.onSuccess();
-          }}
-        />
-      )}
-    </>
+      <CreatePaymentLinkModal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        customerId={customerId}
+        customerName={customerName}
+        appointmentId={appointmentId}
+        tattooRequestId={tattooRequestId}
+        defaultAmount={defaultAmount}
+        defaultType={defaultType}
+        onSuccess={(paymentLink) => {
+          setShowModal(false);
+          if (onSuccess) {
+            onSuccess(paymentLink);
+          }
+        }}
+      />
+    </div>
   );
 } 

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Calendar, List } from 'lucide-react';
 import { AppointmentService, type AppointmentData } from '@/src/lib/api/services/appointmentService';
 import { apiClient } from '@/src/lib/api/apiClient';
-import AppointmentCalendar from '@/src/components/ui/AppointmentCalendar';
+import AppointmentCalendar from '@/src/components/dashboard/AppointmentCalendar';
 import Modal from '@/src/components/ui/Modal';
 import AppointmentForm from '@/src/components/forms/AppointmentForm';
 

@@ -176,8 +176,8 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-[600px]">
         <div className="text-center space-y-4">
-          <span className="loading loading-spinner loading-lg text-[#5F6368]"></span>
-          <p className="text-[#5F6368] text-lg">Loading dashboard...</p>
+          <span className="loading loading-spinner loading-lg text-[#C9A449]"></span>
+          <p className="text-gray-400 text-lg">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -188,11 +188,11 @@ export default function DashboardPage() {
       <div className="flex items-center justify-center min-h-[600px]">
         <div className="text-center space-y-4 max-w-md">
           <div className="text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-[#171717]">Unable to Load Dashboard</h2>
-          <p className="text-[#5F6368]">{error}</p>
+          <h2 className="text-2xl font-bold text-white">Unable to Load Dashboard</h2>
+          <p className="text-gray-400">{error}</p>
           <button 
             onClick={loadDashboardData} 
-            className="mt-4 bg-gradient-to-r from-[#3C4043] to-[#202124] text-[#F7F8FA] border border-[#5F6368] px-6 py-3 rounded-[10px] font-semibold transition-all duration-300 hover:bg-gradient-to-r hover:from-[#5F6368] hover:to-[#3C4043] hover:transform hover:-translate-y-[2px] hover:shadow-[0_6px_16px_rgba(32,33,36,0.3)]"
+            className="mt-4 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg shadow-[#C9A449]/20"
           >
             Try Again
           </button>
@@ -202,75 +202,82 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA]">
-      <div className="max-w-7xl mx-auto p-8">
-        {/* Page Header - Following dashboardstyle.md */}
-        <div className="mb-8 pb-5 border-b border-[#DADCE0] bg-gradient-to-r from-[rgba(247,248,250,0.8)] to-[rgba(232,234,237,0.4)] rounded-xl p-6">
-          <h1 className="text-[28px] font-bold text-[#171717] mb-2">Dashboard Overview</h1>
-          <p className="text-base text-[#5F6368]">Welcome back! Here's what's happening at your shop today.</p>
-        </div>
-
-        {/* Stats Grid with Professional Spacing */}
-        <div className="mb-10">
-          <StatsGrid stats={stats} />
-        </div>
-
-        {/* Main Content Grid with Enhanced Layout */}
-        <div className="space-y-8">
-          {/* Row 1: Appointments and Requests */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Today's Appointments Card */}
-            <div className="bg-[#E8EAED] border border-[#DADCE0] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,36,0.08)] transition-all duration-300 hover:border-[#9AA0A6] hover:shadow-[0_8px_24px_rgba(32,33,36,0.12)] hover:transform hover:-translate-y-[2px] hover:bg-gradient-to-br hover:from-[#E8EAED] hover:to-[#F1F3F4] backdrop-blur-[10px]">
-              <div className="mb-5 pb-4 border-b border-[#D2D4D7]">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold text-[#171717]">Today's Appointments</h2>
-                  <Link 
-                    href="/dashboard/appointments" 
-                    className="text-sm text-[#3C4043] font-medium transition-colors duration-200 hover:text-[#202124] hover:underline"
-                  >
-                    View details →
-                  </Link>
-                </div>
-              </div>
-              <div>
-                <AppointmentsTable appointments={appointments} />
-              </div>
-            </div>
-
-            {/* Recent Tattoo Requests Card */}
-            <div className="bg-[#E8EAED] border border-[#DADCE0] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,36,0.08)] transition-all duration-300 hover:border-[#9AA0A6] hover:shadow-[0_8px_24px_rgba(32,33,36,0.12)] hover:transform hover:-translate-y-[2px] hover:bg-gradient-to-br hover:from-[#E8EAED] hover:to-[#F1F3F4] backdrop-blur-[10px]">
-              <div className="mb-5 pb-4 border-b border-[#D2D4D7]">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold text-[#171717]">Recent Tattoo Requests</h2>
-                  <Link 
-                    href="/dashboard/tattoo-request" 
-                    className="text-sm text-[#3C4043] font-medium transition-colors duration-200 hover:text-[#202124] hover:underline"
-                  >
-                    View details →
-                  </Link>
-                </div>
-              </div>
-              <div>
-                <TattooRequestsTable requests={requests} />
-              </div>
-            </div>
+    <div className="min-h-screen">
+      {/* Professional Container with Gold Border */}
+      <div className="max-w-7xl mx-auto relative">
+        {/* Main container with gold border */}
+        <div className="relative border border-[#C9A449]/30 rounded-2xl bg-[#0a0a0a]/90 backdrop-blur-sm p-8">
+          {/* Page Header - Dark theme version */}
+          <div className="mb-8 border border-[#C9A449]/20 bg-gradient-to-r from-[#080808]/80 to-[#0a0a0a]/40 rounded-xl p-6 backdrop-blur-sm">
+            <h1 className="text-3xl font-heading font-bold text-white mb-2 tracking-wide">Dashboard Overview</h1>
+            <p className="text-base text-gray-400">Welcome back! Here's what's happening at your shop today.</p>
           </div>
 
-          {/* Row 2: Recent Customers - Full Width */}
-          <div className="bg-[#E8EAED] border border-[#DADCE0] rounded-2xl p-6 shadow-[0_2px_12px_rgba(32,33,36,0.08)] transition-all duration-300 hover:border-[#9AA0A6] hover:shadow-[0_8px_24px_rgba(32,33,36,0.12)] hover:transform hover:-translate-y-[2px] hover:bg-gradient-to-br hover:from-[#E8EAED] hover:to-[#F1F3F4] backdrop-blur-[10px]">
-            <div className="mb-5 pb-4 border-b border-[#D2D4D7]">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-[#171717]">Recent Customers</h2>
-                <Link 
-                  href="/dashboard/customers" 
-                  className="text-sm text-[#3C4043] font-medium transition-colors duration-200 hover:text-[#202124] hover:underline"
-                >
-                  View details →
-                </Link>
+          {/* Stats Grid with Professional Spacing */}
+          <div className="mb-10">
+            <StatsGrid stats={stats} />
+          </div>
+
+          {/* Main Content Grid with Enhanced Layout */}
+          <div className="space-y-8">
+            {/* Row 1: Appointments and Requests */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Today's Appointments Card */}
+              <div className="bg-[#111111] border border-[#C9A449]/20 rounded-2xl p-6 transition-all duration-300 hover:border-[#C9A449]/30 backdrop-blur-sm">
+                <div className="mb-5 pb-4 border-b border-[#1a1a1a]">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-lg font-semibold text-white">Today's Appointments</h2>
+                    <Link 
+                      href="/dashboard/appointments" 
+                      className="text-sm text-[#C9A449] font-medium transition-all duration-200 hover:text-[#E5B563] group flex items-center gap-1"
+                    >
+                      View details 
+                      <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                    </Link>
+                  </div>
+                </div>
+                <div>
+                  <AppointmentsTable appointments={appointments} />
+                </div>
+              </div>
+
+              {/* Recent Tattoo Requests Card */}
+              <div className="bg-[#111111] border border-[#C9A449]/20 rounded-2xl p-6 transition-all duration-300 hover:border-[#C9A449]/30 backdrop-blur-sm">
+                <div className="mb-5 pb-4 border-b border-[#1a1a1a]">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-lg font-semibold text-white">Recent Tattoo Requests</h2>
+                    <Link 
+                      href="/dashboard/tattoo-request" 
+                      className="text-sm text-[#C9A449] font-medium transition-all duration-200 hover:text-[#E5B563] group flex items-center gap-1"
+                    >
+                      View details 
+                      <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                    </Link>
+                  </div>
+                </div>
+                <div>
+                  <TattooRequestsTable requests={requests} />
+                </div>
               </div>
             </div>
-            <div>
-              <CustomersTable customers={customers} />
+
+            {/* Row 2: Recent Customers - Full Width */}
+            <div className="bg-[#111111] border border-[#C9A449]/20 rounded-2xl p-6 transition-all duration-300 hover:border-[#C9A449]/30 backdrop-blur-sm">
+              <div className="mb-5 pb-4 border-b border-[#1a1a1a]">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-semibold text-white">Recent Customers</h2>
+                  <Link 
+                    href="/dashboard/customers" 
+                    className="text-sm text-[#C9A449] font-medium transition-all duration-200 hover:text-[#E5B563] group flex items-center gap-1"
+                  >
+                    View details 
+                    <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+                  </Link>
+                </div>
+              </div>
+              <div>
+                <CustomersTable customers={customers} />
+              </div>
             </div>
           </div>
         </div>

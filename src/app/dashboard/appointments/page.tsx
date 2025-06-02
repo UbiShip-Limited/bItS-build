@@ -121,20 +121,20 @@ export default function AppointmentsPage() {
       {/* Page Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-smoke-900 mb-2">Appointments</h1>
-          <p className="text-smoke-500 text-lg">Manage all your appointments</p>
+          <h1 className="text-3xl font-heading font-bold text-white mb-2 tracking-wide">Appointments</h1>
+          <p className="text-gray-400 text-lg">Manage all your appointments</p>
         </div>
         <div className="flex gap-3">
           <Link
             href="/dashboard/appointments/calendar"
-            className="btn btn-outline btn-sm text-smoke-600 border-smoke-300 hover:bg-smoke-100 hover:border-smoke-400"
+            className="btn btn-ghost btn-sm text-gray-400 border border-[#1a1a1a] hover:border-[#C9A449]/30 hover:text-[#C9A449]"
           >
             <Calendar className="w-4 h-4" />
             Calendar View
           </Link>
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="btn btn-primary btn-sm"
+            className="btn btn-sm bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] border-0 shadow-lg shadow-[#C9A449]/20"
           >
             <Plus className="w-4 h-4" />
             New Appointment
@@ -143,21 +143,21 @@ export default function AppointmentsPage() {
       </div>
 
       {/* Filters */}
-      <div className="card bg-smoke-100 shadow-smoke hover:shadow-smoke-lg transition-all duration-300 border border-smoke-200 mb-6">
+      <div className="card bg-[#111111] shadow-2xl hover:shadow-[#C9A449]/10 hover:shadow-2xl transition-all duration-300 border border-[#1a1a1a] hover:border-[#C9A449]/20 mb-6">
         <div className="card-body">
           <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-smoke-700" />
-            <span className="font-semibold text-smoke-900 text-lg">Filters</span>
+            <Filter className="w-5 h-5 text-[#C9A449]" />
+            <span className="font-semibold text-white text-lg">Filters</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-smoke-700 font-medium">Status</span>
+                <span className="label-text text-gray-400 font-medium">Status</span>
               </label>
               <select 
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-                className="select select-bordered bg-smoke-50 border-smoke-300 text-smoke-700 focus:border-smoke-500"
+                className="select select-bordered bg-[#0a0a0a] border-[#1a1a1a] text-white focus:border-[#C9A449]/50 focus:outline-none"
               >
                 <option value="">All Statuses</option>
                 {Object.values(BookingStatus).map(status => (
@@ -170,32 +170,32 @@ export default function AppointmentsPage() {
             
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-smoke-700 font-medium">From Date</span>
+                <span className="label-text text-gray-400 font-medium">From Date</span>
               </label>
               <input 
                 type="date"
                 value={filters.from}
                 onChange={(e) => setFilters({ ...filters, from: e.target.value, page: 1 })}
-                className="input input-bordered bg-smoke-50 border-smoke-300 text-smoke-700 focus:border-smoke-500"
+                className="input input-bordered bg-[#0a0a0a] border-[#1a1a1a] text-white focus:border-[#C9A449]/50 focus:outline-none"
               />
             </div>
             
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-smoke-700 font-medium">To Date</span>
+                <span className="label-text text-gray-400 font-medium">To Date</span>
               </label>
               <input 
                 type="date"
                 value={filters.to}
                 onChange={(e) => setFilters({ ...filters, to: e.target.value, page: 1 })}
-                className="input input-bordered bg-smoke-50 border-smoke-300 text-smoke-700 focus:border-smoke-500"
+                className="input input-bordered bg-[#0a0a0a] border-[#1a1a1a] text-white focus:border-[#C9A449]/50 focus:outline-none"
               />
             </div>
             
             <div className="form-control justify-end">
               <button
                 onClick={() => setFilters({ status: '', from: '', to: '', page: 1, limit: 20 })}
-                className="btn btn-ghost btn-block text-smoke-600 hover:bg-smoke-200"
+                className="btn btn-ghost btn-block text-gray-400 hover:text-white hover:bg-[#1a1a1a]/50"
               >
                 Clear Filters
               </button>
@@ -205,27 +205,27 @@ export default function AppointmentsPage() {
       </div>
 
       {/* Appointments Table */}
-      <div className="card bg-smoke-100 shadow-smoke hover:shadow-smoke-lg transition-all duration-300 border border-smoke-200 overflow-hidden">
+      <div className="card bg-[#111111] shadow-2xl hover:shadow-[#C9A449]/10 hover:shadow-2xl transition-all duration-300 border border-[#1a1a1a] hover:border-[#C9A449]/20 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center">
-            <span className="loading loading-spinner loading-lg text-smoke-500"></span>
-            <p className="mt-2 text-smoke-500">Loading appointments...</p>
+            <span className="loading loading-spinner loading-lg text-[#C9A449]"></span>
+            <p className="mt-2 text-gray-400">Loading appointments...</p>
           </div>
         ) : error ? (
           <div className="p-8 text-center">
-            <div className="alert alert-error">
-              <span>{error}</span>
+            <div className="alert alert-error bg-red-500/10 border border-red-500/30">
+              <span className="text-red-400">{error}</span>
               <button 
                 onClick={loadAppointments}
-                className="btn btn-sm btn-ghost"
+                className="btn btn-sm btn-ghost text-red-400 hover:bg-red-500/10"
               >
                 Retry
               </button>
             </div>
           </div>
         ) : appointments.length === 0 ? (
-          <div className="p-8 text-center text-smoke-500">
-            <Calendar className="w-12 h-12 mx-auto mb-4 text-smoke-400" />
+          <div className="p-8 text-center text-gray-400">
+            <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-600" />
             <p className="text-lg font-medium">No appointments found</p>
           </div>
         ) : (
@@ -233,40 +233,40 @@ export default function AppointmentsPage() {
             <div className="overflow-x-auto">
               <table className="table">
                 <thead>
-                  <tr className="border-smoke-300">
-                    <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Client</th>
-                    <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Date & Time</th>
-                    <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Type</th>
-                    <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Status</th>
-                    <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50">Price</th>
-                    <th className="bg-gradient-to-r from-smoke-800 to-smoke-900 text-smoke-50 text-right">Actions</th>
+                  <tr>
+                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Client</th>
+                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Date & Time</th>
+                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Type</th>
+                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Status</th>
+                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Price</th>
+                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-[#1a1a1a]">
                   {appointments.map((appointment) => {
                     const { date, time } = formatDateTime(appointment.startTime);
                     return (
-                      <tr key={appointment.id} className="hover:bg-smoke-50 transition-colors border-smoke-200">
+                      <tr key={appointment.id} className="hover:bg-[#1a1a1a]/50 transition-colors">
                         <td>
                           <div className="flex items-center gap-3">
                             <div className="avatar placeholder">
-                              <div className="bg-smoke-300 text-smoke-700 rounded-full w-10">
+                              <div className="bg-gradient-to-br from-[#C9A449] to-[#8B7635] text-[#080808] rounded-full w-10">
                                 <User className="w-5 h-5" />
                               </div>
                             </div>
                             <div>
-                              <div className="font-bold text-smoke-900">
+                              <div className="font-bold text-white">
                                 {appointment.customer?.name || 'Anonymous'}
                               </div>
-                              <div className="text-sm opacity-75 text-smoke-500">
+                              <div className="text-sm opacity-75 text-gray-500">
                                 {appointment.customer?.email || appointment.contactEmail || 'No email'}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td>
-                          <div className="flex items-center gap-2 text-smoke-700">
-                            <Calendar className="w-4 h-4 text-smoke-600" />
+                          <div className="flex items-center gap-2 text-gray-300">
+                            <Calendar className="w-4 h-4 text-[#C9A449]" />
                             <div>
                               <div className="font-medium">{date}</div>
                               <div className="text-sm opacity-75 flex items-center gap-1">
@@ -277,31 +277,37 @@ export default function AppointmentsPage() {
                           </div>
                         </td>
                         <td>
-                          <div className="text-smoke-700">
+                          <div className="text-gray-300">
                             <div className="font-medium">{getBookingTypeLabel(appointment.type)}</div>
                             <div className="text-sm opacity-75">{appointment.duration} minutes</div>
                           </div>
                         </td>
                         <td>
-                          <span className={`badge ${getStatusColor(appointment.status)} badge-sm`}>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                            appointment.status === BookingStatus.CONFIRMED ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                            appointment.status === BookingStatus.PENDING ? 'bg-[#C9A449]/20 text-[#C9A449] border-[#C9A449]/30' :
+                            appointment.status === BookingStatus.COMPLETED ? 'bg-gray-500/20 text-gray-400 border-gray-500/30' :
+                            appointment.status === BookingStatus.CANCELLED ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                            'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                          }`}>
                             {appointment.status.replace('_', ' ')}
                           </span>
                         </td>
                         <td>
                           {appointment.priceQuote ? (
-                            <div className="flex items-center font-medium text-smoke-800">
+                            <div className="flex items-center font-medium text-[#C9A449]">
                               <DollarSign className="w-4 h-4 mr-1" />
                               {appointment.priceQuote.toFixed(2)}
                             </div>
                           ) : (
-                            <span className="text-smoke-400">-</span>
+                            <span className="text-gray-600">-</span>
                           )}
                         </td>
                         <td>
                           <div className="flex justify-end gap-2">
                             <Link 
                               href={`/dashboard/appointments/${appointment.id}`} 
-                              className="btn btn-ghost btn-xs text-smoke-600 hover:text-smoke-900"
+                              className="btn btn-ghost btn-xs text-[#C9A449] hover:text-[#E5B563]"
                             >
                               View
                             </Link>
@@ -310,14 +316,14 @@ export default function AppointmentsPage() {
                                 setSelectedAppointment(appointment);
                                 setShowCreateModal(true);
                               }}
-                              className="btn btn-ghost btn-xs text-smoke-600 hover:text-smoke-900"
+                              className="btn btn-ghost btn-xs text-gray-400 hover:text-white"
                             >
                               Edit
                             </button>
                             {appointment.status !== BookingStatus.CANCELLED && (
                               <button 
                                 onClick={() => handleCancelAppointment(appointment.id)}
-                                className="btn btn-ghost btn-xs text-error"
+                                className="btn btn-ghost btn-xs text-red-400 hover:text-red-300"
                               >
                                 Cancel
                               </button>
@@ -332,30 +338,30 @@ export default function AppointmentsPage() {
             </div>
             
             {/* Pagination */}
-            <div className="bg-smoke-50 border-t border-smoke-300 p-4">
+            <div className="bg-[#080808] border-t border-[#1a1a1a] p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-smoke-700">
-                    Showing <span className="font-bold">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
-                    <span className="font-bold">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
-                    <span className="font-bold">{pagination.total}</span> results
+                  <p className="text-sm text-gray-400">
+                    Showing <span className="font-bold text-white">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
+                    <span className="font-bold text-white">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
+                    <span className="font-bold text-white">{pagination.total}</span> results
                   </p>
                 </div>
                 <div className="join">
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
                     disabled={filters.page === 1}
-                    className="join-item btn btn-sm"
+                    className="join-item btn btn-sm bg-[#111111] border-[#1a1a1a] text-gray-400 hover:bg-[#1a1a1a] hover:text-white"
                   >
                     Previous
                   </button>
-                  <button className="join-item btn btn-sm btn-active">
+                  <button className="join-item btn btn-sm btn-active bg-[#C9A449] text-[#080808] border-[#C9A449]">
                     Page {pagination.page} of {pagination.pages}
                   </button>
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
                     disabled={filters.page === pagination.pages}
-                    className="join-item btn btn-sm"
+                    className="join-item btn btn-sm bg-[#111111] border-[#1a1a1a] text-gray-400 hover:bg-[#1a1a1a] hover:text-white"
                   >
                     Next
                   </button>

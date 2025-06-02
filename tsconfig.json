@@ -28,7 +28,8 @@
         "./*"
       ]
     },
-    "strictNullChecks": true
+    "strictNullChecks": true,
+    "types": ["vitest/globals"]
   },
   "include": [
     "next-env.d.ts",

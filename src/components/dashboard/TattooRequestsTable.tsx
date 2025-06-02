@@ -15,42 +15,42 @@ interface TattooRequestsTableProps {
 export default function TattooRequestsTable({ requests }: TattooRequestsTableProps) {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      new: 'badge-primary',
-      reviewing: 'badge-secondary',
-      quoted: 'badge-accent',
-      approved: 'badge-success',
+      new: 'bg-[#C9A449]/20 text-[#C9A449] border-[#C9A449]/30',
+      reviewing: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+      quoted: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+      approved: 'bg-green-500/20 text-green-400 border-green-500/30',
     };
-    return statusConfig[status as keyof typeof statusConfig] || 'badge-ghost';
+    return statusConfig[status as keyof typeof statusConfig] || 'bg-gray-500/20 text-gray-400';
   };
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#D2D4D7] shadow-[0_4px_16px_rgba(32,33,36,0.08)]">
+    <div className="overflow-hidden rounded-xl">
       <table className="w-full">
         <thead>
           <tr>
-            <th className="bg-gradient-to-r from-[#202124] to-[#171717] text-[#F7F8FA] px-5 py-4 text-left font-semibold text-sm border-b border-[#3C4043]">Client</th>
-            <th className="bg-gradient-to-r from-[#202124] to-[#171717] text-[#F7F8FA] px-5 py-4 text-left font-semibold text-sm border-b border-[#3C4043]">Design</th>
-            <th className="bg-gradient-to-r from-[#202124] to-[#171717] text-[#F7F8FA] px-5 py-4 text-left font-semibold text-sm border-b border-[#3C4043]">Date</th>
-            <th className="bg-gradient-to-r from-[#202124] to-[#171717] text-[#F7F8FA] px-5 py-4 text-left font-semibold text-sm border-b border-[#3C4043]">Status</th>
+            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-wider">Client</th>
+            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-wider">Design</th>
+            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-wider">Date</th>
+            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-wider">Status</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-[#1a1a1a]">
           {requests.length === 0 ? (
             <tr>
-              <td colSpan={4} className="text-center py-8 text-[#9AA0A6] bg-[#E8EAED]">
+              <td colSpan={4} className="text-center py-8 text-gray-500 bg-[#0a0a0a]">
                 No new tattoo requests
               </td>
             </tr>
           ) : (
             requests.map((request, index) => (
-              <tr key={request.id} className="transition-colors hover:bg-[#F1F3F4]">
-                <td className="px-5 py-4 text-[#3C4043] font-medium bg-[#E8EAED] border-b border-[#D2D4D7]">{request.clientName}</td>
-                <td className="px-5 py-4 text-[#3C4043] bg-[#E8EAED] border-b border-[#D2D4D7]">{request.design}</td>
-                <td className="px-5 py-4 text-[#3C4043] bg-[#E8EAED] border-b border-[#D2D4D7]">
+              <tr key={request.id} className="transition-colors hover:bg-[#1a1a1a]/50">
+                <td className="px-5 py-4 text-white font-medium">{request.clientName}</td>
+                <td className="px-5 py-4 text-gray-300">{request.design}</td>
+                <td className="px-5 py-4 text-gray-300">
                   {format(new Date(request.submittedAt), 'MMM dd')}
                 </td>
-                <td className="px-5 py-4 bg-[#E8EAED] border-b border-[#D2D4D7]">
-                  <span className={`badge ${getStatusBadge(request.status)} badge-sm font-medium`}>
+                <td className="px-5 py-4">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(request.status)}`}>
                     {request.status}
                   </span>
                 </td>

@@ -30,6 +30,16 @@ export interface ProcessPaymentParams {
   staffId?: string;
 }
 
+export interface GetPaymentsParams {
+  page?: number;
+  limit?: number;
+  status?: 'pending' | 'completed' | 'failed' | 'refunded';
+  customerId?: string;
+  paymentType?: PaymentType;
+  startDate?: Date;
+  endDate?: Date;
+}
+
 export default class PaymentService {
   private squareClient: ReturnType<typeof SquareClient.fromEnv>;
   private prisma: PrismaClient;
@@ -134,6 +144,80 @@ export default class PaymentService {
       
       // Re-throw the error
       throw error;
+    }
+  }
+
+  async getPayments(params: GetPaymentsParams = {}) {
+    const { 
+      page = 1, 
+      limit = 20, 
+      status, 
+      customerId, 
+      paymentType, 
+      startDate, 
+      endDate 
+    } = params;
+    
+    // Build where clause
+    const where: Prisma.PaymentWhereInput = {};
+    
+    if (status) {
+      where.status = status;
+    }
+    
+    if (customerId) {
+      where.customerId = customerId;
+    }
+    
+    if (paymentType) {
+      where.paymentType = paymentType;
+    }
+    
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        where.createdAt.gte = startDate;
+      }
+      if (endDate) {
+        where.createdAt.lte = endDate;
+      }
+    }
+    
+    const skip = (page - 1) * limit;
+    
+    try {
+      const [payments, total] = await Promise.all([
+        this.prisma.payment.findMany({
+          where,
+          include: {
+            customer: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            }
+          },
+          skip,
+          take: limit,
+          orderBy: { createdAt: 'desc' }
+        }),
+        this.prisma.payment.count({ where })
+      ]);
+      
+      return {
+        data: payments,
+        pagination: {
+          total,
+          page,
+          limit,
+          pages: Math.ceil(total / limit)
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      throw new Error('Failed to fetch payments');
     }
   }
 

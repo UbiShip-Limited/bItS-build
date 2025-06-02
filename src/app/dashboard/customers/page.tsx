@@ -76,15 +76,15 @@ export default function CustomersPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8 pb-6 border-b-2 border-gray-200">
+      <div className="flex justify-between items-center mb-8 pb-6 border-b border-[#1a1a1a]">
         <div>
-          <h1 className="text-3xl font-bold text-black mb-2">Customers</h1>
-          <p className="text-gray-600 text-lg">Manage your customer database</p>
+          <h1 className="text-3xl font-heading font-bold text-white mb-2 tracking-wide">Customers</h1>
+          <p className="text-gray-400 text-lg">Manage your customer database</p>
         </div>
         <div>
           <button 
             onClick={() => setShowCreateModal(true)}
-            className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 flex items-center gap-2 font-medium border-2 border-black transition-colors duration-200"
+            className="bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] px-6 py-3 rounded-lg flex items-center gap-2 font-medium shadow-lg shadow-[#C9A449]/20 transition-all duration-300"
           >
             <Plus className="w-4 h-4" />
             New Customer
@@ -93,23 +93,23 @@ export default function CustomersPage() {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white border-2 border-gray-200 rounded-lg shadow-md p-6 mb-6 hover:border-black transition-colors duration-200">
+      <div className="bg-[#111111] border border-[#1a1a1a] rounded-2xl shadow-2xl p-6 mb-6 hover:border-[#C9A449]/20 transition-all duration-300">
         <form onSubmit={handleSearch} className="flex gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-5 h-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#C9A449] w-5 h-5" />
               <input 
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name, email or phone" 
-                className="block w-full pl-10 pr-3 py-3 bg-white border-2 border-gray-300 rounded-lg focus:outline-none focus:border-black font-medium transition-colors duration-200"
+                className="block w-full pl-10 pr-3 py-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg focus:outline-none focus:border-[#C9A449]/50 focus:ring-1 focus:ring-[#C9A449]/20 text-white placeholder-gray-500 font-medium transition-all duration-300"
               />
             </div>
           </div>
           <button
             type="submit"
-            className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 font-medium border-2 border-black transition-colors duration-200"
+            className="px-6 py-3 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20 transition-all duration-300"
           >
             Search
           </button>
@@ -117,22 +117,22 @@ export default function CustomersPage() {
       </div>
 
       {/* Customers Table */}
-      <div className="bg-white border-2 border-gray-200 rounded-lg shadow-md overflow-hidden hover:border-black transition-colors duration-200">
+      <div className="bg-[#111111] border border-[#1a1a1a] rounded-2xl shadow-2xl overflow-hidden hover:border-[#C9A449]/20 transition-all duration-300">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
-              <p className="mt-2 text-gray-600">Loading customers...</p>
+              <span className="loading loading-spinner loading-lg text-[#C9A449]"></span>
+              <p className="mt-2 text-gray-400">Loading customers...</p>
             </div>
           </div>
         ) : error ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="bg-white border-2 border-red-300 text-red-600 px-6 py-4 rounded-lg">
+              <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-6 py-4 rounded-lg">
                 <p className="font-medium mb-4">{error}</p>
                 <button 
                   onClick={loadCustomers}
-                  className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium"
+                  className="px-6 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
                 >
                   Retry
                 </button>
@@ -142,13 +142,13 @@ export default function CustomersPage() {
         ) : customers.length === 0 ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <p className="text-gray-500 mb-4 text-lg font-medium">
+              <p className="text-gray-400 mb-4 text-lg font-medium">
                 {searchTerm ? 'No customers found matching your search.' : 'No customers yet.'}
               </p>
               {!searchTerm && (
                 <button 
                   onClick={() => setShowCreateModal(true)}
-                  className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-800 font-medium"
+                  className="px-6 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
                 >
                   Create First Customer
                 </button>
@@ -158,67 +158,67 @@ export default function CustomersPage() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y-2 divide-black">
-                <thead className="bg-black">
+              <table className="min-w-full">
+                <thead className="bg-[#080808]">
                   <tr>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Name
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Contact
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Notes
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider border-r border-gray-700">
+                    <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Added
                     </th>
-                    <th scope="col" className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider">
+                    <th scope="col" className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-[#1a1a1a]">
                   {customers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-gray-50 transition-colors duration-150">
-                      <td className="px-6 py-4 whitespace-nowrap border-r border-gray-100">
+                    <tr key={customer.id} className="hover:bg-[#1a1a1a]/50 transition-colors duration-150">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-black text-white rounded-full flex items-center justify-center">
+                          <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-[#C9A449] to-[#8B7635] text-[#080808] rounded-full flex items-center justify-center">
                             <span className="font-bold">
                               {customer.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-semibold text-black">{customer.name}</div>
+                            <div className="text-sm font-semibold text-white">{customer.name}</div>
                             {customer.squareId && (
-                              <div className="text-xs text-gray-600">Square ID: {customer.squareId}</div>
+                              <div className="text-xs text-gray-500">Square ID: {customer.squareId}</div>
                             )}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap border-r border-gray-100">
-                        <div className="text-sm font-medium text-black">{customer.email || '-'}</div>
-                        <div className="text-sm text-gray-600">{customer.phone || '-'}</div>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-300">{customer.email || '-'}</div>
+                        <div className="text-sm text-gray-500">{customer.phone || '-'}</div>
                       </td>
-                      <td className="px-6 py-4 border-r border-gray-100">
-                        <div className="text-sm text-gray-600 max-w-xs truncate">
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-400 max-w-xs truncate">
                           {customer.notes || '-'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-black font-medium border-r border-gray-100">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-medium">
                         {formatDate(customer.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
                           <Link 
                             href={`/dashboard/customers/${customer.id}`} 
-                            className="text-black hover:underline font-medium px-2 py-1"
+                            className="text-[#C9A449] hover:text-[#E5B563] font-medium px-2 py-1 transition-colors"
                           >
                             View
                           </Link>
                           <button 
                             onClick={() => handleEditClick(customer)}
-                            className="text-gray-600 hover:text-black hover:underline font-medium px-2 py-1"
+                            className="text-gray-400 hover:text-white font-medium px-2 py-1 transition-colors"
                           >
                             Edit
                           </button>
@@ -231,30 +231,30 @@ export default function CustomersPage() {
             </div>
             
             {/* Pagination */}
-            <div className="bg-gray-50 border-t-2 border-black px-6 py-4">
+            <div className="bg-[#080808] border-t border-[#1a1a1a] px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button 
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                     disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-4 py-2 border-2 border-gray-300 text-sm font-medium rounded-lg text-black bg-white hover:border-black disabled:opacity-50 transition-colors duration-200"
+                    className="relative inline-flex items-center px-4 py-2 border border-[#C9A449]/30 text-sm font-medium rounded-lg text-[#C9A449] bg-transparent hover:bg-[#C9A449]/10 disabled:opacity-50 transition-all duration-300"
                   >
                     Previous
                   </button>
                   <button 
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={currentPage === totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border-2 border-gray-300 text-sm font-medium rounded-lg text-black bg-white hover:border-black disabled:opacity-50 transition-colors duration-200"
+                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-[#C9A449]/30 text-sm font-medium rounded-lg text-[#C9A449] bg-transparent hover:bg-[#C9A449]/10 disabled:opacity-50 transition-all duration-300"
                   >
                     Next
                   </button>
                 </div>
                 <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-sm text-black font-medium">
-                      Showing <span className="font-bold">{(currentPage - 1) * limit + 1}</span> to{' '}
-                      <span className="font-bold">{Math.min(currentPage * limit, totalCustomers)}</span> of{' '}
-                      <span className="font-bold">{totalCustomers}</span> customers
+                    <p className="text-sm text-gray-400 font-medium">
+                      Showing <span className="font-bold text-white">{(currentPage - 1) * limit + 1}</span> to{' '}
+                      <span className="font-bold text-white">{Math.min(currentPage * limit, totalCustomers)}</span> of{' '}
+                      <span className="font-bold text-white">{totalCustomers}</span> customers
                     </p>
                   </div>
                   <div>
@@ -262,7 +262,7 @@ export default function CustomersPage() {
                       <button 
                         onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                         disabled={currentPage === 1}
-                        className="relative inline-flex items-center px-2 py-2 rounded-l-lg border-2 border-gray-300 bg-white text-sm font-medium text-black hover:border-black disabled:opacity-50 transition-colors duration-200"
+                        className="relative inline-flex items-center px-2 py-2 rounded-l-lg border border-[#1a1a1a] bg-[#111111] text-sm font-medium text-gray-400 hover:bg-[#1a1a1a] hover:text-white disabled:opacity-50 transition-all duration-300"
                       >
                         <ChevronLeft className="h-5 w-5" />
                       </button>
@@ -284,10 +284,10 @@ export default function CustomersPage() {
                           <button
                             key={pageNum}
                             onClick={() => setCurrentPage(pageNum)}
-                            className={`relative inline-flex items-center px-4 py-2 border-2 text-sm font-medium transition-colors duration-200 ${
+                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-all duration-300 ${
                               currentPage === pageNum
-                                ? 'z-10 bg-black border-black text-white'
-                                : 'bg-white border-gray-300 text-black hover:border-black'
+                                ? 'z-10 bg-[#C9A449] border-[#C9A449] text-[#080808]'
+                                : 'bg-[#111111] border-[#1a1a1a] text-gray-400 hover:bg-[#1a1a1a] hover:text-white'
                             }`}
                           >
                             {pageNum}
@@ -298,7 +298,7 @@ export default function CustomersPage() {
                       <button 
                         onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                         disabled={currentPage === totalPages}
-                        className="relative inline-flex items-center px-2 py-2 rounded-r-lg border-2 border-gray-300 bg-white text-sm font-medium text-black hover:border-black disabled:opacity-50 transition-colors duration-200"
+                        className="relative inline-flex items-center px-2 py-2 rounded-r-lg border border-[#1a1a1a] bg-[#111111] text-sm font-medium text-gray-400 hover:bg-[#1a1a1a] hover:text-white disabled:opacity-50 transition-all duration-300"
                       >
                         <ChevronRight className="h-5 w-5" />
                       </button>

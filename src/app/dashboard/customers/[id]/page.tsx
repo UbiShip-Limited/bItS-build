@@ -79,26 +79,26 @@ export default function CustomerDetailPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      scheduled: 'bg-blue-100 text-blue-800',
-      confirmed: 'bg-green-100 text-green-800',
-      completed: 'bg-gray-100 text-gray-800',
-      cancelled: 'bg-red-100 text-red-800',
-      pending: 'bg-yellow-100 text-yellow-800',
-      new: 'bg-purple-100 text-purple-800',
-      approved: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
-      deposit_paid: 'bg-blue-100 text-blue-800',
-      in_progress: 'bg-yellow-100 text-yellow-800'
+      scheduled: 'bg-blue-500/20 text-blue-400',
+      confirmed: 'bg-green-500/20 text-green-400',
+      completed: 'bg-gray-500/20 text-gray-400',
+      cancelled: 'bg-red-500/20 text-red-400',
+      pending: 'bg-[#C9A449]/20 text-[#C9A449]',
+      new: 'bg-purple-500/20 text-purple-400',
+      approved: 'bg-green-500/20 text-green-400',
+      rejected: 'bg-red-500/20 text-red-400',
+      deposit_paid: 'bg-blue-500/20 text-blue-400',
+      in_progress: 'bg-yellow-500/20 text-yellow-400'
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-gray-500/20 text-gray-400';
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600">Loading customer details...</p>
+          <span className="loading loading-spinner loading-lg text-[#C9A449]"></span>
+          <p className="mt-2 text-gray-400">Loading customer details...</p>
         </div>
       </div>
     );
@@ -108,10 +108,10 @@ export default function CustomerDetailPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error || 'Customer not found'}</p>
+          <p className="text-red-400 mb-4">{error || 'Customer not found'}</p>
           <Link
             href="/dashboard/customers"
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
           >
             Back to Customers
           </Link>
@@ -126,7 +126,7 @@ export default function CustomerDetailPage() {
       <div className="mb-6">
         <Link
           href="/dashboard/customers"
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4"
+          className="inline-flex items-center text-gray-400 hover:text-[#C9A449] mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Customers
@@ -134,19 +134,19 @@ export default function CustomerDetailPage() {
 
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-2xl font-bold flex items-center gap-3">
-              <div className="h-12 w-12 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-gray-600 font-medium text-lg">
+            <h1 className="text-2xl font-heading font-bold flex items-center gap-3 text-white">
+              <div className="h-12 w-12 bg-gradient-to-br from-[#C9A449] to-[#8B7635] rounded-full flex items-center justify-center">
+                <span className="text-[#080808] font-medium text-lg">
                   {customer.name.charAt(0).toUpperCase()}
                 </span>
               </div>
               {customer.name}
             </h1>
-            <p className="text-gray-600 mt-1">Customer since {formatDate(customer.createdAt)}</p>
+            <p className="text-gray-400 mt-1">Customer since {formatDate(customer.createdAt)}</p>
           </div>
           <button
             onClick={() => setShowEditModal(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            className="px-4 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg flex items-center gap-2 font-medium shadow-lg shadow-[#C9A449]/20"
           >
             <Edit className="w-4 h-4" />
             Edit Customer
@@ -157,29 +157,29 @@ export default function CustomerDetailPage() {
       {/* Customer Info */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Contact Information</h2>
+          <div className="bg-[#111111] rounded-2xl shadow-2xl p-6 border border-[#1a1a1a] hover:border-[#C9A449]/20 transition-all duration-300">
+            <h2 className="text-lg font-semibold mb-4 text-white">Contact Information</h2>
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <Mail className="w-5 h-5 text-gray-400 mt-0.5" />
+                <Mail className="w-5 h-5 text-[#C9A449] mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium">{customer.email || 'Not provided'}</p>
+                  <p className="text-sm text-gray-400">Email</p>
+                  <p className="font-medium text-gray-300">{customer.email || 'Not provided'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
+                <Phone className="w-5 h-5 text-[#C9A449] mt-0.5" />
                 <div>
-                  <p className="text-sm text-gray-600">Phone</p>
-                  <p className="font-medium">{customer.phone || 'Not provided'}</p>
+                  <p className="text-sm text-gray-400">Phone</p>
+                  <p className="font-medium text-gray-300">{customer.phone || 'Not provided'}</p>
                 </div>
               </div>
               {customer.squareId && (
                 <div className="flex items-start gap-3">
-                  <DollarSign className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <DollarSign className="w-5 h-5 text-[#C9A449] mt-0.5" />
                   <div>
-                    <p className="text-sm text-gray-600">Square ID</p>
-                    <p className="font-medium">{customer.squareId}</p>
+                    <p className="text-sm text-gray-400">Square ID</p>
+                    <p className="font-medium text-gray-300">{customer.squareId}</p>
                   </div>
                 </div>
               )}
@@ -187,8 +187,8 @@ export default function CustomerDetailPage() {
 
             {customer.notes && (
               <div className="mt-6">
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Notes</h3>
-                <p className="text-sm text-gray-600 whitespace-pre-wrap">{customer.notes}</p>
+                <h3 className="text-sm font-semibold text-gray-300 mb-2">Notes</h3>
+                <p className="text-sm text-gray-400 whitespace-pre-wrap">{customer.notes}</p>
               </div>
             )}
           </div>
@@ -196,16 +196,16 @@ export default function CustomerDetailPage() {
 
         <div className="lg:col-span-2 space-y-6">
           {/* Appointments */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
+          <div className="bg-[#111111] rounded-2xl shadow-2xl border border-[#1a1a1a] hover:border-[#C9A449]/20 transition-all duration-300">
+            <div className="p-6 border-b border-[#1a1a1a]">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <Calendar className="w-5 h-5 text-gray-400" />
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-white">
+                  <Calendar className="w-5 h-5 text-[#C9A449]" />
                   Appointments
                 </h2>
                 <Link
                   href={`/dashboard/appointments?customerId=${customerId}`}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-sm text-[#C9A449] hover:text-[#E5B563] transition-colors"
                 >
                   View All
                 </Link>
@@ -220,12 +220,12 @@ export default function CustomerDetailPage() {
                     <Link
                       key={appointment.id}
                       href={`/dashboard/appointments/${appointment.id}`}
-                      className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="block p-4 border border-[#1a1a1a] rounded-lg hover:bg-[#1a1a1a]/50 hover:border-[#C9A449]/20 transition-all duration-300"
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-medium">{appointment.type || 'Appointment'}</p>
-                          <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                          <p className="font-medium text-white">{appointment.type || 'Appointment'}</p>
+                          <p className="text-sm text-gray-400 flex items-center gap-1 mt-1">
                             <Clock className="w-3 h-3" />
                             {formatDateTime(appointment.startTime)}
                           </p>
@@ -242,16 +242,16 @@ export default function CustomerDetailPage() {
           </div>
 
           {/* Tattoo Requests */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
+          <div className="bg-[#111111] rounded-2xl shadow-2xl border border-[#1a1a1a] hover:border-[#C9A449]/20 transition-all duration-300">
+            <div className="p-6 border-b border-[#1a1a1a]">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-gray-400" />
+                <h2 className="text-lg font-semibold flex items-center gap-2 text-white">
+                  <FileText className="w-5 h-5 text-[#C9A449]" />
                   Tattoo Requests
                 </h2>
                 <Link
                   href={`/dashboard/tattoo-requests?customerId=${customerId}`}
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-sm text-[#C9A449] hover:text-[#E5B563] transition-colors"
                 >
                   View All
                 </Link>
@@ -266,12 +266,12 @@ export default function CustomerDetailPage() {
                     <Link
                       key={request.id}
                       href={`/dashboard/tattoo-requests/${request.id}`}
-                      className="block p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="block p-4 border border-[#1a1a1a] rounded-lg hover:bg-[#1a1a1a]/50 hover:border-[#C9A449]/20 transition-all duration-300"
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <p className="font-medium line-clamp-1">{request.description}</p>
-                          <p className="text-sm text-gray-600 mt-1">
+                          <p className="font-medium line-clamp-1 text-white">{request.description}</p>
+                          <p className="text-sm text-gray-400 mt-1">
                             {request.placement} • {request.size}
                           </p>
                         </div>

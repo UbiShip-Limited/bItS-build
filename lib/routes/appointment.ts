@@ -1,12 +1,59 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authorize } from '../middleware/auth.js';
-import { UserRole } from '../types/auth.js';
-import { AppointmentService } from '../services/appointmentService.js';
-import { SquareIntegrationService } from '../services/squareIntegrationService.js';
-import { BookingStatus, BookingType } from '../types/booking.js';
-import { AppointmentError, NotFoundError, ValidationError } from '../services/errors.js';
+import { authorize } from '../middleware/auth';
+import { UserRole } from '../types/auth';
+import { AppointmentService } from '../services/appointmentService';
+import { SquareIntegrationService } from '../services/squareIntegrationService';
+import { BookingStatus, BookingType } from '../types/booking';
+import { AppointmentError } from '../services/errors';
 
-const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
+// Type definitions for request bodies and queries
+interface AppointmentQueryParams {
+  status?: BookingStatus;
+  customerId?: string;
+  artistId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}
+
+interface CreateAppointmentBody {
+  customerId?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  artistId?: string;
+  startAt: string;
+  duration: number;
+  bookingType?: BookingType;
+  status?: BookingStatus;
+  note?: string;
+  priceQuote?: number;
+  tattooRequestId?: string;
+}
+
+interface UpdateAppointmentBody {
+  artistId?: string;
+  startAt?: string;
+  duration?: number;
+  status?: BookingStatus;
+  note?: string;
+  priceQuote?: number;
+}
+
+interface CancelAppointmentBody {
+  reason?: string;
+}
+
+interface AnonymousAppointmentBody {
+  contactEmail: string;
+  contactPhone?: string;
+  startAt: string;
+  duration: number;
+  bookingType?: BookingType;
+  note?: string;
+}
+
+const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize services
   const appointmentService = new AppointmentService();
   const squareService = new SquareIntegrationService();
@@ -57,8 +104,8 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
-    const { status, customerId, artistId, from, to, page = 1, limit = 20 } = request.query as any;
+  }, async (request) => {
+    const { status, customerId, artistId, from, to, page = 1, limit = 20 } = request.query as AppointmentQueryParams;
     
     const result = await appointmentService.list(
       {
@@ -88,7 +135,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { id } = request.params as { id: string };
     const appointment = await appointmentService.findById(id);
     return appointment;
@@ -127,7 +174,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
         ]
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { 
       customerId, 
       contactEmail,
@@ -140,7 +187,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
       note, 
       priceQuote,
       tattooRequestId
-    } = request.body as any;
+    } = request.body as CreateAppointmentBody;
 
     const appointment = await appointmentService.create({
       customerId,
@@ -197,7 +244,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { id } = request.params as { id: string };
     const { 
       artistId, 
@@ -206,7 +253,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
       status, 
       note, 
       priceQuote 
-    } = request.body as any;
+    } = request.body as UpdateAppointmentBody;
     
     const appointment = await appointmentService.update(id, {
       artistId,
@@ -250,9 +297,9 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { id } = request.params as { id: string };
-    const { reason } = request.body as any;
+    const { reason } = request.body as CancelAppointmentBody;
     
     const appointment = await appointmentService.cancel(
       id,
@@ -297,7 +344,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { 
       contactEmail,
       contactPhone,
@@ -305,7 +352,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify, options) => {
       duration, 
       bookingType = BookingType.CONSULTATION,
       note
-    } = request.body as any;
+    } = request.body as AnonymousAppointmentBody;
 
     const appointment = await appointmentService.create({
       contactEmail,

@@ -43,6 +43,8 @@ model Customer {
   appointments    Appointment[]
   tattooRequests  TattooRequest[]
   payments        Payment[]
+  paymentLinks    PaymentLink[]
+  checkoutSessions CheckoutSession[]
   
   @@map("customers")
 }
@@ -112,10 +114,11 @@ model TattooRequest {
 model Payment {
   id             String        @id @default(uuid())
   amount         Float
-  status         String        @default("pending") // pending, completed, failed, refunded
+  status         String        @default("pending") // pending, completed, failed, refunded, partially_refunded
   paymentMethod  String?       @map("payment_method")
   paymentType    String?       @map("payment_type") // consultation, drawing_consultation, tattoo_deposit, tattoo_final
   paymentDetails Json?         @map("payment_details")
+  refundDetails  Json?         @map("refund_details")
   squareId       String?       @unique @map("square_id")
   customerId     String?       @map("customer_id")
   bookingId      String?       @map("booking_id")
@@ -151,6 +154,7 @@ model Invoice {
   amount        Float
   status        String   @default("pending") // pending, paid, canceled
   description   String?
+  metadata      Json?    // For storing Square invoice ID, order ID, etc.
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @default(now()) @map("updated_at")
   
@@ -158,6 +162,40 @@ model Invoice {
   payment       Payment?     @relation(fields: [paymentId], references: [id], onDelete: SetNull)
   
   @@map("invoices")
+}
+
+model PaymentLink {
+  id            String    @id @default(uuid())
+  squareOrderId String?   @map("square_order_id")
+  customerId    String    @map("customer_id")
+  appointmentId String?   @map("appointment_id")
+  amount        Float
+  status        String    @default("active") // active, used, expired, cancelled
+  url           String
+  metadata      Json?     // For storing additional data like payment type, tattoo request ID, etc.
+  deletedAt     DateTime? @map("deleted_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @map("updated_at")
+  
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  
+  @@map("payment_links")
+}
+
+model CheckoutSession {
+  id            String    @id @default(uuid())
+  squareOrderId String    @map("square_order_id")
+  customerId    String    @map("customer_id")
+  appointmentId String?   @map("appointment_id")
+  status        String    @default("pending") // pending, completed, expired, cancelled
+  metadata      Json?     // For storing redirect URL, items, etc.
+  expiresAt     DateTime  @map("expires_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @map("updated_at")
+  
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  
+  @@map("checkout_sessions")
 }
 
 model AuditLog {

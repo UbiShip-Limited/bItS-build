@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply, FastifyInstance } from 'fastify';
 import { supabase } from '../supabase/supabaseClient';
-import { UserRole, AuthError, UserWithRole } from '../types/auth';
+import { UserRole, UserWithRole } from '../types/auth';
 
 export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   // Skip auth completely in test environment
@@ -89,7 +89,7 @@ export function authorize(allowedRoles: UserRole[]) {
 }
 
 // Utility hook to apply authentication to all routes in a plugin
-export function requireAuth(instance: FastifyInstance, options: any, done: () => void) {
+export function requireAuth(instance: FastifyInstance, options: Record<string, unknown>, done: () => void) {
   instance.addHook('preHandler', authenticate);
   done();
 }

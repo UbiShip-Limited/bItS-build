@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, User, Plus } from 'lucide-react';
-import { CustomerService, type Customer } from '@/lib/api/services/customerService';
-import { apiClient } from '@/lib/api/apiClient';
+import { Search, Plus } from 'lucide-react';
+import { CustomerService, type Customer } from '@/src/lib/api/services/customerService';
+import { apiClient } from '@/src/lib/api/apiClient';
 
 interface CustomerSelectorProps {
   value?: string;

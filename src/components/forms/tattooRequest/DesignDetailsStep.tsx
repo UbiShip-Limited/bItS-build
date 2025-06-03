@@ -154,6 +154,7 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
                 {style}
               </option>
             ))}
+            <option value="other">Other (please describe in &quot;design description&quot; or &quot;reference&quot;)</option>
           </select>
         </div>
       </div>

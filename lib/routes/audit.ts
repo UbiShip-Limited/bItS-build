@@ -2,7 +2,35 @@ import { FastifyPluginAsync } from 'fastify';
 import { authorize } from '../middleware/auth';
 import { UserRole } from '../types/auth';
 
-const auditRoutes: FastifyPluginAsync = async (fastify, options) => {
+// Type definitions for request queries and params
+interface AuditLogQueryParams {
+  userId?: string;
+  action?: 'CREATE' | 'UPDATE' | 'DELETE' | 'CANCEL';
+  resource?: string;
+  resourceId?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  limit?: number;
+}
+
+interface PaginationQueryParams {
+  page?: number;
+  limit?: number;
+}
+
+interface AuditLogWhereClause {
+  userId?: string;
+  action?: string;
+  resource?: string;
+  resourceId?: string;
+  createdAt?: {
+    gte?: Date;
+    lte?: Date;
+  };
+}
+
+const auditRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /audit-logs - List all audit logs with filtering
   fastify.get('/', {
     preHandler: authorize(['admin'] as UserRole[]), // Restrict to admin only
@@ -21,11 +49,11 @@ const auditRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
-    const { userId, action, resource, resourceId, from, to, page = 1, limit = 20 } = request.query as any;
+  }, async (request) => {
+    const { userId, action, resource, resourceId, from, to, page = 1, limit = 20 } = request.query as AuditLogQueryParams;
     
     // Build where clause based on query parameters
-    const where: any = {};
+    const where: AuditLogWhereClause = {};
     if (userId) where.userId = userId;
     if (action) where.action = action;
     if (resource) where.resource = resource;
@@ -104,9 +132,9 @@ const auditRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { resource } = request.params as { resource: string };
-    const { page = 1, limit = 20 } = request.query as any;
+    const { page = 1, limit = 20 } = request.query as PaginationQueryParams;
     
     const [auditLogs, total] = await Promise.all([
       fastify.prisma.auditLog.findMany({
@@ -149,9 +177,9 @@ const auditRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request) => {
     const { resource, resourceId } = request.params as { resource: string, resourceId: string };
-    const { page = 1, limit = 20 } = request.query as any;
+    const { page = 1, limit = 20 } = request.query as PaginationQueryParams;
     
     const [auditLogs, total] = await Promise.all([
       fastify.prisma.auditLog.findMany({

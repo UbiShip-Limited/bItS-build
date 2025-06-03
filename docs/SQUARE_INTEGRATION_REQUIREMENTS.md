@@ -1,9 +1,9 @@
 # Square Integration Requirements for Bowen Island Tattoo Shop
 
 ## Overview
-This document outlines what the tattoo shop owner needs to provide to enable Square integration for appointment bookings and payment processing.
+This document outlines what the tattoo shop owner ( kelly ) needs to provide to enable Square integration for appointment bookings and payment processing.
 
-## Required Information from Shop Owner
+## Required Information from Kelly
 
 ### 1. Square Account Setup
 - **Square Business Account**: You need an active Square account for your business
@@ -61,7 +61,7 @@ Configure your artists/staff in Square:
 
 #### For Each Team Member:
 - Full name
-- Email address
+- Email address  
 - Phone number (optional)
 - Working hours/availability
 - Services they can perform
@@ -96,70 +96,3 @@ Your Square access token needs these permissions:
 - **Square Messages**: For appointment reminders
 - **Square Marketing**: For promotional emails
 - **Square Loyalty**: For repeat customer rewards
-
-## Setup Process
-
-### Step 1: Create Square Developer Account
-1. Go to https://developer.squareup.com
-2. Sign up with your Square account
-3. Create a new application
-
-### Step 2: Get Sandbox Credentials
-1. In Developer Dashboard, select your application
-2. Go to "Sandbox" tab
-3. Copy:
-   - Sandbox Access Token
-   - Sandbox Application ID
-   - Default Test Account Location ID
-
-### Step 3: Test the Integration
-1. Provide sandbox credentials to your developer
-2. Test creating bookings, customers, and payments
-3. Verify everything works as expected
-
-### Step 4: Go Live
-1. In Developer Dashboard, go to "Production" tab
-2. Generate production access token
-3. Get your live location ID from Square Dashboard
-4. Replace sandbox credentials with production ones
-
-## Information Checklist
-
-Please provide the following to your developer:
-
-- [ ] Square account email
-- [ ] Business name as registered with Square
-- [ ] Preferred Square location for bookings
-- [ ] List of services with durations and prices
-- [ ] List of team members/artists
-- [ ] Booking policies (advance booking, cancellation, etc.)
-- [ ] Payment policies (deposits, refunds, etc.)
-- [ ] Sandbox credentials for testing
-- [ ] Production credentials when ready to go live
-
-## Security Notes
-
-⚠️ **Important**: 
-- Never share your access tokens publicly
-- Store credentials securely
-- Use environment variables for configuration
-- Rotate access tokens periodically
-- Monitor Square Dashboard for unusual activity
-
-## Support Resources
-
-- **Square Developer Documentation**: https://developer.squareup.com/docs
-- **Square Appointments API**: https://developer.squareup.com/docs/appointments-api
-- **Square Support**: https://squareup.com/help
-
-## Questions to Consider
-
-1. **Multi-Artist Scheduling**: Do different artists have different availability?
-2. **Service Variations**: Do prices vary by artist or complexity?
-3. **Deposit Handling**: When and how much deposit is required?
-4. **Booking Restrictions**: Any blackout dates or special hours?
-5. **Customer Communication**: How should confirmations/reminders be sent?
-
----
-
-*This document should be reviewed with your Square account representative to ensure all business requirements are properly configured.* 

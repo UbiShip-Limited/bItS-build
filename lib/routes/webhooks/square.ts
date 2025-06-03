@@ -1,8 +1,14 @@
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyRequest } from 'fastify';
 import crypto from 'crypto';
-import { prisma } from '../../prisma/prisma.js';
+import { prisma } from '../../prisma/prisma';
+import { SquareWebhookPayload } from '../../types/api';
+import { Square } from 'square';
 
-const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
+interface SquareWebhookRequest extends FastifyRequest {
+  rawBody?: string;
+}
+
+const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /webhooks/square - Handle Square webhook events
   fastify.post('/square', {
     config: {
@@ -20,7 +26,7 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
+  }, async (request: SquareWebhookRequest, reply) => {
     try {
       // Verify webhook signature
       const signature = request.headers['x-square-hmacsha256-signature'] as string;
@@ -30,6 +36,11 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
       if (!webhookSignatureKey) {
         fastify.log.error('Square webhook signature key not configured');
         return reply.status(500).send({ error: 'Webhook configuration error' });
+      }
+      
+      if (!body) {
+        fastify.log.error('No raw body available for webhook verification');
+        return reply.status(400).send({ error: 'Invalid request body' });
       }
       
       // Calculate expected signature
@@ -42,22 +53,22 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
         return reply.status(401).send({ error: 'Invalid signature' });
       }
       
-      const event = request.body as any;
+      const event = request.body as SquareWebhookPayload;
       
       // Handle different event types
       switch (event.type) {
         case 'payment.created':
         case 'payment.updated':
-          await handlePaymentEvent(event.data.object.payment);
+          await handlePaymentEvent(event.data as { object: { payment: Square.Payment } });
           break;
           
         case 'invoice.payment_made':
-          await handleInvoicePayment(event.data.object.invoice);
+          await handleInvoicePayment(event.data as { object: { invoice: Square.Invoice } });
           break;
           
         case 'checkout.created':
         case 'checkout.updated':
-          await handleCheckoutEvent(event.data.object.checkout);
+          await handleCheckoutEvent(event.data as { object: { checkout: { id: string; status: string; order?: { reference_id?: string } } } });
           break;
           
         default:
@@ -75,15 +86,16 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
   });
   
   // Helper functions
-  async function handlePaymentEvent(payment: any) {
+  async function handlePaymentEvent(data: { object: { payment: Square.Payment } }) {
+    const payment = data.object.payment;
     try {
       // Check if payment has a reference ID (links to our system)
-      if (payment.reference_id) {
+      if (payment.referenceId) {
         // Update payment status in our database
         const existingPayment = await prisma.payment.findFirst({
           where: { 
             OR: [
-              { referenceId: payment.reference_id },
+              { referenceId: payment.referenceId },
               { squareId: payment.id }
             ]
           }
@@ -94,8 +106,8 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
           await prisma.payment.update({
             where: { id: existingPayment.id },
             data: {
-              status: payment.status.toLowerCase(),
-              paymentDetails: payment,
+              status: payment.status?.toLowerCase() || 'unknown',
+              paymentDetails: payment as unknown as Record<string, unknown>,
               updatedAt: new Date()
             }
           });
@@ -103,12 +115,12 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
           // Create new payment record
           await prisma.payment.create({
             data: {
-              amount: Number(payment.amount_money.amount) / 100,
-              status: payment.status.toLowerCase(),
-              paymentMethod: payment.source_type,
-              squareId: payment.id,
-              referenceId: payment.reference_id,
-              paymentDetails: payment
+              amount: payment.amountMoney ? Number(payment.amountMoney.amount) / 100 : 0,
+              status: payment.status?.toLowerCase() || 'unknown',
+              paymentMethod: payment.sourceType || 'unknown',
+              squareId: payment.id || '',
+              referenceId: payment.referenceId,
+              paymentDetails: payment as unknown as Record<string, unknown>
             }
           });
         }
@@ -118,11 +130,11 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
           data: {
             action: 'payment_webhook_received',
             resource: 'payment',
-            resourceId: payment.id,
+            resourceId: payment.id || '',
             details: {
               status: payment.status,
-              amount: Number(payment.amount_money.amount) / 100,
-              referenceId: payment.reference_id
+              amount: payment.amountMoney ? Number(payment.amountMoney.amount) / 100 : 0,
+              referenceId: payment.referenceId
             }
           }
         });
@@ -132,13 +144,14 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
     }
   }
   
-  async function handleInvoicePayment(invoice: any) {
+  async function handleInvoicePayment(data: { object: { invoice: Square.Invoice } }) {
+    const invoice = data.object.invoice;
     try {
       // Update invoice status in our database
       const existingInvoice = await prisma.invoice.findFirst({
         where: { 
           description: {
-            contains: invoice.invoice_number
+            contains: invoice.invoiceNumber || ''
           }
         }
       });
@@ -160,7 +173,7 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
             resourceId: existingInvoice.id,
             details: {
               squareInvoiceId: invoice.id,
-              invoiceNumber: invoice.invoice_number,
+              invoiceNumber: invoice.invoiceNumber,
               paidAt: new Date()
             }
           }
@@ -171,7 +184,8 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify, options) => {
     }
   }
   
-  async function handleCheckoutEvent(checkout: any) {
+  async function handleCheckoutEvent(data: { object: { checkout: { id: string; status: string; order?: { reference_id?: string } } } }) {
+    const checkout = data.object.checkout;
     try {
       // Log checkout events for tracking
       await prisma.auditLog.create({

@@ -168,4 +168,4 @@ export class TattooRequestService {
   }
 }
 
-export default TattooRequestService; 
+export { TattooRequestService }; 

@@ -1,16 +1,17 @@
 import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
+import { PrismaClient } from '@prisma/client';
 import { prisma } from '../prisma/prisma'; // Path to your prisma client instance
 
 // For tests, we need to be able to access the mock
 let prismaClient = prisma;
 
 // Allow tests to set the mock client
-export const setPrismaClient = (mockClient: any) => {
+export const setPrismaClient = (mockClient: PrismaClient) => {
   prismaClient = mockClient;
 };
 
-const prismaPlugin: FastifyPluginAsync = async (fastify, options) => {
+const prismaPlugin: FastifyPluginAsync = async (fastify) => {
   fastify.decorate('prisma', prismaClient);
 
   fastify.addHook('onClose', async (instance) => {

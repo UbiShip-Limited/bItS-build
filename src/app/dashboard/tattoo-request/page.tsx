@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Filter, FileText, User, Calendar, DollarSign } from 'lucide-react';
-import { TattooRequestService, type TattooRequest } from '@/lib/api/services/TattooRequestService';
-import { apiClient } from '@/lib/api/apiClient';
+import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
+import { apiClient } from '@/src/lib/api/apiClient';
 
 export default function TattooRequestsPage() {
   const [requests, setRequests] = useState<TattooRequest[]>([]);
@@ -54,15 +54,15 @@ export default function TattooRequestsPage() {
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
-      'new': 'bg-gray-100 text-gray-800',
-      'reviewed': 'bg-blue-100 text-blue-800',
-      'approved': 'bg-green-100 text-green-800',
-      'rejected': 'bg-red-100 text-red-800',
-      'deposit_paid': 'bg-yellow-100 text-yellow-800',
-      'in_progress': 'bg-purple-100 text-purple-800',
-      'completed': 'bg-indigo-100 text-indigo-800'
+      'new': 'bg-[#C9A449]/20 text-[#C9A449] border-[#C9A449]/30',
+      'reviewed': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+      'approved': 'bg-green-500/20 text-green-400 border-green-500/30',
+      'rejected': 'bg-red-500/20 text-red-400 border-red-500/30',
+      'deposit_paid': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+      'in_progress': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+      'completed': 'bg-gray-500/20 text-gray-400 border-gray-500/30'
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
   };
 
   const formatDate = (dateString: string) => {
@@ -75,26 +75,26 @@ export default function TattooRequestsPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-8 pb-6 border-b border-[#1a1a1a]">
         <div>
-          <h1 className="text-2xl font-bold">Tattoo Requests</h1>
-          <p className="text-gray-600">Manage all tattoo requests</p>
+          <h1 className="text-3xl font-heading font-bold text-white mb-2 tracking-wide">Tattoo Requests</h1>
+          <p className="text-gray-400 text-lg">Manage all tattoo requests</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Filter className="w-4 h-4 text-gray-500" />
-          <span className="font-medium">Filters</span>
+      <div className="bg-[#111111] border border-[#1a1a1a] rounded-2xl shadow-2xl p-6 mb-6 hover:border-[#C9A449]/20 transition-all duration-300">
+        <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#1a1a1a]">
+          <Filter className="w-5 h-5 text-[#C9A449]" />
+          <span className="font-semibold text-white text-lg">Filters</span>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <label className="block text-sm font-medium text-gray-400 mb-2">Status</label>
             <select 
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-              className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md"
+              className="block w-full px-3 py-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg focus:border-[#C9A449]/50 focus:outline-none focus:ring-1 focus:ring-[#C9A449]/20 text-white transition-all duration-300"
             >
               <option value="">All Statuses</option>
               <option value="new">New</option>
@@ -107,7 +107,7 @@ export default function TattooRequestsPage() {
           <div className="flex items-end">
             <button
               onClick={() => setFilters({ status: '', page: 1, limit: 20 })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+              className="w-full px-3 py-2 border border-[#1a1a1a] text-gray-400 rounded-lg hover:border-[#C9A449]/30 hover:bg-[#1a1a1a]/50 hover:text-white font-medium transition-all duration-300"
             >
               Clear Filters
             </button>
@@ -116,59 +116,61 @@ export default function TattooRequestsPage() {
       </div>
 
       {/* Tattoo Requests Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-[#111111] border border-[#1a1a1a] rounded-2xl shadow-2xl overflow-hidden hover:border-[#C9A449]/20 transition-all duration-300">
         {loading ? (
           <div className="p-8 text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-gray-600">Loading tattoo requests...</p>
+            <span className="loading loading-spinner loading-lg text-[#C9A449]"></span>
+            <p className="mt-2 text-gray-400">Loading tattoo requests...</p>
           </div>
         ) : error ? (
-          <div className="p-8 text-center text-red-600">
-            <p>{error}</p>
-            <button 
-              onClick={loadTattooRequests}
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Retry
-            </button>
+          <div className="p-8 text-center">
+            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-6 py-4 rounded-lg">
+              <p className="font-medium">{error}</p>
+              <button 
+                onClick={loadTattooRequests}
+                className="mt-4 px-6 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
+              >
+                Retry
+              </button>
+            </div>
           </div>
         ) : requests.length === 0 ? (
-          <div className="p-8 text-center text-gray-600">
-            <FileText className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <p>No tattoo requests found</p>
+          <div className="p-8 text-center text-gray-400">
+            <FileText className="w-12 h-12 mx-auto mb-4 text-gray-600" />
+            <p className="text-lg font-medium">No tattoo requests found</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full">
+                <thead className="bg-[#080808]">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Request
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Contact
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Details
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Style
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-[#1a1a1a]">
                   {requests.map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-50">
+                    <tr key={request.id} className="hover:bg-[#1a1a1a]/50 transition-colors duration-150">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-gray-100 rounded overflow-hidden">
+                          <div className="flex-shrink-0 h-10 w-10 bg-[#1a1a1a] rounded overflow-hidden border border-[#2a2a2a]">
                             {request.referenceImages && request.referenceImages.length > 0 ? (
                               <img 
                                 src={request.referenceImages[0].url} 
@@ -176,24 +178,24 @@ export default function TattooRequestsPage() {
                                 className="h-full w-full object-cover"
                               />
                             ) : (
-                              <div className="h-full w-full flex items-center justify-center text-gray-500">
+                              <div className="h-full w-full flex items-center justify-center text-[#C9A449]">
                                 <FileText className="w-5 h-5" />
                               </div>
                             )}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-semibold text-white">
                               Request #{request.id.slice(-6)}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              <Calendar className="w-3 h-3 inline mr-1" />
+                            <div className="text-sm text-gray-500 flex items-center">
+                              <Calendar className="w-3 h-3 mr-1" />
                               {formatDate(request.createdAt)}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm font-medium text-gray-300">
                           {request.customer ? (
                             <>
                               <User className="w-3 h-3 inline mr-1" />
@@ -208,7 +210,7 @@ export default function TattooRequestsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900 max-w-xs truncate">
+                        <div className="text-sm font-medium text-gray-300 max-w-xs truncate">
                           {request.description}
                         </div>
                         <div className="text-sm text-gray-500">
@@ -216,17 +218,17 @@ export default function TattooRequestsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(request.status)}`}>
+                        <span className={`px-3 py-1 inline-flex text-xs leading-5 font-medium rounded-full border ${getStatusColor(request.status)}`}>
                           {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-medium">
                         {request.style || 'Not specified'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Link 
                           href={`/dashboard/tattoo-request/${request.id}`} 
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-[#C9A449] hover:text-[#E5B563] font-medium px-2 py-1 transition-colors"
                         >
                           View
                         </Link>
@@ -238,30 +240,30 @@ export default function TattooRequestsPage() {
             </div>
             
             {/* Pagination */}
-            <div className="bg-white px-4 py-3 border-t border-gray-200">
+            <div className="bg-[#080808] border-t border-[#1a1a1a] px-6 py-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-700">
-                    Showing <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
-                    <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
-                    <span className="font-medium">{pagination.total}</span> results
+                  <p className="text-sm text-gray-400 font-medium">
+                    Showing <span className="font-bold text-white">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
+                    <span className="font-bold text-white">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
+                    <span className="font-bold text-white">{pagination.total}</span> results
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
                     disabled={filters.page === 1}
-                    className="px-3 py-1 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="px-4 py-2 border border-[#1a1a1a] bg-[#111111] text-gray-400 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#1a1a1a] hover:text-white font-medium transition-all duration-300"
                   >
                     Previous
                   </button>
-                  <span className="px-3 py-1 text-sm">
+                  <span className="px-4 py-2 text-sm font-medium text-white">
                     Page {pagination.page} of {pagination.pages}
                   </span>
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
                     disabled={filters.page === pagination.pages}
-                    className="px-3 py-1 border rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                    className="px-4 py-2 border border-[#1a1a1a] bg-[#111111] text-gray-400 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#1a1a1a] hover:text-white font-medium transition-all duration-300"
                   >
                     Next
                   </button>

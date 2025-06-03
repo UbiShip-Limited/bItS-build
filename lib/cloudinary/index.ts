@@ -13,6 +13,29 @@ cloudinary.config({
   secure: true, // Use HTTPS for all requests
 });
 
+// Type definitions for Cloudinary metadata and parameters
+export interface CloudinaryUploadParams {
+  timestamp?: number;
+  folder?: string;
+  tags?: string[];
+  transformation?: string;
+  format?: string;
+  quality?: string | number;
+  [key: string]: string | number | boolean | string[] | undefined;
+}
+
+export interface CloudinaryTransformations {
+  width?: number;
+  height?: number;
+  crop?: string;
+  quality?: string | number;
+  format?: string;
+  gravity?: string;
+  fetch_format?: string;
+  dpr?: string | number;
+  [key: string]: string | number | undefined;
+}
+
 export interface CloudinaryUploadResult {
   url: string;
   publicId: string;
@@ -21,7 +44,6 @@ export interface CloudinaryUploadResult {
   height: number;
   resourceType: string;
   secureUrl: string;
-  metadata: Record<string, any>;
 }
 
 /**
@@ -44,8 +66,7 @@ export const validateUploadResult = async (
       width: result.width,
       height: result.height,
       resourceType: result.resource_type,
-      secureUrl: result.secure_url,
-      metadata: result.metadata || {}
+      secureUrl: result.secure_url
     };
   } catch (error) {
     console.error('Error validating Cloudinary upload:', error);
@@ -57,7 +78,7 @@ export const validateUploadResult = async (
  * Generates a signed upload signature for secure direct uploads from frontend
  */
 export const generateUploadSignature = (
-  params: Record<string, any> = {},
+  params: CloudinaryUploadParams = {},
   timestamp: number = Math.round(new Date().getTime() / 1000)
 ): { signature: string; timestamp: number; apiKey: string; cloudName: string } => {
   // Add timestamp to params if not provided
@@ -104,8 +125,7 @@ export const uploadImage = async (
       width: result.width,
       height: result.height,
       resourceType: result.resource_type,
-      secureUrl: result.secure_url,
-      metadata: result.metadata || {}
+      secureUrl: result.secure_url
     };
   } catch (error) {
     console.error('Error uploading to Cloudinary:', error);
@@ -131,12 +151,13 @@ export const deleteImage = async (publicId: string): Promise<boolean> => {
  */
 export const getTransformedImageUrl = (
   publicId: string,
-  transformations: Record<string, any> = {}
+  transformations: CloudinaryTransformations = {}
 ): string => {
   return cloudinary.url(publicId, transformations);
 };
 
-export default {
+// Create a named object for the default export to avoid anonymous export
+const CloudinaryService = {
   cloudinary,
   validateUploadResult,
   generateUploadSignature,
@@ -144,3 +165,5 @@ export default {
   deleteImage,
   getTransformedImageUrl
 };
+
+export default CloudinaryService;

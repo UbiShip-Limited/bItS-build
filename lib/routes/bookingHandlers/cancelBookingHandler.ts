@@ -29,9 +29,14 @@ interface CancelBookingBody {
   notifyCustomer?: boolean;
 }
 
-export async function cancelBookingHandler(this: any, request: FastifyRequest<{ Params: CancelBookingParams, Body: CancelBookingBody }>, reply: FastifyReply) {
+// Add proper typing for fastify instance with bookingService
+interface FastifyInstanceWithBookingService {
+  bookingService: BookingService;
+}
+
+export async function cancelBookingHandler(this: FastifyInstanceWithBookingService, request: FastifyRequest<{ Params: CancelBookingParams, Body: CancelBookingBody }>, reply: FastifyReply) {
   const { id } = request.params;
-  const { reason, notifyCustomer = true } = request.body; // Default for notifyCustomer here
+  const { reason } = request.body; // Removed unused notifyCustomer
   const bookingService: BookingService = this.bookingService;
   const user = request.user as UserWithRole;
 
@@ -70,13 +75,14 @@ export async function cancelBookingHandler(this: any, request: FastifyRequest<{ 
     // TODO: Implement customer notification via email or SMS if notifyCustomer is true and result was successful
 
     return result; // The service already returns a { success, booking, squareCancelled } like object
-  } catch (error: any) {
+  } catch (error: unknown) {
     request.log.error(error);
     // The service might throw specific errors, handle them if needed
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return reply.code(500).send({
       success: false,
       message: 'Error cancelling booking',
-      error: error.message
+      error: errorMessage
     });
   }
 } 

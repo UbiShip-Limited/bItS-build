@@ -1,7 +1,28 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authenticate, authorize } from '../middleware/auth';
+//import { authenticate, authorize } from '../middleware/auth';
 
-const customerRoutes: FastifyPluginAsync = async (fastify, options) => {
+// Type definitions for request bodies and queries
+interface CustomerQueryParams {
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+interface CreateCustomerBody {
+  name: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+}
+
+interface UpdateCustomerBody {
+  name?: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+}
+
+const customerRoutes: FastifyPluginAsync = async (fastify) => {
   // Apply authentication to all routes
   // TODO: Re-enable auth after testing
   // fastify.addHook('preHandler', authenticate);
@@ -20,8 +41,8 @@ const customerRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
-    const { search, page = 1, limit = 20 } = request.query as any;
+  }, async (request) => {
+    const { search, page = 1, limit = 20 } = request.query as CustomerQueryParams;
     
     // Build where clause
     const where = search ? {
@@ -105,7 +126,7 @@ const customerRoutes: FastifyPluginAsync = async (fastify, options) => {
       }
     }
   }, async (request, reply) => {
-    const customerData = request.body as any;
+    const customerData = request.body as CreateCustomerBody;
     
     // Check if customer with email already exists
     if (customerData.email) {
@@ -163,7 +184,7 @@ const customerRoutes: FastifyPluginAsync = async (fastify, options) => {
     }
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const updateData = request.body as any;
+    const updateData = request.body as UpdateCustomerBody;
     
     // Get original for audit
     const original = await fastify.prisma.customer.findUnique({

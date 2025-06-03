@@ -1,9 +1,58 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authorize } from '../../middleware/auth.js';
-import PaymentLinkService from '../../services/paymentLinkService.js';
-import { PaymentType } from '../../services/paymentService.js';
+import { authorize } from '../../middleware/auth';
+import PaymentLinkService from '../../services/paymentLinkService';
+import { PaymentType } from '../../services/paymentService';
 
-const paymentLinkRoutes: FastifyPluginAsync = async (fastify, options) => {
+// Type definitions for request bodies and queries
+interface CreatePaymentLinkBody {
+  amount: number;
+  title: string;
+  description?: string;
+  customerId: string;
+  appointmentId?: string;
+  tattooRequestId?: string;
+  paymentType: PaymentType;
+  redirectUrl?: string;
+  allowTipping?: boolean;
+  customFields?: Array<{
+    title: string;
+  }>;
+}
+
+interface PaymentLinksQueryParams {
+  cursor?: string;
+  limit?: number;
+}
+
+interface CreateInvoiceBody {
+  customerId: string;
+  appointmentId?: string;
+  tattooRequestId?: string;
+  items: Array<{
+    description: string;
+    amount: number;
+  }>;
+  paymentSchedule?: Array<{
+    amount: number;
+    dueDate: string;
+    type: 'DEPOSIT' | 'BALANCE';
+  }>;
+  deliveryMethod?: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY';
+}
+
+interface CreateCheckoutBody {
+  customerId: string;
+  appointmentId?: string;
+  items: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    note?: string;
+  }>;
+  redirectUrl?: string;
+}
+
+const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
   const paymentLinkService = new PaymentLinkService();
 
   // POST /payments/links - Create a payment link
@@ -40,7 +89,7 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify, options) => {
     }
   }, async (request, reply) => {
     try {
-      const result = await paymentLinkService.createPaymentLink(request.body as any);
+      const result = await paymentLinkService.createPaymentLink(request.body as CreatePaymentLinkBody);
       
       return {
         success: true,
@@ -53,9 +102,10 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify, options) => {
       };
     } catch (error) {
       fastify.log.error('Error creating payment link:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return reply.status(500).send({ 
         error: 'Failed to create payment link',
-        message: error.message 
+        message: errorMessage
       });
     }
   });
@@ -74,7 +124,7 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify, options) => {
     }
   }, async (request, reply) => {
     try {
-      const { cursor, limit } = request.query as any;
+      const { cursor, limit } = request.query as PaymentLinksQueryParams;
       const result = await paymentLinkService.listPaymentLinks({ cursor, limit });
       
       return {
@@ -192,7 +242,7 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify, options) => {
     }
   }, async (request, reply) => {
     try {
-      const result = await paymentLinkService.createInvoice(request.body as any);
+      const result = await paymentLinkService.createInvoice(request.body as CreateInvoiceBody);
       
       return {
         success: true,
@@ -206,9 +256,10 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify, options) => {
       };
     } catch (error) {
       fastify.log.error('Error creating invoice:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return reply.status(500).send({ 
         error: 'Failed to create invoice',
-        message: error.message 
+        message: errorMessage
       });
     }
   });
@@ -242,7 +293,7 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify, options) => {
     }
   }, async (request, reply) => {
     try {
-      const result = await paymentLinkService.createCheckoutSession(request.body as any);
+      const result = await paymentLinkService.createCheckoutSession(request.body as CreateCheckoutBody);
       
       return {
         success: true,
@@ -253,9 +304,10 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify, options) => {
       };
     } catch (error) {
       fastify.log.error('Error creating checkout session:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return reply.status(500).send({ 
         error: 'Failed to create checkout session',
-        message: error.message 
+        message: errorMessage
       });
     }
   });

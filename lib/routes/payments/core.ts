@@ -1,11 +1,23 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authorize } from '../../middleware/auth.js';
-import PaymentService from '../../services/paymentService.js';
+import { authorize } from '../../middleware/auth';
 
-const coreRoutes: FastifyPluginAsync = async (fastify, options) => {
-  // Initialize services
-  const paymentService = new PaymentService();
+// Type definitions for request bodies
+interface CreatePaymentBody {
+  amount: number;
+  status?: 'pending' | 'completed' | 'failed' | 'refunded';
+  paymentMethod?: string;
+  paymentDetails?: Record<string, unknown>;
+  squareId?: string;
+}
 
+interface UpdatePaymentBody {
+  status?: 'pending' | 'completed' | 'failed' | 'refunded';
+  paymentMethod?: string;
+  paymentDetails?: Record<string, unknown>;
+  squareId?: string;
+}
+
+const coreRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /payments - Create a new payment
   fastify.post('/', {
     preHandler: authorize(['admin']),
@@ -22,8 +34,8 @@ const coreRoutes: FastifyPluginAsync = async (fastify, options) => {
         }
       }
     }
-  }, async (request, reply) => {
-    const paymentData = request.body as any;
+  }, async (request) => {
+    const paymentData = request.body as CreatePaymentBody;
     
     const payment = await fastify.prisma.payment.create({
       data: paymentData
@@ -66,7 +78,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify, options) => {
     }
   }, async (request, reply) => {
     const { id } = request.params as { id: string };
-    const updateData = request.body as any;
+    const updateData = request.body as UpdatePaymentBody;
     
     // Get original for audit
     const original = await fastify.prisma.payment.findUnique({

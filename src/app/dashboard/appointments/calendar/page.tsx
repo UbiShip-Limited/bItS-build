@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, List } from 'lucide-react';
-import { AppointmentService, type AppointmentData } from '@/lib/api/services/appointmentService';
-import { apiClient } from '@/lib/api/apiClient';
-import AppointmentCalendar from '@/components/ui/AppointmentCalendar';
-import Modal from '@/components/ui/Modal';
-import AppointmentForm from '@/components/forms/AppointmentForm';
+import { AppointmentService, type AppointmentData } from '@/src/lib/api/services/appointmentService';
+import { apiClient } from '@/src/lib/api/apiClient';
+import AppointmentCalendar from '@/src/components/dashboard/AppointmentCalendar';
+import Modal from '@/src/components/ui/Modal';
+import AppointmentForm from '@/src/components/forms/AppointmentForm';
 
 export default function AppointmentCalendarPage() {
   const router = useRouter();
@@ -75,13 +75,13 @@ export default function AppointmentCalendarPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Appointment Calendar</h1>
-          <p className="text-gray-600">View and manage appointments in calendar view</p>
+          <h1 className="text-2xl font-heading font-bold text-white">Appointment Calendar</h1>
+          <p className="text-gray-400">View and manage appointments in calendar view</p>
         </div>
         <div className="flex gap-2">
           <Link
             href="/dashboard/appointments"
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
+            className="px-4 py-2 border border-[#1a1a1a] text-gray-400 rounded-lg hover:border-[#C9A449]/30 hover:text-[#C9A449] hover:bg-[#1a1a1a]/50 flex items-center gap-2 transition-all duration-300"
           >
             <List className="w-4 h-4" />
             List View
@@ -91,7 +91,7 @@ export default function AppointmentCalendarPage() {
               setSelectedDate(new Date());
               setShowCreateModal(true);
             }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            className="bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] px-4 py-2 rounded-lg font-medium shadow-lg shadow-[#C9A449]/20 transition-all duration-300"
           >
             + New Appointment
           </button>
@@ -101,17 +101,17 @@ export default function AppointmentCalendarPage() {
       {loading ? (
         <div className="flex items-center justify-center min-h-[600px]">
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-gray-600">Loading calendar...</p>
+            <span className="loading loading-spinner loading-lg text-[#C9A449]"></span>
+            <p className="mt-2 text-gray-400">Loading calendar...</p>
           </div>
         </div>
       ) : error ? (
         <div className="flex items-center justify-center min-h-[600px]">
           <div className="text-center">
-            <p className="text-red-600 mb-4">{error}</p>
+            <p className="text-red-400 mb-4">{error}</p>
             <button 
               onClick={loadAppointments}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="px-4 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
             >
               Retry
             </button>

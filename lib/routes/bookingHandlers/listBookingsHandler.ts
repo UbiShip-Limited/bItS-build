@@ -28,6 +28,15 @@ interface ListBookingsQuery {
   limit?: number;
 }
 
+interface WhereClause {
+  startTime?: { gte: Date };
+  endTime?: { lte: Date };
+  status?: string;
+  type?: string;
+  customerId?: string;
+  artistId?: string;
+}
+
 export async function listBookingsHandler(request: FastifyRequest<{ Querystring: ListBookingsQuery }>, reply: FastifyReply) {
   const {
     startDate,
@@ -41,7 +50,7 @@ export async function listBookingsHandler(request: FastifyRequest<{ Querystring:
   } = request.query;
 
   const skip = (page - 1) * limit;
-  const where: any = {};
+  const where: WhereClause = {};
 
   if (startDate) where.startTime = { gte: new Date(startDate) };
   if (endDate) where.endTime = { lte: new Date(endDate) }; // Note: Original code used endTime, but filter was on startTime. This might be a bug or intentional. Keeping as endTime for now.
@@ -75,12 +84,13 @@ export async function listBookingsHandler(request: FastifyRequest<{ Querystring:
         pages: Math.ceil(total / limit)
       }
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     request.log.error(error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return reply.code(500).send({
       success: false,
       message: 'Error fetching bookings',
-      error: error.message
+      error: errorMessage
     });
   }
 } 

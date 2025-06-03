@@ -31,6 +31,7 @@ export const updateBookingSchema: RouteShorthandOptions['schema'] = {
 
 interface UpdateBookingParams {
   id: string;
+  
 }
 
 interface UpdateBookingBody {
@@ -43,9 +44,14 @@ interface UpdateBookingBody {
   priceQuote?: number;
 }
 
-export async function updateBookingHandler(this: any, request: FastifyRequest<{ Params: UpdateBookingParams, Body: UpdateBookingBody }>, reply: FastifyReply) {
+// Add proper typing for fastify instance with bookingService  
+interface FastifyInstanceWithBookingService {
+  bookingService: BookingService;
+}
+
+export async function updateBookingHandler(this: FastifyInstanceWithBookingService, request: FastifyRequest<{ Params: UpdateBookingParams, Body: UpdateBookingBody }>, reply: FastifyReply) {
   const { id } = request.params;
-  const { startTime, endTime, duration, status, artistId, notes, priceQuote } = request.body;
+  const { startTime, duration, status, artistId, notes, priceQuote } = request.body; // Remove unused endTime
   const bookingService: BookingService = this.bookingService;
   const user = request.user as UserWithRole;
 
@@ -56,7 +62,6 @@ export async function updateBookingHandler(this: any, request: FastifyRequest<{ 
     const result = await bookingService.updateBooking({
       bookingId: id,
       startAt: startTime ? new Date(startTime) : undefined,
-      endTime: endTime ? new Date(endTime) : undefined,
       duration,
       status,
       artistId,
@@ -76,30 +81,30 @@ export async function updateBookingHandler(this: any, request: FastifyRequest<{ 
               details: {
                 previousStatus: existingBooking.status,
                 newStatus: status || existingBooking.status,
-                changes: request.body // Simplified, might want to log specific changed fields
-              } as any // Cast to any if Prisma complains about JSON structure
+                changes: { ...request.body }
+              }
             }
         });
     }
-
 
     return {
       success: true,
       booking: result.booking,
       squareBookingUpdated: result.squareBookingUpdated
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     request.log.error(error);
-    if (error.message.includes('not found')) { // Specific error from service
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    if (errorMessage.includes('not found')) {
         return reply.code(404).send({
             success: false,
-            message: error.message
+            message: errorMessage
         });
     }
     return reply.code(500).send({
       success: false,
       message: 'Error updating booking',
-      error: error.message
+      error: errorMessage
     });
   }
 } 

@@ -1,13 +1,10 @@
 import { apiClient } from '../apiClient';
+import { PaymentType, getMinimumAmount, formatPaymentType } from '../../../../lib/config/pricing';
 
-// Types
-export enum PaymentType {
-  CONSULTATION = 'consultation',
-  DRAWING_CONSULTATION = 'drawing_consultation',
-  TATTOO_DEPOSIT = 'tattoo_deposit',
-  TATTOO_FINAL = 'tattoo_final'
-}
+// Re-export PaymentType for easier imports
+export { PaymentType } from '../../../../lib/config/pricing';
 
+// Types - PaymentType is now imported from centralized config
 export interface PaymentLink {
   id: string;
   url: string;
@@ -124,26 +121,14 @@ class PaymentService {
    * Helper to format payment type for display
    */
   formatPaymentType(type: PaymentType): string {
-    const typeMap = {
-      [PaymentType.CONSULTATION]: 'Consultation',
-      [PaymentType.DRAWING_CONSULTATION]: 'Drawing Consultation',
-      [PaymentType.TATTOO_DEPOSIT]: 'Tattoo Deposit',
-      [PaymentType.TATTOO_FINAL]: 'Final Payment'
-    };
-    return typeMap[type] || type;
+    return formatPaymentType(type);
   }
 
   /**
    * Helper to get minimum amounts for payment types
    */
   getMinimumAmount(type: PaymentType): number {
-    const minimums = {
-      [PaymentType.CONSULTATION]: 35,
-      [PaymentType.DRAWING_CONSULTATION]: 50,
-      [PaymentType.TATTOO_DEPOSIT]: 75,
-      [PaymentType.TATTOO_FINAL]: 100
-    };
-    return minimums[type] || 0;
+    return getMinimumAmount(type);
   }
 }
 

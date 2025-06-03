@@ -1,21 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import formidable from 'formidable';
-import fs from 'fs';
 import axios from 'axios';
-import { Readable } from 'stream';
 
-// Helper function to convert ReadableStream to Node.js Readable stream
-async function streamToBuffer(stream: ReadableStream): Promise<Buffer> {
-  const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
-  
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-  }
-  
-  return Buffer.concat(chunks);
+interface AxiosErrorResponse {
+  response?: {
+    status: number;
+    data: unknown;
+  };
+  message?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -64,18 +55,24 @@ export async function POST(request: NextRequest) {
     
     // Return the response from the backend
     return NextResponse.json(response.data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error uploading file:', error);
     
+    // Type guard for axios error
+    const isAxiosError = (err: unknown): err is AxiosErrorResponse => {
+      return typeof err === 'object' && err !== null && 'response' in err;
+    };
+    
     // Handle API error responses
-    if (error.response) {
+    if (isAxiosError(error) && error.response) {
       const { status, data } = error.response;
       return NextResponse.json(data, { status });
     }
     
     // Handle network or other errors
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Failed to upload file', message: error.message },
+      { error: 'Failed to upload file', message: errorMessage },
       { status: 500 }
     );
   }

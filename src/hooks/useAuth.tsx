@@ -81,11 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const userData = await userResponse.json();
               setUser({ ...session.user, role: userData.role });
             } else {
-              setUser(session.user);
+              setUser(session.user as UserWithRole);
             }
           } catch (err) {
             console.error('Error fetching user data:', err);
-            setUser(session.user);
+            setUser(session.user as UserWithRole);
           }
         }
         
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (_event, session) => {
             setSession(session);
-            setUser(session?.user || null);
+            setUser(session?.user as UserWithRole || null);
             
             // Also update token in localStorage for the API client
             if (session?.access_token) {
@@ -136,15 +136,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error instanceof Error ? error : new Error('Login failed');
     }
   };
   
   // Sign up function
   const signUp = async (email: string, password: string) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
       });
@@ -155,15 +156,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // New users might require confirmation depending on Supabase config
       return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Sign up failed' };
     }
   };
   
   // Sign out function
   const signOut = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem('auth_token');
+    try {
+      await supabase.auth.signOut();
+      localStorage.removeItem('auth_token');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Ignore logout errors - user is already being logged out
+    } finally {
+      setUser(null);
+      setLoading(false);
+    }
   };
   
   // Check if user has one of the specified roles

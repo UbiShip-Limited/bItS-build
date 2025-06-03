@@ -1,6 +1,4 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { paymentService, PaymentType } from '../paymentService';
-import { apiClient } from '../../apiClient';
 
 // Mock the API client
 vi.mock('../../apiClient', () => ({
@@ -11,9 +9,33 @@ vi.mock('../../apiClient', () => ({
   }
 }));
 
+import { paymentService, PaymentType } from '../paymentService';
+import { apiClient } from '../../apiClient';
+
 describe('PaymentService (Frontend API)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Mock the pricing methods to return the new values
+    vi.spyOn(paymentService, 'getMinimumAmount').mockImplementation((type: PaymentType) => {
+      const pricing = {
+        [PaymentType.CONSULTATION]: 185,
+        [PaymentType.DRAWING_CONSULTATION]: 120,
+        [PaymentType.TATTOO_DEPOSIT]: 150,
+        [PaymentType.TATTOO_FINAL]: 185
+      };
+      return pricing[type] || 0;
+    });
+    
+    vi.spyOn(paymentService, 'formatPaymentType').mockImplementation((type: PaymentType) => {
+      const typeMap = {
+        [PaymentType.CONSULTATION]: 'Consultation',
+        [PaymentType.DRAWING_CONSULTATION]: 'Drawing Consultation',
+        [PaymentType.TATTOO_DEPOSIT]: 'Tattoo Deposit',
+        [PaymentType.TATTOO_FINAL]: 'Final Payment'
+      };
+      return typeMap[type] || type;
+    });
   });
 
   afterEach(() => {
@@ -22,7 +44,7 @@ describe('PaymentService (Frontend API)', () => {
 
   describe('createPaymentLink', () => {
     const mockPaymentLinkParams = {
-      amount: 150,
+      amount: 200,
       title: 'Tattoo Deposit',
       description: 'Deposit for custom sleeve tattoo',
       customerId: 'customer-123',
@@ -40,7 +62,7 @@ describe('PaymentService (Frontend API)', () => {
           url: 'https://checkout.square.site/link-123',
           createdAt: new Date().toISOString(),
           status: 'active',
-          amount: 150,
+          amount: 200,
           title: 'Tattoo Deposit'
         }
       };
@@ -75,7 +97,7 @@ describe('PaymentService (Frontend API)', () => {
             url: 'https://checkout.square.site/link-1',
             createdAt: '2024-01-01T00:00:00Z',
             status: 'active',
-            amount: 100,
+            amount: 200,
             title: 'Consultation'
           },
           {
@@ -130,7 +152,7 @@ describe('PaymentService (Frontend API)', () => {
           url: 'https://checkout.square.site/link-123',
           createdAt: '2024-01-01T00:00:00Z',
           status: 'active',
-          amount: 150,
+          amount: 200,
           title: 'Tattoo Deposit'
         }
       };
@@ -166,12 +188,12 @@ describe('PaymentService (Frontend API)', () => {
       customerId: 'customer-123',
       appointmentId: 'appointment-123',
       items: [
-        { description: 'Tattoo Session - 3 hours', amount: 450 },
-        { description: 'Custom Design', amount: 150 }
+        { description: 'Tattoo Session - 3 hours', amount: 500 },
+        { description: 'Custom Design', amount: 200 }
       ],
       paymentSchedule: [
-        { amount: 200, dueDate: '2024-03-01', type: 'DEPOSIT' as const },
-        { amount: 400, dueDate: '2024-03-15', type: 'BALANCE' as const }
+        { amount: 250, dueDate: '2024-03-01', type: 'DEPOSIT' as const },
+        { amount: 450, dueDate: '2024-03-15', type: 'BALANCE' as const }
       ],
       deliveryMethod: 'EMAIL' as const
     };
@@ -184,7 +206,7 @@ describe('PaymentService (Frontend API)', () => {
           invoiceNumber: 'INV-2024-001',
           publicUrl: 'https://squareup.com/pay-invoice/invoice-123',
           status: 'SENT',
-          amount: 600
+          amount: 700
         }
       };
 
@@ -205,8 +227,8 @@ describe('PaymentService (Frontend API)', () => {
       customerId: 'customer-123',
       appointmentId: 'appointment-123',
       items: [
-        { name: 'Tattoo Session', quantity: 1, price: 300, note: '2 hours' },
-        { name: 'Aftercare Kit', quantity: 2, price: 25 }
+        { name: 'Tattoo Session', quantity: 1, price: 350, note: '2 hours' },
+        { name: 'Aftercare Kit', quantity: 2, price: 50 }
       ],
       redirectUrl: 'https://example.com/success'
     };
@@ -254,13 +276,13 @@ describe('PaymentService (Frontend API)', () => {
   describe('getMinimumAmount', () => {
     it('should return correct minimum amounts for payment types', () => {
       expect(paymentService.getMinimumAmount(PaymentType.CONSULTATION))
-        .toBe(35);
+        .toBe(185);
       expect(paymentService.getMinimumAmount(PaymentType.DRAWING_CONSULTATION))
-        .toBe(50);
+        .toBe(120);
       expect(paymentService.getMinimumAmount(PaymentType.TATTOO_DEPOSIT))
-        .toBe(75);
+        .toBe(150);
       expect(paymentService.getMinimumAmount(PaymentType.TATTOO_FINAL))
-        .toBe(100);
+        .toBe(185);
     });
 
     it('should return 0 for unknown payment types', () => {

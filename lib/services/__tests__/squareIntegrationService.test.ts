@@ -3,21 +3,19 @@ import { SquareIntegrationService } from '../squareIntegrationService';
 import type { Appointment } from '@prisma/client';
 
 // Mock Square client
-vi.mock('../../square/index', () => ({
-  default: {
-    fromEnv: vi.fn(() => ({
-      createBooking: vi.fn(),
-      getBookingById: vi.fn(),
-      cancelBooking: vi.fn()
-    }))
-  }
-}));
+const mockSquareClient = {
+  createBooking: vi.fn(),
+  getBookingById: vi.fn(),
+  cancelBooking: vi.fn(),
+  createCustomer: vi.fn()
+};
 
 // Mock prisma
 vi.mock('../../prisma/prisma', () => ({
   prisma: {
     customer: {
-      findUnique: vi.fn()
+      findUnique: vi.fn(),
+      update: vi.fn()
     },
     appointment: {
       update: vi.fn()
@@ -36,12 +34,13 @@ vi.mock('uuid', () => ({
 describe('SquareIntegrationService', () => {
   let squareService: SquareIntegrationService;
   let mockPrisma: any;
-  let mockSquareClient: any;
+  let mockUuid: any;
   
   const mockAppointment: Appointment = {
     id: 'appointment-123',
     startTime: new Date('2024-01-15T10:00:00Z'),
     endTime: new Date('2024-01-15T11:00:00Z'),
+    date: new Date('2024-01-15'),
     duration: 60,
     status: 'scheduled',
     type: 'consultation',
@@ -53,6 +52,7 @@ describe('SquareIntegrationService', () => {
     contactPhone: null,
     squareId: null,
     tattooRequestId: null,
+    paymentId: null,
     createdAt: new Date(),
     updatedAt: new Date()
   };
@@ -62,33 +62,44 @@ describe('SquareIntegrationService', () => {
     email: 'test@example.com',
     name: 'Test Customer',
     phone: '+1234567890',
+    squareId: 'square-customer-123', // Customer already has Square ID
     createdAt: new Date(),
     updatedAt: new Date()
   };
   
   beforeEach(async () => {
     vi.clearAllMocks();
-    squareService = new SquareIntegrationService();
     
-    // Set environment variables
-    process.env.SQUARE_LOCATION_ID = 'test-location-id';
-    process.env.NODE_ENV = 'test';
+    // Re-setup UUID mock after clearAllMocks
+    const { v4 } = await import('uuid');
+    mockUuid = v4 as any;
+    mockUuid.mockReturnValue('mock-uuid-123');
+    
+    // Set required Square environment variables using vi.stubEnv
+    vi.stubEnv('SQUARE_ACCESS_TOKEN', 'test-access-token');
+    vi.stubEnv('SQUARE_APPLICATION_ID', 'test-app-id');
+    vi.stubEnv('SQUARE_LOCATION_ID', 'test-location-id');
+    vi.stubEnv('SQUARE_ENVIRONMENT', 'sandbox');
+    vi.stubEnv('NODE_ENV', 'test');
+    
+    // Inject the mock Square client directly
+    squareService = new SquareIntegrationService(mockSquareClient as any);
     
     // Get the mocked instances
     const { prisma } = await import('../../prisma/prisma');
-    const SquareClient = (await import('../../square/index')).default;
     
     mockPrisma = prisma;
-    mockSquareClient = SquareClient.fromEnv();
     
     // Setup default mocks
     mockPrisma.customer.findUnique.mockResolvedValue(mockCustomer);
     mockPrisma.appointment.update.mockResolvedValue(mockAppointment);
+    mockPrisma.customer.update.mockResolvedValue(mockCustomer);
     mockPrisma.auditLog.create.mockResolvedValue({});
   });
   
   afterEach(() => {
     vi.resetAllMocks();
+    vi.unstubAllEnvs();
   });
   
   describe('syncAppointmentToSquare', () => {
@@ -113,7 +124,7 @@ describe('SquareIntegrationService', () => {
       expect(mockSquareClient.createBooking).toHaveBeenCalledWith({
         startAt: mockAppointment.startTime?.toISOString(),
         locationId: 'test-location-id',
-        customerId: mockCustomer.email,
+        customerId: mockCustomer.squareId,
         duration: 60,
         idempotencyKey: 'mock-uuid-123',
         staffId: 'artist-123',
@@ -260,6 +271,88 @@ describe('SquareIntegrationService', () => {
           note: 'consultation'
         })
       );
+    });
+    
+    it('should create Square customer if none exists and sync appointment', async () => {
+      const customerWithoutSquareId = {
+        ...mockCustomer,
+        squareId: null
+      };
+      
+      mockPrisma.customer.findUnique.mockResolvedValueOnce(customerWithoutSquareId);
+      
+      const squareCustomerResponse = {
+        result: {
+          customer: {
+            id: 'new-square-customer-456'
+          }
+        }
+      };
+      
+      const squareBookingResponse = {
+        result: {
+          booking: {
+            id: 'square-booking-123',
+            version: 1
+          }
+        }
+      };
+      
+      mockSquareClient.createCustomer.mockResolvedValueOnce(squareCustomerResponse);
+      mockSquareClient.createBooking.mockResolvedValueOnce(squareBookingResponse);
+      
+      const result = await squareService.syncAppointmentToSquare(mockAppointment);
+      
+      expect(result).toEqual({
+        squareId: 'square-booking-123'
+      });
+      
+      // Should create customer first
+      expect(mockSquareClient.createCustomer).toHaveBeenCalledWith({
+        givenName: 'Test',
+        familyName: 'Customer',
+        emailAddress: mockCustomer.email,
+        phoneNumber: mockCustomer.phone,
+        idempotencyKey: 'mock-uuid-123'
+      });
+      
+      // Should update customer with Square ID
+      expect(mockPrisma.customer.update).toHaveBeenCalledWith({
+        where: { id: 'customer-123' },
+        data: { squareId: 'new-square-customer-456' }
+      });
+      
+      // Should create booking with new customer ID
+      expect(mockSquareClient.createBooking).toHaveBeenCalledWith({
+        startAt: mockAppointment.startTime?.toISOString(),
+        locationId: 'test-location-id',
+        customerId: 'new-square-customer-456',
+        duration: 60,
+        idempotencyKey: 'mock-uuid-123',
+        staffId: 'artist-123',
+        note: 'consultation - Test appointment notes'
+      });
+    });
+    
+    it('should handle Square customer creation failure', async () => {
+      const customerWithoutSquareId = {
+        ...mockCustomer,
+        squareId: null
+      };
+      
+      mockPrisma.customer.findUnique.mockResolvedValueOnce(customerWithoutSquareId);
+      
+      const customerError = new Error('Customer creation failed');
+      mockSquareClient.createCustomer.mockRejectedValueOnce(customerError);
+      
+      const result = await squareService.syncAppointmentToSquare(mockAppointment);
+      
+      expect(result).toEqual({
+        error: 'Failed to create Square customer: Customer creation failed'
+      });
+      
+      expect(mockSquareClient.createCustomer).toHaveBeenCalled();
+      expect(mockSquareClient.createBooking).not.toHaveBeenCalled();
     });
   });
   
@@ -532,7 +625,7 @@ describe('SquareIntegrationService', () => {
       };
       
       const notFoundError = new Error('Booking not found');
-      notFoundError.statusCode = 404;
+      (notFoundError as any).statusCode = 404;
       
       mockSquareClient.getBookingById.mockResolvedValueOnce(getBookingResponse);
       mockSquareClient.cancelBooking.mockRejectedValueOnce(notFoundError);
@@ -630,7 +723,7 @@ describe('SquareIntegrationService', () => {
   
   describe('Error Logging', () => {
     it('should log errors with high severity in production', async () => {
-      process.env.NODE_ENV = 'production';
+      vi.stubEnv('NODE_ENV', 'production');
       
       const apiError = new Error('Production API error');
       mockSquareClient.createBooking.mockRejectedValueOnce(apiError);
@@ -695,7 +788,7 @@ describe('SquareIntegrationService', () => {
   
   describe('Environment Configuration', () => {
     it('should use environment location ID', async () => {
-      process.env.SQUARE_LOCATION_ID = 'env-location-123';
+      vi.stubEnv('SQUARE_LOCATION_ID', 'env-location-123');
       
       const squareBookingResponse = {
         result: {

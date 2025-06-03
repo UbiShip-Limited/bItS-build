@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import PaymentService, { PaymentType, ProcessPaymentParams } from '../paymentService';
+import PaymentService, { ProcessPaymentParams } from '../paymentService';
+import { PaymentType } from '../../config/pricing';
 
 
 // Mock dependencies
@@ -57,7 +58,7 @@ describe('PaymentService', () => {
 
     const basePaymentParams: ProcessPaymentParams = {
       sourceId: 'cnon:card-nonce-123',
-      amount: 100,
+      amount: 200, // Above $185 minimum for consultation
       customerId: 'customer-123',
       paymentType: PaymentType.CONSULTATION,
       note: 'Test payment'
@@ -71,7 +72,7 @@ describe('PaymentService', () => {
       const mockSquarePayment = {
         id: 'square-payment-123',
         sourceType: 'CARD',
-        amountMoney: { amount: 10000, currency: 'CAD' },
+        amountMoney: { amount: 20000, currency: 'CAD' }, // 200 * 100 cents
         status: 'COMPLETED'
       };
       mockSquareClient.createPayment.mockResolvedValue({
@@ -81,7 +82,7 @@ describe('PaymentService', () => {
       // Mock payment creation
       const mockPayment = {
         id: 'payment-123',
-        amount: 100,
+        amount: 200, // Updated amount
         status: 'completed',
         paymentMethod: 'card',
         paymentType: PaymentType.CONSULTATION,
@@ -136,11 +137,11 @@ describe('PaymentService', () => {
     it('should reject payment below minimum amount', async () => {
       const params = {
         ...basePaymentParams,
-        amount: 20 // Below $35 minimum for consultation
+        amount: 100 // Below $185 minimum for consultation
       };
 
       await expect(paymentService.processPayment(params))
-        .rejects.toThrow('Minimum payment amount for consultation is $35 CAD');
+        .rejects.toThrow('Minimum payment amount for consultation is $185 CAD');
     });
 
     it('should handle customer not found error', async () => {
@@ -164,7 +165,7 @@ describe('PaymentService', () => {
           resource: 'payment',
           details: {
             paymentType: PaymentType.CONSULTATION,
-            amount: 100,
+            amount: 200, // Updated amount
             customerId: 'customer-123',
             error: 'Payment declined'
           }
@@ -177,7 +178,7 @@ describe('PaymentService', () => {
         ...basePaymentParams,
         bookingId: 'booking-123',
         paymentType: PaymentType.TATTOO_DEPOSIT,
-        amount: 150
+        amount: 200 // Above $150 minimum for tattoo deposit
       };
 
       mockPrismaClient.customer.findUnique.mockResolvedValue(mockCustomer);
@@ -186,7 +187,7 @@ describe('PaymentService', () => {
       });
       mockPrismaClient.payment.create.mockResolvedValue({
         id: 'payment-123',
-        amount: 150,
+        amount: 200, // Updated amount
         status: 'completed',
         paymentMethod: 'card',
         paymentType: PaymentType.TATTOO_DEPOSIT,
@@ -213,7 +214,7 @@ describe('PaymentService', () => {
   describe('refundPayment', () => {
     const mockPayment = {
       id: 'payment-123',
-      amount: 100,
+      amount: 200, // Updated to match new pricing
       squareId: 'square-payment-123',
       status: 'completed',
       paymentMethod: 'card',
@@ -233,7 +234,7 @@ describe('PaymentService', () => {
       const mockRefund = {
         id: 'refund-123',
         paymentId: 'square-payment-123',
-        amountMoney: { amount: 10000, currency: 'CAD' },
+        amountMoney: { amount: 20000, currency: 'CAD' }, // Updated to 200 * 100 cents
         status: 'COMPLETED'
       };
       mockSquareClient.createRefund.mockResolvedValue({
@@ -277,7 +278,7 @@ describe('PaymentService', () => {
       const mockRefund = {
         id: 'refund-123',
         paymentId: 'square-payment-123',
-        amountMoney: { amount: 5000, currency: 'CAD' },
+        amountMoney: { amount: 10000, currency: 'CAD' }, // 100 * 100 cents (partial)
         status: 'COMPLETED'
       };
       mockSquareClient.createRefund.mockResolvedValue({
@@ -291,7 +292,7 @@ describe('PaymentService', () => {
       };
       mockPrismaClient.payment.update.mockResolvedValue(updatedPayment);
 
-      const result = await paymentService.refundPayment('payment-123', 50, 'Partial refund');
+      const result = await paymentService.refundPayment('payment-123', 100, 'Partial refund');
 
       expect(result.success).toBe(true);
       expect(result.payment.status).toBe('partially_refunded');
@@ -300,7 +301,7 @@ describe('PaymentService', () => {
         paymentId: 'square-payment-123',
         idempotencyKey: expect.any(String),
         amountMoney: {
-          amount: 50,
+          amount: 100,
           currency: 'CAD'
         },
         reason: 'Partial refund'

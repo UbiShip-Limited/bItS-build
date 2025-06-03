@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { DollarSign, Link, FileText, Send, Loader } from 'lucide-react';
 import CreatePaymentLinkModal from './CreatePaymentLinkModal';
 import CreateInvoiceModal from './CreateInvoiceModal';
-import { PaymentType } from '@/src/lib/api/services/paymentService';
+import { PaymentType } from '../../../lib/services/paymentService';
 
 interface PaymentButtonProps {
   customerId: string;

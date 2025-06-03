@@ -36,6 +36,9 @@ export interface AppointmentFilters {
 
 export class AppointmentService {
   async create(data: CreateAppointmentData): Promise<Appointment> {
+    // Validate business logic first
+    this.validateAppointmentBusinessLogic(data);
+    
     // Validate: either customerId OR contact info required
     if (!data.customerId && !data.contactEmail) {
       throw new ValidationError(
@@ -55,8 +58,24 @@ export class AppointmentService {
       }
     }
     
+    // If artistId provided, verify it exists
+    if (data.artistId) {
+      const artist = await prisma.user.findUnique({
+        where: { id: data.artistId }
+      });
+      
+      if (!artist) {
+        throw new NotFoundError('Artist', data.artistId);
+      }
+    }
+    
     // Calculate end time
     const endTime = new Date(data.startAt.getTime() + data.duration * 60000);
+    
+    // Check for time conflicts if artist is specified
+    if (data.artistId) {
+      await this.checkTimeConflicts(data.startAt, endTime, data.artistId);
+    }
     
     // Create appointment data
     const appointmentData: Prisma.AppointmentCreateInput = {
@@ -84,28 +103,32 @@ export class AppointmentService {
     }
     
     try {
-      const appointment = await prisma.appointment.create({
-        data: appointmentData,
-        include: {
-          customer: true,
-          artist: true,
-          tattooRequest: true
-        }
-      });
-      
-      // Log the creation
-      await prisma.auditLog.create({
-        data: {
-          action: 'appointment_created',
-          resource: 'Appointment',
-          resourceId: appointment.id,
-          resourceType: 'appointment',
-          details: {
-            bookingType: data.bookingType,
-            isAnonymous: !data.customerId,
-            startAt: data.startAt.toISOString()
+      const appointment = await prisma.$transaction(async (tx) => {
+        const newAppointment = await tx.appointment.create({
+          data: appointmentData,
+          include: {
+            customer: true,
+            artist: true,
+            tattooRequest: true
           }
-        }
+        });
+        
+        // Log the creation in the same transaction
+        await tx.auditLog.create({
+          data: {
+            action: 'appointment_created',
+            resource: 'Appointment',
+            resourceId: newAppointment.id,
+            resourceType: 'appointment',
+            details: {
+              bookingType: data.bookingType,
+              isAnonymous: !data.customerId,
+              startAt: data.startAt.toISOString()
+            }
+          }
+        });
+        
+        return newAppointment;
       });
       
       return appointment;
@@ -120,6 +143,17 @@ export class AppointmentService {
   async update(id: string, data: UpdateAppointmentData): Promise<Appointment> {
     const existing = await this.findById(id);
     
+    // If artistId is being updated, validate it exists
+    if (data.artistId && data.artistId !== '') {
+      const artist = await prisma.user.findUnique({
+        where: { id: data.artistId }
+      });
+      
+      if (!artist) {
+        throw new NotFoundError('Artist', data.artistId);
+      }
+    }
+    
     const updateData: Prisma.AppointmentUpdateInput = {};
     
     if (data.startAt) {
@@ -129,6 +163,14 @@ export class AppointmentService {
       const duration = data.duration || existing.duration || 60;
       updateData.endTime = new Date(data.startAt.getTime() + duration * 60000);
       
+      // Check for time conflicts
+      if (existing.artistId || data.artistId) {
+        const artistId = data.artistId !== undefined ? data.artistId : existing.artistId;
+        if (artistId) {
+          await this.checkTimeConflicts(data.startAt, updateData.endTime as Date, artistId, id);
+        }
+      }
+      
       if (data.duration) {
         updateData.duration = data.duration;
       }
@@ -136,6 +178,11 @@ export class AppointmentService {
       // Only duration changed
       updateData.duration = data.duration;
       updateData.endTime = new Date(existing.startTime.getTime() + data.duration * 60000);
+      
+      // Check for time conflicts with new duration
+      if (existing.artistId) {
+        await this.checkTimeConflicts(existing.startTime, updateData.endTime as Date, existing.artistId, id);
+      }
     }
     
     if (data.status) updateData.status = data.status;
@@ -147,29 +194,33 @@ export class AppointmentService {
     if (data.note !== undefined) updateData.notes = data.note;
     if (data.priceQuote !== undefined) updateData.priceQuote = data.priceQuote;
     
-    const updated = await prisma.appointment.update({
-      where: { id },
-      data: updateData,
-      include: {
-        customer: true,
-        artist: true,
-        tattooRequest: true
-      }
-    });
-    
-    // Log the update
-    await prisma.auditLog.create({
-      data: {
-        action: 'appointment_updated',
-        resource: 'Appointment',
-        resourceId: id,
-        resourceType: 'appointment',
-        details: {
-          previousStatus: existing.status,
-          newStatus: data.status || existing.status,
-          changes: Object.keys(data)
+    const updated = await prisma.$transaction(async (tx) => {
+      const updatedAppointment = await tx.appointment.update({
+        where: { id },
+        data: updateData,
+        include: {
+          customer: true,
+          artist: true,
+          tattooRequest: true
         }
-      }
+      });
+      
+      // Log the update in the same transaction
+      await tx.auditLog.create({
+        data: {
+          action: 'appointment_updated',
+          resource: 'Appointment',
+          resourceId: id,
+          resourceType: 'appointment',
+          details: {
+            previousStatus: existing.status,
+            newStatus: data.status || existing.status,
+            changes: Object.keys(data)
+          }
+        }
+      });
+      
+      return updatedAppointment;
     });
     
     return updated;
@@ -182,33 +233,37 @@ export class AppointmentService {
       throw new ValidationError('Appointment is already cancelled');
     }
     
-    const cancelled = await prisma.appointment.update({
-      where: { id },
-      data: {
-        status: BookingStatus.CANCELLED,
-        notes: existing.notes 
-          ? `${existing.notes}\n\nCancellation reason: ${reason || 'No reason provided'}`
-          : `Cancellation reason: ${reason || 'No reason provided'}`
-      },
-      include: {
-        customer: true,
-        artist: true
-      }
-    });
-    
-    // Log the cancellation
-    await prisma.auditLog.create({
-      data: {
-        action: 'appointment_cancelled',
-        resource: 'Appointment',
-        resourceId: id,
-        resourceType: 'appointment',
-        userId: cancelledBy,
-        details: {
-          reason,
-          previousStatus: existing.status
+    const cancelled = await prisma.$transaction(async (tx) => {
+      const cancelledAppointment = await tx.appointment.update({
+        where: { id },
+        data: {
+          status: BookingStatus.CANCELLED,
+          notes: existing.notes 
+            ? `${existing.notes}\n\nCancellation reason: ${reason || 'No reason provided'}`
+            : `Cancellation reason: ${reason || 'No reason provided'}`
+        },
+        include: {
+          customer: true,
+          artist: true
         }
-      }
+      });
+      
+      // Log the cancellation in the same transaction
+      await tx.auditLog.create({
+        data: {
+          action: 'appointment_cancelled',
+          resource: 'Appointment',
+          resourceId: id,
+          resourceType: 'appointment',
+          userId: cancelledBy,
+          details: {
+            reason,
+            previousStatus: existing.status
+          }
+        }
+      });
+      
+      return cancelledAppointment;
     });
     
     return cancelled;
@@ -276,9 +331,117 @@ export class AppointmentService {
   }
 
   static async validateAppointmentData(data: Record<string, unknown>): Promise<void> {
-    // Validate required fields
-    if (!data.customerId || typeof data.customerId !== 'string') {
-      throw new AppointmentError('customerId is required and must be a string', 'INVALID_CUSTOMER_ID');
+    // Validate required fields - either customerId OR contactEmail is required
+    if (!data.customerId && !data.contactEmail) {
+      throw new AppointmentError(
+        'Either customer ID or contact email is required', 
+        'INVALID_CONTACT_INFO'
+      );
+    }
+    
+    // Validate customerId if provided
+    if (data.customerId && typeof data.customerId !== 'string') {
+      throw new AppointmentError('customerId must be a string', 'INVALID_CUSTOMER_ID');
+    }
+    
+    // Validate contactEmail if provided
+    if (data.contactEmail && typeof data.contactEmail !== 'string') {
+      throw new AppointmentError('contactEmail must be a string', 'INVALID_CONTACT_EMAIL');
+    }
+    
+    // Validate required booking fields
+    if (!data.startAt || !(data.startAt instanceof Date)) {
+      throw new AppointmentError('startAt is required and must be a Date', 'INVALID_START_TIME');
+    }
+    
+    if (!data.duration || typeof data.duration !== 'number' || data.duration <= 0) {
+      throw new AppointmentError('duration is required and must be a positive number', 'INVALID_DURATION');
+    }
+    
+    if (!data.bookingType || typeof data.bookingType !== 'string') {
+      throw new AppointmentError('bookingType is required and must be a string', 'INVALID_BOOKING_TYPE');
+    }
+  }
+
+  private validateAppointmentBusinessLogic(data: CreateAppointmentData): void {
+    // Validate appointment date is not in the past
+    const now = new Date();
+    const appointmentDate = new Date(data.startAt);
+    
+    if (appointmentDate <= now) {
+      throw new ValidationError('Appointment date must be in the future');
+    }
+    
+    // Validate duration is positive and reasonable (between 15 minutes and 8 hours)
+    if (!data.duration || data.duration <= 0) {
+      throw new ValidationError('Duration must be a positive number');
+    }
+    
+    if (data.duration < 15) {
+      throw new ValidationError('Minimum appointment duration is 15 minutes');
+    }
+    
+    if (data.duration > 480) { // 8 hours
+      throw new ValidationError('Maximum appointment duration is 8 hours');
+    }
+    
+    // Validate price quote is positive if provided
+    if (data.priceQuote !== undefined && data.priceQuote < 0) {
+      throw new ValidationError('Price quote must be a positive number');
+    }
+  }
+
+  async checkTimeConflicts(startTime: Date, endTime: Date, artistId?: string, excludeAppointmentId?: string): Promise<void> {
+    const where: Prisma.AppointmentWhereInput = {
+      AND: [
+        {
+          OR: [
+            // New appointment starts during existing appointment
+            {
+              AND: [
+                { startTime: { lte: startTime } },
+                { endTime: { gt: startTime } }
+              ]
+            },
+            // New appointment ends during existing appointment
+            {
+              AND: [
+                { startTime: { lt: endTime } },
+                { endTime: { gte: endTime } }
+              ]
+            },
+            // New appointment completely encompasses existing appointment
+            {
+              AND: [
+                { startTime: { gte: startTime } },
+                { endTime: { lte: endTime } }
+              ]
+            }
+          ]
+        },
+        { status: { not: BookingStatus.CANCELLED } }
+      ]
+    };
+    
+    // If artistId is provided, check conflicts for that artist
+    if (artistId) {
+      where.artistId = artistId;
+    }
+    
+    // Exclude current appointment if updating
+    if (excludeAppointmentId) {
+      where.id = { not: excludeAppointmentId };
+    }
+    
+    const conflicts = await prisma.appointment.findMany({
+      where,
+      select: { id: true, startTime: true, endTime: true }
+    });
+    
+    if (conflicts.length > 0) {
+      throw new ValidationError(
+        `Time conflict detected with existing appointment${conflicts.length > 1 ? 's' : ''}`
+      );
     }
   }
 }

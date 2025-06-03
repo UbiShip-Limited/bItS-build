@@ -2,15 +2,18 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import BookingService, { BookingType, BookingStatus } from '../bookingService';
 import { AppointmentService } from '../appointmentService';
 import { SquareIntegrationService } from '../squareIntegrationService';
+import { AvailabilityService } from '../availabilityService';
 
 // Mock the dependencies
 vi.mock('../appointmentService');
 vi.mock('../squareIntegrationService');
+vi.mock('../availabilityService');
 
 describe('BookingService', () => {
   let bookingService: BookingService;
   let mockAppointmentService: any;
   let mockSquareService: any;
+  let mockAvailabilityService: any;
   
   const mockAppointment = {
     id: 'appointment-123',
@@ -59,10 +62,34 @@ describe('BookingService', () => {
       updateSquareBooking: vi.fn(),
       cancelSquareBooking: vi.fn()
     };
+
+    mockAvailabilityService = {
+      isTimeSlotAvailable: vi.fn(),
+      searchAvailability: vi.fn(),
+      getBusinessBookingProfile: vi.fn(),
+      getLocationBookingProfiles: vi.fn(),
+      getTeamMemberBookingProfiles: vi.fn(),
+      getBusinessHoursForDay: vi.fn()
+    };
     
     // Mock the constructors
     vi.mocked(AppointmentService).mockImplementation(() => mockAppointmentService);
     vi.mocked(SquareIntegrationService).mockImplementation(() => mockSquareService);
+    vi.mocked(AvailabilityService).mockImplementation(() => mockAvailabilityService);
+    
+    // Set default mock return values
+    mockAvailabilityService.isTimeSlotAvailable.mockResolvedValue(true);
+    mockAvailabilityService.searchAvailability.mockResolvedValue({
+      availabilities: [],
+      totalResults: 0,
+      searchParams: {}
+    });
+    mockAvailabilityService.getBusinessHoursForDay.mockReturnValue({
+      dayOfWeek: 1,
+      openTime: '09:00',
+      closeTime: '17:00',
+      isOpen: true
+    });
     
     bookingService = new BookingService();
   });
@@ -238,6 +265,67 @@ describe('BookingService', () => {
       );
     });
     
+    it('should check availability before creating booking with artist', async () => {
+      const paramsWithArtist = {
+        ...validCreateParams,
+        artistId: 'artist-123'
+      };
+      
+      mockAvailabilityService.isTimeSlotAvailable.mockResolvedValueOnce(true);
+      mockAppointmentService.create.mockResolvedValueOnce(mockAppointment);
+      mockSquareService.syncAppointmentToSquare.mockResolvedValueOnce({
+        success: true,
+        squareId: 'square-123'
+      });
+      mockAppointmentService.findById.mockResolvedValueOnce({
+        ...mockAppointment,
+        squareId: 'square-123'
+      });
+      
+      await bookingService.createBooking(paramsWithArtist);
+      
+      expect(mockAvailabilityService.isTimeSlotAvailable).toHaveBeenCalledWith(
+        validCreateParams.startAt,
+        validCreateParams.duration,
+        'artist-123'
+      );
+    });
+
+    it('should throw error when time slot is not available', async () => {
+      const paramsWithArtist = {
+        ...validCreateParams,
+        artistId: 'artist-123'
+      };
+      
+      mockAvailabilityService.isTimeSlotAvailable.mockResolvedValueOnce(false);
+      
+      await expect(bookingService.createBooking(paramsWithArtist))
+        .rejects.toThrow('Selected time slot is not available');
+      
+      expect(mockAppointmentService.create).not.toHaveBeenCalled();
+    });
+
+    it('should not check availability when no artist is specified', async () => {
+      const paramsWithoutArtist = {
+        ...validCreateParams,
+        artistId: undefined
+      };
+      
+      mockAppointmentService.create.mockResolvedValueOnce(mockAppointment);
+      mockSquareService.syncAppointmentToSquare.mockResolvedValueOnce({
+        success: true,
+        squareId: 'square-123'
+      });
+      mockAppointmentService.findById.mockResolvedValueOnce({
+        ...mockAppointment,
+        squareId: 'square-123'
+      });
+      
+      await bookingService.createBooking(paramsWithoutArtist);
+      
+      expect(mockAvailabilityService.isTimeSlotAvailable).not.toHaveBeenCalled();
+    });
+
     it('should throw error when appointment creation fails', async () => {
       const error = new Error('Database error');
       mockAppointmentService.create.mockRejectedValueOnce(error);
@@ -296,6 +384,62 @@ describe('BookingService', () => {
       expect(mockSquareService.updateSquareBooking).toHaveBeenCalledWith(updatedAppointment);
     });
     
+    it('should check availability when updating time slot', async () => {
+      const updateParams = {
+        bookingId: 'appointment-123',
+        startAt: new Date('2024-01-15T14:00:00Z'),
+        duration: 90,
+        artistId: 'artist-456'
+      };
+      
+      const existingAppointment = {
+        ...mockAppointment,
+        artistId: 'artist-123'
+      };
+      
+      mockAppointmentService.findById.mockResolvedValueOnce(existingAppointment);
+      mockAvailabilityService.isTimeSlotAvailable.mockResolvedValueOnce(true);
+      mockAppointmentService.update.mockResolvedValueOnce({
+        ...existingAppointment,
+        ...updateParams,
+        startTime: updateParams.startAt
+      });
+      mockSquareService.updateSquareBooking.mockResolvedValueOnce({
+        success: true,
+        squareId: 'square-123'
+      });
+      
+      await bookingService.updateBooking(updateParams);
+      
+      expect(mockAvailabilityService.isTimeSlotAvailable).toHaveBeenCalledWith(
+        updateParams.startAt,
+        updateParams.duration,
+        updateParams.artistId,
+        'appointment-123' // exclude current appointment
+      );
+    });
+
+    it('should throw error when updated time slot is not available', async () => {
+      const updateParams = {
+        bookingId: 'appointment-123',
+        startAt: new Date('2024-01-15T14:00:00Z'),
+        artistId: 'artist-456'
+      };
+      
+      const existingAppointment = {
+        ...mockAppointment,
+        artistId: 'artist-123'
+      };
+      
+      mockAppointmentService.findById.mockResolvedValueOnce(existingAppointment);
+      mockAvailabilityService.isTimeSlotAvailable.mockResolvedValueOnce(false);
+      
+      await expect(bookingService.updateBooking(updateParams))
+        .rejects.toThrow('Updated time slot is not available');
+      
+      expect(mockAppointmentService.update).not.toHaveBeenCalled();
+    });
+
     it('should handle partial updates', async () => {
       const partialUpdate = {
         bookingId: 'appointment-123',
@@ -313,6 +457,7 @@ describe('BookingService', () => {
       
       await bookingService.updateBooking(partialUpdate);
       
+      expect(mockAvailabilityService.isTimeSlotAvailable).not.toHaveBeenCalled();
       expect(mockAppointmentService.update).toHaveBeenCalledWith('appointment-123', {
         startAt: undefined,
         duration: undefined,

@@ -114,10 +114,11 @@ model TattooRequest {
 model Payment {
   id             String        @id @default(uuid())
   amount         Float
-  status         String        @default("pending") // pending, completed, failed, refunded
+  status         String        @default("pending") // pending, completed, failed, refunded, partially_refunded
   paymentMethod  String?       @map("payment_method")
   paymentType    String?       @map("payment_type") // consultation, drawing_consultation, tattoo_deposit, tattoo_final
   paymentDetails Json?         @map("payment_details")
+  refundDetails  Json?         @map("refund_details")
   squareId       String?       @unique @map("square_id")
   customerId     String?       @map("customer_id")
   bookingId      String?       @map("booking_id")

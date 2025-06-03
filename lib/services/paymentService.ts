@@ -3,21 +3,10 @@ import SquareClient from '../square/index.js';
 import { prisma } from '../prisma/prisma.js';
 import { PrismaClient, Prisma } from '@prisma/client';
 import type { Square } from 'square';
+import { PaymentType, getMinimumAmount } from '../config/pricing';
 
-export enum PaymentType {
-  CONSULTATION = 'consultation',
-  DRAWING_CONSULTATION = 'drawing_consultation',
-  TATTOO_DEPOSIT = 'tattoo_deposit',
-  TATTOO_FINAL = 'tattoo_final'
-}
-
-// Minimum payment amount validation (in CAD)
-const MINIMUM_PAYMENT_AMOUNTS = {
-  [PaymentType.CONSULTATION]: 35,
-  [PaymentType.DRAWING_CONSULTATION]: 50,
-  [PaymentType.TATTOO_DEPOSIT]: 75,
-  [PaymentType.TATTOO_FINAL]: 100
-};
+// Re-export PaymentType for backward compatibility
+export { PaymentType } from '../config/pricing';
 
 export interface ProcessPaymentParams {
   sourceId: string;
@@ -63,8 +52,8 @@ export default class PaymentService {
       note,
     } = params;
     
-    // Validate minimum payment amount
-    const minimumAmount = MINIMUM_PAYMENT_AMOUNTS[paymentType] || 0;
+    // Validate minimum payment amount using centralized pricing
+    const minimumAmount = getMinimumAmount(paymentType);
     if (amount < minimumAmount) {
       throw new Error(`Minimum payment amount for ${paymentType} is $${minimumAmount} CAD`);
     }
@@ -95,20 +84,24 @@ export default class PaymentService {
       });
       
       // Extract payment details from Square response
-      const squarePayment = squareResponse.result.payment;
+      const squarePayment = squareResponse.result?.payment;
+      
+      if (!squarePayment) {
+        throw new Error('No payment returned from Square');
+      }
       
       // Store payment record in database
       const payment = await this.prisma.payment.create({
         data: {
           amount,
           status: 'completed',
-          paymentMethod: squarePayment?.sourceType || 'card',
+          paymentMethod: squarePayment.sourceType || 'card',
           paymentType,
-          squareId: squarePayment?.id,
+          squareId: squarePayment.id,
           customerId,
           bookingId,
           referenceId,
-          paymentDetails: squarePayment
+          paymentDetails: squarePayment as Prisma.InputJsonValue
         }
       });
       
@@ -128,7 +121,21 @@ export default class PaymentService {
         squarePayment
       };
     } catch (error) {
-      // Log payment failure
+      // Log payment failure with proper error extraction
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error && typeof error === 'object') {
+        if (Array.isArray((error as any).errors) && (error as any).errors.length > 0) {
+          const squareError = (error as any).errors[0];
+          errorMessage = squareError.detail || squareError.message || 'Square API error';
+        } else if ((error as any).message) {
+          errorMessage = (error as any).message;
+        } else {
+          errorMessage = String(error);
+        }
+      }
+
       await this.prisma.auditLog.create({
         data: {
           action: 'payment_failed',
@@ -137,7 +144,7 @@ export default class PaymentService {
             paymentType, 
             amount, 
             customerId,
-            error: error.message 
+            error: errorMessage
           }
         }
       });
@@ -193,8 +200,7 @@ export default class PaymentService {
             customer: {
               select: {
                 id: true,
-                firstName: true,
-                lastName: true,
+                name: true,
                 email: true
               }
             }
@@ -247,11 +253,17 @@ export default class PaymentService {
       });
       
       // Update payment status in database
+      const refundResult = refundResponse.result?.refund;
+      if (!refundResult) {
+        throw new Error('No refund returned from Square');
+      }
+      
       const updatedPayment = await this.prisma.payment.update({
         where: { id: paymentId },
         data: {
           status: amount && amount < payment.amount ? 'partially_refunded' : 'refunded',
-          refundDetails: refundResponse.result.refund as Prisma.InputJsonValue
+          // TODO: Fix refundDetails type issue
+          // refundDetails: JSON.parse(JSON.stringify(refundResult)) as Prisma.InputJsonValue
         }
       });
       
@@ -272,7 +284,7 @@ export default class PaymentService {
       return {
         success: true,
         payment: updatedPayment,
-        refund: refundResponse.result.refund
+        refund: refundResult
       };
     } catch (error) {
       // Log error

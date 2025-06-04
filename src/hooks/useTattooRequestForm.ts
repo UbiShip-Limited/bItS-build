@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { TattooRequestService } from '../lib/api/services/tattooRequestService';
+import { TattooRequestApiClient } from '../lib/api/services/tattooRequestApiClient';
 import { ImageUploadService } from '../lib/api/services/ImageUploadService';
 import { apiClient } from '../lib/api/apiClient';
 import { useCloudinaryUpload } from './useCloudinaryUpload';
 
 // Initialize the services ONCE
-const tattooRequestService = new TattooRequestService(apiClient);
+const tattooRequestClient = new TattooRequestApiClient(apiClient);
 const imageUploadService = new ImageUploadService(apiClient);
 
 interface TattooRequestFormData {
@@ -207,7 +207,7 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
           }))
       };
       
-      const tattooRequestData = await tattooRequestService.submitTattooRequest(requestData);
+      const tattooRequestData = await tattooRequestClient.create(requestData);
       setSuccess(true);
       setResponse(tattooRequestData);
     } catch (err: any) {

@@ -303,7 +303,7 @@ describe('AvailabilityService', () => {
       profiles.forEach(profile => {
         expect(profile.teamMemberBookingProfile).toMatchObject({
           teamMemberId: profile.teamMemberId,
-          description: expect.stringContaining(profile.teamMemberId),
+          description: expect.stringContaining(profile.displayName),
           displayName: expect.any(String),
           isBookable: true,
           hourlyRate: null,

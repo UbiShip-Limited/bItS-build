@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import Link from 'next/link';
-import { AppointmentService, type AppointmentData, BookingStatus, BookingType } from '@/src/lib/api/services/appointmentService';
-import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
+import { AppointmentApiClient, type AppointmentData, BookingStatus, BookingType } from '@/src/lib/api/services/appointmentApiClient';
+import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 
 // Component imports
@@ -29,14 +29,6 @@ interface Appointment {
   status: 'confirmed' | 'pending' | 'completed';
 }
 
-interface DashboardTattooRequest {
-  id: string;
-  clientName: string;
-  design: string;
-  submittedAt: string;
-  status: 'new' | 'reviewing' | 'quoted' | 'approved';
-}
-
 interface RecentCustomer {
   id: string;
   name: string;
@@ -56,10 +48,10 @@ export default function DashboardPage() {
   });
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [customers, setCustomers] = useState<RecentCustomer[]>([]);
-  const [requests, setRequests] = useState<DashboardTattooRequest[]>([]);
+  const [requests, setRequests] = useState<TattooRequest[]>([]);
 
-  const appointmentService = new AppointmentService(apiClient);
-  const tattooRequestService = new TattooRequestService(apiClient);
+  const appointmentClient = new AppointmentApiClient(apiClient);
+  const tattooRequestClient = new TattooRequestApiClient(apiClient);
 
   useEffect(() => {
     loadDashboardData();
@@ -74,7 +66,7 @@ export default function DashboardPage() {
       const nextWeek = new Date(today);
       nextWeek.setDate(nextWeek.getDate() + 7);
       
-      const appointmentsResponse = await appointmentService.getAppointments({
+      const appointmentsResponse = await appointmentClient.getAppointments({
         from: today.toISOString(),
         to: nextWeek.toISOString(),
         status: BookingStatus.SCHEDULED
@@ -89,16 +81,16 @@ export default function DashboardPage() {
       const recentAppointments = appointmentsResponse.data.slice(0, 3);
       
       // Load tattoo requests
-      const requestsResponse = await tattooRequestService.getAll({
+      const requestsResponse = await tattooRequestClient.getAll({
         status: 'new',
         limit: 10
       });
       
-      const recentRequests = requestsResponse.data.slice(0, 3) as unknown as TattooRequest[];
+      const recentRequests = requestsResponse.data.slice(0, 3);
       
       // Calculate monthly revenue (from completed appointments)
       const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const completedAppointments = await appointmentService.getAppointments({
+      const completedAppointments = await appointmentClient.getAppointments({
         status: BookingStatus.COMPLETED,
         from: firstDayOfMonth.toISOString(),
         to: today.toISOString()
@@ -124,15 +116,6 @@ export default function DashboardPage() {
         time: format(new Date(appointment.startTime), 'h:mm a'),
         service: appointment.type.replace('_', ' '),
         status: appointment.status as 'confirmed' | 'pending' | 'completed'
-      }));
-
-      // Convert requests to the new format
-      const formattedRequests = recentRequests.map((request: any) => ({
-        id: request.id,
-        clientName: request.clientName || 'Anonymous',
-        design: request.style || request.placement || 'Custom Design',
-        submittedAt: request.createdAt || new Date().toISOString(),
-        status: (request.status || 'new') as 'new' | 'reviewing' | 'quoted' | 'approved'
       }));
 
       // Get customers from appointments
@@ -163,7 +146,7 @@ export default function DashboardPage() {
 
       setAppointments(formattedAppointments);
       setCustomers(formattedCustomers);
-      setRequests(formattedRequests);
+      setRequests(recentRequests);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       setError(error instanceof Error ? error.message : 'Failed to load dashboard data');

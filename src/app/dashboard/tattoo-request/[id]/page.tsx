@@ -20,7 +20,7 @@ import {
   MessageSquare,
   UserPlus
 } from 'lucide-react';
-import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
+import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '@/src/components/ui/Modal';
 import CustomerForm from '@/src/components/forms/CustomerForm';
@@ -34,7 +34,7 @@ export default function TattooRequestDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
 
-  const tattooRequestService = new TattooRequestService(apiClient);
+  const tattooRequestClient = new TattooRequestApiClient(apiClient);
 
   useEffect(() => {
     if (params.id) {
@@ -47,7 +47,7 @@ export default function TattooRequestDetailPage() {
     setError(null);
     
     try {
-      const data = await tattooRequestService.getById(id);
+      const data = await tattooRequestClient.getById(id);
       setRequest(data);
     } catch (err: any) {
       setError(err.message || 'Failed to load tattoo request');
@@ -61,7 +61,7 @@ export default function TattooRequestDetailPage() {
     
     setUpdating(true);
     try {
-      await tattooRequestService.update(request.id, { status: newStatus });
+      await tattooRequestClient.updateStatus(request.id, newStatus);
       await loadTattooRequest(request.id);
     } catch (err: any) {
       alert(err.message || 'Failed to update status');

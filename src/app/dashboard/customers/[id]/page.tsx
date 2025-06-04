@@ -5,8 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Edit, Calendar, FileText, DollarSign, Clock, Mail, Phone, User } from 'lucide-react';
 import { CustomerService, type Customer } from '@/src/lib/api/services/customerService';
-import { AppointmentService, type AppointmentData } from '@/src/lib/api/services/appointmentService';
-import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
+import { AppointmentApiClient, type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
+import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '../../../../components/ui/Modal';
 import CustomerForm from '../../../../components/forms/CustomerForm';
@@ -24,7 +24,7 @@ export default function CustomerDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
 
   const customerService = new CustomerService(apiClient);
-  const appointmentService = new AppointmentService(apiClient);
+  const appointmentService = new AppointmentApiClient(apiClient);
   const tattooRequestService = new TattooRequestService(apiClient);
 
   useEffect(() => {

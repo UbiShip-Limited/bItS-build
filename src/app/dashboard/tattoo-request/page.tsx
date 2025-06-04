@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Filter, FileText, User, Calendar, DollarSign } from 'lucide-react';
-import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
+import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 
 export default function TattooRequestsPage() {
@@ -26,7 +26,7 @@ export default function TattooRequestsPage() {
     pages: 1
   });
 
-  const tattooRequestService = new TattooRequestService(apiClient);
+  const tattooRequestClient = new TattooRequestApiClient(apiClient);
 
   useEffect(() => {
     loadTattooRequests();
@@ -37,7 +37,7 @@ export default function TattooRequestsPage() {
     setError(null);
     
     try {
-      const response = await tattooRequestService.getAll({
+      const response = await tattooRequestClient.getAll({
         status: filters.status || undefined,
         page: filters.page,
         limit: filters.limit

@@ -103,7 +103,6 @@ export class AvailabilityService {
         searchParams: params
       };
     } catch (error) {
-      console.error('Availability search error:', error);
       throw new Error(`Failed to search availability: ${error.message}`);
     }
   }

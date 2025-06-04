@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import { 
-  AppointmentService, 
-  AppointmentData, 
-  CreateAppointmentRequest, 
-  AppointmentFilters, 
-  AppointmentListResponse,
+import {
+  AppointmentApiClient,
+  type AppointmentData,
+  type CreateAppointmentRequest,
+  type UpdateAppointmentRequest,
+  type AppointmentListResponse,
+  type AppointmentFilters,
   BookingType,
-  BookingStatus 
-} from '../lib/api/services/appointmentService';
+  BookingStatus
+} from '../lib/api/services/appointmentApiClient';
 import { apiClient } from '../lib/api/apiClient';
 
-const appointmentService = new AppointmentService(apiClient);
+// Initialize the client ONCE
+const appointmentClient = new AppointmentApiClient(apiClient);
 
 export interface UseAppointmentsReturn {
   appointments: AppointmentData[];
@@ -90,7 +92,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      const response: AppointmentListResponse = await appointmentService.getAppointments(filters);
+      const response: AppointmentListResponse = await appointmentClient.getAppointments(filters);
       setAppointments(response.data);
       setPagination(response.pagination);
     } catch (err: any) {
@@ -104,7 +106,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      const appointmentData = await appointmentService.getAppointment(id);
+      const appointmentData = await appointmentClient.getAppointment(id);
       setAppointment(appointmentData);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch appointment');
@@ -117,7 +119,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      const newAppointment = await appointmentService.createAppointment(data);
+      const newAppointment = await appointmentClient.createAppointment(data);
       setAppointments(prev => [newAppointment, ...prev]);
       return newAppointment;
     } catch (err: any) {
@@ -142,7 +144,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      const newAppointment = await appointmentService.createAppointmentForCustomer(data);
+      const newAppointment = await appointmentClient.createAppointmentForCustomer(data);
       setAppointments(prev => [newAppointment, ...prev]);
       return newAppointment;
     } catch (err: any) {
@@ -168,7 +170,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      const newAppointment = await appointmentService.createAppointmentWithCustomerDetails(data);
+      const newAppointment = await appointmentClient.createAppointmentWithCustomerDetails(data);
       setAppointments(prev => [newAppointment, ...prev]);
       return newAppointment;
     } catch (err: any) {
@@ -191,7 +193,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      const newAppointment = await appointmentService.createAnonymousAppointment(data);
+      const newAppointment = await appointmentClient.createAnonymousAppointment(data);
       setAppointments(prev => [newAppointment, ...prev]);
       return newAppointment;
     } catch (err: any) {
@@ -206,7 +208,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      const updatedAppointment = await appointmentService.updateAppointment(id, data);
+      const updatedAppointment = await appointmentClient.updateAppointment(id, data);
       setAppointments(prev => 
         prev.map(apt => apt.id === id ? updatedAppointment : apt)
       );
@@ -226,7 +228,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      const cancelledAppointment = await appointmentService.cancelAppointment(id, reason);
+      const cancelledAppointment = await appointmentClient.cancelAppointment(id, reason);
       setAppointments(prev => 
         prev.map(apt => apt.id === id ? cancelledAppointment : apt)
       );
@@ -249,7 +251,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      const newAppointment = await appointmentService.createAppointmentFromTattooRequest(
+      const newAppointment = await appointmentClient.createAppointmentFromTattooRequest(
         tattooRequestId, 
         appointmentData
       );
@@ -277,7 +279,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
     setIsLoading(true);
     setError(null);
     try {
-      const newAppointment = await appointmentService.createAnonymousAppointmentFromTattooRequest(
+      const newAppointment = await appointmentClient.createAnonymousAppointmentFromTattooRequest(
         tattooRequestId,
         contactData
       );

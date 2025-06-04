@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { BookingStatus, type AppointmentData } from '@/src/lib/api/services/appointmentService';
+import { BookingStatus, type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from 'date-fns';
 
 interface AppointmentCalendarProps {

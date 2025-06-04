@@ -1,20 +1,8 @@
 import { ApiClient } from '../apiClient';
+import { BookingType, BookingStatus } from '../../types/shared';
 
-// Enums to match backend
-export enum BookingType {
-  CONSULTATION = 'consultation',
-  DRAWING_CONSULTATION = 'drawing_consultation',
-  TATTOO_SESSION = 'tattoo_session'
-}
-
-export enum BookingStatus {
-  PENDING = 'pending',
-  SCHEDULED = 'scheduled',
-  CONFIRMED = 'confirmed',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-  NO_SHOW = 'no_show'
-}
+// Re-export for convenience
+export { BookingType, BookingStatus } from '../../types/shared';
 
 export interface AppointmentData {
   id: string;
@@ -23,8 +11,8 @@ export interface AppointmentData {
   startTime: string;
   endTime: string;
   duration: number;
-  type: BookingType;
-  status: BookingStatus;
+  type: string; // Will be BookingType but as string from API
+  status: string; // Will be BookingStatus but as string from API
   notes?: string;
   priceQuote?: number;
   tattooRequestId?: string;
@@ -42,8 +30,8 @@ export interface CreateAppointmentRequest {
   artistId?: string;
   startAt: string;
   duration: number;
-  bookingType: BookingType;
-  status?: BookingStatus;
+  bookingType: string;
+  status?: string;
   note?: string;
   priceQuote?: number;
   tattooRequestId?: string;
@@ -60,7 +48,7 @@ export interface UpdateAppointmentRequest {
   artistId?: string;
   startAt?: string;
   duration?: number;
-  status?: BookingStatus;
+  status?: string;
   note?: string;
   priceQuote?: number;
 }
@@ -76,7 +64,7 @@ export interface AppointmentListResponse {
 }
 
 export interface AppointmentFilters {
-  status?: BookingStatus;
+  status?: string;
   customerId?: string;
   artistId?: string;
   from?: string;
@@ -85,7 +73,11 @@ export interface AppointmentFilters {
   limit?: number;
 }
 
-export class AppointmentService {
+/**
+ * Frontend API Client for appointment operations
+ * Handles HTTP communication with the backend API
+ */
+export class AppointmentApiClient {
   constructor(private apiClient: ApiClient) {}
 
   async getAppointments(filters?: AppointmentFilters): Promise<AppointmentListResponse> {
@@ -119,8 +111,8 @@ export class AppointmentService {
     artistId?: string;
     startAt: string;
     duration: number;
-    bookingType: BookingType;
-    status?: BookingStatus;
+    bookingType: string;
+    status?: string;
     note?: string;
     priceQuote?: number;
     tattooRequestId?: string;
@@ -135,8 +127,8 @@ export class AppointmentService {
     artistId?: string;
     startAt: string;
     duration: number;
-    bookingType: BookingType;
-    status?: BookingStatus;
+    bookingType: string;
+    status?: string;
     note?: string;
     priceQuote?: number;
     tattooRequestId?: string;
@@ -150,7 +142,7 @@ export class AppointmentService {
     contactPhone?: string;
     startAt: string;
     duration: number;
-    bookingType: BookingType.CONSULTATION | BookingType.DRAWING_CONSULTATION;
+    bookingType: string; // 'consultation' | 'drawing_consultation'
     note?: string;
     tattooRequestId?: string;
   }): Promise<AppointmentData> {
@@ -189,7 +181,7 @@ export class AppointmentService {
       contactPhone?: string;
       startAt: string;
       duration: number;
-      bookingType: BookingType.CONSULTATION | BookingType.DRAWING_CONSULTATION;
+      bookingType: string; // 'consultation' | 'drawing_consultation'
       note?: string;
     }
   ): Promise<AppointmentData> {
@@ -198,4 +190,7 @@ export class AppointmentService {
       tattooRequestId
     });
   }
-} 
+}
+
+// Export with both names for backward compatibility during transition
+export { AppointmentApiClient as AppointmentService }; 

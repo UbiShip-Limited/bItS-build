@@ -3,71 +3,19 @@ import multipart from '@fastify/multipart';
 import { authorize } from '../middleware/auth';
 import { UserRole } from '../types/auth';
 import { v4 as uuidv4 } from 'uuid';
-import { TattooRequestService } from '../services/tattooRequestService';
-import { BookingType } from '../types/booking';
-// import cloudinaryService from '../cloudinary/index.js';
+import { TattooRequestService, CreateTattooRequestData, ConvertToAppointmentData } from '../services/tattooRequestService';
+import { BookingType } from '../services/bookingService';
 import { pipeline } from 'stream/promises';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { NotFoundError, ValidationError } from '../services/errors';
 
 // Type definitions for request bodies and queries
 interface TattooRequestQueryParams {
-  status?: 'new' | 'reviewed' | 'approved' | 'rejected';
+  status?: 'new' | 'reviewed' | 'approved' | 'rejected' | 'converted_to_appointment';
   page?: number;
   limit?: number;
-}
-
-interface CreateTattooRequestBody {
-  customerId?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  description: string;
-  placement?: string;
-  size?: string;
-  colorPreference?: string;
-  style?: string;
-  purpose?: string;
-  preferredArtist?: string;
-  timeframe?: string;
-  contactPreference?: string;
-  additionalNotes?: string;
-  referenceImages?: Array<{
-    url: string;
-    publicId: string;
-  }>;
-}
-
-interface TattooRequestData {
-  description: string;
-  placement?: string;
-  size?: string;
-  colorPreference?: string;
-  style?: string;
-  purpose?: string;
-  preferredArtist?: string;
-  timeframe?: string;
-  contactPreference?: string;
-  additionalNotes?: string;
-  referenceImages: Array<{
-    url: string;
-    publicId: string;
-  }>;
-  customerId?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  trackingToken?: string;
-}
-
-interface UpdateTattooRequestBody {
-  status?: 'new' | 'reviewed' | 'approved' | 'rejected';
-  notes?: string;
-  customerId?: string;
-}
-
-interface UpdateTattooRequestData {
-  notes?: string;
-  customerId?: string;
 }
 
 interface ConvertToAppointmentBody {
@@ -80,7 +28,7 @@ interface ConvertToAppointmentBody {
 }
 
 const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
-  // Register multipart support for this route context
+  // Register multipart support for image uploads
   await fastify.register(multipart, {
     limits: {
       fileSize: 10 * 1024 * 1024, // 10MB max file size
@@ -88,44 +36,45 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // Initialize TattooRequestService
+  // Initialize service
   const tattooRequestService = new TattooRequestService();
-  
-  // Decorate fastify instance
-  if (!fastify.hasDecorator('tattooRequestService')) {
-    fastify.decorate('tattooRequestService', tattooRequestService);
-  }
 
-  // GET /tattoo-requests - List tattoo requests (admin only)
+  // GET /tattoo-requests - List tattoo requests (admin dashboard)
   fastify.get('/', {
-    // TODO: Re-enable auth after testing
-    // preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    preHandler: authorize(['artist', 'admin'] as UserRole[]),
     schema: {
       querystring: {
         type: 'object',
         properties: {
-          status: { type: 'string', enum: ['new', 'reviewed', 'approved', 'rejected'] },
+          status: { 
+            type: 'string', 
+            enum: ['new', 'reviewed', 'approved', 'rejected', 'converted_to_appointment'] 
+          },
           page: { type: 'integer', minimum: 1, default: 1 },
           limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 }
         }
       }
     }
-  }, async (request) => {
-    const { status, page = 1, limit = 20 } = request.query as TattooRequestQueryParams;
-    
-    const result = await tattooRequestService.list({
-      status,
-      page,
-      limit
-    });
-    
-    return result;
+  }, async (request, reply) => {
+    try {
+      const { status, page = 1, limit = 20 } = request.query as TattooRequestQueryParams;
+      
+      const result = await tattooRequestService.list({
+        status,
+        page,
+        limit
+      });
+      
+      return result;
+    } catch (error) {
+      request.log.error(error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
   });
   
-  // GET /tattoo-requests/:id - Get details of a specific tattoo request
+  // GET /tattoo-requests/:id - Get tattoo request details
   fastify.get('/:id', {
-    // TODO: Re-enable auth after testing
-    // preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    preHandler: authorize(['artist', 'admin'] as UserRole[]),
     schema: {
       params: {
         type: 'object',
@@ -135,13 +84,21 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
     }
-  }, async (request) => {
-    const { id } = request.params as { id: string };
-    const tattooRequest = await tattooRequestService.findById(id);
-    return tattooRequest;
+  }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const tattooRequest = await tattooRequestService.findById(id);
+      return tattooRequest;
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        return reply.status(404).send({ error: error.message });
+      }
+      request.log.error(error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
   });
   
-  // POST /tattoo-requests - Submit a new tattoo request
+  // POST /tattoo-requests - Submit new tattoo request (public endpoint)
   fastify.post('/', {
     schema: {
       body: {
@@ -151,7 +108,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
           customerId: { type: 'string' },
           contactEmail: { type: 'string', format: 'email' },
           contactPhone: { type: 'string' },
-          description: { type: 'string' },
+          description: { type: 'string', minLength: 10 },
           placement: { type: 'string' },
           size: { type: 'string' },
           colorPreference: { type: 'string' },
@@ -181,91 +138,36 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     try {
-      const { 
-        customerId, 
-        contactEmail,
-        contactPhone,
-        description, 
-        placement, 
-        size, 
-        colorPreference, 
-        style,
-        purpose,
-        preferredArtist,
-        timeframe,
-        contactPreference,
-        additionalNotes,
-        referenceImages 
-      } = request.body as CreateTattooRequestBody;
+      const requestData = request.body as CreateTattooRequestData;
       
-      // Generate tracking token for anonymous requests
-      const trackingToken = !customerId ? uuidv4() : null;
+      // Create via service (handles all business logic)
+      const tattooRequest = await tattooRequestService.create(
+        requestData,
+        request.user?.id
+      );
       
-      // Create the tattoo request with the right structure
-      const tattooRequestData: TattooRequestData = {
-        description,
-        placement,
-        size,
-        colorPreference,
-        style,
-        purpose,
-        preferredArtist,
-        timeframe,
-        contactPreference,
-        additionalNotes,
-        referenceImages: referenceImages || []
-      };
-      
-      // Add either customer ID or anonymous fields
-      if (customerId) {
-        tattooRequestData.customerId = customerId;
-      } else {
-        // Add anonymous request fields
-        if (contactEmail) tattooRequestData.contactEmail = contactEmail;
-        if (contactPhone) tattooRequestData.contactPhone = contactPhone;
-        if (trackingToken) tattooRequestData.trackingToken = trackingToken;
-      }
-      
-      // Create the tattoo request
-      const tattooRequest = await fastify.prisma.tattooRequest.create({
-        data: tattooRequestData
-      });
-      
-      // Log the audit - only if user is available (optional for anonymous requests)
-      try {
-        await fastify.prisma.auditLog.create({
-          data: {
-            userId: request.user?.id || null,
-            action: 'CREATE',
-            resource: 'TattooRequest',
-            resourceId: tattooRequest.id,
-            details: { 
-              tattooRequest,
-              isAnonymous: !customerId
-            }
-          }
-        });
-      } catch (auditError) {
-        // Log audit error but don't fail the request
-        fastify.log.warn('Failed to create audit log:', auditError);
-      }
-      
-      reply.type('application/json');
       return tattooRequest;
     } catch (error: unknown) {
-      fastify.log.error(error, 'Error creating tattoo request');
+      request.log.error(error, 'Error creating tattoo request');
+      
+      if (error instanceof ValidationError) {
+        return reply.status(400).send({ error: error.message });
+      }
+      
+      if (error instanceof NotFoundError) {
+        return reply.status(404).send({ error: error.message });
+      }
+      
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const errorStack = error instanceof Error ? error.stack : undefined;
       return reply.status(500).send({ 
         error: 'Failed to submit tattoo request',
-        message: errorMessage,
-        details: process.env.NODE_ENV === 'development' ? errorStack : undefined
+        message: errorMessage
       });
     }
   });
   
-  // PUT /tattoo-requests/:id - Update a tattoo request
-  fastify.put('/:id', {
+  // PUT /tattoo-requests/:id/status - Update status (admin workflow)
+  fastify.put('/:id/status', {
     preHandler: authorize(['artist', 'admin'] as UserRole[]),
     schema: {
       params: {
@@ -277,54 +179,37 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
       },
       body: {
         type: 'object',
+        required: ['status'],
         properties: {
-          status: { type: 'string', enum: ['new', 'reviewed', 'approved', 'rejected'] },
-          notes: { type: 'string' },
-          customerId: { type: 'string' }
+          status: { 
+            type: 'string', 
+            enum: ['new', 'reviewed', 'approved', 'rejected', 'converted_to_appointment'] 
+          }
         }
       }
     }
   }, async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const { status, notes, customerId } = request.body as UpdateTattooRequestBody;
-    
-    if (status) {
+    try {
+      const { id } = request.params as { id: string };
+      const { status } = request.body as { status: 'new' | 'reviewed' | 'approved' | 'rejected' | 'converted_to_appointment' };
+      
       const updated = await tattooRequestService.updateStatus(id, status, request.user?.id);
       return updated;
-    }
-    
-    // If not updating status, handle other updates
-    const updateData: UpdateTattooRequestData = {};
-    if (notes !== undefined) updateData.notes = notes;
-    if (customerId !== undefined) updateData.customerId = customerId;
-    
-    const original = await fastify.prisma.tattooRequest.findUnique({ where: { id } });
-    
-    if (!original) {
-      return reply.status(404).send({ error: 'Tattoo request not found' });
-    }
-    
-    const updated = await fastify.prisma.tattooRequest.update({
-      where: { id },
-      data: updateData
-    });
-    
-    // Log the audit
-    await fastify.prisma.auditLog.create({
-      data: {
-        userId: request.user?.id,
-        action: 'UPDATE',
-        resource: 'TattooRequest',
-        resourceId: id,
-        details: { before: original, after: updated }
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        return reply.status(404).send({ error: error.message });
       }
-    });
-    
-    reply.type('application/json');
-    return updated;
+      
+      if (error instanceof ValidationError) {
+        return reply.status(400).send({ error: error.message });
+      }
+      
+      request.log.error(error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
   });
 
-  // POST /tattoo-requests/:id/convert-to-appointment - Convert an approved tattoo request to an appointment
+  // POST /tattoo-requests/:id/convert-to-appointment - Convert to appointment (admin action)
   fastify.post('/:id/convert-to-appointment', {
     preHandler: authorize(['artist', 'admin'] as UserRole[]),
     schema: {
@@ -340,7 +225,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
         required: ['startAt', 'duration'],
         properties: {
           startAt: { type: 'string', format: 'date-time' },
-          duration: { type: 'integer', minimum: 30 }, // Duration in minutes
+          duration: { type: 'integer', minimum: 30 },
           artistId: { type: 'string' },
           bookingType: { 
             type: 'string', 
@@ -353,17 +238,17 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const { 
-      startAt, 
-      duration, 
-      artistId = request.user?.id, 
-      bookingType = BookingType.TATTOO_SESSION,
-      priceQuote,
-      note
-    } = request.body as ConvertToAppointmentBody;
-    
     try {
+      const { id } = request.params as { id: string };
+      const { 
+        startAt, 
+        duration, 
+        artistId = request.user?.id, 
+        bookingType = BookingType.TATTOO_SESSION,
+        priceQuote,
+        note
+      } = request.body as ConvertToAppointmentBody;
+      
       const result = await tattooRequestService.convertToAppointment(
         id,
         {
@@ -379,13 +264,17 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
       
       return result;
     } catch (error) {
+      if (error instanceof ValidationError || error instanceof NotFoundError) {
+        return reply.status(400).send({ error: error.message });
+      }
+      
       request.log.error(error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      return reply.status(400).send({ error: errorMessage });
+      return reply.status(500).send({ error: errorMessage });
     }
   });
 
-  // POST /tattoo-requests/upload-images - Upload reference images
+  // POST /tattoo-requests/upload-images - Upload reference images (public endpoint)
   fastify.post('/upload-images', {
     schema: {
       description: 'Upload reference images for tattoo requests',
@@ -424,22 +313,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
         // Save file to temp location
         await pipeline(file.file, fs.createWriteStream(tempFilePath));
         
-        // Upload to Cloudinary (temporarily disabled)
-        // const uploadResult = await cloudinaryService.uploadImage(
-        //   tempFilePath,
-        //   'tattoo-requests',
-        //   ['tattoo-request', 'reference-image']
-        // );
-        // console.log('uploadResult', uploadResult);
-        // if (uploadResult) {
-        //   images.push({
-        //     url: uploadResult.secureUrl,
-        //     publicId: uploadResult.publicId,
-        //     originalName: file.filename
-        //   });
-        // }
-        
-        // Temporary mock response for testing
+        // TODO: Replace with actual cloudinary upload when ready
         images.push({
           url: `http://localhost:3001/temp-image-${Date.now()}.jpg`,
           publicId: `temp-${Date.now()}`,
@@ -452,7 +326,6 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
         try {
           await fs.promises.unlink(tempFile);
         } catch {
-          // Log but don't throw - file cleanup is not critical
           fastify.log.warn(`Failed to delete temp file: ${tempFile}`);
         }
       }

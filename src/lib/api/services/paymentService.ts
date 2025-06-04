@@ -1,8 +1,8 @@
 import { apiClient } from '../apiClient';
-import { PaymentType, getMinimumAmount, formatPaymentType } from '../../../../lib/config/pricing';
+import { PaymentType, getMinimumAmount, formatPaymentType } from '../../types/shared';
 
 // Re-export PaymentType for easier imports
-export { PaymentType } from '../../../../lib/config/pricing';
+export { PaymentType } from '../../types/shared';
 
 // Types - PaymentType is now imported from centralized config
 export interface PaymentLink {

@@ -92,9 +92,10 @@ export interface TattooRequestResponse extends TattooRequest {
 }
 
 /**
- * Service for tattoo request operations
+ * Frontend API Client for tattoo request operations
+ * Handles HTTP communication with the backend API
  */
-export class TattooRequestService {
+export class TattooRequestApiClient {
   private client: ApiClient;
   private baseUrl = '/tattoo-requests';
 
@@ -140,7 +141,7 @@ export class TattooRequestService {
   /**
    * Create a new tattoo request
    */
-  public async create(payload: CreateTattooRequestPayload): Promise<TattooRequest> {
+  public async create(payload: CreateTattooRequestPayload | TattooRequestFormData): Promise<TattooRequest> {
     return this.client.post<TattooRequest>(this.baseUrl, payload);
   }
   
@@ -149,6 +150,13 @@ export class TattooRequestService {
    */
   public async update(id: string, payload: UpdateTattooRequestPayload): Promise<TattooRequest> {
     return this.client.put<TattooRequest>(`${this.baseUrl}/${id}`, payload);
+  }
+
+  /**
+   * Update tattoo request status (admin workflow)
+   */
+  public async updateStatus(id: string, status: string): Promise<TattooRequest> {
+    return this.client.put<TattooRequest>(`${this.baseUrl}/${id}/status`, { status });
   }
 
   /**
@@ -168,4 +176,5 @@ export class TattooRequestService {
   }
 }
 
-export { TattooRequestService }; 
+// Export the class with both names for backward compatibility during transition
+export { TattooRequestApiClient as TattooRequestService }; 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Calendar, Clock, DollarSign, User, Filter, Plus } from 'lucide-react';
-import { AppointmentService, BookingStatus, BookingType, type AppointmentData } from '@/src/lib/api/services/appointmentService';
+import { AppointmentApiClient, BookingStatus, BookingType, type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '@/src/components/ui/Modal';
 import AppointmentForm from '@/src/components/forms/AppointmentForm';
@@ -32,7 +32,7 @@ export default function AppointmentsPage() {
     pages: 1
   });
 
-  const appointmentService = new AppointmentService(apiClient);
+  const appointmentService = new AppointmentApiClient(apiClient);
 
   useEffect(() => {
     loadAppointments();

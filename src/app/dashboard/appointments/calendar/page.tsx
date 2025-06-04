@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, List } from 'lucide-react';
-import { AppointmentService, type AppointmentData } from '@/src/lib/api/services/appointmentService';
+import { AppointmentApiClient, type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import AppointmentCalendar from '@/src/components/dashboard/AppointmentCalendar';
 import Modal from '@/src/components/ui/Modal';
@@ -19,7 +19,7 @@ export default function AppointmentCalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
 
-  const appointmentService = new AppointmentService(apiClient);
+  const appointmentService = new AppointmentApiClient(apiClient);
 
   useEffect(() => {
     loadAppointments();

@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
-// Define base API configuration
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Define base API configuration - now points directly to Fastify backend
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
 
 // Error type for API responses
 export interface ApiError {
@@ -11,20 +11,22 @@ export interface ApiError {
 }
 
 /**
- * API Client for interacting with the backend
+ * API Client for interacting with the Fastify backend directly
  */
 export class ApiClient {
   private axiosInstance: AxiosInstance;
   private baseURL: string;
   
-  constructor(baseURL: string = '/api') {
-    // Always use /api which will be proxied to the backend
+  constructor(baseURL: string = API_URL) {
+    // Now calls Fastify backend directly instead of Next.js API routes
     this.baseURL = baseURL;
     this.axiosInstance = axios.create({
       baseURL: baseURL,
       headers: {
         'Content-Type': 'application/json',
       },
+      // Add timeout for better error handling
+      timeout: 30000
     });
     
     // Add request interceptor for auth tokens
@@ -48,6 +50,9 @@ export class ApiClient {
           // Handle unauthorized
           localStorage.removeItem('authToken');
           // Redirect to login if needed
+          if (typeof window !== 'undefined') {
+            window.location.href = '/auth/login';
+          }
         }
         return Promise.reject(error);
       }
@@ -83,6 +88,20 @@ export class ApiClient {
    */
   public async delete<T>(path: string, config?: AxiosRequestConfig): Promise<T> {
     const response: AxiosResponse<T> = await this.axiosInstance.delete(path, config);
+    return response.data;
+  }
+
+  /**
+   * POST request for file uploads
+   */
+  public async uploadFile<T>(path: string, formData: FormData, config?: AxiosRequestConfig): Promise<T> {
+    const response: AxiosResponse<T> = await this.axiosInstance.post(path, formData, {
+      ...config,
+      headers: {
+        ...config?.headers,
+        'Content-Type': 'multipart/form-data',
+      }
+    });
     return response.data;
   }
 }

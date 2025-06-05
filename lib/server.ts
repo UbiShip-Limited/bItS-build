@@ -3,8 +3,22 @@ import 'dotenv/config';
 import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
-config({ path: '.env.local' });
 
+// Load .env file and log the result
+const envResult = config({ path: '.env' });
+if (envResult.error) {
+  console.warn('⚠️  Could not load .env file:', envResult.error.message);
+} else {
+  console.log('✅ .env file loaded successfully');
+}
+
+// Debug: Log Cloudinary environment variables at startup
+console.log('🔍 Environment Variables Debug:');
+console.log('CLOUDINARY_URL:', process.env.CLOUDINARY_URL ? '***SET***' : 'NOT SET');
+console.log('CLOUDINARY_CLOUD_NAME:', process.env.CLOUDINARY_CLOUD_NAME || 'NOT SET');
+console.log('CLOUDINARY_API_KEY:', process.env.CLOUDINARY_API_KEY ? '***SET***' : 'NOT SET');
+console.log('CLOUDINARY_API_SECRET:', process.env.CLOUDINARY_API_SECRET ? '***SET***' : 'NOT SET');
+console.log('NODE_ENV:', process.env.NODE_ENV || 'NOT SET');
 
 import Fastify, { FastifyInstance } from 'fastify';
 import tattooRequestsRoutes from './routes/tattooRequest';
@@ -15,11 +29,67 @@ import appointmentRoutes from './routes/appointment';
 import auditRoutes from './routes/audit';
 import cloudinaryRoutes from './routes/cloudinary.js'; // Import Cloudinary routes
 import webhookRoutes from './routes/webhooks/index.js'; // Import webhook routes
+import healthRoutes from './routes/health.js'; // Import health check routes
 import cors from '@fastify/cors';
 
+// Environment variable validation
+function validateEnvironment() {
+  const requiredEnvVars = {
+    'DATABASE_URL': process.env.DATABASE_URL,
+    'SQUARE_ACCESS_TOKEN': process.env.SQUARE_ACCESS_TOKEN,
+    'SQUARE_APPLICATION_ID': process.env.SQUARE_APPLICATION_ID,
+    'SQUARE_LOCATION_ID': process.env.SQUARE_LOCATION_ID,
+    'SQUARE_ENVIRONMENT': process.env.SQUARE_ENVIRONMENT
+  };
+
+  // Optional but important for webhooks
+  const optionalEnvVars = {
+    'SQUARE_WEBHOOK_SIGNATURE_KEY': process.env.SQUARE_WEBHOOK_SIGNATURE_KEY,
+    'FRONTEND_URL': process.env.FRONTEND_URL,
+    'CLOUDINARY_CLOUD_NAME': process.env.CLOUDINARY_CLOUD_NAME,
+    'CLOUDINARY_API_KEY': process.env.CLOUDINARY_API_KEY,
+    'CLOUDINARY_API_SECRET': process.env.CLOUDINARY_API_SECRET
+  };
+
+  const missingRequired = Object.entries(requiredEnvVars)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+  const missingOptional = Object.entries(optionalEnvVars)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingRequired.length > 0) {
+    console.error('❌ Missing required environment variables:');
+    missingRequired.forEach(env => console.error(`   - ${env}`));
+    console.error('\nPlease set these in your .env file and restart the server.');
+    process.exit(1);
+  }
+
+  if (missingOptional.length > 0) {
+    console.warn('⚠️  Missing optional environment variables:');
+    missingOptional.forEach(env => console.warn(`   - ${env}`));
+    console.warn('Some features may not work properly.\n');
+  }
+
+  // Validate Square environment
+  const validSquareEnvs = ['sandbox', 'production'];
+  if (!validSquareEnvs.includes(process.env.SQUARE_ENVIRONMENT!)) {
+    console.error(`❌ Invalid SQUARE_ENVIRONMENT: ${process.env.SQUARE_ENVIRONMENT}`);
+    console.error(`Must be one of: ${validSquareEnvs.join(', ')}`);
+    process.exit(1);
+  }
+
+  console.log('✅ Environment validation passed');
+}
 
 // Initialize Fastify
 const build = (opts = {}): FastifyInstance => {
+  // Validate environment first (skip in test mode)
+  if (process.env.NODE_ENV !== 'test') {
+    validateEnvironment();
+  }
+
   const fastify = Fastify(opts);
 
   // Register cors plugin FIRST before other plugins
@@ -48,6 +118,7 @@ const build = (opts = {}): FastifyInstance => {
   });
 
   // Register your routes
+  fastify.register(healthRoutes); // No prefix for health checks
   fastify.register(tattooRequestsRoutes, { prefix: '/tattoo-requests' });
   fastify.register(customerRoutes, { prefix: '/customers' });
   fastify.register(paymentRoutes, { prefix: '/payments' });
@@ -56,15 +127,17 @@ const build = (opts = {}): FastifyInstance => {
   fastify.register(cloudinaryRoutes, { prefix: '/cloudinary' });
   fastify.register(webhookRoutes, { prefix: '/webhooks' });
 
-  // TODO: Register your other routes and plugins here
-
-  // Set default Cloudinary URL if not provided to prevent initialization errors
-  if (!process.env.CLOUDINARY_URL) {
-    console.warn('CLOUDINARY_URL not set, using demo values. This should not be used in production.');
-    process.env.CLOUDINARY_URL = 'cloudinary://123456789012345:abcdefghijklmnopqrstuvwxyz@demo';
-    process.env.CLOUDINARY_CLOUD_NAME = 'demo';
-    process.env.CLOUDINARY_API_KEY = '123456789012345';
-    process.env.CLOUDINARY_API_SECRET = 'abcdefghijklmnopqrstuvwxyz';
+  // Set Cloudinary fallbacks only in development/test if NO real values are set
+  if ((process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test')) {
+    if (!process.env.CLOUDINARY_URL && !process.env.CLOUDINARY_CLOUD_NAME) {
+      console.warn('⚠️  Using demo Cloudinary values for development/test only');
+      process.env.CLOUDINARY_URL = 'cloudinary://123456789012345:abcdefghijklmnopqrstuvwxyz@demo';
+      process.env.CLOUDINARY_CLOUD_NAME = 'demo';
+      process.env.CLOUDINARY_API_KEY = '123456789012345';
+      process.env.CLOUDINARY_API_SECRET = 'abcdefghijklmnopqrstuvwxyz';
+    } else {
+      console.log('✅ Using real Cloudinary credentials from .env file');
+    }
   }
 
   return fastify;

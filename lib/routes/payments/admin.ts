@@ -51,11 +51,11 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
           limit
         );
         
-        // Return the Square payments data
+        // Return the Square payments data with proper null safety
         return {
-          data: squareResponse.result.payments || [],
+          data: squareResponse.result?.payments || [],
           pagination: {
-            cursor: squareResponse.result.cursor
+            cursor: squareResponse.cursor || ''
           }
         };
       } catch (error) {
@@ -114,7 +114,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     if (source === 'square') {
       try {
         const squareResponse = await squareClient.getPaymentById(id);
-        return squareResponse.result.payment || {};
+        return squareResponse.result?.payment || {};
       } catch (error) {
         fastify.log.error('Error fetching Square payment', error);
         return reply.status(404).send({ error: 'Payment not found in Square' });
@@ -158,15 +158,16 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
         limit
       );
       
-      if (!squareResponse.result.payments || squareResponse.result.payments.length === 0) {
+      if (!squareResponse.result?.payments || squareResponse.result.payments.length === 0) {
         return { synced: 0, message: 'No payments found in Square' };
       }
       
       // Track how many were synced
       let syncedCount = 0;
+      const squarePayments = squareResponse.result.payments;
       
       // Process each Square payment
-      for (const squarePayment of squareResponse.result.payments) {
+      for (const squarePayment of squarePayments) {
         // Skip if payment is not completed
         if (squarePayment.status !== 'COMPLETED') continue;
         
@@ -182,7 +183,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
               amount: Number(squarePayment.amountMoney?.amount || 0) / 100, // Convert from cents
               status: 'completed',
               paymentMethod: squarePayment.sourceType,
-              paymentDetails: squarePayment,
+              paymentDetails: squarePayment as any, // Properly cast to JSON-compatible type
               squareId: squarePayment.id
             }
           });
@@ -191,9 +192,10 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
         }
       }
       
+              const totalPayments = squarePayments.length;
       return { 
         synced: syncedCount,
-        total: squareResponse.result.payments.length,
+        total: totalPayments,
         message: `Synced ${syncedCount} new payments from Square`
       };
     } catch (error) {

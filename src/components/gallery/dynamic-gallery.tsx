@@ -3,97 +3,124 @@
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, ZoomIn } from "lucide-react"
+import { X, ZoomIn, Loader2, RefreshCw } from "lucide-react"
+import { GalleryService, GalleryImage } from "@/src/lib/api/services/galleryService"
+import { apiClient } from "@/src/lib/api/apiClient"
 
-// Define the types for our gallery items
-interface GalleryItem {
-  id: string
-  src: string
-  alt: string
-  artist: string
-  style: string
-  width: number
-  height: number
-}
+const galleryService = new GalleryService(apiClient);
 
 export function DynamicGallery() {
-  // Gallery items data
-  const galleryItems: GalleryItem[] = [
-    {
-      id: "2",
-      src: "/gallery-images/image1.jpeg",
-      alt: "Minimalist line art tattoo",
-      artist: "Jamie Chen",
-      style: "Minimalist",
-      width: 1,
-      height: 1,
-    },
-    {
-      id: "3",
-      src: "/gallery-images/image2.jpeg",
-      alt: "Colorful floral sleeve tattoo",
-      artist: "Morgan Lee",
-      style: "Floral",
-      width: 2,
-      height: 2,
-    },
-    {
-      id: "4",
-      src: "/gallery-images/image3.jpeg",
-      alt: "Abstract watercolor style tattoo",
-      artist: "Alex Mercer",
-      style: "Watercolor",
-      width: 1,
-      height: 2,
-    },
-    {
-      id: "5",
-      src: "/gallery-images/image4.jpeg",
-      alt: "Traditional Japanese style tattoo",
-      artist: "Kai Tanaka",
-      style: "Traditional",
-      width: 2,
-      height: 2,
-    },
-    {
-      id: "6",
-      src: "/gallery-images/image5.jpeg",
-      alt: "Blackwork tattoo with fine details",
-      artist: "Jamie Chen",
-      style: "Blackwork",
-      width: 1,
-      height: 1,
-    },
-    {
-      id: "7",
-      src: "/gallery-images/image6.jpeg",
-      alt: "Neo-traditional portrait tattoo",
-      artist: "Morgan Lee",
-      style: "Neo-Traditional",
-      width: 2,
-      height: 3,
-    },
- 
-  ]
-
-  // State for modal and hover
-  const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null)
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null)
+  // State management
+  const [galleryItems, setGalleryItems] = useState<GalleryImage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<GalleryImage | null>(null);
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [artists, setArtists] = useState<string[]>([]);
+  const [styles, setStyles] = useState<string[]>([]);
+  const [selectedArtist, setSelectedArtist] = useState<string>('');
+  const [selectedStyle, setSelectedStyle] = useState<string>('');
 
   // Ref for the gallery container
-  const galleryRef = useRef<HTMLDivElement>(null)
+  const galleryRef = useRef<HTMLDivElement>(null);
+
+  // Load gallery data on component mount
+  useEffect(() => {
+    loadGalleryData();
+  }, []);
+
+  // Load filtered data when filters change
+  useEffect(() => {
+    if (!loading) {
+      loadFilteredData();
+    }
+  }, [selectedArtist, selectedStyle]);
+
+  const loadGalleryData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🖼️ Frontend: Loading gallery data...');
+      
+      // Load all gallery images and metadata
+      const [images, artistsList, stylesList] = await Promise.all([
+        galleryService.getGalleryImages(),
+        galleryService.getArtists(),
+        galleryService.getStyles()
+      ]);
+      
+      console.log(`🖼️ Frontend: Loaded ${images.length} images`);
+      console.log('🎨 Artists:', artistsList);
+      console.log('🎭 Styles:', stylesList);
+      console.log('📸 Sample image:', images[0]);
+      
+      setGalleryItems(images);
+      setArtists(artistsList);
+      setStyles(stylesList);
+    } catch (err) {
+      console.error('❌ Frontend: Failed to load gallery:', err);
+      setError('Failed to load gallery images. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadFilteredData = async () => {
+    try {
+      setError(null);
+      
+      const filters: any = {};
+      if (selectedArtist) filters.artist = selectedArtist;
+      if (selectedStyle) filters.style = selectedStyle;
+      
+      const images = await galleryService.getGalleryImages(filters);
+      setGalleryItems(images);
+    } catch (err) {
+      console.error('Failed to load filtered gallery:', err);
+      setError('Failed to load filtered images.');
+    }
+  };
+
+  const resetFilters = () => {
+    setSelectedArtist('');
+    setSelectedStyle('');
+  };
 
   // Handle escape key for modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setSelectedItem(null)
+        setSelectedItem(null);
       }
-    }
+    };
 
-    window.addEventListener("keydown", handleKeyDown)
-    return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [])
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Error state
+  if (error && !loading) {
+    return (
+      <div className="bg-[#080808] py-20 px-4 md:px-8 lg:px-16">
+        <div className="container mx-auto text-center">
+          <div className="mb-8">
+            <h2 className="font-heading text-4xl md:text-5xl font-bold text-white mb-4">
+              ARTIST GALLERY
+            </h2>
+            <div className="text-red-400 mb-4">{error}</div>
+            <button
+              onClick={loadGalleryData}
+              className="inline-flex items-center gap-2 bg-[#C9A449] text-[#080808] px-6 py-3 rounded-lg hover:bg-[#C9A449]/80 transition-colors"
+            >
+              <RefreshCw size={20} />
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#080808] py-20 px-4 md:px-8 lg:px-16">
@@ -117,81 +144,147 @@ export function DynamicGallery() {
           </p>
         </div>
 
-        {/* Staggered Gallery */}
-        <div ref={galleryRef} className="columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-6 space-y-4 md:space-y-6">
-          {galleryItems.map((item) => (
-            <motion.div
-              key={item.id}
-              layoutId={`gallery-item-${item.id}`}
-              className="relative overflow-hidden rounded-lg mb-4 md:mb-6 break-inside-avoid"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.3 }}
-              onMouseEnter={() => setHoveredItem(item.id)}
-              onMouseLeave={() => setHoveredItem(null)}
-              onClick={() => setSelectedItem(item)}
-              style={{
-                height: `${item.height * 150}px`,
-              }}
+        {/* Filter Controls */}
+        <div className="mb-8 flex flex-wrap justify-center gap-4">
+          <select
+            value={selectedArtist}
+            onChange={(e) => setSelectedArtist(e.target.value)}
+            className="bg-[#444444] text-white border border-[#C9A449]/30 rounded-lg px-4 py-2 font-body"
+          >
+            <option value="">All Artists</option>
+            {artists.map((artist) => (
+              <option key={artist} value={artist}>{artist}</option>
+            ))}
+          </select>
+          
+          <select
+            value={selectedStyle}
+            onChange={(e) => setSelectedStyle(e.target.value)}
+            className="bg-[#444444] text-white border border-[#C9A449]/30 rounded-lg px-4 py-2 font-body"
+          >
+            <option value="">All Styles</option>
+            {styles.map((style) => (
+              <option key={style} value={style}>{style}</option>
+            ))}
+          </select>
+          
+          {(selectedArtist || selectedStyle) && (
+            <button
+              onClick={resetFilters}
+              className="bg-[#C9A449]/20 text-[#C9A449] border border-[#C9A449]/30 rounded-lg px-4 py-2 hover:bg-[#C9A449]/30 transition-colors font-body"
             >
-              {/* Image with gold-accented border */}
-              <div className="relative w-full h-full group cursor-pointer border border-[#C9A449]/0 group-hover:border-[#C9A449]/40 transition-colors duration-300">
-                <Image
-                  src={item.src || "/placeholder.svg"}
-                  alt={item.alt}
-                  fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
+              Clear Filters
+            </button>
+          )}
+        </div>
 
-                {/* Overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#080808] to-transparent opacity-60"></div>
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="animate-spin text-[#C9A449]" size={48} />
+          </div>
+        )}
 
-                {/* Hover overlay */}
-                <div
-                  className={`absolute inset-0 bg-gradient-to-t from-[#080808] via-[#080808]/70 to-transparent transition-opacity duration-300 ${
-                    hoveredItem === item.id ? "opacity-80" : "opacity-0"
-                  }`}
-                ></div>
+        {/* Gallery Grid */}
+        {!loading && galleryItems.length > 0 && (
+          <div ref={galleryRef} className="columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-6 space-y-4 md:space-y-6">
+            {galleryItems.map((item) => (
+              <motion.div
+                key={item.id}
+                layoutId={`gallery-item-${item.id}`}
+                className="relative overflow-hidden rounded-lg mb-4 md:mb-6 break-inside-avoid"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.3 }}
+                onMouseEnter={() => setHoveredItem(item.id)}
+                onMouseLeave={() => setHoveredItem(null)}
+                onClick={() => setSelectedItem(item)}
+                style={{
+                  height: `${Math.max(200, Math.min(400, item.height * 0.3))}px`,
+                }}
+              >
+                {/* Image with gold-accented border */}
+                <div className="relative w-full h-full group cursor-pointer border border-[#C9A449]/0 group-hover:border-[#C9A449]/40 transition-colors duration-300">
+                  <Image
+                    src={item.thumbnailUrl || item.url}
+                    alt={item.alt}
+                    fill
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    loading="lazy"
+                  />
 
-                {/* Victorian Gothic frame elements - gold border corners */}
-                <div className="absolute -top-1 -left-1 h-6 w-6 border-t border-l border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="absolute -top-1 -right-1 h-6 w-6 border-t border-r border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="absolute -bottom-1 -left-1 h-6 w-6 border-b border-l border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="absolute -bottom-1 -right-1 h-6 w-6 border-b border-r border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  {/* Overlay gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#080808] to-transparent opacity-60"></div>
 
-                {/* Gold accent line */}
-                <div className={`absolute bottom-14 left-4 right-4 h-[1px] bg-gradient-to-r from-[#C9A449]/0 via-[#C9A449] to-[#C9A449]/0 transition-opacity duration-300 ${
-                  hoveredItem === item.id ? "opacity-70" : "opacity-0"
-                }`}></div>
+                  {/* Hover overlay */}
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-t from-[#080808] via-[#080808]/70 to-transparent transition-opacity duration-300 ${
+                      hoveredItem === item.id ? "opacity-80" : "opacity-0"
+                    }`}
+                  ></div>
 
-                {/* Info overlay */}
-                <div
-                  className={`absolute bottom-0 left-0 right-0 p-4 transition-transform duration-300 ${
-                    hoveredItem === item.id ? "translate-y-0" : "translate-y-10 opacity-0"
-                  }`}
-                >
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-white font-medium font-body">{item.alt}</p>
-                      <p className="text-white/70 text-sm font-body">by {item.artist}</p>
+                  {/* Victorian Gothic frame elements - gold border corners */}
+                  <div className="absolute -top-1 -left-1 h-6 w-6 border-t border-l border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="absolute -top-1 -right-1 h-6 w-6 border-t border-r border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="absolute -bottom-1 -left-1 h-6 w-6 border-b border-l border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="absolute -bottom-1 -right-1 h-6 w-6 border-b border-r border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+                  {/* Gold accent line */}
+                  <div className={`absolute bottom-14 left-4 right-4 h-[1px] bg-gradient-to-r from-[#C9A449]/0 via-[#C9A449] to-[#C9A449]/0 transition-opacity duration-300 ${
+                    hoveredItem === item.id ? "opacity-70" : "opacity-0"
+                  }`}></div>
+
+                  {/* Info overlay */}
+                  <div
+                    className={`absolute bottom-0 left-0 right-0 p-4 transition-transform duration-300 ${
+                      hoveredItem === item.id ? "translate-y-0" : "translate-y-10 opacity-0"
+                    }`}
+                  >
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-white font-medium font-body">
+                          {item.alt === item.publicId ? 'Tattoo Artwork' : item.alt}
+                        </p>
+                        <p className="text-white/70 text-sm font-body">
+                          by {item.artist === 'Unknown Artist' ? 'Our Artists' : item.artist}
+                        </p>
+                      </div>
+                      <div className="bg-[#444444]/40 border border-[#C9A449]/30 text-white text-xs px-2 py-1 rounded-sm font-body">
+                        {item.style === 'Mixed' ? 'Gallery' : item.style}
+                      </div>
                     </div>
-                    <div className="bg-[#444444]/40 border border-[#C9A449]/30 text-white text-xs px-2 py-1 rounded-sm font-body">{item.style}</div>
+                  </div>
+
+                  {/* Zoom icon with gold background */}
+                  <div
+                    className={`absolute top-4 right-4 bg-[#C9A449]/80 p-2 rounded-full transition-opacity duration-300 ${
+                      hoveredItem === item.id ? "opacity-100" : "opacity-0"
+                    }`}
+                  >
+                    <ZoomIn size={16} className="text-[#080808]" />
                   </div>
                 </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
-                {/* Zoom icon with gold background */}
-                <div
-                  className={`absolute top-4 right-4 bg-[#C9A449]/80 p-2 rounded-full transition-opacity duration-300 ${
-                    hoveredItem === item.id ? "opacity-100" : "opacity-0"
-                  }`}
-                >
-                  <ZoomIn size={16} className="text-[#080808]" />
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        {/* Empty State */}
+        {!loading && galleryItems.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-white/60 text-xl mb-4">No images found</p>
+            {(selectedArtist || selectedStyle) && (
+              <button
+                onClick={resetFilters}
+                className="bg-[#C9A449] text-[#080808] px-6 py-3 rounded-lg hover:bg-[#C9A449]/80 transition-colors"
+              >
+                Clear Filters
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Modal for expanded view with gold accents */}
@@ -214,10 +307,12 @@ export function DynamicGallery() {
               
               <div className="relative aspect-auto w-full h-full max-h-[80vh]">
                 <Image
-                  src={selectedItem.src || "/placeholder.svg"}
+                  src={selectedItem.largeUrl || selectedItem.url}
                   alt={selectedItem.alt}
                   fill
                   className="object-contain"
+                  sizes="(max-width: 768px) 100vw, 80vw"
+                  priority
                 />
               </div>
 
@@ -238,10 +333,16 @@ export function DynamicGallery() {
               {/* Info panel with gold accent line */}
               <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#080808] to-transparent">
                 <div className="h-[1px] w-full bg-gradient-to-r from-[#C9A449]/0 via-[#C9A449] to-[#C9A449]/0 mb-4"></div>
-                <h3 className="text-white text-xl font-medium mb-1 font-heading">{selectedItem.alt}</h3>
+                <h3 className="text-white text-xl font-medium mb-1 font-heading">
+                  {selectedItem.alt === selectedItem.publicId ? 'Tattoo Artwork' : selectedItem.alt}
+                </h3>
                 <div className="flex justify-between items-center">
-                  <p className="text-white/80 font-body">Artist: {selectedItem.artist}</p>
-                  <div className="bg-[#444444]/40 border border-[#C9A449]/30 text-white px-3 py-1 rounded-sm font-body">{selectedItem.style}</div>
+                  <p className="text-white/80 font-body">
+                    Artist: {selectedItem.artist === 'Unknown Artist' ? 'Our Artists' : selectedItem.artist}
+                  </p>
+                  <div className="bg-[#444444]/40 border border-[#C9A449]/30 text-white px-3 py-1 rounded-sm font-body">
+                    {selectedItem.style === 'Mixed' ? 'Gallery' : selectedItem.style}
+                  </div>
                 </div>
               </div>
             </motion.div>

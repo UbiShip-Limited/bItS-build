@@ -174,6 +174,16 @@ export class TattooRequestApiClient {
     const response = await this.client.get<TattooRequestResponse>(`${this.baseUrl}/${id}`);
     return response;
   }
+
+  /**
+   * Link existing Cloudinary images to a tattoo request
+   * Used when images are uploaded before request creation
+   */
+  async linkImagesToRequest(requestId: string, publicIds: string[]): Promise<{ message: string; linkedCount: number }> {
+    return this.client.post<{ message: string; linkedCount: number }>(`${this.baseUrl}/${requestId}/link-images`, {
+      publicIds
+    });
+  }
 }
 
 // Export the class with both names for backward compatibility during transition

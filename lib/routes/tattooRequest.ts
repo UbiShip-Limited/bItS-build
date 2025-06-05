@@ -10,6 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { NotFoundError, ValidationError } from '../services/errors';
+import CloudinaryService from '../cloudinary/index.js';
 
 // Type definitions for request bodies and queries
 interface TattooRequestQueryParams {
@@ -274,11 +275,70 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
+  // POST /tattoo-requests/:id/link-images - Link existing Cloudinary images to tattoo request
+  fastify.post('/:id/link-images', {
+    preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        required: ['publicIds'],
+        properties: {
+          publicIds: {
+            type: 'array',
+            items: { type: 'string' },
+            minItems: 1
+          }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const { publicIds } = request.body as { publicIds: string[] };
+      
+      await tattooRequestService.linkImagesToRequest(id, publicIds, request.user?.id);
+      
+      reply.code(200).send({ 
+        message: 'Images linked successfully',
+        linkedCount: publicIds.length 
+      });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        return reply.status(404).send({ error: error.message });
+      }
+      
+      if (error instanceof ValidationError) {
+        return reply.status(400).send({ error: error.message });
+      }
+      
+      request.log.error(error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return reply.status(500).send({ 
+        error: 'Failed to link images',
+        message: errorMessage
+      });
+    }
+  });
+
   // POST /tattoo-requests/upload-images - Upload reference images (public endpoint)
   fastify.post('/upload-images', {
     schema: {
       description: 'Upload reference images for tattoo requests',
       consumes: ['multipart/form-data'],
+      body: {
+        type: 'object',
+        properties: {
+          tattooRequestId: { type: 'string' },
+          customerId: { type: 'string' }
+        }
+      },
       response: {
         200: {
           type: 'object',
@@ -303,22 +363,55 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
     const tempFiles: string[] = [];
 
     try {
-      const files = await request.files();
+      const parts = request.files();
+      let tattooRequestId: string | undefined;
+      let customerId: string | undefined;
       
-      for await (const file of files) {
-        // Create temp file path
-        const tempFilePath = path.join(os.tmpdir(), `upload-${uuidv4()}-${file.filename}`);
-        tempFiles.push(tempFilePath);
-        
-        // Save file to temp location
-        await pipeline(file.file, fs.createWriteStream(tempFilePath));
-        
-        // TODO: Replace with actual cloudinary upload when ready
-        images.push({
-          url: `http://localhost:3001/temp-image-${Date.now()}.jpg`,
-          publicId: `temp-${Date.now()}`,
-          originalName: file.filename
-        });
+      // Process all parts (fields and files)
+      for await (const part of parts) {
+        if (part.type === 'field') {
+          const value = part.value as string;
+          if (part.fieldname === 'tattooRequestId') {
+            tattooRequestId = value;
+          } else if (part.fieldname === 'customerId') {
+            customerId = value;
+          }
+        } else if (part.type === 'file') {
+          // Create temp file path
+          const tempFilePath = path.join(os.tmpdir(), `upload-${uuidv4()}-${part.filename}`);
+          tempFiles.push(tempFilePath);
+          
+          // Save file to temp location
+          await pipeline(part.file, fs.createWriteStream(tempFilePath));
+          
+          // Upload to Cloudinary using the existing service
+          try {
+            const cloudinaryResult = await CloudinaryService.uploadImage(
+              tempFilePath,
+              CloudinaryService.CLOUDINARY_FOLDERS.TATTOO_REQUESTS,
+              ['tattoo_request', 'customer_upload', ...(customerId ? [`customer_${customerId}`] : [])],
+              {
+                ...(tattooRequestId && { tattoo_request_id: tattooRequestId }),
+                ...(customerId && { customer_id: customerId }),
+                upload_type: 'tattoo_request_reference',
+                original_name: part.filename
+              }
+            );
+            
+            if (cloudinaryResult) {
+              images.push({
+                url: cloudinaryResult.secureUrl,
+                publicId: cloudinaryResult.publicId,
+                originalName: part.filename
+              });
+            } else {
+              request.log.warn(`Failed to upload ${part.filename} to Cloudinary`);
+            }
+          } catch (uploadError) {
+            request.log.error(uploadError, `Error uploading ${part.filename} to Cloudinary`);
+            // Continue with other files instead of failing completely
+          }
+        }
       }
       
       // Clean up temp files

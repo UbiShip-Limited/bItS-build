@@ -43,16 +43,23 @@ export interface CreateInvoiceParams {
   deliveryMethod?: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY';
 }
 
-export interface CreateCheckoutParams {
+export interface DirectPaymentParams {
+  sourceId: string;
+  amount: number;
   customerId: string;
-  appointmentId?: string;
-  items: Array<{
-    name: string;
-    quantity: number;
-    price: number;
-    note?: string;
-  }>;
-  redirectUrl?: string;
+  paymentType: PaymentType;
+  bookingId?: string;
+  note?: string;
+}
+
+export interface PaymentListParams {
+  page?: number;
+  limit?: number;
+  status?: 'pending' | 'completed' | 'failed' | 'refunded';
+  customerId?: string;
+  paymentType?: PaymentType;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface Invoice {
@@ -63,58 +70,111 @@ export interface Invoice {
   amount?: number;
 }
 
-export interface CheckoutSession {
-  checkoutUrl: string;
-  checkoutId: string;
+export interface PaymentResponse {
+  success: boolean;
+  data: any;
+  type: 'payment_link' | 'invoice' | 'direct_payment';
+}
+
+export interface PaymentListResponse {
+  data: any[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    pages: number;
+  };
 }
 
 class PaymentService {
   private basePath = '/payments';
 
   /**
-   * Create a payment link
+   * Get list of payments
    */
-  async createPaymentLink(params: CreatePaymentLinkParams): Promise<{ success: boolean; data: PaymentLink }> {
-    return apiClient.post(`${this.basePath}/links`, params);
+  async getPayments(params?: PaymentListParams): Promise<PaymentListResponse> {
+    const searchParams = new URLSearchParams();
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, value.toString());
+        }
+      });
+    }
+
+    return apiClient.get(`${this.basePath}?${searchParams.toString()}`);
   }
 
   /**
-   * List payment links
+   * Create a payment link
+   */
+  async createPaymentLink(params: CreatePaymentLinkParams): Promise<PaymentResponse> {
+    return apiClient.post(this.basePath, {
+      type: 'payment_link',
+      ...params
+    });
+  }
+
+  /**
+   * Create an invoice
+   */
+  async createInvoice(params: CreateInvoiceParams): Promise<PaymentResponse> {
+    return apiClient.post(this.basePath, {
+      type: 'invoice',
+      ...params
+    });
+  }
+
+  /**
+   * Process a direct payment
+   */
+  async processDirectPayment(params: DirectPaymentParams): Promise<PaymentResponse> {
+    return apiClient.post(this.basePath, {
+      type: 'direct_payment',
+      ...params
+    });
+  }
+
+  /**
+   * List payment links (now uses admin routes)
    */
   async listPaymentLinks(params?: { cursor?: string; limit?: number }): Promise<{
     success: boolean;
     data: PaymentLink[];
     cursor?: string;
   }> {
-    return apiClient.get(`${this.basePath}/links`, { params });
+    // This would use the admin routes for listing specific payment links
+    // For now, we'll use the general payments endpoint and filter
+    const payments = await this.getPayments({ paymentType: 'tattoo_deposit' });
+    return {
+      success: true,
+      data: payments.data,
+      cursor: undefined
+    };
   }
 
   /**
-   * Get payment link details
+   * Get payment link details (now uses admin routes)
    */
   async getPaymentLink(id: string): Promise<{ success: boolean; data: PaymentLink }> {
-    return apiClient.get(`${this.basePath}/links/${id}`);
+    // This would need to use the admin individual payment endpoint
+    const payment = await apiClient.get(`${this.basePath}/${id}`);
+    return {
+      success: true,
+      data: payment
+    };
   }
 
   /**
-   * Delete a payment link
+   * Delete a payment link - deprecated (use cancel instead)
    */
   async deletePaymentLink(id: string): Promise<{ success: boolean; message: string }> {
-    return apiClient.delete(`${this.basePath}/links/${id}`);
-  }
-
-  /**
-   * Create an invoice
-   */
-  async createInvoice(params: CreateInvoiceParams): Promise<{ success: boolean; data: Invoice }> {
-    return apiClient.post(`${this.basePath}/invoices`, params);
-  }
-
-  /**
-   * Create a checkout session
-   */
-  async createCheckoutSession(params: CreateCheckoutParams): Promise<{ success: boolean; data: CheckoutSession }> {
-    return apiClient.post(`${this.basePath}/checkout`, params);
+    console.warn('deletePaymentLink is deprecated. Consider using cancellation instead.');
+    return {
+      success: false,
+      message: 'Payment link deletion not supported. Use cancellation instead.'
+    };
   }
 
   /**

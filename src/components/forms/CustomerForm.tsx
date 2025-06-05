@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Customer, CustomerService } from '@/src/lib/api/services/customerService';
+import { Customer, CustomerService, CreateCustomerRequest, UpdateCustomerRequest } from '@/src/lib/api/services/customerService';
 import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import { Search, Link as LinkIcon } from 'lucide-react';

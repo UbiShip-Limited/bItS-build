@@ -2,16 +2,21 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Proxy /api/* requests to backend, excluding Next.js API routes
-  if (request.nextUrl.pathname.startsWith('/api/') && 
-      !request.nextUrl.pathname.startsWith('/api/upload')) {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-    const path = request.nextUrl.pathname.replace('/api', '');
-    
-    return NextResponse.rewrite(new URL(path, backendUrl));
-  }
+  // Middleware can be used for authentication, logging, etc.
+  // API proxying removed - frontend now calls Fastify backend directly
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  // Only run middleware on specific paths if needed
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };

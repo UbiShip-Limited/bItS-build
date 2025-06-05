@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { TattooRequestApiClient } from '../lib/api/services/tattooRequestApiClient';
 import { ImageUploadService } from '../lib/api/services/ImageUploadService';
 import { apiClient } from '../lib/api/apiClient';
-import { useCloudinaryUpload } from './useCloudinaryUpload';
 
 // Initialize the services ONCE
 const tattooRequestClient = new TattooRequestApiClient(apiClient);
@@ -101,8 +100,6 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
   const [response, setResponse] = useState<ResponseData | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors | null>(null);
   
-  const { uploadToCloudinary, isUploading: isCloudinaryUploading } = useCloudinaryUpload();
-  
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
     
@@ -155,7 +152,16 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
     setError(null);
     
     try {
-      const uploadedImages = await uploadToCloudinary(files);
+      // Create a temporary tattoo request ID for upload organization
+      // In production, you might want to create a pending request first
+      const tempRequestId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Upload images with proper metadata for tattoo requests
+      const uploadedImages = await imageUploadService.uploadTattooRequestImages(
+        files,
+        tempRequestId
+        // Note: No customerId since this is an anonymous request initially
+      );
       
       // Update form data with uploaded images
       setFormData(prev => ({
@@ -186,6 +192,7 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
     }
     
     try {
+      // First, create the tattoo request
       const requestData = {
         contactEmail: formData.contactEmail,
         contactPhone: formData.contactPhone,
@@ -208,6 +215,23 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
       };
       
       const tattooRequestData = await tattooRequestClient.create(requestData);
+      
+      // If we have uploaded images with publicIds, link them to the tattoo request
+      if (formData.referenceImages.length > 0 && tattooRequestData.id) {
+        try {
+          const publicIds = formData.referenceImages
+            .filter(img => img.publicId)
+            .map(img => img.publicId!);
+          
+          if (publicIds.length > 0) {
+            await tattooRequestClient.linkImagesToRequest(tattooRequestData.id, publicIds);
+          }
+        } catch (imageError) {
+          console.warn('Failed to link images to tattoo request:', imageError);
+          // Don't fail the whole request if image linking fails
+        }
+      }
+      
       setSuccess(true);
       setResponse(tattooRequestData);
     } catch (err: any) {
@@ -216,6 +240,8 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
       setIsLoading(false);
     }
   };
+  
+
   
   const resetForm = () => {
     setFormData({

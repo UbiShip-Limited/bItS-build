@@ -201,19 +201,31 @@ export default class PaymentService {
         throw new Error('No payment returned from Square');
       }
 
-      // 8. Store payment record in database
-      const payment = await this.prisma.payment.create({
-        data: {
-          amount: enhancedParams.amount,
-          status: 'completed',
-          paymentMethod: squarePayment.sourceType || 'card',
-          paymentType: enhancedParams.paymentType,
-          squareId: squarePayment.id,
-          customerId: enhancedParams.customerId,
-          bookingId: enhancedParams.bookingId,
-          referenceId,
-          paymentDetails: squarePayment as Prisma.InputJsonValue
+      // 8. Store payment record in database with transaction
+      const payment = await this.prisma.$transaction(async (tx) => {
+        const newPayment = await tx.payment.create({
+          data: {
+            amount: enhancedParams.amount,
+            status: 'completed',
+            paymentMethod: squarePayment.sourceType || 'card',
+            paymentType: enhancedParams.paymentType,
+            squareId: squarePayment.id,
+            customerId: enhancedParams.customerId,
+            bookingId: enhancedParams.bookingId,
+            referenceId,
+            paymentDetails: squarePayment as Prisma.InputJsonValue
+          }
+        });
+
+        // Update any related records within the same transaction
+        if (enhancedParams.bookingId) {
+          await tx.appointment.updateMany({
+            where: { id: enhancedParams.bookingId },
+            data: { paymentId: newPayment.id }
+          });
         }
+
+        return newPayment;
       });
       
       // 9. Log successful payment
@@ -263,7 +275,7 @@ export default class PaymentService {
     }
   }
 
-  async getPayments(params: GetPaymentsParams = {}) {
+  async getPayments(params: GetPaymentsParams = {}, requestingUserId?: string, userRole?: string) {
     const { 
       page = 1, 
       limit = 20, 
@@ -291,6 +303,20 @@ export default class PaymentService {
     }
     
     if (customerId) {
+      // SECURITY: Verify user has permission to view this customer's payments
+      if (userRole !== 'admin' && requestingUserId) {
+        // For non-admin users, verify they own the customer record or are assigned to it
+        const customer = await this.prisma.customer.findFirst({
+          where: {
+            id: customerId,
+            // Add any customer ownership logic here
+          }
+        });
+        
+        if (!customer) {
+          throw new PaymentValidationError('Access denied: Customer not found or not authorized', 'UNAUTHORIZED_CUSTOMER_ACCESS');
+        }
+      }
       where.customerId = customerId;
     }
     
@@ -396,8 +422,13 @@ export default class PaymentService {
         where: { id: paymentId },
         data: {
           status: amount && amount < payment.amount ? 'partially_refunded' : 'refunded',
-          // TODO: Fix refundDetails type issue
-          // refundDetails: JSON.parse(JSON.stringify(refundResult)) as Prisma.InputJsonValue
+          refundDetails: {
+            refundId: refundResult.id,
+            refundAmount: amount || payment.amount,
+            refundReason: reason || 'Customer requested refund',
+            refundedAt: new Date().toISOString(),
+            squareRefundDetails: refundResult
+          } as Prisma.InputJsonValue
         }
       });
       

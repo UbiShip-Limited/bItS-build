@@ -1,29 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Get Supabase credentials from environment variables
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-// Only validate in non-test environments
-let supabase;
-if (process.env.NODE_ENV === 'test') {
-  // Use a dummy client for tests
-  supabase = {
-    auth: {
-      signIn: () => {},
-      signOut: () => {},
-      onAuthStateChange: () => {},
-      getSession: () => ({ data: { session: null }, error: null }),
-    },
-    from: () => ({ select: () => {} }),
-    // Add other methods as needed
-  };
+// Check that environment variables are set
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  const errorMessage = 'Supabase environment variables are missing. Please add SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY to your backend .env file.';
+  console.error('🔑❌ ' + errorMessage);
+  throw new Error(errorMessage);
 } else {
-  // Regular validation for non-test environments
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Supabase URL or Anon Key is missing from environment variables.');
-  }
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  console.log('🔑✅ Supabase client configured for server-side authentication.');
 }
 
-export { supabase };
+// Create a single Supabase client for use in the application
+export const supabase = createClient(supabaseUrl, supabaseServiceRoleKey, {
+  auth: {
+    // This is a server-side client, so we don't need to persist sessions
+    // on the client side.
+    autoRefreshToken: false,
+    persistSession: false,
+  },
+});
 

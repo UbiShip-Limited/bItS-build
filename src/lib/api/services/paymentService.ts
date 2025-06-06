@@ -110,6 +110,20 @@ class PaymentService {
    * Create a payment link
    */
   async createPaymentLink(params: CreatePaymentLinkParams): Promise<PaymentResponse> {
+    // Client-side validation
+    const minAmount = this.getMinimumAmount(params.paymentType);
+    if (params.amount < minAmount) {
+      throw new Error(`Minimum amount for ${this.formatPaymentType(params.paymentType)} is $${minAmount}`);
+    }
+
+    if (params.amount > 10000) {
+      throw new Error('Payment amount exceeds maximum limit ($10,000 CAD)');
+    }
+
+    if (!params.title?.trim()) {
+      throw new Error('Payment title is required');
+    }
+
     return apiClient.post(this.basePath, {
       type: 'payment_link',
       ...params

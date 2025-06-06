@@ -1,8 +1,9 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/src/hooks/useAuth';
 import ThemeSwitcher from '@/src/components/ThemeSwitcher';
 import { 
   LayoutDashboard, 
@@ -13,8 +14,10 @@ import {
   Settings,
   LogOut,
   Bell,
-  ChevronLeft
+  ChevronLeft,
+  Loader2
 } from 'lucide-react';
+import NotificationCenter from '@/src/components/dashboard/NotificationCenter';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -22,7 +25,34 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, session, loading, signOut } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    // Only redirect if we're done loading AND have no session at all
+    if (!loading && !session) {
+      console.log('🚪 No session found in DashboardLayout, redirecting to login');
+      router.push('/auth/login');
+    }
+  }, [session, loading, router]);
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-[#C9A449] mx-auto mb-4" />
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push('/auth/login');
+  };
 
   const navItems = [
     { 
@@ -205,14 +235,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 {!isCollapsed && (
                   <>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-white">Admin User</p>
-                      <p className="text-xs text-gray-500">admin@bowentattoo.com</p>
+                      <p className="text-sm font-medium text-white">{user?.role || session?.user?.user_metadata?.role || 'Artist'}</p>
+                      <p className="text-xs text-gray-500">{user?.email || session?.user?.email || 'User'}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <ThemeSwitcher />
                       <div className="divider divider-horizontal m-0 before:bg-[#1a1a1a] after:bg-[#1a1a1a]"></div>
-                      <button className="btn btn-ghost btn-xs btn-circle text-gray-400 
-                                       hover:text-white hover:bg-white/10 group">
+                      <button 
+                        onClick={handleSignOut}
+                        className="btn btn-ghost btn-xs btn-circle text-gray-400 
+                                         hover:text-white hover:bg-white/10 group"
+                        title="Sign Out"
+                      >
                         <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
                       </button>
                     </div>
@@ -223,8 +257,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               {isCollapsed && (
                 <div className="mt-2 flex justify-center gap-2">
                   <ThemeSwitcher />
-                  <button className="btn btn-ghost btn-xs btn-circle text-gray-400 
-                                   hover:text-white hover:bg-white/10">
+                  <button 
+                    onClick={handleSignOut}
+                    className="btn btn-ghost btn-xs btn-circle text-gray-400 
+                                     hover:text-white hover:bg-white/10"
+                    title="Sign Out"
+                  >
                     <LogOut className="w-4 h-4" />
                   </button>
                 </div>
@@ -256,6 +294,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               
               {/* Quick Actions */}
               <div className="flex items-center gap-3">
+                <NotificationCenter userId="admin-user" />
                 <button className="btn btn-ghost btn-sm text-gray-400 hover:text-white 
                                  border border-transparent hover:border-[#C9A449]/20">
                   Quick Add

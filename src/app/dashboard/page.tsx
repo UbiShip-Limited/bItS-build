@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { useAuth } from '@/src/hooks/useAuth';
 import { AppointmentApiClient, type AppointmentData, BookingStatus, BookingType } from '@/src/lib/api/services/appointmentApiClient';
 import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 
 // Component imports
 import StatsGrid from '@/src/components/dashboard/StatsGrid';
+import EnhancedStatsGrid from '@/src/components/dashboard/EnhancedStatsGrid';
 import AppointmentsTable from '@/src/components/dashboard/AppointmentsTable';
 import TattooRequestsTable from '@/src/components/dashboard/TattooRequestsTable';
 import CustomersTable from '@/src/components/dashboard/CustomersTable';
@@ -18,6 +20,40 @@ interface DashboardStats {
   weeklyRevenue: number;
   activeCustomers: number;
   pendingRequests: number;
+}
+
+interface EnhancedMetrics {
+  revenue: {
+    today: { amount: number; trend: number; currency: string };
+    week: { amount: number; trend: number; target: number };
+    month: { amount: number; trend: number; forecast: number };
+  };
+  appointments: {
+    today: { count: number; completed: number; remaining: number };
+    week: { scheduled: number; completed: number; cancelled: number };
+    metrics: {
+      averageDuration: number;
+      conversionRate: number;
+      noShowRate: number;
+    };
+  };
+  customers: {
+    total: number;
+    new: { today: number; week: number; month: number };
+    segments: {
+      newCustomers: number;
+      regularCustomers: number;
+      vipCustomers: number;
+    };
+  };
+  requests: {
+    pending: { count: number; urgent: number; overdue: number };
+    processed: { today: number; week: number; month: number };
+    conversion: {
+      rate: number;
+      averageTimeToConvert: number;
+    };
+  };
 }
 
 interface Appointment {
@@ -38,6 +74,7 @@ interface RecentCustomer {
 }
 
 export default function DashboardPage() {
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats>({
@@ -46,6 +83,7 @@ export default function DashboardPage() {
     activeCustomers: 0,
     pendingRequests: 0,
   });
+  const [enhancedMetrics, setEnhancedMetrics] = useState<EnhancedMetrics | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [customers, setCustomers] = useState<RecentCustomer[]>([]);
   const [requests, setRequests] = useState<TattooRequest[]>([]);
@@ -53,15 +91,63 @@ export default function DashboardPage() {
   const appointmentClient = new AppointmentApiClient(apiClient);
   const tattooRequestClient = new TattooRequestApiClient(apiClient);
 
+  // Wait for authentication before loading dashboard data
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (!authLoading && isAuthenticated && user) {
+      console.log('🔐 Authentication complete, loading dashboard data...');
+      loadDashboardData();
+    } else if (!authLoading && !isAuthenticated) {
+      console.log('❌ Not authenticated, redirecting...');
+      setError('Authentication required');
+    }
+  }, [authLoading, isAuthenticated, user]);
+
+  const handleRefreshMetrics = async () => {
+    try {
+      const response = await fetch('/api/analytics/dashboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeframe: 'current' })
+      });
+      
+      if (response.ok) {
+        const { metrics } = await response.json();
+        setEnhancedMetrics(metrics);
+      }
+    } catch (error) {
+      console.warn('Failed to refresh metrics:', error);
+    }
+  };
 
   const loadDashboardData = async () => {
+    console.log('📊 Starting dashboard data load...');
     setLoading(true);
     setError(null);
+    
+    if (!isAuthenticated || !user) {
+      console.log('❌ Cannot load dashboard data: not authenticated');
+      setError('Authentication required');
+      setLoading(false);
+      return;
+    }
+    
     try {
+      // Load enhanced metrics first (with error handling)
+      let analyticsData = null;
+      try {
+        console.log('📈 Loading analytics data...');
+        const analyticsResponse = await fetch('/api/analytics/dashboard');
+        if (analyticsResponse.ok) {
+          analyticsData = await analyticsResponse.json();
+          setEnhancedMetrics(analyticsData);
+          console.log('✅ Analytics data loaded');
+        }
+      } catch (analyticsError) {
+        console.warn('⚠️ Failed to load analytics data:', analyticsError);
+        // Continue with basic dashboard even if analytics fail
+      }
       // Load appointments
+      console.log('📅 Loading appointments...');
       const today = new Date();
       const nextWeek = new Date(today);
       nextWeek.setDate(nextWeek.getDate() + 7);
@@ -71,6 +157,7 @@ export default function DashboardPage() {
         to: nextWeek.toISOString(),
         status: BookingStatus.SCHEDULED
       });
+      console.log('✅ Appointments loaded:', appointmentsResponse.data.length);
       
       // Count upcoming appointments
       const upcomingCount = appointmentsResponse.data.filter(
@@ -81,10 +168,12 @@ export default function DashboardPage() {
       const recentAppointments = appointmentsResponse.data.slice(0, 3);
       
       // Load tattoo requests
+      console.log('🎨 Loading tattoo requests...');
       const requestsResponse = await tattooRequestClient.getAll({
         status: 'new',
         limit: 10
       });
+      console.log('✅ Tattoo requests loaded:', requestsResponse.data.length);
       
       const recentRequests = requestsResponse.data.slice(0, 3);
       
@@ -198,7 +287,15 @@ export default function DashboardPage() {
 
           {/* Stats Grid with Professional Spacing */}
           <div className="mb-10">
-            <StatsGrid stats={stats} />
+            {enhancedMetrics ? (
+              <EnhancedStatsGrid 
+                metrics={enhancedMetrics} 
+                loading={loading}
+                onRefresh={handleRefreshMetrics}
+              />
+            ) : (
+              <StatsGrid stats={stats} />
+            )}
           </div>
 
           {/* Main Content Grid with Enhanced Layout */}

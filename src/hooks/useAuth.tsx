@@ -1,14 +1,10 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-js';
-
-// Types for our auth context
-export type UserRole = 'customer' | 'artist' | 'admin';
-
-export interface UserWithRole extends User {
-  role?: UserRole;
-}
+import { createBrowserClient } from '@supabase/ssr';
+import { SupabaseClient, User, Session } from '@supabase/supabase-js';
+import { UserRole, UserWithRole } from '../../lib/types/auth';
+import { getAuthHeaders, clearAuthCache } from '../lib/api/apiClient';
 
 interface AuthContextType {
   user: UserWithRole | null;
@@ -42,13 +38,12 @@ const defaultAuthContext: AuthContextType = {
 // Create the auth context
 const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
-// URL and key should come from environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [supabase] = useState<SupabaseClient>(() => 
-    createClient(supabaseUrl, supabaseAnonKey)
+    createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
   );
   const [user, setUser] = useState<UserWithRole | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -57,35 +52,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initialize auth state
   useEffect(() => {
     const initializeAuth = async () => {
+      console.log('🔄 Initializing auth...');
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Error getting session:', error);
+          console.error('❌ Error getting session during init:', error);
           setLoading(false);
           return;
         }
         
         if (session) {
+          console.log('✅ Valid session found during init:', {
+            userId: session.user.id,
+            email: session.user.email,
+            expiresAt: new Date(session.expires_at! * 1000).toISOString()
+          });
           setSession(session);
           
-          // Get user with role information from our backend
+          // Set user immediately with session data to prevent auth loops
+          console.log('✅ Setting user immediately to prevent auth loops');
+          setUser({ ...session.user, role: 'artist' as UserRole }); // Default role
+          
+          // Try to get user role from backend (but don't block auth on this)
           try {
-            const userResponse = await fetch('/api/me', {
-              headers: {
-                Authorization: `Bearer ${session.access_token}`
-              }
+            console.log('👤 Fetching user role from backend...');
+            const headers = await getAuthHeaders();
+            const userResponse = await fetch('http://localhost:3001/users/me', {
+              headers
             });
             
             if (userResponse.ok) {
               const userData = await userResponse.json();
-              setUser({ ...session.user, role: userData.role });
+              console.log('✅ User role fetched, updating:', userData.user.role);
+              setUser(prev => prev ? { ...prev, role: userData.user.role } : null);
             } else {
-              setUser(session.user as UserWithRole);
+              console.warn('⚠️ Failed to fetch user role, keeping default');
             }
           } catch (err) {
-            console.error('Error fetching user data:', err);
-            setUser(session.user as UserWithRole);
+            console.error('❌ Error fetching user data:', err);
+            console.warn('⚠️ Continuing with default role');
           }
         }
         
@@ -93,16 +99,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Subscribe to auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (_event, session) => {
-            setSession(session);
-            setUser(session?.user as UserWithRole || null);
+          async (event, session) => {
+            console.log('🔄 Auth state change detected:', {
+              event,
+              hasSession: !!session,
+              userId: session?.user?.id,
+              timestamp: new Date().toISOString()
+            });
             
-            // Also update token in localStorage for the API client
-            if (session?.access_token) {
-              localStorage.setItem('auth_token', session.access_token);
-            } else {
-              localStorage.removeItem('auth_token');
+            setSession(session);
+            
+            if (session) {
+              // Set user immediately to prevent auth loops
+              console.log('✅ Auth state changed, setting user with session:', {
+                userId: session.user.id,
+                email: session.user.email,
+                expiresAt: new Date(session.expires_at! * 1000).toISOString()
+              });
+              setUser({ ...session.user, role: 'artist' as UserRole }); // Default role
+              
+              // Try to get user role from backend (but don't block auth on this)
+              try {
+                console.log('👤 Fetching updated user role from backend...');
+                const headers = await getAuthHeaders();
+                const userResponse = await fetch('http://localhost:3001/users/me', {
+                  headers
+                });
+                
+                if (userResponse.ok) {
+                  const userData = await userResponse.json();
+                  console.log('✅ User role updated:', userData.user.role);
+                  setUser(prev => prev ? { ...prev, role: userData.user.role } : null);
+                              } else {
+                console.warn('⚠️ Failed to fetch user role on auth change');
+              }
+            } catch (err) {
+              console.error('❌ Error fetching user data on auth change:', err);
+              console.warn('⚠️ Continuing with default role');
             }
+          } else {
+            console.log('🚪 Session ended or null, clearing user. Event:', event);
+            setUser(null);
+          }
           }
         );
         
@@ -120,6 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   // Sign in function
   const signIn = async (email: string, password: string) => {
+    console.log('🔑 Attempting sign in for:', email);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -127,18 +166,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (error) {
+        console.error('❌ Sign in failed:', error.message);
         return { success: false, error: error.message };
       }
       
-      // Store token for API requests
-      if (data.session) {
-        localStorage.setItem('auth_token', data.session.access_token);
-      }
-      
+      console.log('✅ Sign in successful, session should be created:', {
+        userId: data.user?.id,
+        hasSession: !!data.session
+      });
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
-      throw error instanceof Error ? error : new Error('Login failed');
+      return { success: false, error: error instanceof Error ? error.message : 'Login failed' };
     }
   };
   
@@ -163,15 +202,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   // Sign out function
   const signOut = async () => {
+    console.log('🚪 SignOut called - clearing session and user');
+    console.trace('SignOut call stack:'); // This will show us what called signOut
     try {
       await supabase.auth.signOut();
-      localStorage.removeItem('auth_token');
+      clearAuthCache(); // Clear the auth token cache
     } catch (error) {
       console.error('Logout error:', error);
       // Ignore logout errors - user is already being logged out
     } finally {
       setUser(null);
+      setSession(null);
       setLoading(false);
+      clearAuthCache(); // Clear cache in all cases
+      console.log('✅ SignOut complete - user and session cleared');
     }
   };
   

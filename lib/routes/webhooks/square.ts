@@ -35,12 +35,12 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
       
       if (!webhookSignatureKey) {
         fastify.log.error('Square webhook signature key not configured');
-        return reply.status(500).send({ error: 'Webhook configuration error' });
+        return reply.status(500).send({ error: 'Internal configuration error' });
       }
       
       if (!body) {
         fastify.log.error('No raw body available for webhook verification');
-        return reply.status(400).send({ error: 'Invalid request body' });
+        return reply.status(400).send({ error: 'Invalid request' });
       }
       
       // Calculate expected signature
@@ -80,8 +80,18 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
       
     } catch (error) {
       fastify.log.error('Error processing Square webhook:', error);
-      // Still return 200 to prevent retries for processing errors
-      return { received: true, error: 'Processing error' };
+      
+      // For configuration or critical errors, return 500 to trigger retries
+      if (error instanceof Error && (
+        error.message.includes('configuration') || 
+        error.message.includes('database') ||
+        error.message.includes('connection')
+      )) {
+        return reply.status(500).send({ error: 'Temporary processing error' });
+      }
+      
+      // For other errors, return 200 to prevent unnecessary retries
+      return { received: true, error: 'Processing completed with warnings' };
     }
   });
   

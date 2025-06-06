@@ -131,6 +131,12 @@ model Payment {
   appointments   Appointment[]
   tattooRequests TattooRequest[]
   
+  // Add indexes for performance
+  @@index([customerId])
+  @@index([status])
+  @@index([paymentType])
+  @@index([createdAt])
+  @@index([referenceId])
   @@map("payments")
 }
 

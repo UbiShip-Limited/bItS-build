@@ -1,10 +1,12 @@
 import { FastifyPluginAsync } from 'fastify';
 import multipart from '@fastify/multipart';
-import { authorize } from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
 import { UserRole } from '../types/auth';
 import { v4 as uuidv4 } from 'uuid';
 import { TattooRequestService, CreateTattooRequestData, ConvertToAppointmentData } from '../services/tattooRequestService';
 import { BookingType } from '../services/bookingService';
+import { tattooRequestImageService } from '../services/tattooRequestImageService';
+import { tattooRequestWorkflowService } from '../services/tattooRequestWorkflowService';
 import { pipeline } from 'stream/promises';
 import fs from 'fs';
 import path from 'path';
@@ -23,7 +25,7 @@ interface ConvertToAppointmentBody {
   startAt: string;
   duration: number;
   artistId?: string;
-  bookingType?: BookingType;
+  bookingType?: any;
   priceQuote?: number;
   note?: string;
 }
@@ -42,7 +44,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /tattoo-requests - List tattoo requests (admin dashboard)
   fastify.get('/', {
-    preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
     schema: {
       querystring: {
         type: 'object',
@@ -75,7 +77,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
   
   // GET /tattoo-requests/:id - Get tattoo request details
   fastify.get('/:id', {
-    preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
     schema: {
       params: {
         type: 'object',
@@ -169,7 +171,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
   
   // PUT /tattoo-requests/:id/status - Update status (admin workflow)
   fastify.put('/:id/status', {
-    preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
     schema: {
       params: {
         type: 'object',
@@ -212,7 +214,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /tattoo-requests/:id/convert-to-appointment - Convert to appointment (admin action)
   fastify.post('/:id/convert-to-appointment', {
-    preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
     schema: {
       params: {
         type: 'object',
@@ -229,7 +231,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
           duration: { type: 'integer', minimum: 30 },
           artistId: { type: 'string' },
           bookingType: { 
-            type: 'string', 
+            type: 'string',
             enum: Object.values(BookingType),
             default: BookingType.TATTOO_SESSION
           },
@@ -250,7 +252,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
         note
       } = request.body as ConvertToAppointmentBody;
       
-      const result = await tattooRequestService.convertToAppointment(
+      const result = await tattooRequestWorkflowService.convertToAppointment(
         id,
         {
           startAt: new Date(startAt),
@@ -277,7 +279,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /tattoo-requests/:id/link-images - Link existing Cloudinary images to tattoo request
   fastify.post('/:id/link-images', {
-    preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
     schema: {
       params: {
         type: 'object',
@@ -303,7 +305,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = request.params as { id: string };
       const { publicIds } = request.body as { publicIds: string[] };
       
-      await tattooRequestService.linkImagesToRequest(id, publicIds, request.user?.id);
+      await tattooRequestImageService.linkImagesToRequest(id, publicIds, request.user?.id);
       
       reply.code(200).send({ 
         message: 'Images linked successfully',

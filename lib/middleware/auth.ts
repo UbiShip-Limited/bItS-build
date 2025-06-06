@@ -25,6 +25,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
   const authHeader = request.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    request.log.warn('🔑 Auth failed: No Bearer token in request headers');
     return reply.status(401).send({ 
       error: 'Authentication required',
       message: 'Valid Bearer token is required'
@@ -35,6 +36,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
   
   // Validate token format (basic check)
   if (!token || token.length < 10) {
+    request.log.warn(`🔑 Auth failed: Invalid token format (length: ${token?.length || 0})`);
     return reply.status(401).send({ 
       error: 'Invalid token format',
       message: 'Token appears to be malformed'
@@ -45,11 +47,14 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     const { data, error } = await supabase.auth.getUser(token);
     
     if (error || !data.user) {
+      request.log.warn(`🔑 Auth failed: Supabase validation failed - ${error?.message || 'No user returned'}`);
       return reply.status(401).send({ 
         error: 'Invalid or expired token',
         message: error?.message || 'Authentication failed'
       });
     }
+    
+    request.log.info(`🔑 Supabase auth successful for user: ${data.user.id}`);
     
     // Get user role from database
     const userWithRole = await request.server.prisma.user.findUnique({
@@ -58,11 +63,14 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     });
     
     if (!userWithRole) {
+      request.log.warn(`🔑 Auth failed: User ${data.user.id} not found in database`);
       return reply.status(403).send({ 
         error: 'User not found in system',
         message: 'Please contact an administrator to set up your account'
       });
     }
+    
+    request.log.info(`🔑 Auth complete: User ${data.user.id} with role ${userWithRole.role}`);
     
     // Attach the user to the request for use in route handlers
     request.user = {

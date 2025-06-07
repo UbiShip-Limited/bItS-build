@@ -3,6 +3,7 @@ import { authorize } from '../../middleware/auth';
 import PaymentService from '../../services/paymentService';
 import PaymentLinkService from '../../services/paymentLinkService';
 import { PaymentType } from '../../services/paymentService';
+import '../../types/fastify'; // Import type extensions
 
 // Type definitions for request bodies
 interface CreatePaymentBody {
@@ -54,6 +55,8 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize services
   const paymentService = new PaymentService();
   const paymentLinkService = new PaymentLinkService();
+  
+  fastify.log.info('🔄 Registering core payment routes...');
 
   // GET /payments - List payments (accessible by admin and artist)
   fastify.get('/', {
@@ -73,6 +76,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request) => {
+    fastify.log.info(`💰 Processing payment list request with query: ${JSON.stringify(request.query)}`);
     const { 
       page = 1, 
       limit = 20, 
@@ -230,7 +234,10 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
     const paymentData = request.body as CreatePaymentBody;
     
     const payment = await fastify.prisma.payment.create({
-      data: paymentData
+      data: {
+        ...paymentData,
+        paymentDetails: paymentData.paymentDetails ? JSON.parse(JSON.stringify(paymentData.paymentDetails)) : null
+      }
     });
     
     // Log audit
@@ -283,7 +290,10 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
     
     const updated = await fastify.prisma.payment.update({
       where: { id },
-      data: updateData
+      data: {
+        ...updateData,
+        paymentDetails: updateData.paymentDetails ? JSON.parse(JSON.stringify(updateData.paymentDetails)) : undefined
+      }
     });
     
     // Log audit
@@ -299,6 +309,8 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
     
     return updated;
   });
+  
+  fastify.log.info('✅ Core payment routes registered successfully');
 };
 
 export default coreRoutes;

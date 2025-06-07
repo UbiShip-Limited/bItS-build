@@ -1,49 +1,46 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, TrendingDown, Calendar, DollarSign, Users, FileText, Clock, Target } from 'lucide-react';
+import { Calendar, DollarSign, FileText, Clock, AlertCircle, CheckCircle } from 'lucide-react';
 
-interface EnhancedMetrics {
-  revenue: {
-    today: { amount: number; trend: number; currency: string };
-    week: { amount: number; trend: number; target: number };
-    month: { amount: number; trend: number; forecast: number };
-  };
-  appointments: {
-    today: { count: number; completed: number; remaining: number };
-    week: { scheduled: number; completed: number; cancelled: number };
-    metrics: {
-      averageDuration: number;
-      conversionRate: number;
-      noShowRate: number;
-    };
-  };
-  customers: {
+interface ActionableMetrics {
+  // Today's actionable items
+  todayAppointments: {
     total: number;
-    new: { today: number; week: number; month: number };
-    segments: {
-      newCustomers: number;
-      regularCustomers: number;
-      vipCustomers: number;
-    };
+    completed: number;
+    remaining: number;
+    nextAppointment?: string; // time of next appointment
   };
+  
+  // Requests needing attention
   requests: {
-    pending: { count: number; urgent: number; overdue: number };
-    processed: { today: number; week: number; month: number };
-    conversion: {
-      rate: number;
-      averageTimeToConvert: number;
-    };
+    newCount: number; // new requests needing first review
+    urgentCount: number; // overdue or high priority
+    totalPending: number;
+  };
+  
+  // Simple revenue tracking
+  revenue: {
+    today: number;
+    thisWeek: number;
+    currency: string;
+  };
+  
+  // Action items
+  actionItems: {
+    overdueRequests: number;
+    unconfirmedAppointments: number;
+    followUpsNeeded: number;
   };
 }
 
-interface EnhancedStatsGridProps {
-  metrics?: EnhancedMetrics;
+interface ActionableStatsGridProps {
+  metrics?: ActionableMetrics;
   loading?: boolean;
   onRefresh?: () => void;
 }
 
-export default function EnhancedStatsGrid({ metrics, loading = false, onRefresh }: EnhancedStatsGridProps) {
+export default function EnhancedStatsGrid({ metrics, loading = false, onRefresh }: ActionableStatsGridProps) {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   useEffect(() => {
@@ -52,64 +49,57 @@ export default function EnhancedStatsGrid({ metrics, loading = false, onRefresh 
     }
   }, [metrics]);
 
-  // Fallback to simple stats if enhanced metrics not available
-  const simpleStats = {
-    todayAppointments: metrics?.appointments.today.count || 0,
-    weeklyRevenue: metrics?.revenue.week.amount || 0,
-    activeCustomers: metrics?.customers.total || 0,
-    pendingRequests: metrics?.requests.pending.count || 0,
-  };
-
-  const StatCard = ({ 
+  const ActionCard = ({ 
     title, 
     value, 
     icon: Icon, 
-    trend, 
-    trendText, 
-    color = 'text-[#C9A449]',
-    bgColor = 'bg-[#111111]',
+    description,
+    urgency = 'normal',
+    action,
     children 
   }: {
     title: string;
     value: string | number;
     icon: any;
-    trend?: number;
-    trendText?: string;
-    color?: string;
-    bgColor?: string;
+    description: string;
+    urgency?: 'normal' | 'attention' | 'urgent';
+    action?: string;
     children?: React.ReactNode;
-  }) => (
-    <div className="group">
-      <div className={`stat ${bgColor} rounded-2xl p-6 border border-[#C9A449]/20 transition-all duration-300 hover:border-[#C9A449]/30 backdrop-blur-sm`}>
-        <div className={`stat-figure ${color} opacity-70 group-hover:opacity-100 transition-opacity`}>
-          <Icon className="w-8 h-8" />
-        </div>
-        <div className="stat-title text-gray-400 text-sm font-medium mb-2">{title}</div>
-        <div className="stat-value text-white text-3xl font-bold mb-2">
-          {typeof value === 'number' ? value.toLocaleString() : value}
-        </div>
-        {trend !== undefined && (
-          <div className="stat-desc text-gray-500 text-sm flex items-center gap-1">
-            {trend >= 0 ? (
-              <TrendingUp className="w-4 h-4 text-green-500" />
-            ) : (
-              <TrendingDown className="w-4 h-4 text-red-500" />
-            )}
-            <span className={trend >= 0 ? 'text-green-500' : 'text-red-500'}>
-              {Math.abs(trend).toFixed(1)}%
-            </span>
-            <span>{trendText}</span>
+  }) => {
+    const urgencyColors = {
+      normal: 'text-[#C9A449] border-[#C9A449]/20',
+      attention: 'text-orange-400 border-orange-400/20',
+      urgent: 'text-red-400 border-red-400/20'
+    };
+
+    return (
+      <div className="group">
+        <div className={`stat bg-[#111111] rounded-2xl p-6 border transition-all duration-300 hover:border-opacity-40 backdrop-blur-sm ${urgencyColors[urgency]}`}>
+          <div className={`stat-figure opacity-70 group-hover:opacity-100 transition-opacity ${urgency === 'normal' ? 'text-[#C9A449]' : urgency === 'attention' ? 'text-orange-400' : 'text-red-400'}`}>
+            <Icon className="w-8 h-8" />
           </div>
-        )}
-        {children}
+          <div className="stat-title text-gray-400 text-sm font-medium mb-2">{title}</div>
+          <div className="stat-value text-white text-3xl font-bold mb-2">
+            {typeof value === 'number' ? value.toLocaleString() : value}
+          </div>
+          <div className="stat-desc text-gray-500 text-sm">
+            {action && urgency !== 'normal' && (
+              <span className={urgency === 'attention' ? 'text-orange-400' : 'text-red-400'}>
+                ⚡ {action}
+              </span>
+            )}
+            {!action && <span>{description}</span>}
+          </div>
+          {children}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[...Array(8)].map((_, i) => (
+        {[...Array(4)].map((_, i) => (
           <div key={i} className="stat bg-[#111111] rounded-2xl p-6 border border-[#C9A449]/20 animate-pulse">
             <div className="h-8 w-8 bg-gray-700 rounded mb-4"></div>
             <div className="h-4 w-24 bg-gray-700 rounded mb-2"></div>
@@ -122,45 +112,25 @@ export default function EnhancedStatsGrid({ metrics, loading = false, onRefresh 
   }
 
   if (!metrics) {
-    // Fallback to simple stats grid
+    // Fallback message when enhanced metrics aren't available
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Today's Appointments"
-          value={simpleStats.todayAppointments}
-          icon={Calendar}
-          trendText="vs yesterday"
-        />
-        <StatCard
-          title="Monthly Revenue"
-          value={`$${simpleStats.weeklyRevenue.toLocaleString()}`}
-          icon={DollarSign}
-          trendText="vs last month"
-        />
-        <StatCard
-          title="Total Customers"
-          value={simpleStats.activeCustomers}
-          icon={Users}
-          trendText="this month"
-        />
-        <StatCard
-          title="Pending Requests"
-          value={simpleStats.pendingRequests}
-          icon={FileText}
-          trendText="need review"
-        />
+      <div className="text-center py-8">
+        <div className="text-gray-400 mb-4">
+          <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
+          <p>Loading actionable insights...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header with refresh */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-white">Business Overview</h3>
+          <h3 className="text-lg font-semibold text-white">Today's Action Items</h3>
           <p className="text-sm text-gray-400">
-            Last updated: {lastUpdated.toLocaleTimeString()}
+            Focus on what needs your attention • Updated: {lastUpdated.toLocaleTimeString()}
           </p>
         </div>
         {onRefresh && (
@@ -175,90 +145,77 @@ export default function EnhancedStatsGrid({ metrics, loading = false, onRefresh 
         )}
       </div>
 
-      {/* Primary Metrics */}
+      {/* Actionable Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Today's Revenue"
-          value={`$${metrics.revenue.today.amount.toLocaleString()}`}
-          icon={DollarSign}
-          trend={metrics.revenue.today.trend}
-          trendText="vs yesterday"
-        />
-        
-        <StatCard
-          title="Today's Appointments"
-          value={metrics.appointments.today.count}
+        {/* Today's Schedule - What's coming up */}
+        <ActionCard
+          title="Today's Schedule"
+          value={metrics.todayAppointments.total}
           icon={Calendar}
-          trendText={`${metrics.appointments.today.remaining} remaining`}
+          description={`${metrics.todayAppointments.remaining} remaining`}
+          urgency={metrics.todayAppointments.remaining > 0 ? 'attention' : 'normal'}
+          action={metrics.todayAppointments.remaining > 0 ? 'Check preparation' : undefined}
         >
-          <div className="mt-2 text-xs text-gray-500">
-            {metrics.appointments.today.completed} completed
-          </div>
-        </StatCard>
+          {metrics.todayAppointments.nextAppointment && (
+            <div className="mt-2 text-xs text-gray-500">
+              Next: {metrics.todayAppointments.nextAppointment}
+            </div>
+          )}
+        </ActionCard>
 
-        <StatCard
-          title="Active Customers"
-          value={metrics.customers.total}
-          icon={Users}
-          trendText={`${metrics.customers.new.today} new today`}
-        />
-
-        <StatCard
-          title="Pending Requests"
-          value={metrics.requests.pending.count}
+        {/* New Requests - Need first review */}
+        <ActionCard
+          title="New Requests"
+          value={metrics.requests.newCount}
           icon={FileText}
-          trendText={metrics.requests.pending.urgent > 0 ? `${metrics.requests.pending.urgent} urgent` : 'all current'}
-          color={metrics.requests.pending.urgent > 0 ? 'text-orange-500' : 'text-[#C9A449]'}
-        />
-      </div>
+          description="Need initial review"
+          urgency={metrics.requests.newCount > 0 ? 'attention' : 'normal'}
+          action={metrics.requests.newCount > 0 ? 'Review needed' : undefined}
+        >
+          {metrics.requests.urgentCount > 0 && (
+            <div className="mt-2 text-xs text-red-400">
+              {metrics.requests.urgentCount} urgent
+            </div>
+          )}
+        </ActionCard>
 
-      {/* Secondary Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Weekly Revenue"
-          value={`$${metrics.revenue.week.amount.toLocaleString()}`}
-          icon={Target}
-          trend={metrics.revenue.week.trend}
-          trendText="vs last week"
+        {/* Today's Revenue - Simple tracking */}
+        <ActionCard
+          title="Today's Revenue"
+          value={`${metrics.revenue.currency}${metrics.revenue.today.toLocaleString()}`}
+          icon={DollarSign}
+          description="Completed today"
         >
           <div className="mt-2 text-xs text-gray-500">
-            Target: ${metrics.revenue.week.target.toLocaleString()}
+            Week: ${metrics.revenue.thisWeek.toLocaleString()}
           </div>
-        </StatCard>
+        </ActionCard>
 
-        <StatCard
-          title="Conversion Rate"
-          value={`${metrics.requests.conversion.rate}%`}
-          icon={TrendingUp}
-          trendText="request to appointment"
+        {/* Action Items - Things that need attention */}
+        <ActionCard
+          title="Action Items"
+          value={metrics.actionItems.overdueRequests + metrics.actionItems.unconfirmedAppointments + metrics.actionItems.followUpsNeeded}
+          icon={AlertCircle}
+          description="Items need attention"
+          urgency={
+            (metrics.actionItems.overdueRequests + metrics.actionItems.unconfirmedAppointments + metrics.actionItems.followUpsNeeded) > 0 
+              ? 'urgent' 
+              : 'normal'
+          }
+          action={
+            (metrics.actionItems.overdueRequests + metrics.actionItems.unconfirmedAppointments + metrics.actionItems.followUpsNeeded) > 0 
+              ? 'Take action' 
+              : undefined
+          }
         >
-          <div className="mt-2 text-xs text-gray-500">
-            Avg {metrics.requests.conversion.averageTimeToConvert} days
-          </div>
-        </StatCard>
-
-        <StatCard
-          title="Customer Segments"
-          value={metrics.customers.segments.vipCustomers}
-          icon={Users}
-          trendText="VIP customers"
-        >
-          <div className="mt-2 text-xs text-gray-500 space-y-1">
-            <div>New: {metrics.customers.segments.newCustomers}</div>
-            <div>Regular: {metrics.customers.segments.regularCustomers}</div>
-          </div>
-        </StatCard>
-
-        <StatCard
-          title="Appointment Quality"
-          value={`${(100 - metrics.appointments.metrics.noShowRate).toFixed(1)}%`}
-          icon={Clock}
-          trendText="show rate"
-        >
-          <div className="mt-2 text-xs text-gray-500">
-            Avg {metrics.appointments.metrics.averageDuration}min duration
-          </div>
-        </StatCard>
+          {(metrics.actionItems.overdueRequests + metrics.actionItems.unconfirmedAppointments + metrics.actionItems.followUpsNeeded) > 0 && (
+            <div className="mt-2 text-xs text-gray-500 space-y-1">
+              {metrics.actionItems.overdueRequests > 0 && <div>Overdue: {metrics.actionItems.overdueRequests}</div>}
+              {metrics.actionItems.unconfirmedAppointments > 0 && <div>Unconfirmed: {metrics.actionItems.unconfirmedAppointments}</div>}
+              {metrics.actionItems.followUpsNeeded > 0 && <div>Follow-ups: {metrics.actionItems.followUpsNeeded}</div>}
+            </div>
+          )}
+        </ActionCard>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { UserService, CreateUserData, UpdateUserData } from '../services/userService';
-import { authorize } from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
 import { UserRole, canManageUsers } from '../types/auth';
 import { ValidationError, NotFoundError } from '../services/errors';
 
@@ -23,19 +23,13 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
   
   // GET /users/me - Get current user profile
   fastify.get('/me', {
-    preHandler: authorize(['artist', 'assistant', 'admin'] as UserRole[])
+    preHandler: [authenticate, authorize(['artist', 'assistant', 'admin'] as UserRole[])]
   }, async (request, reply) => {
     try {
-      const authHeader = request.headers.authorization;
-      if (!authHeader) {
-        return reply.status(401).send({ error: 'Authorization header required' });
-      }
-      
-      const token = authHeader.split(' ')[1];
-      const user = await userService.getCurrentUser(token);
+      const user = request.user;
       
       if (!user) {
-        return reply.status(404).send({ error: 'User not found' });
+        return reply.status(401).send({ error: 'User not authenticated' });
       }
       
       return {
@@ -56,7 +50,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /users - List all users (admin only)
   fastify.get('/', {
-    preHandler: authorize(['admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['admin'] as UserRole[])],
     schema: {
       querystring: {
         type: 'object',
@@ -89,7 +83,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /users/:id - Get user by ID (admin only)
   fastify.get('/:id', {
-    preHandler: authorize(['admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['admin'] as UserRole[])],
     schema: {
       params: {
         type: 'object',
@@ -134,7 +128,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /users - Create new user (admin only)
   fastify.post('/', {
-    preHandler: authorize(['admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['admin'] as UserRole[])],
     schema: {
       body: {
         type: 'object',
@@ -196,7 +190,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
 
   // PUT /users/:id - Update user (admin only)
   fastify.put('/:id', {
-    preHandler: authorize(['admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['admin'] as UserRole[])],
     schema: {
       params: {
         type: 'object',
@@ -266,7 +260,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
 
   // DELETE /users/:id - Delete user (admin only)
   fastify.delete('/:id', {
-    preHandler: authorize(['admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['admin'] as UserRole[])],
     schema: {
       params: {
         type: 'object',
@@ -314,7 +308,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
 
   // PUT /users/me/password - Update current user's password
   fastify.put('/me/password', {
-    preHandler: authorize(['artist', 'assistant', 'admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['artist', 'assistant', 'admin'] as UserRole[])],
     schema: {
       body: {
         type: 'object',

@@ -1,18 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Link, FileText, CreditCard, ExternalLink, Copy, Trash2, RefreshCw } from 'lucide-react';
+import { Plus, Link, FileText, CreditCard, ExternalLink, Copy, Trash2, RefreshCw, User } from 'lucide-react';
 import CreatePaymentLinkModal from '@/src/components/payments/CreatePaymentLinkModal';
 import CreateInvoiceModal from '@/src/components/payments/CreateInvoiceModal';
+import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHistory';
 import { paymentService, PaymentLink } from '@/src/lib/api/services/paymentService';
 
 export default function PaymentsPage() {
   const [paymentLinks, setPaymentLinks] = useState<PaymentLink[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchingData, setFetchingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  const [selectedCustomerName, setSelectedCustomerName] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -20,6 +23,12 @@ export default function PaymentsPage() {
   }, []);
 
   const fetchPaymentLinks = async () => {
+    if (fetchingData) {
+      console.log('⏳ Already fetching payment links, skipping...');
+      return;
+    }
+
+    setFetchingData(true);
     try {
       setError(null);
       const response = await paymentService.listPaymentLinks({ limit: 50 });
@@ -31,10 +40,15 @@ export default function PaymentsPage() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setFetchingData(false);
     }
   };
 
   const handleRefresh = () => {
+    if (fetchingData) {
+      console.log('⏳ Refresh already in progress, skipping...');
+      return;
+    }
     setRefreshing(true);
     fetchPaymentLinks();
   };
@@ -45,6 +59,11 @@ export default function PaymentsPage() {
   };
 
   const handleDeleteLink = async (id: string) => {
+    if (fetchingData) {
+      alert('Please wait for the current operation to complete.');
+      return;
+    }
+
     if (!confirm('Are you sure you want to delete this payment link?')) {
       return;
     }
@@ -65,6 +84,11 @@ export default function PaymentsPage() {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleCustomerClick = (customerId: string, customerName: string) => {
+    setSelectedCustomerId(customerId);
+    setSelectedCustomerName(customerName);
   };
 
   return (
@@ -116,14 +140,14 @@ export default function PaymentsPage() {
           <h2 className="text-xl font-semibold text-white">Recent Payment Links</h2>
           <button
             onClick={handleRefresh}
-            className={`p-2 text-[#C9A449] hover:bg-[#C9A449]/10 rounded-lg border border-[#C9A449]/30 hover:border-[#C9A449]/50 transition-all duration-300 ${refreshing ? 'animate-spin' : ''}`}
-            disabled={refreshing}
+            className={`p-2 text-[#C9A449] hover:bg-[#C9A449]/10 rounded-lg border border-[#C9A449]/30 hover:border-[#C9A449]/50 transition-all duration-300 ${refreshing || fetchingData ? 'animate-spin' : ''}`}
+            disabled={refreshing || fetchingData}
           >
             <RefreshCw className="w-5 h-5" />
           </button>
         </div>
 
-        {loading ? (
+        {loading || fetchingData ? (
           <div className="p-12 text-center">
             <span className="loading loading-spinner loading-lg text-[#C9A449]"></span>
             <p className="mt-2 text-gray-400">Loading payment links...</p>
@@ -135,6 +159,7 @@ export default function PaymentsPage() {
               <button
                 onClick={fetchPaymentLinks}
                 className="mt-4 px-6 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
+                disabled={fetchingData}
               >
                 Retry
               </button>
@@ -157,7 +182,10 @@ export default function PaymentsPage() {
               <thead className="bg-[#080808]">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                    Title
+                    Payment Link
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    Customer
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                     Amount
@@ -178,6 +206,18 @@ export default function PaymentsPage() {
                   <tr key={link.id} className="hover:bg-[#1a1a1a]/50 transition-colors duration-150">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-semibold text-white">{link.title || 'Untitled'}</div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        ID: {link.id.slice(-6)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-400 flex items-center gap-1">
+                        <User className="w-3 h-3" />
+                        <span>Customer ID in link</span>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Click "View" to see details
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-[#C9A449]">${link.amount?.toFixed(2) || '0.00'}</div>
@@ -228,6 +268,31 @@ export default function PaymentsPage() {
           </div>
         )}
       </div>
+
+      {/* Customer Payment History Section */}
+      {selectedCustomerId && (
+        <div className="mt-8">
+          <div className="bg-[#111111] border border-[#1a1a1a] rounded-2xl shadow-2xl overflow-hidden hover:border-[#C9A449]/20 transition-all duration-300">
+            <div className="px-6 py-4 border-b border-[#1a1a1a] flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-white">Customer Payment Context</h2>
+              <button
+                onClick={() => setSelectedCustomerId('')}
+                className="text-gray-400 hover:text-white text-sm"
+              >
+                ✕ Close
+              </button>
+            </div>
+            <div className="p-6">
+              <CustomerPaymentHistory
+                customerId={selectedCustomerId}
+                customerName={selectedCustomerName}
+                variant="full"
+                showTitle={false}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <CreatePaymentLinkModal

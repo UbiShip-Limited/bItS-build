@@ -7,6 +7,8 @@ import { AppointmentApiClient, BookingStatus, BookingType, type AppointmentData 
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '@/src/components/ui/Modal';
 import AppointmentForm from '@/src/components/forms/AppointmentForm';
+import QuickPaymentActions from '@/src/components/payments/QuickPaymentActions';
+import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHistory';
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<AppointmentData[]>([]);
@@ -239,6 +241,7 @@ export default function AppointmentsPage() {
                     <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Type</th>
                     <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Status</th>
                     <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Price</th>
+                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Payment</th>
                     <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider text-right">Actions</th>
                   </tr>
                 </thead>
@@ -302,6 +305,35 @@ export default function AppointmentsPage() {
                           ) : (
                             <span className="text-gray-600">-</span>
                           )}
+                        </td>
+                        <td>
+                          <div className="space-y-2">
+                            {/* Quick payment actions */}
+                            {appointment.customer && (
+                              <QuickPaymentActions
+                                customerId={appointment.customer.id}
+                                customerName={appointment.customer.name}
+                                appointmentId={appointment.id}
+                                appointmentStatus={appointment.status}
+                                currentPrice={appointment.priceQuote}
+                                depositPaid={appointment.depositPaid}
+                                variant="compact"
+                                onPaymentCreated={() => {
+                                  // Refresh appointments when payment is created
+                                  loadAppointments();
+                                }}
+                              />
+                            )}
+                            
+                            {/* Inline payment history */}
+                            {appointment.customer && (
+                              <CustomerPaymentHistory
+                                customerId={appointment.customer.id}
+                                variant="inline"
+                                className="mt-1"
+                              />
+                            )}
+                          </div>
                         </td>
                         <td>
                           <div className="flex justify-end gap-2">

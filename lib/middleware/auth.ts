@@ -57,17 +57,33 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     request.log.info(`🔑 Supabase auth successful for user: ${data.user.id}`);
     
     // Get user role from database
-    const userWithRole = await request.server.prisma.user.findUnique({
+    let userWithRole = await request.server.prisma.user.findUnique({
       where: { id: data.user.id },
       select: { role: true, email: true }
     });
     
+    // If user doesn't exist in local database but exists in Supabase, create them with default role
     if (!userWithRole) {
-      request.log.warn(`🔑 Auth failed: User ${data.user.id} not found in database`);
-      return reply.status(403).send({ 
-        error: 'User not found in system',
-        message: 'Please contact an administrator to set up your account'
-      });
+      request.log.info(`🔑 Creating missing user record for ${data.user.id} (${data.user.email})`);
+      
+      try {
+        userWithRole = await request.server.prisma.user.create({
+          data: {
+            id: data.user.id,
+            email: data.user.email || '',
+            role: 'artist' // Default role for auto-created users
+          },
+          select: { role: true, email: true }
+        });
+        
+        request.log.info(`🔑 Auto-created user record with role: ${userWithRole.role}`);
+      } catch (createError) {
+        request.log.error(createError, `Failed to auto-create user record for ${data.user.id}`);
+        return reply.status(500).send({ 
+          error: 'Failed to initialize user account',
+          message: 'Please contact an administrator'
+        });
+      }
     }
     
     request.log.info(`🔑 Auth complete: User ${data.user.id} with role ${userWithRole.role}`);

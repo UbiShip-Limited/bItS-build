@@ -2,12 +2,13 @@ import { PrismaClient } from '@prisma/client';
 import { createClient } from '@supabase/supabase-js';
 import { UserRole, UserWithRole } from '../types/auth';
 import { ValidationError, NotFoundError } from './errors';
+import { supabase } from '../supabase/supabaseClient';
 
 const prisma = new PrismaClient();
 
 // Initialize Supabase with service role key for admin operations
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
   {
     auth: {
@@ -15,12 +16,6 @@ const supabaseAdmin = createClient(
       persistSession: false
     }
   }
-);
-
-// Initialize regular client for user operations
-const supabaseClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
 export interface CreateUserData {
@@ -309,7 +304,7 @@ export class UserService {
    */
   async getCurrentUser(authToken: string): Promise<UserWithRole | null> {
     try {
-      const { data, error } = await supabaseClient.auth.getUser(authToken);
+      const { data, error } = await supabase.auth.getUser(authToken);
       
       if (error || !data.user) {
         return null;

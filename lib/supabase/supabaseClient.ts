@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Get Supabase credentials from environment variables
+// Get Supabase credentials from environment variables (backend server-side variables)
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 

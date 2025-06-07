@@ -422,13 +422,13 @@ export default class PaymentService {
         where: { id: paymentId },
         data: {
           status: amount && amount < payment.amount ? 'partially_refunded' : 'refunded',
-          refundDetails: {
+          refundDetails: JSON.parse(JSON.stringify({
             refundId: refundResult.id,
             refundAmount: amount || payment.amount,
             refundReason: reason || 'Customer requested refund',
             refundedAt: new Date().toISOString(),
             squareRefundDetails: refundResult
-          } as Prisma.InputJsonValue
+          }))
         }
       });
       

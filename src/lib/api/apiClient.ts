@@ -2,7 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { createBrowserClient } from '@supabase/ssr';
 
 // Define base API configuration - now points directly to Fastify backend
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
 
 // Debug: Log the API URL to make sure it's correct
 console.log('🔗 API Client configured for:', API_URL);

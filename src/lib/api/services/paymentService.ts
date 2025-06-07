@@ -88,22 +88,57 @@ export interface PaymentListResponse {
 
 class PaymentService {
   private basePath = '/payments';
+  private client = apiClient;
 
   /**
-   * Get list of payments
+   * Get payments with filtering
    */
-  async getPayments(params?: PaymentListParams): Promise<PaymentListResponse> {
-    const searchParams = new URLSearchParams();
+  async getPayments(params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    customerId?: string;
+    paymentType?: PaymentType;
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<{
+    success: boolean;
+    data: any[];
+    pagination?: any;
+  }> {
+    const queryParams = new URLSearchParams();
     
-    if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          searchParams.append(key, value.toString());
-        }
-      });
-    }
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.customerId) queryParams.append('customerId', params.customerId);
+    if (params?.paymentType) queryParams.append('paymentType', params.paymentType);
+    if (params?.startDate) queryParams.append('startDate', params.startDate.toISOString());
+    if (params?.endDate) queryParams.append('endDate', params.endDate.toISOString());
+    
+    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    return this.client.get(`${this.basePath}${queryString}`);
+  }
 
-    return apiClient.get(`${this.basePath}?${searchParams.toString()}`);
+  /**
+   * Get payments for a specific customer using core endpoint (accessible by artists)
+   */
+  async getCustomerPayments(customerId: string, limit: number = 50): Promise<{
+    success: boolean;
+    data: any[];
+    pagination?: any;
+  }> {
+    const queryParams = new URLSearchParams();
+    queryParams.append('customerId', customerId);
+    queryParams.append('limit', limit.toString());
+    
+    const response = await this.client.get(`/payments?${queryParams.toString()}`);
+    
+    return {
+      success: true,
+      data: response.data || [],
+      pagination: response.pagination
+    };
   }
 
   /**
@@ -124,7 +159,7 @@ class PaymentService {
       throw new Error('Payment title is required');
     }
 
-    return apiClient.post(this.basePath, {
+    return this.client.post(this.basePath, {
       type: 'payment_link',
       ...params
     });
@@ -134,7 +169,7 @@ class PaymentService {
    * Create an invoice
    */
   async createInvoice(params: CreateInvoiceParams): Promise<PaymentResponse> {
-    return apiClient.post(this.basePath, {
+    return this.client.post(this.basePath, {
       type: 'invoice',
       ...params
     });
@@ -144,28 +179,21 @@ class PaymentService {
    * Process a direct payment
    */
   async processDirectPayment(params: DirectPaymentParams): Promise<PaymentResponse> {
-    return apiClient.post(this.basePath, {
+    return this.client.post(this.basePath, {
       type: 'direct_payment',
       ...params
     });
   }
 
   /**
-   * List payment links (now uses admin routes)
+   * List payment links (corrected to use proper endpoint)
    */
   async listPaymentLinks(params?: { cursor?: string; limit?: number }): Promise<{
     success: boolean;
     data: PaymentLink[];
     cursor?: string;
   }> {
-    // This would use the admin routes for listing specific payment links
-    // For now, we'll use the general payments endpoint and filter
-    const payments = await this.getPayments({ paymentType: 'tattoo_deposit' });
-    return {
-      success: true,
-      data: payments.data,
-      cursor: undefined
-    };
+    return this.client.get('/payments/links', { params });
   }
 
   /**
@@ -173,7 +201,7 @@ class PaymentService {
    */
   async getPaymentLink(id: string): Promise<{ success: boolean; data: PaymentLink }> {
     // This would need to use the admin individual payment endpoint
-    const payment = await apiClient.get(`${this.basePath}/${id}`);
+    const payment = await this.client.get(`${this.basePath}/${id}`);
     return {
       success: true,
       data: payment
@@ -181,14 +209,10 @@ class PaymentService {
   }
 
   /**
-   * Delete a payment link - deprecated (use cancel instead)
+   * Delete a payment link
    */
   async deletePaymentLink(id: string): Promise<{ success: boolean; message: string }> {
-    console.warn('deletePaymentLink is deprecated. Consider using cancellation instead.');
-    return {
-      success: false,
-      message: 'Payment link deletion not supported. Use cancellation instead.'
-    };
+    return this.client.delete(`/payments/links/${id}`);
   }
 
   /**

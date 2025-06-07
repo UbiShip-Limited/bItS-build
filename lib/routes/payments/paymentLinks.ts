@@ -56,7 +56,7 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
   const paymentLinkService = new PaymentLinkService();
 
   // POST /payments/links - Create a payment link
-  fastify.post('/links', {
+  fastify.post('/', {
     preHandler: authorize(['admin', 'artist']),
     schema: {
       body: {
@@ -111,7 +111,7 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // GET /payments/links - List payment links
-  fastify.get('/links', {
+  fastify.get('/', {
     preHandler: authorize(['admin', 'artist']),
     schema: {
       querystring: {
@@ -141,7 +141,7 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // GET /payments/links/:id - Get payment link details
-  fastify.get('/links/:id', {
+  fastify.get('/:id', {
     preHandler: authorize(['admin', 'artist']),
     schema: {
       params: {
@@ -170,7 +170,7 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // DELETE /payments/links/:id - Delete payment link
-  fastify.delete('/links/:id', {
+  fastify.delete('/:id', {
     preHandler: authorize(['admin']),
     schema: {
       params: {
@@ -198,7 +198,7 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // POST /payments/invoices - Create an invoice
+  // POST /payments/links/invoices - Create an invoice
   fastify.post('/invoices', {
     preHandler: authorize(['admin', 'artist']),
     schema: {
@@ -264,7 +264,7 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  // POST /payments/checkout - Create a checkout session
+  // POST /payments/links/checkout - Create a checkout session
   fastify.post('/checkout', {
     preHandler: authorize(['admin', 'artist']),
     schema: {

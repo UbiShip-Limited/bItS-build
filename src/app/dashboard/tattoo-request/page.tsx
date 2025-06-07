@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Filter, FileText, User, Calendar, DollarSign } from 'lucide-react';
 import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
+import QuickPaymentActions from '@/src/components/payments/QuickPaymentActions';
+import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHistory';
 
 export default function TattooRequestsPage() {
   const [requests, setRequests] = useState<TattooRequest[]>([]);
@@ -30,7 +32,7 @@ export default function TattooRequestsPage() {
 
   useEffect(() => {
     loadTattooRequests();
-  }, [filters]);
+  }, [filters.status, filters.page, filters.limit]);
 
   const loadTattooRequests = async () => {
     setLoading(true);
@@ -160,6 +162,9 @@ export default function TattooRequestsPage() {
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Style
                     </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      Payment
+                    </th>
                     <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
@@ -224,6 +229,42 @@ export default function TattooRequestsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-medium">
                         {request.style || 'Not specified'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-medium">
+                        <div className="space-y-2">
+                          {/* Quick payment actions */}
+                          {request.customer && (
+                            <QuickPaymentActions
+                              customerId={request.customer.id}
+                              customerName={request.customer.name}
+                              tattooRequestId={request.id}
+                              requestStatus={request.status}
+                              depositPaid={request.depositPaid}
+                              variant="compact"
+                              onPaymentCreated={() => {
+                                // Refresh requests when payment is created
+                                loadTattooRequests();
+                              }}
+                            />
+                          )}
+                          
+                          {/* Show deposit status if exists */}
+                          {request.depositPaid && request.depositAmount && (
+                            <div className="text-xs text-green-400 flex items-center">
+                              <DollarSign className="w-3 h-3 mr-1" />
+                              ${request.depositAmount.toFixed(0)} paid
+                            </div>
+                          )}
+                          
+                          {/* Inline payment history */}
+                          {request.customer && (
+                            <CustomerPaymentHistory
+                              customerId={request.customer.id}
+                              variant="inline"
+                              className="mt-1"
+                            />
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Link 

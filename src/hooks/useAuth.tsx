@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { createBrowserClient } from '@supabase/ssr';
 import { SupabaseClient, User, Session } from '@supabase/supabase-js';
 import { UserRole, UserWithRole } from '../../lib/types/auth';
-import { getAuthHeaders, clearAuthCache } from '../lib/api/apiClient';
+import { apiClient, clearAuthCache } from '../lib/api/apiClient';
 
 interface AuthContextType {
   user: UserWithRole | null;
@@ -77,15 +77,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Try to get user role from backend (but don't block auth on this)
           try {
             console.log('👤 Fetching user role from backend...');
-            const headers = await getAuthHeaders();
-            const userResponse = await fetch('http://localhost:3001/users/me', {
-              headers
-            });
+            const userData = await apiClient.get<{ user: UserWithRole }>('/users/me');
             
-            if (userResponse.ok) {
-              const userData = await userResponse.json();
+            if (userData?.user) {
               console.log('✅ User role fetched, updating:', userData.user.role);
-              setUser(prev => prev ? { ...prev, role: userData.user.role } : null);
+              setUser({ ...session.user, role: userData.user.role });
             } else {
               console.warn('⚠️ Failed to fetch user role, keeping default');
             }
@@ -121,26 +117,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // Try to get user role from backend (but don't block auth on this)
               try {
                 console.log('👤 Fetching updated user role from backend...');
-                const headers = await getAuthHeaders();
-                const userResponse = await fetch('http://localhost:3001/users/me', {
-                  headers
-                });
+                const userData = await apiClient.get<{ user: UserWithRole }>('/users/me');
                 
-                if (userResponse.ok) {
-                  const userData = await userResponse.json();
+                if (userData?.user) {
                   console.log('✅ User role updated:', userData.user.role);
-                  setUser(prev => prev ? { ...prev, role: userData.user.role } : null);
-                              } else {
-                console.warn('⚠️ Failed to fetch user role on auth change');
+                  setUser({ ...session.user, role: userData.user.role });
+                } else {
+                  console.warn('⚠️ Failed to fetch user role on auth change');
+                }
+              } catch (err) {
+                console.error('❌ Error fetching user data on auth change:', err);
+                console.warn('⚠️ Continuing with default role');
               }
-            } catch (err) {
-              console.error('❌ Error fetching user data on auth change:', err);
-              console.warn('⚠️ Continuing with default role');
+            } else {
+              console.log('🚪 Session ended or null, clearing user. Event:', event);
+              setUser(null);
             }
-          } else {
-            console.log('🚪 Session ended or null, clearing user. Event:', event);
-            setUser(null);
-          }
           }
         );
         

@@ -1,5 +1,8 @@
 "use client"
 
+// 🎯 COST-OPTIMIZED GALLERY: Only fetches 15 images to reduce API costs
+// Uses elegant skeleton placeholders with CTAs to encourage bookings
+
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
@@ -43,14 +46,14 @@ export function DynamicGallery() {
       
       console.log('🖼️ Frontend: Loading gallery data...');
       
-      // Load all gallery images and metadata
+      // Load LIMITED gallery images (15) and metadata to reduce costs
       const [images, artistsList, stylesList] = await Promise.all([
-        galleryService.getGalleryImages(),
+        galleryService.getGalleryImages({ limit: 15 }), // 🎯 Cost optimization: Only fetch 15 images
         galleryService.getArtists(),
         galleryService.getStyles()
       ]);
       
-      console.log(`🖼️ Frontend: Loaded ${images.length} images`);
+      console.log(`🖼️ Frontend: Loaded ${images.length} images (limited for cost optimization)`);
       console.log('🎨 Artists:', artistsList);
       console.log('🎭 Styles:', stylesList);
       console.log('📸 Sample image:', images[0]);
@@ -70,7 +73,7 @@ export function DynamicGallery() {
     try {
       setError(null);
       
-      const filters: any = {};
+      const filters: any = { limit: 15 }; // Always limit to 15 images for cost optimization
       if (selectedArtist) filters.artist = selectedArtist;
       if (selectedStyle) filters.style = selectedStyle;
       
@@ -133,14 +136,17 @@ export function DynamicGallery() {
             <div className="absolute -bottom-3 -left-3 h-4 w-4 border-b border-l border-[#C9A449]"></div>
             <div className="absolute -bottom-3 -right-3 h-4 w-4 border-b border-r border-[#C9A449]"></div>
             <h2 className="font-heading text-4xl md:text-5xl font-bold text-white px-6">
-              ARTIST GALLERY
+              FEATURED GALLERY
             </h2>
           </div>
           <div className="h-[2px] w-40 mx-auto bg-gradient-to-r from-[#C9A449] to-[#C9A449]/0 mb-2"></div>
           <div className="h-[2px] w-40 mx-auto bg-gradient-to-l from-[#C9A449] to-[#C9A449]/0 mb-6"></div>
           <p className="text-white/80 max-w-2xl mx-auto font-body">
-            Explore our diverse collection of tattoo artistry. Each piece represents our commitment to quality,
+            A curated selection from our extensive portfolio. Each piece represents our commitment to quality,
             creativity, and personal expression.
+          </p>
+          <p className="text-[#C9A449]/80 text-sm font-body mt-2">
+            View our complete collection during your private consultation
           </p>
         </div>
 
@@ -180,8 +186,9 @@ export function DynamicGallery() {
 
         {/* Loading State */}
         {loading && (
-          <div className="flex justify-center items-center py-20">
-            <Loader2 className="animate-spin text-[#C9A449]" size={48} />
+          <div className="flex flex-col justify-center items-center py-20">
+            <Loader2 className="animate-spin text-[#C9A449] mb-4" size={48} />
+            <p className="text-white/60 font-body">Loading featured gallery...</p>
           </div>
         )}
 
@@ -269,6 +276,84 @@ export function DynamicGallery() {
               </motion.div>
             ))}
           </div>
+        )}
+
+        {/* Horizontal Skeleton Row - "More Portfolio" Teaser */}
+        {!loading && galleryItems.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6 }}
+            className="mt-16"
+          >
+            {/* Section divider */}
+            <div className="flex items-center justify-center mb-8">
+              <div className="w-24 h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/40 to-transparent"></div>
+              <div className="mx-6 text-[#C9A449]/60 text-xl font-body tracking-wider">
+                CREATE YOUR OWN COLLECTION
+              </div>
+              <div className="w-24 h-[0.5px] bg-gradient-to-l from-transparent via-[#C9A449]/40 to-transparent"></div>
+            </div>
+
+            {/* Horizontal skeleton grid - matches main gallery styling */}
+            <div className="relative">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <motion.div
+                    key={`skeleton-${index}`}
+                    className="relative aspect-[3/4] overflow-hidden rounded-lg"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: 0.1 * index }}
+                  >
+                    {/* Skeleton container - matches main gallery styling exactly */}
+                    <div className="relative w-full h-full group cursor-pointer border border-[#C9A449]/0 hover:border-[#C9A449]/20 transition-colors duration-300">
+                      {/* Base skeleton image placeholder */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] rounded-lg">
+                        {/* Shimmer effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#C9A449]/8 to-transparent animate-pulse rounded-lg"></div>
+                      </div>
+
+                      {/* Overlay gradient - matches main gallery */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#080808] to-transparent opacity-60"></div>
+
+                      {/* Victorian Gothic frame elements - matches main gallery */}
+                      <div className="absolute -top-1 -left-1 h-6 w-6 border-t border-l border-[#C9A449]/30 opacity-0 group-hover:opacity-60 transition-opacity"></div>
+                      <div className="absolute -top-1 -right-1 h-6 w-6 border-t border-r border-[#C9A449]/30 opacity-0 group-hover:opacity-60 transition-opacity"></div>
+                      <div className="absolute -bottom-1 -left-1 h-6 w-6 border-b border-l border-[#C9A449]/30 opacity-0 group-hover:opacity-60 transition-opacity"></div>
+                      <div className="absolute -bottom-1 -right-1 h-6 w-6 border-b border-r border-[#C9A449]/30 opacity-0 group-hover:opacity-60 transition-opacity"></div>
+
+                      {/* Gold accent line - matches main gallery */}
+                      <div className="absolute bottom-14 left-4 right-4 h-[1px] bg-gradient-to-r from-[#C9A449]/0 via-[#C9A449]/40 to-[#C9A449]/0 opacity-0 group-hover:opacity-70 transition-opacity duration-300"></div>
+
+                      {/* Info overlay - skeleton version */}
+                      <div className="absolute bottom-0 left-0 right-0 p-4 transition-transform duration-300 group-hover:translate-y-0 translate-y-10 opacity-0 group-hover:opacity-100">
+                        <div className="flex justify-between items-end">
+                          <div className="w-full">
+                            <div className="h-3 bg-[#C9A449]/20 rounded mb-2 animate-pulse"></div>
+                            <div className="h-2 bg-[#C9A449]/15 rounded w-2/3 animate-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Lock/Preview icon instead of zoom */}
+                      <div className="absolute top-4 right-4 bg-[#C9A449]/60 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="w-4 h-4 border border-[#080808] rounded-sm"></div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Fade effect overlay - gradual fade from right */}
+              <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#080808] via-[#080808]/80 to-transparent pointer-events-none"></div>
+              
+              {/* Additional fade overlay for smoother transition */}
+              <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-[#080808] to-transparent pointer-events-none"></div>
+            </div>
+          </motion.div>
         )}
 
         {/* Empty State */}

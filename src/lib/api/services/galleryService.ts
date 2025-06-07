@@ -20,6 +20,7 @@ export interface GalleryFilters {
   style?: string;
   tags?: string[];
   limit?: number;
+  folder?: string;
 }
 
 export class GalleryService {
@@ -31,26 +32,30 @@ export class GalleryService {
   }
 
   /**
-   * Get all gallery images from shop_content folder
+   * Get gallery images from specified folder (defaults to shop_content for backward compatibility)
    */
   async getGalleryImages(filters?: GalleryFilters): Promise<GalleryImage[]> {
     try {
+      const targetFolder = filters?.folder || 'shop_content';
       console.log('🔗 GalleryService: Fetching images from', this.galleryUrl);
+      console.log(`📁 GalleryService: Target folder: ${targetFolder}`);
       console.log('🌐 Cloudinary cloud name:', process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'NOT SET');
       
       const response = await this.client.get<GalleryImage[]>(this.galleryUrl, {
         params: filters
       });
       
-      console.log(`✅ GalleryService: Received ${response.length} images from API`);
+      console.log(`✅ GalleryService: Received ${response.length} images from ${targetFolder} folder`);
       
       // Add responsive image URLs for each image
-      const imagesWithUrls = response.map(image => ({
-        ...image,
-        thumbnailUrl: this.getResponsiveUrl(image.publicId, 'thumbnail'),
-        mediumUrl: this.getResponsiveUrl(image.publicId, 'medium'),
-        largeUrl: this.getResponsiveUrl(image.publicId, 'large')
-      }));
+      const imagesWithUrls = response.map(image => {
+        return {
+          ...image,
+          thumbnailUrl: image.thumbnailUrl || this.getResponsiveUrl(image.publicId, 'thumbnail', image.url),
+          mediumUrl: image.mediumUrl || this.getResponsiveUrl(image.publicId, 'medium', image.url),
+          largeUrl: image.largeUrl || this.getResponsiveUrl(image.publicId, 'large', image.url)
+        };
+      });
       
       console.log('🖼️ Sample image with URLs:', imagesWithUrls[0]);
       
@@ -73,6 +78,27 @@ export class GalleryService {
    */
   async getImagesByStyle(style: string): Promise<GalleryImage[]> {
     return this.getGalleryImages({ style });
+  }
+
+  /**
+   * Get images from site_content folder (for hero images, backgrounds, etc.)
+   */
+  async getSiteContentImages(filters?: Omit<GalleryFilters, 'folder'>): Promise<GalleryImage[]> {
+    return this.getGalleryImages({ ...filters, folder: 'site_content' });
+  }
+
+  /**
+   * Get images from shop_content folder (for tattoo gallery)
+   */
+  async getShopGalleryImages(filters?: Omit<GalleryFilters, 'folder'>): Promise<GalleryImage[]> {
+    return this.getGalleryImages({ ...filters, folder: 'shop_content' });
+  }
+
+  /**
+   * Get images from any custom folder
+   */
+  async getImagesByFolder(folder: string, filters?: Omit<GalleryFilters, 'folder'>): Promise<GalleryImage[]> {
+    return this.getGalleryImages({ ...filters, folder });
   }
 
   /**
@@ -104,10 +130,22 @@ export class GalleryService {
   }
 
   /**
+   * Extract cloud name from an existing Cloudinary URL
+   */
+  private getCloudNameFromUrl(url: string): string {
+    const match = url.match(/res\.cloudinary\.com\/([^\/]+)/);
+    return match ? match[1] : 'demo';
+  }
+
+  /**
    * Generate responsive image URL for different sizes
    */
-  private getResponsiveUrl(publicId: string, size: 'thumbnail' | 'medium' | 'large'): string {
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo';
+  private getResponsiveUrl(publicId: string, size: 'thumbnail' | 'medium' | 'large', existingUrl?: string): string {
+    // Try to get cloud name from existing URL first, then fallback to env var
+    const cloudName = existingUrl 
+      ? this.getCloudNameFromUrl(existingUrl)
+      : process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo';
+    
     const baseUrl = `https://res.cloudinary.com/${cloudName}/image/upload`;
     
     const transformations = {
@@ -122,8 +160,12 @@ export class GalleryService {
   /**
    * Get optimized URL for gallery display
    */
-  getOptimizedUrl(publicId: string, width?: number, height?: number): string {
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo';
+  getOptimizedUrl(publicId: string, width?: number, height?: number, existingUrl?: string): string {
+    // Try to get cloud name from existing URL first, then fallback to env var
+    const cloudName = existingUrl 
+      ? this.getCloudNameFromUrl(existingUrl)
+      : process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo';
+    
     const baseUrl = `https://res.cloudinary.com/${cloudName}/image/upload`;
     
     let transformation = 'q_auto,f_auto';

@@ -180,22 +180,33 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify, _options) => {
     }
   });
 
-  // Get gallery images from shop_content folder
+  // Get gallery images from specified folder (defaults to shop_content for backward compatibility)
   fastify.get('/gallery', async (request, reply) => {
     try {
-      const { artist, style, tags, limit } = request.query as {
+      const { artist, style, tags, limit, folder } = request.query as {
         artist?: string;
         style?: string;
         tags?: string[];
         limit?: string;
+        folder?: string;
       };
       
-      console.log('🖼️ Gallery: Fetching shop gallery images...');
+      // Default to shop_content for backward compatibility
+      const targetFolder = folder || 'shop_content';
+      console.log(`🖼️ Gallery: Fetching images from ${targetFolder} folder...`);
       
-      // Get all shop gallery images
-      let images = await CloudinaryService.getShopGalleryImages();
+      // Get images from specified folder
+      let images: any[] = [];
+      if (targetFolder === 'shop_content') {
+        images = await CloudinaryService.getShopGalleryImages();
+      } else if (targetFolder === 'site_content') {
+        images = await CloudinaryService.getSiteContentImages();
+      } else {
+        // Use generic folder fetcher for other folders
+        images = await CloudinaryService.getGalleryImagesByFolder(targetFolder);
+      }
       
-      console.log(`🖼️ Gallery: Found ${images.length} images in shop_content folder`);
+      console.log(`🖼️ Gallery: Found ${images.length} images in ${targetFolder} folder`);
       
       // Apply filters if provided
       if (artist) {

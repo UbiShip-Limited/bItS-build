@@ -34,6 +34,9 @@ export const CLOUDINARY_FOLDERS = {
   // Shop gallery content (managed by admin)
   SHOP_CONTENT: 'shop_content',
   
+  // Site content (hero images, backgrounds, UI assets)
+  SITE_CONTENT: 'site_content',
+  
   // Customer uploaded images (tattoo requests, reference images)
   CUSTOMER_UPLOADS: 'customer_uploads',
   
@@ -235,16 +238,19 @@ export const uploadImage = async (
 };
 
 /**
- * Query shop gallery images from shop_content folder
+ * Generic function to query gallery images from any folder
  */
-export const getShopGalleryImages = async (): Promise<GalleryImage[]> => {
+export const getGalleryImagesByFolder = async (
+  folder: string, 
+  maxResults: number = 100
+): Promise<GalleryImage[]> => {
   try {
     const result = await cloudinary.search
-      .expression(`folder:${CLOUDINARY_FOLDERS.SHOP_CONTENT}`)
+      .expression(`folder:${folder}`)
       .with_field('tags')
       .with_field('context')
       .sort_by('created_at', 'desc')
-      .max_results(100)
+      .max_results(maxResults)
       .execute();
     
     return result.resources.map((resource: any) => ({
@@ -259,9 +265,23 @@ export const getShopGalleryImages = async (): Promise<GalleryImage[]> => {
       tags: resource.tags || []
     }));
   } catch (error) {
-    console.error('Error fetching gallery images:', error);
+    console.error(`Error fetching gallery images from ${folder}:`, error);
     return [];
   }
+};
+
+/**
+ * Query shop gallery images from shop_content folder (backward compatibility)
+ */
+export const getShopGalleryImages = async (): Promise<GalleryImage[]> => {
+  return getGalleryImagesByFolder(CLOUDINARY_FOLDERS.SHOP_CONTENT);
+};
+
+/**
+ * Query site content images from site_content folder
+ */
+export const getSiteContentImages = async (): Promise<GalleryImage[]> => {
+  return getGalleryImagesByFolder(CLOUDINARY_FOLDERS.SITE_CONTENT);
 };
 
 /**
@@ -423,7 +443,9 @@ const CloudinaryService = {
   generateUploadSignature,
   generateTattooRequestUploadSignature,
   uploadImage,
+  getGalleryImagesByFolder,
   getShopGalleryImages,
+  getSiteContentImages,
   getCustomerUploadedImages,
   getTattooRequestImages,
   transferImagesToCustomer,

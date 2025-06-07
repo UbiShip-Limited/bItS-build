@@ -3,7 +3,6 @@ import { authorize } from '../../middleware/auth';
 import PaymentService from '../../services/paymentService';
 import PaymentLinkService from '../../services/paymentLinkService';
 import { PaymentType } from '../../services/paymentService';
-import '../../types/fastify'; // Import type extensions
 
 // Type definitions for request bodies
 interface CreatePaymentBody {
@@ -145,7 +144,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
         case 'payment_link':
           const paymentLinkResult = await paymentLinkService.createPaymentLink({
             amount: paymentData.amount,
-            title: paymentData.title,
+            title: paymentData.title || '',
             description: paymentData.description,
             customerId: paymentData.customerId,
             appointmentId: paymentData.appointmentId,
@@ -167,7 +166,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
             customerId: paymentData.customerId,
             appointmentId: paymentData.appointmentId,
             tattooRequestId: paymentData.tattooRequestId,
-            items: paymentData.items,
+            items: paymentData.items || [],
             paymentSchedule: paymentData.paymentSchedule,
             deliveryMethod: paymentData.deliveryMethod || 'EMAIL'
           });

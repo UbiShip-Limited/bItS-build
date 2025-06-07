@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookingType, BookingStatus } from '@/src/lib/api/services/appointmentApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
-import CustomerSelector from '@/src/components/ui/CustomerSelector';
+import CustomerSelector from '@/src/components/dashboard/CustomerSelector';
 import Modal from '@/src/components/ui/Modal';
 import CustomerForm from '@/src/components/forms/CustomerForm';
 

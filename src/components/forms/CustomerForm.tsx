@@ -106,6 +106,19 @@ export default function CustomerForm({
     setLoading(true);
     setError(null);
 
+    // Client-side validation
+    if (!formData.name.trim()) {
+      setError('Name is required');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
     try {
       let customerId: string;
       
@@ -136,8 +149,8 @@ export default function CustomerForm({
       if (selectedRequestId || tattooRequestId) {
         const requestId = selectedRequestId || tattooRequestId;
         try {
-          // Update the tattoo request to link it with the customer
-          await apiClient.put(`/tattoo-requests/${requestId}`, {
+          // Update the tattoo request to link it with the customer using proper API method
+          await tattooRequestService.update(requestId!, {
             customerId: customerId
           });
         } catch (err) {

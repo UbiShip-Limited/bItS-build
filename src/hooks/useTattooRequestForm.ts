@@ -152,16 +152,8 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
     setError(null);
     
     try {
-      // Create a temporary tattoo request ID for upload organization
-      // In production, you might want to create a pending request first
-      const tempRequestId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Upload images with proper metadata for tattoo requests
-      const uploadedImages = await imageUploadService.uploadTattooRequestImages(
-        files,
-        tempRequestId
-        // Note: No customerId since this is an anonymous request initially
-      );
+      // Upload images directly to Cloudinary for tattoo requests
+      const uploadedImages = await imageUploadService.uploadTattooRequestImages(files);
       
       // Update form data with uploaded images
       setFormData(prev => ({
@@ -192,7 +184,7 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
     }
     
     try {
-      // First, create the tattoo request
+      // Prepare the tattoo request data
       const requestData = {
         contactEmail: formData.contactEmail,
         contactPhone: formData.contactPhone,
@@ -206,6 +198,7 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
         timeframe: formData.timeframe,
         contactPreference: formData.contactPreference,
         additionalNotes: formData.additionalNotes,
+        // Include reference images directly in the creation
         referenceImages: formData.referenceImages
           .filter(img => img.publicId)
           .map(img => ({
@@ -214,23 +207,8 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
           }))
       };
       
+      // Create the tattoo request with all data including images
       const tattooRequestData = await tattooRequestClient.create(requestData);
-      
-      // If we have uploaded images with publicIds, link them to the tattoo request
-      if (formData.referenceImages.length > 0 && tattooRequestData.id) {
-        try {
-          const publicIds = formData.referenceImages
-            .filter(img => img.publicId)
-            .map(img => img.publicId!);
-          
-          if (publicIds.length > 0) {
-            await tattooRequestClient.linkImagesToRequest(tattooRequestData.id, publicIds);
-          }
-        } catch (imageError) {
-          console.warn('Failed to link images to tattoo request:', imageError);
-          // Don't fail the whole request if image linking fails
-        }
-      }
       
       setSuccess(true);
       setResponse(tattooRequestData);
@@ -240,8 +218,6 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
       setIsLoading(false);
     }
   };
-  
-
   
   const resetForm = () => {
     setFormData({

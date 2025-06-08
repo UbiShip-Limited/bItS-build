@@ -65,7 +65,7 @@ export function AboutBowenIslandSection() {
       </div>
 
       {/* Section Header */}
-      <div className="relative z-10 text-center py-16 px-8">
+      <div className="relative z-10 text-center py-12 px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -84,7 +84,7 @@ export function AboutBowenIslandSection() {
           <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl text-white mb-4 tracking-wide uppercase">
             About
           </h2>
-          <p className="font-body text-xl text-[#C9A449]/80 mb-6 uppercase tracking-widest font-light">
+          <p className="font-body text-xl text-[#C9A449]/80 mb-4 uppercase tracking-widest font-light">
             Bowen Island Tattoo
           </p>
 
@@ -100,7 +100,7 @@ export function AboutBowenIslandSection() {
       {/* Section 1 - The Studio */}
       <div
         ref={section1Ref}
-        className="relative z-10 min-h-screen flex flex-col md:flex-row items-center py-20 px-8 md:px-16 lg:px-24"
+        className="relative z-10 min-h-screen flex flex-col md:flex-row items-center py-16 px-8 md:px-16 lg:px-24"
       >
         <div className="w-full md:w-1/2 mb-10 md:mb-0 overflow-hidden">
           <motion.div

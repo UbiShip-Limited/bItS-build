@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "./button"
 import { ChevronRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -193,25 +194,29 @@ export function TattooHero() {
             className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 w-full sm:w-auto"
             variants={itemVariants}
           >
-            <Button
-              className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 w-full sm:w-auto px-6 h-14"
-              size="lg"
-            >
-              <span className="relative z-10 flex items-center font-body tracking-widest uppercase text-sm md:text-sm font-medium">
-                Book Your Session
-                <ChevronRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
-              </span>
-            </Button>
+            <Link href="/tattooRequest">
+              <Button
+                className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 w-full sm:w-auto px-6 h-14"
+                size="lg"
+              >
+                <span className="relative z-10 flex items-center font-body tracking-widest uppercase text-sm md:text-sm font-medium">
+                  Book Your Session
+                  <ChevronRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+              </Button>
+            </Link>
 
-            <Button
-              variant="outline"
-              className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white hover:border-white/40 transition-all duration-300 w-full sm:w-auto px-6 h-14"
-              size="lg"
-            >
-              <span className="font-body tracking-widest uppercase text-sm md:text-sm font-medium">
-                Explore Gallery
-              </span>
-            </Button>
+            <Link href="/gallery">
+              <Button
+                variant="outline"
+                className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white hover:border-white/40 transition-all duration-300 w-full sm:w-auto px-6 h-14"
+                size="lg"
+              >
+                <span className="font-body tracking-widest uppercase text-sm md:text-sm font-medium">
+                  Explore Gallery
+                </span>
+              </Button>
+            </Link>
           </motion.div>
         </motion.div>
 

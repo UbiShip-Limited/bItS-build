@@ -19,10 +19,6 @@ export function DynamicGallery() {
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<GalleryImage | null>(null);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const [artists, setArtists] = useState<string[]>([]);
-  const [styles, setStyles] = useState<string[]>([]);
-  const [selectedArtist, setSelectedArtist] = useState<string>('');
-  const [selectedStyle, setSelectedStyle] = useState<string>('');
 
   // Ref for the gallery container
   const galleryRef = useRef<HTMLDivElement>(null);
@@ -32,13 +28,6 @@ export function DynamicGallery() {
     loadGalleryData();
   }, []);
 
-  // Load filtered data when filters change
-  useEffect(() => {
-    if (!loading) {
-      loadFilteredData();
-    }
-  }, [selectedArtist, selectedStyle]);
-
   const loadGalleryData = async () => {
     try {
       setLoading(true);
@@ -46,48 +35,19 @@ export function DynamicGallery() {
       
       console.log('🖼️ Frontend: Loading gallery data...');
       
-      // Load LIMITED gallery images (15) and metadata to reduce costs
-      const [images, artistsList, stylesList] = await Promise.all([
-        galleryService.getGalleryImages({ limit: 15 }), // 🎯 Cost optimization: Only fetch 15 images
-        galleryService.getArtists(),
-        galleryService.getStyles()
-      ]);
+      // Load LIMITED gallery images (15) to reduce costs
+      const images = await galleryService.getGalleryImages({ limit: 15 }); // 🎯 Cost optimization: Only fetch 15 images
       
       console.log(`🖼️ Frontend: Loaded ${images.length} images (limited for cost optimization)`);
-      console.log('🎨 Artists:', artistsList);
-      console.log('🎭 Styles:', stylesList);
       console.log('📸 Sample image:', images[0]);
       
       setGalleryItems(images);
-      setArtists(artistsList);
-      setStyles(stylesList);
     } catch (err) {
       console.error('❌ Frontend: Failed to load gallery:', err);
       setError('Failed to load gallery images. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const loadFilteredData = async () => {
-    try {
-      setError(null);
-      
-      const filters: any = { limit: 15 }; // Always limit to 15 images for cost optimization
-      if (selectedArtist) filters.artist = selectedArtist;
-      if (selectedStyle) filters.style = selectedStyle;
-      
-      const images = await galleryService.getGalleryImages(filters);
-      setGalleryItems(images);
-    } catch (err) {
-      console.error('Failed to load filtered gallery:', err);
-      setError('Failed to load filtered images.');
-    }
-  };
-
-  const resetFilters = () => {
-    setSelectedArtist('');
-    setSelectedStyle('');
   };
 
   // Handle escape key for modal
@@ -141,48 +101,16 @@ export function DynamicGallery() {
           </div>
           <div className="h-[2px] w-40 mx-auto bg-gradient-to-r from-[#C9A449] to-[#C9A449]/0 mb-2"></div>
           <div className="h-[2px] w-40 mx-auto bg-gradient-to-l from-[#C9A449] to-[#C9A449]/0 mb-6"></div>
-          <p className="text-white/80 max-w-2xl mx-auto font-body">
+          <p className="text-white/80 max-w-2xl mx-auto font-body mb-4 text-xl">
             A curated selection from our extensive portfolio. Each piece represents our commitment to quality,
             creativity, and personal expression.
           </p>
-          <p className="text-[#C9A449]/80 text-sm font-body mt-2">
+          <p className="text-[#C9A449]/80 text-xl font-body mt-2">
             View our complete collection during your private consultation
           </p>
         </div>
 
-        {/* Filter Controls */}
-        <div className="mb-8 flex flex-wrap justify-center gap-4">
-          <select
-            value={selectedArtist}
-            onChange={(e) => setSelectedArtist(e.target.value)}
-            className="bg-[#444444] text-white border border-[#C9A449]/30 rounded-lg px-4 py-2 font-body"
-          >
-            <option value="">All Artists</option>
-            {artists.map((artist) => (
-              <option key={artist} value={artist}>{artist}</option>
-            ))}
-          </select>
-          
-          <select
-            value={selectedStyle}
-            onChange={(e) => setSelectedStyle(e.target.value)}
-            className="bg-[#444444] text-white border border-[#C9A449]/30 rounded-lg px-4 py-2 font-body"
-          >
-            <option value="">All Styles</option>
-            {styles.map((style) => (
-              <option key={style} value={style}>{style}</option>
-            ))}
-          </select>
-          
-          {(selectedArtist || selectedStyle) && (
-            <button
-              onClick={resetFilters}
-              className="bg-[#C9A449]/20 text-[#C9A449] border border-[#C9A449]/30 rounded-lg px-4 py-2 hover:bg-[#C9A449]/30 transition-colors font-body"
-            >
-              Clear Filters
-            </button>
-          )}
-        </div>
+
 
         {/* Loading State */}
         {loading && (
@@ -254,11 +182,11 @@ export function DynamicGallery() {
                         <p className="text-white font-medium font-body">
                           {item.alt === item.publicId ? 'Tattoo Artwork' : item.alt}
                         </p>
-                        <p className="text-white/70 text-sm font-body">
+                        <p className="text-white/70 text-lg font-body">
                           by {item.artist === 'Unknown Artist' ? 'Our Artists' : item.artist}
                         </p>
                       </div>
-                      <div className="bg-[#444444]/40 border border-[#C9A449]/30 text-white text-xs px-2 py-1 rounded-sm font-body">
+                      <div className="bg-[#444444]/40 border border-[#C9A449]/30 text-white text-sm px-2 py-1 rounded-sm font-body">
                         {item.style === 'Mixed' ? 'Gallery' : item.style}
                       </div>
                     </div>
@@ -360,14 +288,6 @@ export function DynamicGallery() {
         {!loading && galleryItems.length === 0 && (
           <div className="text-center py-20">
             <p className="text-white/60 text-xl mb-4">No images found</p>
-            {(selectedArtist || selectedStyle) && (
-              <button
-                onClick={resetFilters}
-                className="bg-[#C9A449] text-[#080808] px-6 py-3 rounded-lg hover:bg-[#C9A449]/80 transition-colors"
-              >
-                Clear Filters
-              </button>
-            )}
           </div>
         )}
       </div>

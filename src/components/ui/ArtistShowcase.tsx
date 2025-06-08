@@ -10,7 +10,7 @@ export function ArtistShowcase() {
   const [imageLoaded, setImageLoaded] = useState(false)
 
   return (
-    <section className="min-h-screen bg-[#080808] text-white relative overflow-hidden">
+    <section className="min-h-screen bg-[#080808] text-white relative overflow-hidden mb">
       {/* Atmospheric background elements */}
       <div className="absolute inset-0 z-0">
         {/* Subtle gradient vignette for dark room effect */}

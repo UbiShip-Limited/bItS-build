@@ -65,6 +65,7 @@ export interface CreateTattooRequestPayload {
 export interface UpdateTattooRequestPayload {
   status?: string;
   notes?: string;
+  customerId?: string;
 }
 
 export interface TattooRequestFormData {
@@ -160,29 +161,11 @@ export class TattooRequestApiClient {
   }
 
   /**
-   * Submit a new tattoo request (anonymous)
-   */
-  async submitTattooRequest(formData: TattooRequestFormData): Promise<TattooRequestResponse> {
-    const response = await this.client.post<TattooRequestResponse>(this.baseUrl, formData);
-    return response;
-  }
-
-  /**
    * Get a tattoo request by ID
    */
   async getTattooRequestById(id: string): Promise<TattooRequestResponse> {
     const response = await this.client.get<TattooRequestResponse>(`${this.baseUrl}/${id}`);
     return response;
-  }
-
-  /**
-   * Link existing Cloudinary images to a tattoo request
-   * Used when images are uploaded before request creation
-   */
-  async linkImagesToRequest(requestId: string, publicIds: string[]): Promise<{ message: string; linkedCount: number }> {
-    return this.client.post<{ message: string; linkedCount: number }>(`${this.baseUrl}/${requestId}/link-images`, {
-      publicIds
-    });
   }
 }
 

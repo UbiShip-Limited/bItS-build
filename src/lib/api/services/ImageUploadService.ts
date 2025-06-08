@@ -108,20 +108,10 @@ export class ImageUploadService {
    * Uses backend endpoint that handles Cloudinary upload with proper tagging and metadata
    */
   async uploadTattooRequestImages(
-    files: File[], 
-    tattooRequestId?: string, 
-    customerId?: string
+    files: File[]
   ): Promise<ImageUploadResponse[]> {
     try {
       const formData = new FormData();
-      
-      // Add metadata fields
-      if (tattooRequestId) {
-        formData.append('tattooRequestId', tattooRequestId);
-      }
-      if (customerId) {
-        formData.append('customerId', customerId);
-      }
       
       // Add all files
       files.forEach((file) => {

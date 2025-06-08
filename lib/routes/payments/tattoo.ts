@@ -40,8 +40,8 @@ interface TattooRequestFinalUpdate {
 
 const tattooRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize services
-  const paymentService = new PaymentService();
-  const bookingService = new BookingService();
+  const paymentService = new PaymentService(fastify.prisma);
+  const bookingService = new BookingService(fastify.prisma);
 
   // POST /payments/tattoo-deposit - Process a tattoo deposit payment
   fastify.post('/tattoo-deposit', {

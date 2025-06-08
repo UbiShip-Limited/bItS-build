@@ -3,6 +3,7 @@
 import { useRef } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
 import Image from "next/image"
+import Link from "next/link"
 
 export function AboutBowenIslandSection() {
   // Refs for each section
@@ -84,7 +85,7 @@ export function AboutBowenIslandSection() {
           <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl text-white mb-4 tracking-wide uppercase">
             About
           </h2>
-          <p className="font-body text-xl text-[#C9A449]/80 mb-4 uppercase tracking-widest font-light">
+          <p className="font-body text-2xl text-[#C9A449]/80 mb-4 uppercase tracking-widest font-light">
             Bowen Island Tattoo
           </p>
 
@@ -136,7 +137,7 @@ export function AboutBowenIslandSection() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             {/* Accent label */}
-            <div className="inline-block bg-transparent border border-[#C9A449]/50 px-3 py-1 text-xs font-semibold text-[#C9A449] mb-4 uppercase tracking-widest font-body">
+            <div className="inline-block bg-transparent border border-[#C9A449]/50 px-3 py-1 text-sm font-semibold text-[#C9A449] mb-4 uppercase tracking-widest font-body">
               Private
             </div>
 
@@ -150,12 +151,12 @@ export function AboutBowenIslandSection() {
               <div className="w-2 h-2 border border-[#C9A449]/50 rotate-45 mx-3"></div>
             </div>
 
-            <p className="font-body text-white/90 mb-6 text-lg leading-relaxed">
+            <p className="font-body text-white/90 mb-6 text-xl leading-relaxed">
               Nestled on the serene Bowen Island, our private studio offers an intimate and tranquil environment 
               unlike any traditional tattoo parlor. Away from the hustle and bustle of the city, we provide 
               a peaceful sanctuary where artistry and personal expression flourish.
             </p>
-            <p className="font-body text-white/80 text-lg leading-relaxed italic">
+            <p className="font-body text-white/80 text-xl leading-relaxed italic">
               Every detail of our studio has been carefully curated to ensure your comfort and privacy. 
               From the moment you step through our doors, you'll experience the difference that a truly 
               personalized, boutique approach makes to your tattoo journey.
@@ -164,7 +165,7 @@ export function AboutBowenIslandSection() {
         </div>
       </div>
 
-      {/* Section 2 - The Artist */}
+      {/* Section 2 - The Setting */}
       <div
         ref={section2Ref}
         className="relative z-10 min-h-screen flex flex-col md:flex-row-reverse items-center py-20 px-8 md:px-16 lg:px-24 bg-black/20"
@@ -204,11 +205,11 @@ export function AboutBowenIslandSection() {
           >
             {/* Accent label */}
             <div className="inline-block bg-transparent border border-[#C9A449]/50 px-3 py-1 text-xs font-semibold text-[#C9A449] mb-4 uppercase tracking-widest font-body">
-              Master
+              Island Life
             </div>
 
             <h2 className="font-heading text-4xl md:text-5xl mb-4 text-white drop-shadow-[0_0_8px_rgba(201,164,73,0.3)] tracking-wide">
-              THE ARTIST
+              THE SETTING
             </h2>
             
             {/* Ornamental divider */}
@@ -218,20 +219,21 @@ export function AboutBowenIslandSection() {
             </div>
 
             <p className="font-body text-white/90 mb-6 text-lg leading-relaxed">
-              With over a decade of experience in the tattoo industry, our resident artist brings both technical 
-              mastery and artistic vision to every piece. Specializing in realism, nature-inspired designs, 
-              and custom artwork, each tattoo is approached as a unique collaboration.
+              Bowen Island offers more than just a location—it provides an escape. Just a short ferry ride 
+              from Vancouver, our studio is situated in a place where time slows down and nature's beauty 
+              becomes part of your tattoo journey. This isn't just about getting a tattoo; it's about the 
+              experience of disconnecting from the urban rush.
             </p>
             <p className="font-body text-white/80 text-lg leading-relaxed italic">
-              Our philosophy centers on understanding your story and translating it into meaningful, lasting art. 
-              From initial concept to final healing, we're committed to exceeding your expectations while 
-              maintaining the highest standards of safety and professionalism.
+              The island's serene atmosphere creates the perfect environment for thoughtful, intentional 
+              tattooing. Here, surrounded by forest and ocean, you'll find the mental space to truly 
+              connect with your artistic vision and the meaning behind your chosen piece.
             </p>
           </motion.div>
         </div>
       </div>
 
-      {/* Section 3 - The Experience */}
+      {/* Section 3 - The Product */}
       <div
         ref={section3Ref}
         className="relative z-10 min-h-screen flex flex-col md:flex-row items-center py-20 px-8 md:px-16 lg:px-24"
@@ -271,11 +273,11 @@ export function AboutBowenIslandSection() {
           >
             {/* Accent label */}
             <div className="inline-block bg-transparent border border-[#C9A449]/50 px-3 py-1 text-xs font-semibold text-[#C9A449] mb-4 uppercase tracking-widest font-body">
-              Bespoke
+              Excellence
             </div>
 
             <h2 className="font-heading text-4xl md:text-5xl mb-4 text-white drop-shadow-[0_0_8px_rgba(201,164,73,0.3)] tracking-wide">
-              THE EXPERIENCE
+              THE PRODUCT
             </h2>
             
             {/* Ornamental divider */}
@@ -285,22 +287,27 @@ export function AboutBowenIslandSection() {
             </div>
 
             <p className="font-body text-white/90 mb-6 text-lg leading-relaxed">
-              Your tattoo journey begins with an in-depth consultation where we explore your vision, discuss 
-              design possibilities, and plan every detail. We believe that the process should be as memorable 
-              and meaningful as the final artwork itself.
+              At Bowen Island Tattoo, we don't just create tattoos—we craft lifelong pieces of art. Our 
+              approach combines technical precision with artistic innovation, using only the highest quality 
+              materials and most advanced techniques. Every piece is meticulously planned, expertly executed, 
+              and given the time it deserves to achieve perfection.
             </p>
             <p className="font-body text-white/80 text-lg leading-relaxed italic">
-              From custom design creation to aftercare guidance, we provide comprehensive support throughout 
-              your entire experience. Our commitment extends beyond the tattoo session, ensuring your piece 
-              heals beautifully and remains vibrant for years to come.
+              We distinguish ourselves through our unwavering commitment to quality, cleanliness, and 
+              attention to detail. From the initial consultation to the final healing process, we ensure 
+              every aspect of your tattoo meets our exacting standards. This is why our clients trust us 
+              with their most meaningful pieces and return time after time.
             </p>
 
             {/* CTA Button */}
             <div className="mt-8">
-              <button className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 px-8 py-4 font-body tracking-widest uppercase text-sm font-medium">
-                <span className="relative z-10">Schedule Consultation</span>
+              <Link 
+                href="/tattooRequest" 
+                className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 px-8 py-4 font-body tracking-widest uppercase text-sm font-medium"
+              >
+                <span className="relative z-10">Begin Your Journey</span>
                 <div className="absolute inset-0 bg-[#C9A449]/5 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
-              </button>
+              </Link>
             </div>
           </motion.div>
         </div>

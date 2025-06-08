@@ -172,6 +172,13 @@ export function TattooHero() {
             Where artistry meets tranquility. A private studio experience unlike any other.
           </motion.p>
 
+          <motion.p
+            className="font-body text-xl md:text-xl text-[#FFFFFF]/80 max-w-sm md:max-w-lg mx-auto mb-5 sm:mb-6 md:mb-7 italic leading-relaxed"
+            variants={itemVariants}
+          >
+           By appointment only.
+          </motion.p>
+
           {/* Ornamental line below tagline */}
           <motion.div className="mb-6 sm:mb-7 md:mb-8 w-full" variants={itemVariants}>
             <div className="relative">

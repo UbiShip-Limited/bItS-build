@@ -1,6 +1,6 @@
- "use client";
+"use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -26,8 +26,22 @@ export function CtaSection({
   className = ""
 }: CtaSectionProps) {
   
+  // Mobile state
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
   return (
-    <div className={`bg-[#080808] py-20 px-4 md:px-8 lg:px-16 ${className}`}>
+    <div className={`bg-[#080808] py-12 md:py-20 px-4 md:px-8 lg:px-16 ${className}`}>
       <div className="container mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
@@ -37,12 +51,12 @@ export function CtaSection({
           className="text-center"
         >
           {/* Ornamental divider */}
-          <div className="flex items-center justify-center mb-8">
-            <div className="w-24 h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/60 to-transparent"></div>
-            <div className="mx-6 w-3 h-3 border border-[#C9A449]/50 rotate-45 relative">
+          <div className="flex items-center justify-center mb-6 md:mb-8">
+            <div className={`${isMobile ? 'w-16' : 'w-24'} h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/60 to-transparent`}></div>
+            <div className={`mx-4 md:mx-6 ${isMobile ? 'w-2 h-2' : 'w-3 h-3'} border border-[#C9A449]/50 rotate-45 relative`}>
               <div className="absolute inset-1 bg-[#C9A449]/30 rotate-45"></div>
             </div>
-            <div className="w-24 h-[0.5px] bg-gradient-to-l from-transparent via-[#C9A449]/60 to-transparent"></div>
+            <div className={`${isMobile ? 'w-16' : 'w-24'} h-[0.5px] bg-gradient-to-l from-transparent via-[#C9A449]/60 to-transparent`}></div>
           </div>
 
           <motion.h2 
@@ -50,7 +64,11 @@ export function CtaSection({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="font-heading text-3xl md:text-4xl lg:text-5xl text-white mb-6 tracking-wide"
+            className={`font-heading ${
+              isMobile 
+                ? 'text-2xl leading-tight' 
+                : 'text-3xl md:text-4xl lg:text-5xl'
+            } text-white mb-4 md:mb-6 tracking-wide px-2`}
           >
             {title}
           </motion.h2>
@@ -60,7 +78,11 @@ export function CtaSection({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="text-white/80 max-w-2xl mx-auto font-body mb-8 leading-relaxed text-lg"
+            className={`text-white/80 max-w-2xl mx-auto font-body mb-6 md:mb-8 leading-relaxed ${
+              isMobile 
+                ? 'text-base px-4' 
+                : 'text-lg'
+            }`}
           >
             {description}
           </motion.p>
@@ -70,11 +92,19 @@ export function CtaSection({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-8"
+            className={`flex ${
+              isMobile 
+                ? 'flex-col gap-4' 
+                : 'flex-col sm:flex-row gap-6'
+            } justify-center items-center mb-6 md:mb-8 px-4`}
           >
             <Link 
               href={primaryButtonHref}
-              className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 px-10 py-4 font-body tracking-widest uppercase text-sm font-medium shadow-[0_8px_30px_rgba(201,164,73,0.2)] hover:shadow-[0_12px_40px_rgba(201,164,73,0.4)] transform hover:scale-105"
+              className={`group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 ${
+                isMobile 
+                  ? 'w-full px-8 py-4 text-sm' 
+                  : 'px-10 py-4 text-sm'
+              } font-body tracking-widest uppercase font-medium shadow-[0_8px_30px_rgba(201,164,73,0.2)] hover:shadow-[0_12px_40px_rgba(201,164,73,0.4)] transform hover:scale-105 active:scale-95 flex items-center justify-center min-h-[48px]`}
             >
               <span className="relative z-10">{primaryButtonText}</span>
               <div className="absolute inset-0 bg-[#C9A449]/5 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
@@ -82,7 +112,11 @@ export function CtaSection({
             
             <Link
               href={secondaryButtonHref}
-              className="border border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white hover:border-white/40 transition-all duration-300 px-10 py-4 font-body tracking-widest uppercase text-sm font-medium shadow-[0_8px_30px_rgba(255,255,255,0.1)] hover:shadow-[0_12px_40px_rgba(255,255,255,0.2)] transform hover:scale-105"
+              className={`border border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white hover:border-white/40 transition-all duration-300 ${
+                isMobile 
+                  ? 'w-full px-8 py-4 text-sm' 
+                  : 'px-10 py-4 text-sm'
+              } font-body tracking-widest uppercase font-medium shadow-[0_8px_30px_rgba(255,255,255,0.1)] hover:shadow-[0_12px_40px_rgba(255,255,255,0.2)] transform hover:scale-105 active:scale-95 flex items-center justify-center min-h-[48px]`}
             >
               {secondaryButtonText}
             </Link>
@@ -93,7 +127,11 @@ export function CtaSection({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="text-[#C9A449]/60 text-sm font-body italic"
+            className={`text-[#C9A449]/60 font-body italic ${
+              isMobile 
+                ? 'text-xs px-2' 
+                : 'text-sm'
+            }`}
           >
             {tagline}
           </motion.p>
@@ -104,8 +142,9 @@ export function CtaSection({
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="mt-12 flex justify-center mb-12"
+            className={`${isMobile ? 'mt-8 mb-8' : 'mt-12 mb-12'} flex justify-center`}
           >
+            {/* Decorative elements can be added here if needed */}
           </motion.div>
         </motion.div>
       </div>

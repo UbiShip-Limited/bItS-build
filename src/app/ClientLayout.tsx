@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Header } from "@/src/components/layout/header";
 import { Footer } from "@/src/components/layout/footer";
 import { AuthProvider } from "@/src/hooks/useAuth";
+import MobileOptimizer from "./MobileOptimizer";
 
 export default function ClientLayout({
   children,
@@ -15,6 +16,9 @@ export default function ClientLayout({
 
   return (
     <AuthProvider>
+      {/* Mobile optimizations - runs after hydration */}
+      <MobileOptimizer />
+      
       {!isDashboard && <Header />}
       <main className={!isDashboard ? "pt-16 md:pt-20" : ""}>
         {children}

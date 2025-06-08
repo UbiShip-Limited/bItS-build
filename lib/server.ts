@@ -21,12 +21,15 @@ import userRoutes from './routes/users.js';
 function validateEnvironment() {
   const requiredEnvVars = {
     'DATABASE_URL': process.env.DATABASE_URL,
+    'SUPABASE_URL': process.env.SUPABASE_URL,
+    'SUPABASE_SERVICE_ROLE_KEY': process.env.SUPABASE_SERVICE_ROLE_KEY,
+  };
+
+  const squareEnvVars = {
     'SQUARE_ACCESS_TOKEN': process.env.SQUARE_ACCESS_TOKEN,
     'SQUARE_APPLICATION_ID': process.env.SQUARE_APPLICATION_ID,
     'SQUARE_LOCATION_ID': process.env.SQUARE_LOCATION_ID,
     'SQUARE_ENVIRONMENT': process.env.SQUARE_ENVIRONMENT,
-    'SUPABASE_URL': process.env.SUPABASE_URL,
-    'SUPABASE_SERVICE_ROLE_KEY': process.env.SUPABASE_SERVICE_ROLE_KEY,
   };
 
   const optionalEnvVars = {
@@ -41,6 +44,10 @@ function validateEnvironment() {
     .filter(([_, value]) => !value)
     .map(([key]) => key);
 
+  const missingSquare = Object.entries(squareEnvVars)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
   const missingOptional = Object.entries(optionalEnvVars)
     .filter(([_, value]) => !value)
     .map(([key]) => key);
@@ -52,16 +59,26 @@ function validateEnvironment() {
     process.exit(1);
   }
 
-  if (missingOptional.length > 0) {
-    console.warn('⚠️  Missing optional environment variables:');
-    missingOptional.forEach(env => console.warn(`   - ${env}`));
+  // Check Square configuration status
+  const hasAllSquareVars = missingSquare.length === 0;
+  if (hasAllSquareVars) {
+    const validSquareEnvs = ['sandbox', 'production'];
+    if (!validSquareEnvs.includes(process.env.SQUARE_ENVIRONMENT!)) {
+      console.error(`❌ Invalid SQUARE_ENVIRONMENT: ${process.env.SQUARE_ENVIRONMENT}`);
+      console.error(`Must be one of: ${validSquareEnvs.join(', ')}`);
+      process.exit(1);
+    }
+    console.log('✅ Square integration is configured and ready');
+  } else {
+    console.warn('⚠️  Square integration is not configured - payment features will be limited');
+    console.warn('   Missing Square environment variables:');
+    missingSquare.forEach(env => console.warn(`   - ${env}`));
+    console.warn('   Payment routes will return appropriate error messages when Square features are accessed.');
   }
 
-  const validSquareEnvs = ['sandbox', 'production'];
-  if (!validSquareEnvs.includes(process.env.SQUARE_ENVIRONMENT!)) {
-    console.error(`❌ Invalid SQUARE_ENVIRONMENT: ${process.env.SQUARE_ENVIRONMENT}`);
-    console.error(`Must be one of: ${validSquareEnvs.join(', ')}`);
-    process.exit(1);
+  if (missingOptional.length > 0) {
+    console.warn('ℹ️  Missing optional environment variables:');
+    missingOptional.forEach(env => console.warn(`   - ${env}`));
   }
 
   console.log('✅ Environment validation passed');

@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authorize } from '../../middleware/auth';
+import { authorize, getUserPermissions } from '../../middleware/auth';
 import PaymentService from '../../services/paymentService';
 import PaymentLinkService from '../../services/paymentLinkService';
 import { PaymentType } from '../../services/paymentService';
@@ -50,54 +50,165 @@ interface PaymentQueryParams {
   endDate?: string;
 }
 
+// Helper function to check if Square is configured
+function isSquareConfigured(): boolean {
+  const { 
+    SQUARE_ACCESS_TOKEN,
+    SQUARE_APPLICATION_ID,
+    SQUARE_LOCATION_ID
+  } = process.env;
+  
+  return !!(SQUARE_ACCESS_TOKEN && SQUARE_APPLICATION_ID && SQUARE_LOCATION_ID);
+}
+
 const coreRoutes: FastifyPluginAsync = async (fastify) => {
+  // Check Square configuration on startup and log status
+  const squareConfigured = isSquareConfigured();
+  if (squareConfigured) {
+    fastify.log.info('✅ Core payment routes: Square integration is configured and ready');
+  } else {
+    fastify.log.warn('⚠️  Core payment routes: Square integration is not configured - Square-related payment features will be disabled');
+  }
+
   // Initialize services
-  const paymentService = new PaymentService();
-  const paymentLinkService = new PaymentLinkService();
+  const paymentService = new PaymentService(fastify.prisma);
+  const paymentLinkService = new PaymentLinkService(fastify.prisma);
   
   fastify.log.info('🔄 Registering core payment routes...');
 
-  // GET /payments - List payments (accessible by admin and artist)
+  // GET /payments - Get customer's payments with optional Square data
   fastify.get('/', {
-    preHandler: authorize(['admin', 'artist']),
+    preHandler: authorize(['artist', 'admin']),
     schema: {
       querystring: {
         type: 'object',
         properties: {
+          customerId: { type: 'string' },
+          status: { type: 'string', enum: ['pending', 'completed', 'failed', 'refunded'] },
           page: { type: 'integer', minimum: 1, default: 1 },
           limit: { type: 'integer', minimum: 1, maximum: 100, default: 20 },
-          status: { type: 'string', enum: ['pending', 'completed', 'failed', 'refunded'] },
-          customerId: { type: 'string' },
-          paymentType: { type: 'string' },
-          startDate: { type: 'string' },
-          endDate: { type: 'string' }
+          includeSquare: { type: 'boolean', default: false }
         }
       }
     }
-  }, async (request) => {
-    fastify.log.info(`💰 Processing payment list request with query: ${JSON.stringify(request.query)}`);
-    const { 
-      page = 1, 
-      limit = 20, 
-      status, 
-      customerId, 
-      paymentType, 
-      startDate, 
-      endDate 
-    } = request.query as PaymentQueryParams;
+  }, async (request, reply) => {
+    const { customerId, status, page = 1, limit = 20, includeSquare = false } = request.query as any;
+    
+    // Validate customer exists if customerId is provided
+    if (customerId) {
+      const customerExists = await fastify.prisma.customer.findUnique({
+        where: { id: customerId },
+        select: { id: true, name: true }
+      });
+      
+      if (!customerExists) {
+        return reply.status(404).send({
+          error: 'Customer not found',
+          message: `Customer with ID ${customerId} does not exist`,
+          code: 'CUSTOMER_NOT_FOUND',
+          squareConfigured: isSquareConfigured()
+        });
+      }
+    }
+    
+    // Build where clause for payment filtering
+    let whereClause: any = {};
+    
+    // Artists and admins can filter by specific customer
+    if (customerId) {
+      whereClause.customerId = customerId;
+    }
+    
+    if (status) {
+      whereClause.status = status;
+    }
 
-    const params = {
-      page,
-      limit,
-      status,
-      customerId,
-      paymentType: paymentType as PaymentType,
-      startDate: startDate ? new Date(startDate) : undefined,
-      endDate: endDate ? new Date(endDate) : undefined
+    const [payments, total] = await Promise.all([
+      fastify.prisma.payment.findMany({
+        where: whereClause,
+        include: { 
+          invoices: true,
+          customer: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          }
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        orderBy: { createdAt: 'desc' }
+      }),
+      fastify.prisma.payment.count({ where: whereClause })
+    ]);
+
+    // Determine appropriate message for the response
+    let message: string;
+    if (payments.length === 0) {
+      if (customerId && status) {
+        message = `No ${status} payments found for this customer`;
+      } else if (customerId) {
+        message = 'No payments found for this customer';
+      } else if (status) {
+        message = `No ${status} payments found`;
+      } else {
+        message = 'No payments found. This could mean no payments have been recorded yet.';
+      }
+    } else {
+      message = `Found ${total} payment${total !== 1 ? 's' : ''}`;
+    }
+
+    // Build base response
+    const response = {
+      data: payments,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit),
+        hasNextPage: page < Math.ceil(total / limit),
+        hasPreviousPage: page > 1
+      },
+      squareConfigured: isSquareConfigured(),
+      meta: {
+        isEmpty: payments.length === 0,
+        message,
+        filters: {
+          customerId: customerId || null,
+          status: status || null
+        }
+      }
     };
 
-    const result = await paymentService.getPayments(params);
-    return result;
+    // If Square data requested and configured, enhance with Square payment data
+    if (includeSquare && isSquareConfigured()) {
+      try {
+        // Add Square payment details for payments that have Square IDs
+        for (const payment of response.data) {
+          if (payment.squareId) {
+            try {
+              // Note: This would require modifying PaymentService to handle Square client initialization gracefully
+              // For now, we'll just indicate that Square data could be available
+              (payment as any).hasSquareData = true;
+            } catch (error) {
+              fastify.log.warn(`Could not fetch Square data for payment ${payment.id}: ${error.message}`);
+              (payment as any).hasSquareData = false;
+            }
+          }
+        }
+      } catch (error) {
+        fastify.log.warn('Could not enhance payments with Square data:', error.message);
+      }
+    } else if (includeSquare && !isSquareConfigured()) {
+      return reply.status(503).send({
+        error: 'Square integration not configured',
+        message: 'Square environment variables are not set. Please contact administrator.',
+        squareConfigured: false
+      });
+    }
+
+    return response;
   });
 
   // POST /payments - Process different types of payments
@@ -213,6 +324,88 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
+  // POST /payments/process - Process a new payment through Square
+  fastify.post('/process', {
+    preHandler: authorize(['artist', 'admin']),
+    schema: {
+      body: {
+        type: 'object',
+        required: ['sourceId', 'amount', 'customerId', 'paymentType'],
+        properties: {
+          sourceId: { type: 'string' },
+          amount: { type: 'number', minimum: 0 },
+          customerId: { type: 'string' },
+          paymentType: { 
+            type: 'string', 
+            enum: ['consultation', 'deposit', 'final_payment', 'full_payment', 'touch_up', 'aftercare'] 
+          },
+          note: { type: 'string' },
+          bookingId: { type: 'string' },
+          idempotencyKey: { type: 'string' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    // Check if Square is configured before processing payments
+    if (!isSquareConfigured()) {
+      return reply.status(503).send({
+        error: 'Payment processing unavailable',
+        message: 'Square payment integration is not configured. Please contact administrator.',
+        squareConfigured: false
+      });
+    }
+
+    const paymentData = request.body as any;
+    
+    try {
+      const result = await paymentService.processPayment(paymentData);
+      
+      // Log audit
+      await fastify.prisma.auditLog.create({
+        data: {
+          userId: request.user?.id,
+          action: 'PROCESS_PAYMENT',
+          resource: 'Payment',
+          resourceId: result.payment.id,
+          details: { 
+            amount: paymentData.amount,
+            paymentType: paymentData.paymentType,
+            success: result.success
+          }
+        }
+      });
+      
+      return {
+        ...result,
+        squareConfigured: true
+      };
+    } catch (error) {
+      fastify.log.error('Error processing payment:', error);
+      
+      // Log failed payment attempt
+      await fastify.prisma.auditLog.create({
+        data: {
+          userId: request.user?.id,
+          action: 'PROCESS_PAYMENT_FAILED',
+          resource: 'Payment',
+          details: { 
+            amount: paymentData.amount,
+            paymentType: paymentData.paymentType,
+            error: error.message
+          }
+        }
+      });
+      
+      return reply.status(500).send({ 
+        error: 'Payment processing failed',
+        message: error.message,
+        squareConfigured: isSquareConfigured()
+      });
+    }
+  });
+
+
+
   // POST /payments (legacy) - Create a simple payment record
   fastify.post('/legacy', {
     preHandler: authorize(['admin']),
@@ -250,7 +443,10 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
       }
     });
     
-    return payment;
+    return {
+      ...payment,
+      squareConfigured: isSquareConfigured()
+    };
   });
 
   // PUT /payments/:id - Update payment information
@@ -284,7 +480,10 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
     });
     
     if (!original) {
-      return reply.status(404).send({ error: 'Payment not found' });
+      return reply.status(404).send({ 
+        error: 'Payment not found',
+        squareConfigured: isSquareConfigured()
+      });
     }
     
     const updated = await fastify.prisma.payment.update({
@@ -306,10 +505,152 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
       }
     });
     
-    return updated;
+    return {
+      ...updated,
+      squareConfigured: isSquareConfigured()
+    };
+  });
+
+  // GET /payments/stats - Get payment system statistics
+  fastify.get('/stats', {
+    preHandler: authorize(['artist', 'admin'])
+  }, async (request, reply) => {
+    try {
+      const [
+        totalPayments,
+        totalCustomersWithPayments,
+        paymentsByStatus,
+        recentPayments
+      ] = await Promise.all([
+        // Total payment count
+        fastify.prisma.payment.count(),
+        
+        // Count of customers who have made payments
+        fastify.prisma.payment.groupBy({
+          by: ['customerId'],
+          where: { customerId: { not: null } },
+          _count: { customerId: true }
+        }).then(result => result.length),
+        
+        // Payments grouped by status
+        fastify.prisma.payment.groupBy({
+          by: ['status'],
+          _count: { status: true },
+          orderBy: { _count: { status: 'desc' } }
+        }),
+        
+        // Most recent payments (last 5)
+        fastify.prisma.payment.findMany({
+          take: 5,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            customer: {
+              select: { id: true, name: true }
+            }
+          }
+        })
+      ]);
+
+      const stats = {
+        overview: {
+          totalPayments,
+          totalCustomersWithPayments,
+          isEmpty: totalPayments === 0,
+          hasData: totalPayments > 0
+        },
+        statusBreakdown: paymentsByStatus.map(item => ({
+          status: item.status,
+          count: item._count.status
+        })),
+        recentPayments: recentPayments.map(payment => ({
+          id: payment.id,
+          amount: payment.amount,
+          status: payment.status,
+          paymentType: payment.paymentType,
+          customer: payment.customer?.name || 'Unknown',
+          createdAt: payment.createdAt
+        })),
+        squareConfigured: isSquareConfigured()
+      };
+
+      return {
+        success: true,
+        data: stats,
+        message: totalPayments === 0 
+          ? 'No payment data found. This appears to be a fresh system or placeholder data is being used.'
+          : `Payment system contains ${totalPayments} payment${totalPayments !== 1 ? 's' : ''} from ${totalCustomersWithPayments} customer${totalCustomersWithPayments !== 1 ? 's' : ''}.`
+      };
+    } catch (error) {
+      fastify.log.error('Error fetching payment statistics:', error);
+      return reply.status(500).send({
+        error: 'Failed to fetch payment statistics',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        squareConfigured: isSquareConfigured()
+      });
+    }
+  });
+
+  // GET /payments/permissions - Get current user's payment permissions
+  fastify.get('/permissions', {
+    preHandler: authorize(['artist', 'admin'])
+  }, async (request, reply) => {
+    if (!request.user?.role) {
+      return reply.status(401).send({
+        error: 'Authentication required',
+        message: 'User role not found'
+      });
+    }
+
+    const permissions = getUserPermissions(request.user.role);
+    
+    return {
+      success: true,
+      data: {
+        ...permissions,
+        squareConfigured: isSquareConfigured(),
+        availableEndpoints: getAvailableEndpoints(request.user.role)
+      }
+    };
   });
   
   fastify.log.info('✅ Core payment routes registered successfully');
 };
+
+// Helper function to get available endpoints based on user role
+function getAvailableEndpoints(userRole: string) {
+  const endpoints = {
+    'GET /payments': ['artist', 'admin'],
+    'GET /payments/stats': ['artist', 'admin'],
+    'GET /payments/permissions': ['artist', 'admin'],
+    'POST /payments': ['artist', 'admin'], 
+    'POST /payments/process': ['artist', 'admin'],
+    'POST /payments/legacy': ['admin'],
+    'PUT /payments/:id': ['admin'],
+    'GET /payments/admin/*': ['admin'],
+    'POST /payments/links/*': ['artist', 'admin'],
+    'GET /payments/links/*': ['artist', 'admin'],
+    'DELETE /payments/links/:id': ['admin'],
+    'POST /payments/links/invoices': ['artist', 'admin'],
+    'POST /payments/links/checkout': ['artist', 'admin']
+  };
+
+  const available: string[] = [];
+  const restricted: string[] = [];
+
+  Object.entries(endpoints).forEach(([endpoint, allowedRoles]) => {
+    if (allowedRoles.includes(userRole)) {
+      available.push(endpoint);
+    } else {
+      restricted.push(endpoint);
+    }
+  });
+
+  return {
+    available,
+    restricted,
+    totalEndpoints: Object.keys(endpoints).length,
+    accessibleCount: available.length
+  };
+}
 
 export default coreRoutes;

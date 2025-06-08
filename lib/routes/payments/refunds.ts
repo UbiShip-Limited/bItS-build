@@ -4,7 +4,7 @@ import PaymentService from '../../services/paymentService';
 
 const refundRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize services
-  const paymentService = new PaymentService();
+  const paymentService = new PaymentService(fastify.prisma);
 
   // POST /payments/:id/refund - Process a payment refund
   fastify.post('/:id/refund', {

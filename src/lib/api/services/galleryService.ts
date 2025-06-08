@@ -20,6 +20,7 @@ export interface GalleryFilters {
   style?: string;
   tags?: string[];
   limit?: number;
+  offset?: number;
   folder?: string;
 }
 
@@ -33,12 +34,17 @@ export class GalleryService {
 
   /**
    * Get gallery images from specified folder (defaults to shop_content for backward compatibility)
+   * 🎯 Now supports offset for cost-effective pagination
    */
   async getGalleryImages(filters?: GalleryFilters): Promise<GalleryImage[]> {
     try {
       const targetFolder = filters?.folder || 'shop_content';
+      const offset = filters?.offset || 0;
+      const limit = filters?.limit || 15;
+      
       console.log('🔗 GalleryService: Fetching images from', this.galleryUrl);
       console.log(`📁 GalleryService: Target folder: ${targetFolder}`);
+      console.log(`📄 GalleryService: Pagination - offset: ${offset}, limit: ${limit}`);
       console.log('🌐 Cloudinary cloud name:', process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'NOT SET');
       
       const response = await this.client.get<GalleryImage[]>(this.galleryUrl, {
@@ -46,6 +52,7 @@ export class GalleryService {
       });
       
       console.log(`✅ GalleryService: Received ${response.length} images from ${targetFolder} folder`);
+      console.log(`📊 GalleryService: Cost optimization - requested ${limit} images with offset ${offset}`);
       
       // Add responsive image URLs for each image
       const imagesWithUrls = response.map(image => {
@@ -67,17 +74,50 @@ export class GalleryService {
   }
 
   /**
+   * 🎯 NEW: Get paginated gallery images with explicit offset
+   * Perfect for "Load More" functionality
+   */
+  async getPaginatedGalleryImages(
+    offset: number, 
+    limit: number, 
+    filters?: Omit<GalleryFilters, 'offset' | 'limit'>
+  ): Promise<GalleryImage[]> {
+    console.log(`🔄 GalleryService: Paginated request - offset: ${offset}, limit: ${limit}`);
+    return this.getGalleryImages({ ...filters, offset, limit });
+  }
+
+  /**
+   * 🎯 NEW: Get initial gallery images (for cost optimization)
+   */
+  async getInitialGalleryImages(count: number = 9, filters?: Omit<GalleryFilters, 'limit' | 'offset'>): Promise<GalleryImage[]> {
+    console.log(`💰 GalleryService: Initial load - requesting ${count} images for cost optimization`);
+    return this.getGalleryImages({ ...filters, limit: count, offset: 0 });
+  }
+
+  /**
+   * 🎯 NEW: Get more gallery images (for "Load More" functionality)
+   */
+  async getMoreGalleryImages(
+    currentCount: number, 
+    loadMoreCount: number = 18, 
+    filters?: Omit<GalleryFilters, 'limit' | 'offset'>
+  ): Promise<GalleryImage[]> {
+    console.log(`📈 GalleryService: Load More - current: ${currentCount}, loading: ${loadMoreCount} more`);
+    return this.getGalleryImages({ ...filters, limit: loadMoreCount, offset: currentCount });
+  }
+
+  /**
    * Get filtered gallery images by artist
    */
-  async getImagesByArtist(artist: string): Promise<GalleryImage[]> {
-    return this.getGalleryImages({ artist });
+  async getImagesByArtist(artist: string, limit?: number, offset?: number): Promise<GalleryImage[]> {
+    return this.getGalleryImages({ artist, limit, offset });
   }
 
   /**
    * Get filtered gallery images by style
    */
-  async getImagesByStyle(style: string): Promise<GalleryImage[]> {
-    return this.getGalleryImages({ style });
+  async getImagesByStyle(style: string, limit?: number, offset?: number): Promise<GalleryImage[]> {
+    return this.getGalleryImages({ style, limit, offset });
   }
 
   /**

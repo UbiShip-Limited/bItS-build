@@ -244,17 +244,16 @@ export function ArtistShowcase() {
 
                 {/* CTA Button */}
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <button className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 px-8 py-4 font-body tracking-widest uppercase text-sm font-medium">
+                  <Link 
+                    href="/tattooRequest" 
+                    className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 px-8 py-4 font-body tracking-widest uppercase text-sm font-medium"
+                  >
                     <span className="relative z-10 flex items-center">
                       Book Consultation
                       <ChevronRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                     </span>
                     <div className="absolute inset-0 bg-[#C9A449]/5 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
-                  </button>
-                  
-                  <button className="border border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white hover:border-white/40 transition-all duration-300 px-8 py-4 font-body tracking-widest uppercase text-sm font-medium">
-                    View Portfolio
-                  </button>
+                  </Link>
                 </div>
               </div>
             </motion.div>

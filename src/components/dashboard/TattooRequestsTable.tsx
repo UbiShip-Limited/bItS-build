@@ -1,24 +1,17 @@
 import { format } from 'date-fns';
-
-interface DashboardTattooRequest {
-  id: string;
-  clientName: string;
-  design: string;
-  submittedAt: string;
-  status: 'new' | 'reviewing' | 'quoted' | 'approved';
-}
+import { TattooRequest } from '../../lib/api/services/tattooRequestApiClient';
 
 interface TattooRequestsTableProps {
-  requests: DashboardTattooRequest[];
+  requests: TattooRequest[];
 }
 
 export default function TattooRequestsTable({ requests }: TattooRequestsTableProps) {
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       new: 'bg-[#C9A449]/20 text-[#C9A449] border-[#C9A449]/30',
-      reviewing: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-      quoted: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+      reviewed: 'bg-purple-500/20 text-purple-400 border-purple-500/30',
       approved: 'bg-green-500/20 text-green-400 border-green-500/30',
+      rejected: 'bg-red-500/20 text-red-400 border-red-500/30',
     };
     return statusConfig[status as keyof typeof statusConfig] || 'bg-gray-500/20 text-gray-400';
   };
@@ -44,10 +37,12 @@ export default function TattooRequestsTable({ requests }: TattooRequestsTablePro
           ) : (
             requests.map((request, index) => (
               <tr key={request.id} className="transition-colors hover:bg-[#1a1a1a]/50">
-                <td className="px-5 py-4 text-white font-medium">{request.clientName}</td>
-                <td className="px-5 py-4 text-gray-300">{request.design}</td>
+                <td className="px-5 py-4 text-white font-medium">
+                  {request.customer?.name || 'Anonymous'}
+                </td>
+                <td className="px-5 py-4 text-gray-300">{request.description}</td>
                 <td className="px-5 py-4 text-gray-300">
-                  {format(new Date(request.submittedAt), 'MMM dd')}
+                  {format(new Date(request.createdAt), 'MMM dd')}
                 </td>
                 <td className="px-5 py-4">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(request.status)}`}>

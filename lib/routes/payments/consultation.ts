@@ -14,7 +14,7 @@ interface ConsultationPaymentBody {
 
 const consultationRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize services
-  const paymentService = new PaymentService();
+  const paymentService = new PaymentService(fastify.prisma);
   const bookingService = new BookingService();
 
   // POST /payments/consultation - Process a consultation payment
@@ -64,7 +64,7 @@ const consultationRoutes: FastifyPluginAsync = async (fastify) => {
       if (bookingResult && paymentResult) {
         await fastify.prisma.appointment.update({
           where: { id: bookingResult.booking.id },
-          data: {id: paymentResult.payment.id }
+          data: { paymentId: paymentResult.payment.id }
         });
       }
       
@@ -131,7 +131,7 @@ const consultationRoutes: FastifyPluginAsync = async (fastify) => {
       if (bookingResult && paymentResult) {
         await fastify.prisma.appointment.update({
           where: { id: bookingResult.booking.id },
-          data: { id: paymentResult.payment.id }
+          data: { paymentId: paymentResult.payment.id }
         });
       }
       

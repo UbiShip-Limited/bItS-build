@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "./button"
 import { ChevronRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -171,6 +172,13 @@ export function TattooHero() {
             Where artistry meets tranquility. A private studio experience unlike any other.
           </motion.p>
 
+          <motion.p
+            className="font-body text-xl md:text-xl text-[#FFFFFF]/80 max-w-sm md:max-w-lg mx-auto mb-5 sm:mb-6 md:mb-7 italic leading-relaxed"
+            variants={itemVariants}
+          >
+           By appointment only.
+          </motion.p>
+
           {/* Ornamental line below tagline */}
           <motion.div className="mb-6 sm:mb-7 md:mb-8 w-full" variants={itemVariants}>
             <div className="relative">
@@ -193,25 +201,29 @@ export function TattooHero() {
             className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6 w-full sm:w-auto"
             variants={itemVariants}
           >
-            <Button
-              className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 w-full sm:w-auto px-6 h-14"
-              size="lg"
-            >
-              <span className="relative z-10 flex items-center font-body tracking-widest uppercase text-sm md:text-sm font-medium">
-                Book Your Session
-                <ChevronRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
-              </span>
-            </Button>
+            <Link href="/tattooRequest">
+              <Button
+                className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 w-full sm:w-auto px-6 h-14"
+                size="lg"
+              >
+                <span className="relative z-10 flex items-center font-body tracking-widest uppercase text-sm md:text-sm font-medium">
+                  Book Your Session
+                  <ChevronRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+              </Button>
+            </Link>
 
-            <Button
-              variant="outline"
-              className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white hover:border-white/40 transition-all duration-300 w-full sm:w-auto px-6 h-14"
-              size="lg"
-            >
-              <span className="font-body tracking-widest uppercase text-sm md:text-sm font-medium">
-                Explore Gallery
-              </span>
-            </Button>
+            <Link href="/gallery">
+              <Button
+                variant="outline"
+                className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white hover:border-white/40 transition-all duration-300 w-full sm:w-auto px-6 h-14"
+                size="lg"
+              >
+                <span className="font-body tracking-widest uppercase text-sm md:text-sm font-medium">
+                  Explore Gallery
+                </span>
+              </Button>
+            </Link>
           </motion.div>
         </motion.div>
 

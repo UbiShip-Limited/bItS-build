@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authorize } from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
 import { UserRole } from '../types/auth';
 import { AppointmentService } from '../services/appointmentService';
 import { SquareIntegrationService } from '../services/squareIntegrationService';
@@ -85,8 +85,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /appointments - List all appointments
   fastify.get('/', {
-    // TODO: Re-enable auth after testing
-    // preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
     schema: {
       querystring: {
         type: 'object',
@@ -124,8 +123,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
   
   // GET /appointments/:id - Get a specific appointment
   fastify.get('/:id', {
-    // TODO: Re-enable auth after testing
-    // preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
     schema: {
       params: {
         type: 'object',
@@ -143,6 +141,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
   
   // POST /appointments - Create a new appointment
   fastify.post('/', {
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
     schema: {
       body: {
         type: 'object',
@@ -220,7 +219,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
   
   // PUT /appointments/:id - Update an appointment
   fastify.put('/:id', {
-    preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
     schema: {
       params: {
         type: 'object',
@@ -281,7 +280,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
   
   // POST /appointments/:id/cancel - Cancel an appointment
   fastify.post('/:id/cancel', {
-    preHandler: authorize(['artist', 'admin'] as UserRole[]),
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
     schema: {
       params: {
         type: 'object',

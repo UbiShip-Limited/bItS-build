@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookingType, BookingStatus } from '@/src/lib/api/services/appointmentService';
+import { BookingType, BookingStatus, AppointmentApiClient } from '@/src/lib/api/services/appointmentApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
-import CustomerSelector from '@/src/components/ui/CustomerSelector';
+import CustomerSelector from '@/src/components/dashboard/CustomerSelector';
 import Modal from '@/src/components/ui/Modal';
 import CustomerForm from '@/src/components/forms/CustomerForm';
 
@@ -26,6 +26,8 @@ export default function AppointmentForm({
   const [error, setError] = useState<string | null>(null);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   
+  const appointmentClient = new AppointmentApiClient(apiClient);
+  
   const [formData, setFormData] = useState({
     customerId: customerId || appointment?.customerId || '',
     contactEmail: appointment?.contactEmail || '',
@@ -44,6 +46,31 @@ export default function AppointmentForm({
     setLoading(true);
     setError(null);
 
+    // Client-side validation
+    if (!formData.startAt) {
+      setError('Date and time is required');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.duration || formData.duration < 30) {
+      setError('Duration must be at least 30 minutes');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.isAnonymous && !formData.contactEmail) {
+      setError('Email is required for anonymous bookings');
+      setLoading(false);
+      return;
+    }
+
+    if (!formData.isAnonymous && !formData.customerId) {
+      setError('Please select a customer or choose anonymous booking');
+      setLoading(false);
+      return;
+    }
+
     try {
       const appointmentData: any = {
         startAt: new Date(formData.startAt).toISOString(),
@@ -58,24 +85,27 @@ export default function AppointmentForm({
       if (formData.isAnonymous) {
         appointmentData.contactEmail = formData.contactEmail;
         appointmentData.contactPhone = formData.contactPhone;
-      } else if (formData.customerId) {
-        appointmentData.customerId = formData.customerId;
       } else {
-        setError('Please select a customer or choose anonymous booking');
-        setLoading(false);
-        return;
+        appointmentData.customerId = formData.customerId;
       }
 
-      let response;
+      let appointmentResult;
       if (appointment) {
         // Update existing appointment
-        response = await apiClient.put(`/appointments/${appointment.id}`, appointmentData);
+        appointmentResult = await appointmentClient.updateAppointment(appointment.id, appointmentData);
       } else {
         // Create new appointment
         if (formData.isAnonymous) {
-          response = await apiClient.post('/appointments/anonymous', appointmentData);
+          appointmentResult = await appointmentClient.createAnonymousAppointment({
+            contactEmail: formData.contactEmail,
+            contactPhone: formData.contactPhone,
+            startAt: formData.startAt,
+            duration: formData.duration,
+            bookingType: formData.bookingType as BookingType.CONSULTATION | BookingType.DRAWING_CONSULTATION,
+            note: formData.note
+          });
         } else {
-          response = await apiClient.post('/appointments', appointmentData);
+          appointmentResult = await appointmentClient.createAppointment(appointmentData);
         }
       }
 

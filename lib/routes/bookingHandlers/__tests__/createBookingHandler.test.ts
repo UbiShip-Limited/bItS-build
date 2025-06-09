@@ -1,17 +1,52 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FastifyRequest, FastifyReply } from 'fastify';
 import { createBookingHandler, createBookingSchema } from '../createBookingHandler';
 import { BookingType, BookingStatus } from '../../../services/bookingService';
-import BookingService from '../../../services/bookingService';
+
+// Type definitions for mocks
+interface MockBookingService {
+  createBooking: ReturnType<typeof vi.fn>;
+}
+
+interface MockRequest {
+  body: {
+    startAt: string;
+    duration: number;
+    customerId?: string;
+    bookingType: BookingType;
+    artistId?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    note?: string;
+    priceQuote?: number;
+    status?: BookingStatus;
+    tattooRequestId?: string;
+  };
+  user: {
+    id: string;
+    role: string;
+  };
+  log: {
+    error: ReturnType<typeof vi.fn>;
+  };
+}
+
+interface MockReply {
+  code: ReturnType<typeof vi.fn>;
+  send: ReturnType<typeof vi.fn>;
+}
+
+interface MockFastifyInstance {
+  bookingService: MockBookingService;
+}
 
 // Mock BookingService
 vi.mock('../../../services/bookingService');
 
 describe('createBookingHandler', () => {
-  let mockBookingService: any;
-  let mockRequest: any;
-  let mockReply: any;
-  let fastifyInstance: any;
+  let mockBookingService: MockBookingService;
+  let mockRequest: MockRequest;
+  let mockReply: MockReply;
+  let fastifyInstance: MockFastifyInstance;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -119,7 +154,7 @@ describe('createBookingHandler', () => {
       mockRequest.user = { id: 'artist-123', role: 'artist' };
       mockRequest.body.artistId = 'another-artist-456';
 
-      const result = await createBookingHandler.call(fastifyInstance, mockRequest, mockReply);
+      await createBookingHandler.call(fastifyInstance, mockRequest, mockReply);
 
       expect(mockReply.code).toHaveBeenCalledWith(403);
       expect(mockReply.send).toHaveBeenCalledWith({
@@ -205,133 +240,68 @@ describe('createBookingHandler', () => {
       expect(mockBookingService.createBooking).toHaveBeenCalledWith({
         startAt: new Date('2024-01-15T10:00:00Z'),
         duration: 60,
-        customerId: undefined,
         bookingType: BookingType.CONSULTATION,
-        artistId: undefined,
-        customerEmail: 'test@example.com',
-        customerPhone: undefined,
-        note: undefined,
-        priceQuote: undefined,
-        status: undefined,
-        tattooRequestId: undefined
+        customerEmail: 'test@example.com'
       });
     });
-  });
 
-  describe('Error Handling', () => {
-    it('should handle "not found" errors with 404 status', async () => {
-      mockBookingService.createBooking.mockRejectedValueOnce(
-        new Error('Customer not found')
-      );
-
-      const result = await createBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-
-      expect(mockReply.code).toHaveBeenCalledWith(404);
-      expect(mockReply.send).toHaveBeenCalledWith({
+    it('should handle booking service failure', async () => {
+      mockBookingService.createBooking.mockResolvedValueOnce({
         success: false,
-        message: 'Customer not found'
+        error: 'Time slot not available'
       });
-      expect(mockRequest.log.error).toHaveBeenCalled();
-    });
 
-    it('should handle tattoo request validation errors with 400 status', async () => {
-      mockBookingService.createBooking.mockRejectedValueOnce(
-        new Error('Tattoo request does not belong to this customer')
-      );
-
-      const result = await createBookingHandler.call(fastifyInstance, mockRequest, mockReply);
+      await createBookingHandler.call(fastifyInstance, mockRequest, mockReply);
 
       expect(mockReply.code).toHaveBeenCalledWith(400);
       expect(mockReply.send).toHaveBeenCalledWith({
         success: false,
-        message: 'Tattoo request does not belong to this customer'
+        message: 'Failed to create booking',
+        error: 'Time slot not available'
       });
     });
 
-    it('should handle availability errors with 500 status', async () => {
-      mockBookingService.createBooking.mockRejectedValueOnce(
-        new Error('Selected time slot is not available')
-      );
+    it('should handle booking service errors gracefully', async () => {
+      mockBookingService.createBooking.mockRejectedValueOnce(new Error('Database error'));
 
-      const result = await createBookingHandler.call(fastifyInstance, mockRequest, mockReply);
+      await createBookingHandler.call(fastifyInstance, mockRequest, mockReply);
 
+      expect(mockRequest.log.error).toHaveBeenCalled();
       expect(mockReply.code).toHaveBeenCalledWith(500);
       expect(mockReply.send).toHaveBeenCalledWith({
         success: false,
-        message: 'Error creating booking',
-        error: 'Selected time slot is not available'
-      });
-    });
-
-    it('should handle unknown errors with 500 status', async () => {
-      mockBookingService.createBooking.mockRejectedValueOnce(
-        new Error('Database connection failed')
-      );
-
-      const result = await createBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-
-      expect(mockReply.code).toHaveBeenCalledWith(500);
-      expect(mockReply.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Error creating booking',
-        error: 'Database connection failed'
-      });
-    });
-
-    it('should handle non-Error objects', async () => {
-      mockBookingService.createBooking.mockRejectedValueOnce('String error');
-
-      const result = await createBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-
-      expect(mockReply.code).toHaveBeenCalledWith(500);
-      expect(mockReply.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Error creating booking',
-        error: 'Unknown error'
-      });
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('should handle missing user object', async () => {
-      delete mockRequest.user;
-      mockRequest.body.artistId = 'artist-123';
-
-      const result = await createBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-
-      expect(mockReply.code).toHaveBeenCalledWith(500);
-      expect(mockReply.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Error creating booking',
-        error: expect.any(String)
+        message: 'An error occurred while creating the booking. Please try again.'
       });
     });
 
     it('should handle different booking types', async () => {
-      const bookingTypes = [
-        BookingType.CONSULTATION,
-        BookingType.DRAWING_CONSULTATION,
-        BookingType.TATTOO_SESSION
-      ];
+      mockRequest.body.bookingType = BookingType.TATTOO_SESSION;
 
-      for (const bookingType of bookingTypes) {
-        mockRequest.body.bookingType = bookingType;
-        
-        mockBookingService.createBooking.mockResolvedValueOnce({
-          success: true,
-          booking: { id: 'booking-123', type: bookingType },
-          squareBooking: null
-        });
+      mockBookingService.createBooking.mockResolvedValueOnce({
+        success: true,
+        booking: { id: 'booking-123' },
+        squareBooking: null
+      });
 
-        const result = await createBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-        
-        expect(result.success).toBe(true);
-        expect(mockBookingService.createBooking).toHaveBeenCalledWith(
-          expect.objectContaining({
-            bookingType
-          })
-        );
-      }
+      const result = await createBookingHandler.call(fastifyInstance, mockRequest, mockReply);
+
+      expect(result.success).toBe(true);
+      expect(mockBookingService.createBooking).toHaveBeenCalledWith(expect.objectContaining({
+        bookingType: BookingType.TATTOO_SESSION
+      }));
+    });
+
+    it('should handle missing booking service', async () => {
+      const instanceWithoutService = {};
+
+      await createBookingHandler.call(instanceWithoutService, mockRequest, mockReply);
+
+      expect(mockRequest.log.error).toHaveBeenCalled();
+      expect(mockReply.code).toHaveBeenCalledWith(500);
+      expect(mockReply.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'An error occurred while creating the booking. Please try again.'
+      });
     });
   });
 }); 

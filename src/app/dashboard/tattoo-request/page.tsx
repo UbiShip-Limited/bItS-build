@@ -1,10 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Filter, FileText, User, Calendar, DollarSign } from 'lucide-react';
-import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
+import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
+import QuickPaymentActions from '@/src/components/payments/QuickPaymentActions';
+import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHistory';
 
 export default function TattooRequestsPage() {
   const [requests, setRequests] = useState<TattooRequest[]>([]);
@@ -26,18 +29,15 @@ export default function TattooRequestsPage() {
     pages: 1
   });
 
-  const tattooRequestService = new TattooRequestService(apiClient);
+  // Memoize the client to prevent recreation on every render
+  const tattooRequestClient = useMemo(() => new TattooRequestApiClient(apiClient), []);
 
-  useEffect(() => {
-    loadTattooRequests();
-  }, [filters]);
-
-  const loadTattooRequests = async () => {
+  const loadTattooRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await tattooRequestService.getAll({
+      const response = await tattooRequestClient.getAll({
         status: filters.status || undefined,
         page: filters.page,
         limit: filters.limit
@@ -45,12 +45,16 @@ export default function TattooRequestsPage() {
       
       setRequests(response.data);
       setPagination(response.pagination);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load tattoo requests');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load tattoo requests');
     } finally {
       setLoading(false);
     }
-  };
+  }, [tattooRequestClient, filters.status, filters.page, filters.limit]);
+
+  useEffect(() => {
+    loadTattooRequests();
+  }, [loadTattooRequests]);
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -160,6 +164,9 @@ export default function TattooRequestsPage() {
                     <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Style
                     </th>
+                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                      Payment
+                    </th>
                     <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
                       Actions
                     </th>
@@ -172,9 +179,11 @@ export default function TattooRequestsPage() {
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 bg-[#1a1a1a] rounded overflow-hidden border border-[#2a2a2a]">
                             {request.referenceImages && request.referenceImages.length > 0 ? (
-                              <img 
+                              <Image 
                                 src={request.referenceImages[0].url} 
                                 alt="Reference" 
+                                width={40}
+                                height={40}
                                 className="h-full w-full object-cover"
                               />
                             ) : (
@@ -224,6 +233,42 @@ export default function TattooRequestsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-medium">
                         {request.style || 'Not specified'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-medium">
+                        <div className="space-y-2">
+                          {/* Quick payment actions */}
+                          {request.customer && (
+                            <QuickPaymentActions
+                              customerId={request.customer.id}
+                              customerName={request.customer.name}
+                              tattooRequestId={request.id}
+                              requestStatus={request.status}
+                              depositPaid={request.depositPaid}
+                              variant="compact"
+                              onPaymentCreated={() => {
+                                // Refresh requests when payment is created
+                                loadTattooRequests();
+                              }}
+                            />
+                          )}
+                          
+                          {/* Show deposit status if exists */}
+                          {request.depositPaid && request.depositAmount && (
+                            <div className="text-xs text-green-400 flex items-center">
+                              <DollarSign className="w-3 h-3 mr-1" />
+                              ${request.depositAmount.toFixed(0)} paid
+                            </div>
+                          )}
+                          
+                          {/* Inline payment history */}
+                          {request.customer && (
+                            <CustomerPaymentHistory
+                              customerId={request.customer.id}
+                              variant="inline"
+                              className="mt-1"
+                            />
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Link 

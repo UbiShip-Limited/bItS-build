@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { TattooRequestService } from '../lib/api/services/tattooRequestService';
+import { TattooRequestApiClient } from '../lib/api/services/tattooRequestApiClient';
 import { ImageUploadService } from '../lib/api/services/ImageUploadService';
 import { apiClient } from '../lib/api/apiClient';
-import { useCloudinaryUpload } from './useCloudinaryUpload';
 
 // Initialize the services ONCE
-const tattooRequestService = new TattooRequestService(apiClient);
+const tattooRequestClient = new TattooRequestApiClient(apiClient);
 const imageUploadService = new ImageUploadService(apiClient);
 
 interface TattooRequestFormData {
@@ -101,8 +100,6 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
   const [response, setResponse] = useState<ResponseData | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors | null>(null);
   
-  const { uploadToCloudinary, isUploading: isCloudinaryUploading } = useCloudinaryUpload();
-  
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
     
@@ -155,7 +152,8 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
     setError(null);
     
     try {
-      const uploadedImages = await uploadToCloudinary(files);
+      // Upload images directly to Cloudinary for tattoo requests
+      const uploadedImages = await imageUploadService.uploadTattooRequestImages(files);
       
       // Update form data with uploaded images
       setFormData(prev => ({
@@ -186,6 +184,7 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
     }
     
     try {
+      // Prepare the tattoo request data
       const requestData = {
         contactEmail: formData.contactEmail,
         contactPhone: formData.contactPhone,
@@ -199,6 +198,7 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
         timeframe: formData.timeframe,
         contactPreference: formData.contactPreference,
         additionalNotes: formData.additionalNotes,
+        // Include reference images directly in the creation
         referenceImages: formData.referenceImages
           .filter(img => img.publicId)
           .map(img => ({
@@ -207,7 +207,9 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
           }))
       };
       
-      const tattooRequestData = await tattooRequestService.submitTattooRequest(requestData);
+      // Create the tattoo request with all data including images
+      const tattooRequestData = await tattooRequestClient.create(requestData);
+      
       setSuccess(true);
       setResponse(tattooRequestData);
     } catch (err: any) {

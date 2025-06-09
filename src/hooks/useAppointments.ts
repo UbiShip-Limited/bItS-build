@@ -1,16 +1,24 @@
-import { useState } from 'react';
-import { 
-  AppointmentService, 
-  AppointmentData, 
-  CreateAppointmentRequest, 
-  AppointmentFilters, 
-  AppointmentListResponse,
+import { useState, useCallback, useMemo } from 'react';
+import {
+  type AppointmentData,
+  type CreateAppointmentRequest,
+  type AppointmentListResponse,
+  type AppointmentFilters,
   BookingType,
-  BookingStatus 
-} from '../lib/api/services/appointmentService';
-import { apiClient } from '../lib/api/apiClient';
+  BookingStatus
+} from '../lib/api/services/appointmentApiClient';
+import { appointmentService } from '../lib/api/services/index';
 
-const appointmentService = new AppointmentService(apiClient);
+// Helper function to extract error message from unknown error
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String(error.message);
+  }
+  return 'An unknown error occurred';
+};
 
 export interface UseAppointmentsReturn {
   appointments: AppointmentData[];
@@ -61,18 +69,24 @@ export interface UseAppointmentsReturn {
   updateAppointment: (id: string, data: Partial<CreateAppointmentRequest>) => Promise<AppointmentData>;
   cancelAppointment: (id: string, reason?: string) => Promise<AppointmentData>;
   createAppointmentFromTattooRequest: (tattooRequestId: string, appointmentData: Omit<CreateAppointmentRequest, 'tattooRequestId'>) => Promise<AppointmentData>;
-  createAnonymousAppointmentFromTattooRequest: (
-    tattooRequestId: string,
-    contactData: {
-      contactEmail: string;
-      contactPhone?: string;
-      startAt: string;
-      duration: number;
-      bookingType: BookingType.CONSULTATION | BookingType.DRAWING_CONSULTATION;
-      note?: string;
-    }
-  ) => Promise<AppointmentData>;
+  createAnonymousAppointmentFromTattooRequest: (tattooRequestId: string, contactData: {
+    contactEmail: string;
+    contactPhone?: string;
+    startAt: string;
+    duration: number;
+    bookingType: BookingType.CONSULTATION | BookingType.DRAWING_CONSULTATION;
+    note?: string;
+  }) => Promise<AppointmentData>;
+  // Cache management
+  clearCache: () => void;
 }
+
+// Simple cache for appointment lists
+const appointmentListCache = new Map<string, { 
+  data: AppointmentListResponse; 
+  timestamp: number; 
+}>();
+const CACHE_DURATION = 30000; // 30 seconds
 
 export const useAppointments = (): UseAppointmentsReturn => {
   const [appointments, setAppointments] = useState<AppointmentData[]>([]);
@@ -86,49 +100,76 @@ export const useAppointments = (): UseAppointmentsReturn => {
     pages: number;
   } | null>(null);
 
-  const getAppointments = async (filters?: AppointmentFilters) => {
+  const clearCache = useCallback(() => {
+    appointmentListCache.clear();
+    console.log('🧹 Cleared appointment cache');
+  }, []);
+
+  const getAppointments = useCallback(async (filters?: AppointmentFilters) => {
+    // Create cache key from filters
+    const cacheKey = filters ? JSON.stringify(filters) : 'default';
+    const cached = appointmentListCache.get(cacheKey);
+    const now = Date.now();
+    
+    // Return cached data if still valid
+    if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+      console.log('📝 Using cached appointments');
+      setAppointments(cached.data.data);
+      setPagination(cached.data.pagination);
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
     try {
       const response: AppointmentListResponse = await appointmentService.getAppointments(filters);
+      
+      // Cache the result
+      appointmentListCache.set(cacheKey, {
+        data: response,
+        timestamp: now
+      });
+      
       setAppointments(response.data);
       setPagination(response.pagination);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch appointments');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err) || 'Failed to fetch appointments');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const getAppointment = async (id: string) => {
+  const getAppointment = useCallback(async (id: string) => {
     setIsLoading(true);
     setError(null);
     try {
       const appointmentData = await appointmentService.getAppointment(id);
       setAppointment(appointmentData);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch appointment');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err) || 'Failed to fetch appointment');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const createAppointment = async (data: CreateAppointmentRequest): Promise<AppointmentData> => {
+  const createAppointment = useCallback(async (data: CreateAppointmentRequest): Promise<AppointmentData> => {
     setIsLoading(true);
     setError(null);
     try {
       const newAppointment = await appointmentService.createAppointment(data);
       setAppointments(prev => [newAppointment, ...prev]);
+      // Clear cache as data is now stale
+      clearCache();
       return newAppointment;
-    } catch (err: any) {
-      setError(err.message || 'Failed to create appointment');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err) || 'Failed to create appointment');
       throw err;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [clearCache]);
 
-  const createAppointmentForCustomer = async (data: {
+  const createAppointmentForCustomer = useCallback(async (data: {
     customerId: string;
     artistId?: string;
     startAt: string;
@@ -139,21 +180,14 @@ export const useAppointments = (): UseAppointmentsReturn => {
     priceQuote?: number;
     tattooRequestId?: string;
   }): Promise<AppointmentData> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const newAppointment = await appointmentService.createAppointmentForCustomer(data);
-      setAppointments(prev => [newAppointment, ...prev]);
-      return newAppointment;
-    } catch (err: any) {
-      setError(err.message || 'Failed to create appointment for customer');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    return createAppointment({
+      ...data,
+      bookingType: data.bookingType as string,
+      status: data.status as string,
+    });
+  }, [createAppointment]);
 
-  const createAppointmentWithCustomerDetails = async (data: {
+  const createAppointmentWithCustomerDetails = useCallback(async (data: {
     customerEmail: string;
     customerPhone?: string;
     artistId?: string;
@@ -165,21 +199,14 @@ export const useAppointments = (): UseAppointmentsReturn => {
     priceQuote?: number;
     tattooRequestId?: string;
   }): Promise<AppointmentData> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const newAppointment = await appointmentService.createAppointmentWithCustomerDetails(data);
-      setAppointments(prev => [newAppointment, ...prev]);
-      return newAppointment;
-    } catch (err: any) {
-      setError(err.message || 'Failed to create appointment with customer details');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    return createAppointment({
+      ...data,
+      bookingType: data.bookingType as string,
+      status: data.status as string,
+    });
+  }, [createAppointment]);
 
-  const createAnonymousAppointment = async (data: {
+  const createAnonymousAppointment = useCallback(async (data: {
     contactEmail: string;
     contactPhone?: string;
     startAt: string;
@@ -188,82 +215,79 @@ export const useAppointments = (): UseAppointmentsReturn => {
     note?: string;
     tattooRequestId?: string;
   }): Promise<AppointmentData> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const newAppointment = await appointmentService.createAnonymousAppointment(data);
-      setAppointments(prev => [newAppointment, ...prev]);
-      return newAppointment;
-    } catch (err: any) {
-      setError(err.message || 'Failed to create anonymous appointment');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    return appointmentService.createAnonymousAppointment({
+      ...data,
+      bookingType: data.bookingType as string,
+    });
+  }, []);
 
-  const updateAppointment = async (id: string, data: Partial<CreateAppointmentRequest>): Promise<AppointmentData> => {
+  const updateAppointment = useCallback(async (id: string, data: Partial<CreateAppointmentRequest>): Promise<AppointmentData> => {
     setIsLoading(true);
     setError(null);
     try {
       const updatedAppointment = await appointmentService.updateAppointment(id, data);
+      
+      // Update in current list if present
       setAppointments(prev => 
         prev.map(apt => apt.id === id ? updatedAppointment : apt)
       );
+      
+      // Update single appointment if it's the current one
       if (appointment?.id === id) {
         setAppointment(updatedAppointment);
       }
+      
+      // Clear cache as data is now stale
+      clearCache();
+      
       return updatedAppointment;
-    } catch (err: any) {
-      setError(err.message || 'Failed to update appointment');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err) || 'Failed to update appointment');
       throw err;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [appointment, clearCache]);
 
-  const cancelAppointment = async (id: string, reason?: string): Promise<AppointmentData> => {
+  const cancelAppointment = useCallback(async (id: string, reason?: string): Promise<AppointmentData> => {
     setIsLoading(true);
     setError(null);
     try {
       const cancelledAppointment = await appointmentService.cancelAppointment(id, reason);
+      
+      // Update in current list
       setAppointments(prev => 
         prev.map(apt => apt.id === id ? cancelledAppointment : apt)
       );
+      
+      // Update single appointment if it's the current one
       if (appointment?.id === id) {
         setAppointment(cancelledAppointment);
       }
+      
+      // Clear cache as data is now stale
+      clearCache();
+      
       return cancelledAppointment;
-    } catch (err: any) {
-      setError(err.message || 'Failed to cancel appointment');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err) || 'Failed to cancel appointment');
       throw err;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [appointment, clearCache]);
 
-  const createAppointmentFromTattooRequest = async (
-    tattooRequestId: string, 
+  const createAppointmentFromTattooRequest = useCallback(async (
+    tattooRequestId: string,
     appointmentData: Omit<CreateAppointmentRequest, 'tattooRequestId'>
   ): Promise<AppointmentData> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const newAppointment = await appointmentService.createAppointmentFromTattooRequest(
-        tattooRequestId, 
-        appointmentData
-      );
-      setAppointments(prev => [newAppointment, ...prev]);
-      return newAppointment;
-    } catch (err: any) {
-      setError(err.message || 'Failed to create appointment from tattoo request');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    return createAppointment({
+      ...appointmentData,
+      tattooRequestId
+    });
+  }, [createAppointment]);
 
-  const createAnonymousAppointmentFromTattooRequest = async (
+  const createAnonymousAppointmentFromTattooRequest = useCallback(async (
     tattooRequestId: string,
     contactData: {
       contactEmail: string;
@@ -282,14 +306,15 @@ export const useAppointments = (): UseAppointmentsReturn => {
         contactData
       );
       setAppointments(prev => [newAppointment, ...prev]);
+      clearCache();
       return newAppointment;
-    } catch (err: any) {
-      setError(err.message || 'Failed to create anonymous appointment from tattoo request');
+    } catch (err: unknown) {
+      setError(getErrorMessage(err) || 'Failed to create anonymous appointment from tattoo request');
       throw err;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [clearCache]);
 
   return {
     appointments,
@@ -306,6 +331,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
     updateAppointment,
     cancelAppointment,
     createAppointmentFromTattooRequest,
-    createAnonymousAppointmentFromTattooRequest
+    createAnonymousAppointmentFromTattooRequest,
+    clearCache
   };
 }; 

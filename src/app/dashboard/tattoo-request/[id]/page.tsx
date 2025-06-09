@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   ArrowLeft, 
   Calendar, 
   User, 
   Mail, 
   Phone, 
-  FileText, 
   Palette, 
   Ruler, 
   MapPin,
@@ -20,51 +20,51 @@ import {
   MessageSquare,
   UserPlus
 } from 'lucide-react';
-import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
+import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '@/src/components/ui/Modal';
 import CustomerForm from '@/src/components/forms/CustomerForm';
 
 export default function TattooRequestDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const [request, setRequest] = useState<TattooRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
 
-  const tattooRequestService = new TattooRequestService(apiClient);
+  // Memoize the client to prevent recreation on every render
+  const tattooRequestClient = useMemo(() => new TattooRequestApiClient(apiClient), []);
+
+  const loadTattooRequest = useCallback(async (id: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const data = await tattooRequestClient.getById(id);
+      setRequest(data);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load tattoo request');
+    } finally {
+      setLoading(false);
+    }
+  }, [tattooRequestClient]);
 
   useEffect(() => {
     if (params.id) {
       loadTattooRequest(params.id as string);
     }
-  }, [params.id]);
-
-  const loadTattooRequest = async (id: string) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const data = await tattooRequestService.getById(id);
-      setRequest(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load tattoo request');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [params.id, loadTattooRequest]);
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!request || updating) return;
     
     setUpdating(true);
     try {
-      await tattooRequestService.update(request.id, { status: newStatus });
+      await tattooRequestClient.updateStatus(request.id, newStatus);
       await loadTattooRequest(request.id);
-    } catch (err: any) {
-      alert(err.message || 'Failed to update status');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to update status');
     } finally {
       setUpdating(false);
     }
@@ -305,9 +305,11 @@ export default function TattooRequestDetailPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {request.referenceImages.map((image, index) => (
                   <div key={index} className="relative group">
-                    <img
+                    <Image
                       src={image.url}
                       alt={`Reference ${index + 1}`}
+                      width={300}
+                      height={192}
                       className="w-full h-48 object-cover rounded-lg border border-[#1a1a1a]"
                     />
                     <a

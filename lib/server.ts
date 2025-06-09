@@ -1,93 +1,151 @@
-import 'dotenv/config';
-// For specifically loading .env.local
-import { config } from 'dotenv';
+// This must be the very first import to ensure environment variables are loaded before anything else.
+import './config/envLoader.js';
+
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
-config({ path: '.env.local' });
-
-
-import Fastify, { FastifyInstance } from 'fastify';
-import tattooRequestsRoutes from './routes/tattooRequest';
-import prismaPlugin from './plugins/prisma'; // Path to your prisma plugin
-import customerRoutes from './routes/customer';
-import paymentRoutes from './routes/payments/index.js';
-import appointmentRoutes from './routes/appointment';
-import auditRoutes from './routes/audit';
-import cloudinaryRoutes from './routes/cloudinary.js'; // Import Cloudinary routes
-import webhookRoutes from './routes/webhooks/index.js'; // Import webhook routes
+import fastify from 'fastify';
 import cors from '@fastify/cors';
 
+import tattooRequestsRoutes from './routes/tattooRequest';
+import prismaPlugin from './plugins/prisma';
+import customerRoutes from './routes/customer';
+import paymentRoutes from './routes/payments/index';
+import appointmentRoutes from './routes/appointment';
+import auditRoutes from './routes/audit';
+import cloudinaryRoutes from './routes/cloudinary';
+import webhookRoutes from './routes/webhooks/index';
+import healthRoutes from './routes/health';
+import userRoutes from './routes/users';
 
-// Initialize Fastify
-const build = (opts = {}): FastifyInstance => {
-  const fastify = Fastify(opts);
+// Environment variable validation
+function validateEnvironment() {
+  const requiredEnvVars = {
+    'DATABASE_URL': process.env.DATABASE_URL,
+    'SUPABASE_URL': process.env.SUPABASE_URL,
+    'SUPABASE_SERVICE_ROLE_KEY': process.env.SUPABASE_SERVICE_ROLE_KEY,
+  };
 
-  // Register cors plugin FIRST before other plugins
-  fastify.register(cors, {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true
-  });
+  const squareEnvVars = {
+    'SQUARE_ACCESS_TOKEN': process.env.SQUARE_ACCESS_TOKEN,
+    'SQUARE_APPLICATION_ID': process.env.SQUARE_APPLICATION_ID,
+    'SQUARE_LOCATION_ID': process.env.SQUARE_LOCATION_ID,
+    'SQUARE_ENVIRONMENT': process.env.SQUARE_ENVIRONMENT,
+  };
 
-  // Register Prisma plugin
-  fastify.register(prismaPlugin);
+  const optionalEnvVars = {
+    'SQUARE_WEBHOOK_SIGNATURE_KEY': process.env.SQUARE_WEBHOOK_SIGNATURE_KEY,
+    'FRONTEND_URL': process.env.FRONTEND_URL,
+    'CLOUDINARY_CLOUD_NAME': process.env.CLOUDINARY_CLOUD_NAME,
+    'CLOUDINARY_API_KEY': process.env.CLOUDINARY_API_KEY,
+    'CLOUDINARY_API_SECRET': process.env.CLOUDINARY_API_SECRET,
+  };
 
-  // Example route using Prisma (you can remove this later)
-  fastify.get('/users', async (request, reply) => {
-    try {
-      // Access Prisma via the decorated fastify instance
-      const users = await fastify.prisma.user.findMany();
-      
-      // Simple response without manual serialization
-      reply.type('application/json');
-      return users;
-    } catch (error) {
-      request.log.error(error, 'Error fetching users');
-      reply.type('application/json').code(500);
-      return { error: 'Failed to fetch users' };
-    }
-  });
+  const missingRequired = Object.entries(requiredEnvVars)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
 
-  // Register your routes
-  fastify.register(tattooRequestsRoutes, { prefix: '/tattoo-requests' });
-  fastify.register(customerRoutes, { prefix: '/customers' });
-  fastify.register(paymentRoutes, { prefix: '/payments' });
-  fastify.register(appointmentRoutes, { prefix: '/appointments' });
-  fastify.register(auditRoutes, { prefix: '/audit-logs' });
-  fastify.register(cloudinaryRoutes, { prefix: '/cloudinary' });
-  fastify.register(webhookRoutes, { prefix: '/webhooks' });
+  const missingSquare = Object.entries(squareEnvVars)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
 
-  // TODO: Register your other routes and plugins here
+  const missingOptional = Object.entries(optionalEnvVars)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
 
-  // Set default Cloudinary URL if not provided to prevent initialization errors
-  if (!process.env.CLOUDINARY_URL) {
-    console.warn('CLOUDINARY_URL not set, using demo values. This should not be used in production.');
-    process.env.CLOUDINARY_URL = 'cloudinary://123456789012345:abcdefghijklmnopqrstuvwxyz@demo';
-    process.env.CLOUDINARY_CLOUD_NAME = 'demo';
-    process.env.CLOUDINARY_API_KEY = '123456789012345';
-    process.env.CLOUDINARY_API_SECRET = 'abcdefghijklmnopqrstuvwxyz';
+  if (missingRequired.length > 0) {
+    console.error('❌ Missing required environment variables:');
+    missingRequired.forEach(env => console.error(`   - ${env}`));
+    console.error('\nPlease set these in your .env file and restart the server.');
+    process.exit(1);
   }
 
-  return fastify;
+  // Check Square configuration status
+  const hasAllSquareVars = missingSquare.length === 0;
+  if (hasAllSquareVars) {
+    const validSquareEnvs = ['sandbox', 'production'];
+    if (!validSquareEnvs.includes(process.env.SQUARE_ENVIRONMENT!)) {
+      console.error(`❌ Invalid SQUARE_ENVIRONMENT: ${process.env.SQUARE_ENVIRONMENT}`);
+      console.error(`Must be one of: ${validSquareEnvs.join(', ')}`);
+      process.exit(1);
+    }
+    console.log('✅ Square integration is configured and ready');
+  } else {
+    console.warn('⚠️  Square integration is not configured - payment features will be limited');
+    console.warn('   Missing Square environment variables:');
+    missingSquare.forEach(env => console.warn(`   - ${env}`));
+    console.warn('   Payment routes will return appropriate error messages when Square features are accessed.');
+  }
+
+  if (missingOptional.length > 0) {
+    console.warn('ℹ️  Missing optional environment variables:');
+    missingOptional.forEach(env => console.warn(`   - ${env}`));
+  }
+
+  console.log('✅ Environment validation passed');
+}
+
+// Initialize Fastify
+const build = (opts = {}) => {
+  if (process.env.NODE_ENV !== 'test') {
+    validateEnvironment();
+  }
+
+  const fastifyInstance = fastify(opts);
+
+  fastifyInstance.register(cors, {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  });
+
+  fastifyInstance.register(prismaPlugin);
+
+  fastifyInstance.register(healthRoutes);
+  fastifyInstance.register(userRoutes, { prefix: '/users' });
+  fastifyInstance.register(tattooRequestsRoutes, { prefix: '/tattoo-requests' });
+  fastifyInstance.register(customerRoutes, { prefix: '/customers' });
+  
+  // Add explicit error handling for payment routes registration
+  fastifyInstance.register(async (fastify) => {
+    try {
+      console.log('🔄 Attempting to register payment routes...');
+      await fastify.register(paymentRoutes, { prefix: '/payments' });
+      console.log('✅ Payment routes registered successfully');
+    } catch (error) {
+      console.error('❌ Failed to register payment routes:', error);
+      throw error;
+    }
+  });
+  
+  fastifyInstance.register(appointmentRoutes, { prefix: '/appointments' });
+  fastifyInstance.register(auditRoutes, { prefix: '/audit-logs' });
+  fastifyInstance.register(cloudinaryRoutes, { prefix: '/cloudinary' });
+  fastifyInstance.register(webhookRoutes, { prefix: '/webhooks' });
+  
+  return fastifyInstance;
 };
 
 // Function to start the server
-const start = async (fastifyInstance: FastifyInstance) => {
+const start = async (fastifyInstance) => {
   try {
-    const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001; // Default to port 3001 for the backend
-    await fastifyInstance.listen({ port, host: '0.0.0.0' }); // Listen on all available network interfaces
-     fastifyInstance.log.info(`Backend server listening on port ${port}`); // logger might not be set yet if not passed in build opts
+    const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
+    await fastifyInstance.listen({ port, host: '0.0.0.0' });
+    fastifyInstance.log.info(`Backend server listening on port ${port}`);
   } catch (err) {
     fastifyInstance.log.error(err);
     process.exit(1);
   }
 };
 
-// Graceful shutdown (applies to the instance that is started)
-// This logic might be better handled if server is started by a top level FastifyInstance
-// For now, we'll keep it simple. If the app is started directly, it will attach to that instance.
+const isMainModule = () => {
+  if (import.meta.url.startsWith('file:')) {
+    const modulePath = fileURLToPath(import.meta.url);
+    const mainPath = resolve(process.argv[1]);
+    return modulePath === mainPath;
+  }
+  return false;
+};
 
-// Main function to build and start server if run directly
-const main = async () => {
+if (isMainModule()) {
   const app = build({
     logger: {
       transport: {
@@ -109,23 +167,8 @@ const main = async () => {
     });
   });
 
-  await start(app);
-};
-
-// Only run the main function when directly executed, not when imported
-// Use import.meta.url for ESM module detection
-const isMainModule = () => {
-  const modulePath = fileURLToPath(import.meta.url);
-  const mainPath = resolve(process.argv[1]);
-  return modulePath === mainPath;
-};
-
-if (isMainModule()) {
-  main();
+  start(app);
 }
 
-// Export the build function for testing or programmatic use
 export { build };
 
-// Export the Fastify instance if you need to import it elsewhere (e.g., for testing)
-// export default fastify;

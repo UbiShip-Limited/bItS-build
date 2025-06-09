@@ -1,4 +1,4 @@
-import { PaymentType } from './paymentService';
+
 import { PrismaClient } from '@prisma/client';
 import SquareClient from '../square/index';
 
@@ -9,7 +9,7 @@ interface CacheEntry<T> {
 }
 
 interface PaymentCacheData {
-  payments: any[];
+  payments: unknown[];
   total: number;
   lastUpdated: number;
 }
@@ -20,7 +20,7 @@ interface RateLimitEntry {
 }
 
 export class PaymentCacheService {
-  private cache: Map<string, CacheEntry<any>> = new Map();
+  private cache: Map<string, CacheEntry<unknown>> = new Map();
   private rateLimitTracker: Map<string, RateLimitEntry> = new Map();
   private readonly CACHE_TTL = {
     PAYMENTS_LIST: 5 * 60 * 1000, // 5 minutes
@@ -50,14 +50,14 @@ export class PaymentCacheService {
     const cached = this.cache.get(cacheKey);
     
     if (cached && this.isCacheValid(cached)) {
-      return cached.data;
+      return cached.data as PaymentCacheData;
     }
 
     // Check if we're being rate limited before making the request
     if (!this.checkRateLimit('SQUARE_API', 'global')) {
       // If rate limited, return stale cache if available
       if (cached) {
-        return cached.data;
+        return cached.data as PaymentCacheData;
       }
       throw new Error('Rate limit exceeded and no cached data available');
     }
@@ -77,7 +77,7 @@ export class PaymentCacheService {
       // On error, return stale cache if available
       if (cached) {
         console.warn('Returning stale cache due to error:', error.message);
-        return cached.data;
+        return cached.data as PaymentCacheData;
       }
       throw error;
     }
@@ -175,7 +175,7 @@ export class PaymentCacheService {
               paymentMethod: squarePayment.sourceType || 'unknown',
               squareId: squarePayment.id,
               referenceId: squarePayment.referenceId,
-              paymentDetails: squarePayment as any
+              paymentDetails: JSON.parse(JSON.stringify(squarePayment))
             }
           });
           syncedCount++;
@@ -196,7 +196,7 @@ export class PaymentCacheService {
   /**
    * Asynchronous webhook processing with queue-like behavior
    */
-  async processWebhookAsync(eventData: any): Promise<void> {
+  async processWebhookAsync(eventData: { event_id?: string; type?: string; data?: unknown }): Promise<void> {
     const eventId = eventData.event_id || 'unknown';
     
     if (!this.checkRateLimit('WEBHOOK_PROCESSING', 'global')) {
@@ -301,7 +301,6 @@ export class PaymentCacheService {
    * Get cache statistics for monitoring
    */
   getCacheStats() {
-    const now = Date.now();
     let validEntries = 0;
     let expiredEntries = 0;
 
@@ -322,11 +321,11 @@ export class PaymentCacheService {
     };
   }
 
-  private isCacheValid(entry: CacheEntry<any>): boolean {
+  private isCacheValid(entry: CacheEntry<unknown>): boolean {
     return Date.now() - entry.timestamp < entry.ttl;
   }
 
-  private async processWebhookEvent(eventData: any): Promise<void> {
+  private async processWebhookEvent(eventData: { type?: string; data?: unknown }): Promise<void> {
     // This would contain the actual webhook processing logic
     // For now, it's a placeholder that could be extended
     
@@ -343,12 +342,12 @@ export class PaymentCacheService {
     }
   }
 
-  private async handlePaymentWebhook(data: any): Promise<void> {
+  private async handlePaymentWebhook(data: unknown): Promise<void> {
     // Implementation for payment webhook handling
     // This would update local payment records
   }
 
-  private async handleInvoiceWebhook(data: any): Promise<void> {
+  private async handleInvoiceWebhook(data: unknown): Promise<void> {
     // Implementation for invoice webhook handling
     // This would update local invoice records
   }

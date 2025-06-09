@@ -45,14 +45,10 @@ interface UpdateBookingBody {
 }
 
 // Add proper typing for fastify instance with bookingService  
-interface FastifyInstanceWithBookingService {
-  bookingService: BookingService;
-}
-
-export async function updateBookingHandler(this: FastifyInstanceWithBookingService, request: FastifyRequest<{ Params: UpdateBookingParams, Body: UpdateBookingBody }>, reply: FastifyReply) {
+export async function updateBookingHandler(request: FastifyRequest<{ Params: UpdateBookingParams, Body: UpdateBookingBody }>, reply: FastifyReply) {
   const { id } = request.params;
   const { startTime, duration, status, artistId, notes, priceQuote } = request.body; // Remove unused endTime
-  const bookingService: BookingService = this.bookingService;
+  const bookingService: BookingService = (request.server as any).bookingService;
   const user = request.user as UserWithRole;
 
   try {
@@ -89,8 +85,7 @@ export async function updateBookingHandler(this: FastifyInstanceWithBookingServi
 
     return {
       success: true,
-      booking: result.booking,
-      squareBookingUpdated: result.squareBookingUpdated
+      booking: result.booking
     };
   } catch (error: unknown) {
     request.log.error(error);

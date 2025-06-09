@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Customer, CustomerService } from '@/src/lib/api/services/customerService';
-import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
+import { useState, useEffect, useMemo } from 'react';
+import { Customer, CustomerService, CreateCustomerRequest, UpdateCustomerRequest } from '@/src/lib/api/services/customerService';
+import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import { Search, Link as LinkIcon } from 'lucide-react';
 
@@ -35,8 +35,9 @@ export default function CustomerForm({
   const [showLinkSection, setShowLinkSection] = useState(false);
   const [searchingRequests, setSearchingRequests] = useState(false);
 
-  const customerService = new CustomerService(apiClient);
-  const tattooRequestService = new TattooRequestService(apiClient);
+  // ✅ FIX: Memoize service instances to prevent unnecessary re-renders
+  const customerService = useMemo(() => new CustomerService(apiClient), []);
+  const tattooRequestService = useMemo(() => new TattooRequestService(apiClient), []);
 
   // Load anonymous tattoo requests if creating new customer
   useEffect(() => {
@@ -106,6 +107,19 @@ export default function CustomerForm({
     setLoading(true);
     setError(null);
 
+    // Client-side validation
+    if (!formData.name.trim()) {
+      setError('Name is required');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
+      setError('Please enter a valid email address');
+      setLoading(false);
+      return;
+    }
+
     try {
       let customerId: string;
       
@@ -136,8 +150,8 @@ export default function CustomerForm({
       if (selectedRequestId || tattooRequestId) {
         const requestId = selectedRequestId || tattooRequestId;
         try {
-          // Update the tattoo request to link it with the customer
-          await apiClient.put(`/tattoo-requests/${requestId}`, {
+          // Update the tattoo request to link it with the customer using proper API method
+          await tattooRequestService.update(requestId!, {
             customerId: customerId
           });
         } catch (err) {

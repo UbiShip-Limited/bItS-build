@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from 'fastify';
 import squareWebhookRoutes from './square';
 
-const webhookRoutes: FastifyPluginAsync = async (fastify, _options) => {
+const webhookRoutes: FastifyPluginAsync = async (fastify) => {
   // Register webhook routes
   await fastify.register(squareWebhookRoutes);
 };

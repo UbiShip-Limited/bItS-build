@@ -36,11 +36,7 @@ interface CreateAnonymousBookingBody {
 }
 
 // Add proper typing for fastify instance with bookingService
-interface FastifyInstanceWithBookingService {
-  bookingService: BookingService;
-}
-
-export async function createAnonymousBookingHandler(this: FastifyInstanceWithBookingService, request: FastifyRequest<{ Body: CreateAnonymousBookingBody }>, reply: FastifyReply) {
+export async function createAnonymousBookingHandler(request: FastifyRequest<{ Body: CreateAnonymousBookingBody }>, reply: FastifyReply) {
   const {
     startAt,
     duration,
@@ -51,7 +47,7 @@ export async function createAnonymousBookingHandler(this: FastifyInstanceWithBoo
     tattooRequestId
   } = request.body;
 
-  const bookingService: BookingService = this.bookingService;
+  const bookingService: BookingService = (request.server as any).bookingService;
 
   try {
     if (tattooRequestId) {
@@ -89,8 +85,7 @@ export async function createAnonymousBookingHandler(this: FastifyInstanceWithBoo
       contactEmail,
       contactPhone,
       note,
-      tattooRequestId,
-      isAnonymous: true
+      tattooRequestId
     });
 
     return {

@@ -31,3 +31,67 @@ body {
   color: var(--foreground);
   font-family: var(--font-body);
 }
+
+/* Mobile touch device optimizations */
+.touch-device {
+  /* Improve touch scrolling performance */
+  -webkit-overflow-scrolling: touch;
+  
+  /* Better touch target sizing */
+  touch-action: manipulation;
+}
+
+.touch-device button,
+.touch-device a,
+.touch-device [role="button"] {
+  /* Ensure minimum touch target size (44px recommended) */
+  min-height: 44px;
+  min-width: 44px;
+  
+  /* Improve touch feedback */
+  touch-action: manipulation;
+}
+
+.touch-device input,
+.touch-device textarea,
+.touch-device select {
+  /* Better mobile form experience */
+  font-size: 16px; /* Prevents zoom on iOS */
+  touch-action: manipulation;
+}
+
+/* Optimize scrolling for touch devices */
+.touch-device * {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Remove hover effects on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover states that don't work well on touch */
+  .touch-device button:hover,
+  .touch-device a:hover,
+  .touch-device [role="button"]:hover {
+    /* Reset hover styles for touch devices */
+  }
+}
+
+/* Improve text selection on touch devices */
+.touch-device {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.touch-device p,
+.touch-device h1,
+.touch-device h2,
+.touch-device h3,
+.touch-device h4,
+.touch-device h5,
+.touch-device h6,
+.touch-device span,
+.touch-device div[contenteditable] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  user-select: text;
+}

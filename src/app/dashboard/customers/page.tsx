@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, Filter, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CustomerService, type Customer, type CustomerListResponse } from '@/src/lib/api/services/customerService';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '../../../components/ui/Modal';
@@ -19,34 +19,37 @@ export default function CustomersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
-
-  const customerService = new CustomerService(apiClient);
+  
+  // Define the limit constant used in pagination
   const limit = 20;
 
-  useEffect(() => {
-    loadCustomers();
-  }, [currentPage, searchTerm]);
+  // ✅ FIX: Memoize the customerService instance to prevent infinite loop
+  const customerService = useMemo(() => new CustomerService(apiClient), []);
 
-  const loadCustomers = async () => {
+  const loadCustomers = useCallback(async () => {
     setLoading(true);
     setError(null);
 
     try {
       const response: CustomerListResponse = await customerService.getCustomers({
         page: currentPage,
-        limit,
+        limit: 20,
         search: searchTerm
       });
 
       setCustomers(response.data);
       setTotalPages(response.pagination.pages);
       setTotalCustomers(response.pagination.total);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load customers');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load customers');
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, customerService]);
+
+  useEffect(() => {
+    loadCustomers();
+  }, [loadCustomers]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

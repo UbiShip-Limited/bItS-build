@@ -1,14 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, List } from 'lucide-react';
-import { AppointmentService, type AppointmentData } from '@/src/lib/api/services/appointmentService';
+import { AppointmentApiClient, BookingStatus, type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import AppointmentCalendar from '@/src/components/dashboard/AppointmentCalendar';
 import Modal from '@/src/components/ui/Modal';
 import AppointmentForm from '@/src/components/forms/AppointmentForm';
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  backgroundColor: string;
+  borderColor: string;
+  textColor: string;
+  extendedProps: {
+    appointment: AppointmentData;
+  };
+}
 
 export default function AppointmentCalendarPage() {
   const router = useRouter();
@@ -19,11 +32,35 @@ export default function AppointmentCalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
 
-  const appointmentService = new AppointmentService(apiClient);
+  // Memoize the client to prevent recreation on every render
+  const appointmentService = useMemo(() => new AppointmentApiClient(apiClient), []);
 
   useEffect(() => {
     loadAppointments();
   }, []);
+
+  // Add dynamic loading when month changes
+  const loadAppointmentsForMonth = async (date: Date) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+      const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      
+      const response = await appointmentService.getAppointments({
+        from: firstDay.toISOString(),
+        to: lastDay.toISOString(),
+        limit: 100
+      });
+      
+      setAppointments(response.data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load appointments');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const loadAppointments = async () => {
     setLoading(true);
@@ -51,7 +88,6 @@ export default function AppointmentCalendarPage() {
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
-    // You could show appointments for that specific date
   };
 
   const handleAppointmentClick = (appointment: AppointmentData) => {
@@ -64,11 +100,30 @@ export default function AppointmentCalendarPage() {
     setShowCreateModal(true);
   };
 
+  // Handle quick status changes
+  const handleStatusChange = async (appointmentId: string, newStatus: BookingStatus) => {
+    try {
+      await appointmentService.updateAppointment(appointmentId, { status: newStatus });
+      
+      // Update local state
+      setAppointments(prev => 
+        prev.map(apt => 
+          apt.id === appointmentId 
+            ? { ...apt, status: newStatus }
+            : apt
+        )
+      );
+    } catch (err: any) {
+      console.error('Failed to update appointment status:', err);
+      // You might want to show a toast notification here
+    }
+  };
+
   const handleCreateSuccess = () => {
     setShowCreateModal(false);
     setSelectedDate(null);
     setSelectedAppointment(null);
-    loadAppointments();
+    loadAppointments(); // Refresh data
   };
 
   return (
@@ -123,6 +178,10 @@ export default function AppointmentCalendarPage() {
           onDateClick={handleDateClick}
           onAppointmentClick={handleAppointmentClick}
           onCreateClick={handleCreateClick}
+          onStatusChange={handleStatusChange}
+          onRefresh={loadAppointments}
+          onMonthChange={loadAppointmentsForMonth}
+          loading={loading}
         />
       )}
 

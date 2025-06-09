@@ -1,18 +1,20 @@
 import { DynamicGallery } from "@/src/components/gallery/dynamic-gallery";
-import { ParallaxSections } from "@/src/components/ui/parrallax-section";
+import { AboutBowenIslandSection } from "@/src/components/ui/AboutBowenIsland";
 import { TattooHero } from "@/src/components/ui/Hero";
-import { HorizontalSplitParallax } from "@/src/components/ui/horiztonal-split";
+import { VerticalSplitParallax } from "@/src/components/ui/verticall-split";
 import { ArtistShowcase } from "@/src/components/ui/ArtistShowcase";
-import { CtaSection } from "@/src/components/ui/CtaSection";
+import { ProcessShowcase } from "@/src/components/ui/ProcessShowcase";
+import { CtaSection } from "@/src/components/ui/Cta";
 
 export default function Home() {
   return (
     <div className="bg-white min-h-screen">
       <TattooHero />
-      <HorizontalSplitParallax />
+      <VerticalSplitParallax />
+      <AboutBowenIslandSection />
       <ArtistShowcase />
-      <ParallaxSections />
       <DynamicGallery />
+      <ProcessShowcase />
       <CtaSection />
     </div>
   );

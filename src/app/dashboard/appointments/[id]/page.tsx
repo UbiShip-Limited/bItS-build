@@ -16,7 +16,7 @@ import {
   XCircle,
   CheckCircle
 } from 'lucide-react';
-import { AppointmentService, BookingStatus, BookingType, type AppointmentData } from '@/src/lib/api/services/appointmentService';
+import { AppointmentApiClient, BookingStatus, BookingType, type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '@/src/components/ui/Modal';
 import AppointmentForm from '@/src/components/forms/AppointmentForm';
@@ -32,7 +32,7 @@ export default function AppointmentDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  const appointmentService = new AppointmentService(apiClient);
+  const appointmentService = new AppointmentApiClient(apiClient);
 
   useEffect(() => {
     if (params.id) {

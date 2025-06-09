@@ -1,19 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Calendar, FileText, DollarSign, Clock, Mail, Phone, User } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, FileText, DollarSign, Clock, Mail, Phone } from 'lucide-react';
 import { CustomerService, type Customer } from '@/src/lib/api/services/customerService';
-import { AppointmentService, type AppointmentData } from '@/src/lib/api/services/appointmentService';
-import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestService';
+import { AppointmentApiClient, type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
+import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '../../../../components/ui/Modal';
 import CustomerForm from '../../../../components/forms/CustomerForm';
 
 export default function CustomerDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const customerId = params.id as string;
 
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -23,15 +22,12 @@ export default function CustomerDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const customerService = new CustomerService(apiClient);
-  const appointmentService = new AppointmentService(apiClient);
-  const tattooRequestService = new TattooRequestService(apiClient);
+  // ✅ FIX: Memoize service instances to prevent infinite loops
+  const customerService = useMemo(() => new CustomerService(apiClient), []);
+  const appointmentService = useMemo(() => new AppointmentApiClient(apiClient), []);
+  const tattooRequestService = useMemo(() => new TattooRequestService(apiClient), []);
 
-  useEffect(() => {
-    loadCustomerData();
-  }, [customerId]);
-
-  const loadCustomerData = async () => {
+  const loadCustomerData = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -56,12 +52,16 @@ export default function CustomerDetailPage() {
         req => req.customerId === customerId
       );
       setTattooRequests(customerRequests);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load customer data');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load customer data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [customerId, customerService, appointmentService, tattooRequestService]);
+
+  useEffect(() => {
+    loadCustomerData();
+  }, [loadCustomerData]);
 
   const handleEditSuccess = () => {
     setShowEditModal(false);

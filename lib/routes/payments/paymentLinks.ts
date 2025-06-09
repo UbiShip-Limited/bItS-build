@@ -52,11 +52,30 @@ interface CreateCheckoutBody {
   redirectUrl?: string;
 }
 
+// Helper function to check if Square is configured
+function isSquareConfigured(): boolean {
+  const { 
+    SQUARE_ACCESS_TOKEN,
+    SQUARE_APPLICATION_ID,
+    SQUARE_LOCATION_ID
+  } = process.env;
+  
+  return !!(SQUARE_ACCESS_TOKEN && SQUARE_APPLICATION_ID && SQUARE_LOCATION_ID);
+}
+
 const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
-  const paymentLinkService = new PaymentLinkService();
+  // Check Square configuration on startup and log status
+  const squareConfigured = isSquareConfigured();
+  if (squareConfigured) {
+    fastify.log.info('✅ Payment link routes: Square integration is configured and ready');
+  } else {
+    fastify.log.warn('⚠️  Payment link routes: Square integration is not configured - payment link features will be disabled');
+  }
+
+  const paymentLinkService = new PaymentLinkService(fastify.prisma);
 
   // POST /payments/links - Create a payment link
-  fastify.post('/links', {
+  fastify.post('/', {
     preHandler: authorize(['admin', 'artist']),
     schema: {
       body: {
@@ -88,8 +107,34 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
+    // Check if Square is configured before creating payment links
+    if (!isSquareConfigured()) {
+      return reply.status(503).send({
+        error: 'Payment link creation unavailable',
+        message: 'Square payment integration is not configured. Please contact administrator.',
+        squareConfigured: false
+      });
+    }
+
     try {
       const result = await paymentLinkService.createPaymentLink(request.body as CreatePaymentLinkBody);
+      
+      const body = request.body as CreatePaymentLinkBody;
+      
+      // Log audit
+      await fastify.prisma.auditLog.create({
+        data: {
+          userId: request.user?.id,
+          action: 'CREATE_PAYMENT_LINK',
+          resource: 'PaymentLink',
+          resourceId: result.paymentLink.id,
+          details: {
+            amount: body.amount,
+            paymentType: body.paymentType,
+            customerId: body.customerId
+          }
+        }
+      });
       
       return {
         success: true,
@@ -98,20 +143,22 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
           url: result.url,
           createdAt: result.paymentLink.createdAt,
           paymentLink: result.paymentLink
-        }
+        },
+        squareConfigured: true
       };
     } catch (error) {
       fastify.log.error('Error creating payment link:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return reply.status(500).send({ 
         error: 'Failed to create payment link',
-        message: errorMessage
+        message: errorMessage,
+        squareConfigured: isSquareConfigured()
       });
     }
   });
 
   // GET /payments/links - List payment links
-  fastify.get('/links', {
+  fastify.get('/', {
     preHandler: authorize(['admin', 'artist']),
     schema: {
       querystring: {
@@ -123,6 +170,15 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
+    // Check if Square is configured before listing payment links
+    if (!isSquareConfigured()) {
+      return reply.status(503).send({
+        error: 'Payment links unavailable',
+        message: 'Square payment integration is not configured. Please contact administrator.',
+        squareConfigured: false
+      });
+    }
+
     try {
       const { cursor, limit } = request.query as PaymentLinksQueryParams;
       const result = await paymentLinkService.listPaymentLinks({ cursor, limit });
@@ -130,18 +186,21 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
       return {
         success: true,
         data: result.result.paymentLinks || [],
-        cursor: result.result.cursor
+        cursor: result.result.cursor,
+        squareConfigured: true
       };
     } catch (error) {
       fastify.log.error('Error listing payment links:', error);
       return reply.status(500).send({ 
-        error: 'Failed to list payment links' 
+        error: 'Failed to list payment links',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        squareConfigured: isSquareConfigured()
       });
     }
   });
 
   // GET /payments/links/:id - Get payment link details
-  fastify.get('/links/:id', {
+  fastify.get('/:id', {
     preHandler: authorize(['admin', 'artist']),
     schema: {
       params: {
@@ -153,24 +212,36 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
+    // Check if Square is configured before getting payment link details
+    if (!isSquareConfigured()) {
+      return reply.status(503).send({
+        error: 'Payment link details unavailable',
+        message: 'Square payment integration is not configured. Please contact administrator.',
+        squareConfigured: false
+      });
+    }
+
     try {
       const { id } = request.params as { id: string };
       const result = await paymentLinkService.getPaymentLink(id);
       
       return {
         success: true,
-        data: result.result.paymentLink
+        data: result.result.paymentLink,
+        squareConfigured: true
       };
     } catch (error) {
       fastify.log.error('Error getting payment link:', error);
       return reply.status(404).send({ 
-        error: 'Payment link not found' 
+        error: 'Payment link not found',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        squareConfigured: isSquareConfigured()
       });
     }
   });
 
   // DELETE /payments/links/:id - Delete payment link
-  fastify.delete('/links/:id', {
+  fastify.delete('/:id', {
     preHandler: authorize(['admin']),
     schema: {
       params: {
@@ -182,23 +253,35 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
+    // Check if Square is configured before deleting payment links
+    if (!isSquareConfigured()) {
+      return reply.status(503).send({
+        error: 'Payment link deletion unavailable',
+        message: 'Square payment integration is not configured. Please contact administrator.',
+        squareConfigured: false
+      });
+    }
+
     try {
       const { id } = request.params as { id: string };
       await paymentLinkService.deletePaymentLink(id);
       
       return {
         success: true,
-        message: 'Payment link deleted successfully'
+        message: 'Payment link deleted successfully',
+        squareConfigured: true
       };
     } catch (error) {
       fastify.log.error('Error deleting payment link:', error);
       return reply.status(500).send({ 
-        error: 'Failed to delete payment link' 
+        error: 'Failed to delete payment link',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        squareConfigured: isSquareConfigured()
       });
     }
   });
 
-  // POST /payments/invoices - Create an invoice
+  // POST /payments/links/invoices - Create an invoice
   fastify.post('/invoices', {
     preHandler: authorize(['admin', 'artist']),
     schema: {
@@ -241,8 +324,33 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
+    // Check if Square is configured before creating invoices
+    if (!isSquareConfigured()) {
+      return reply.status(503).send({
+        error: 'Invoice creation unavailable',
+        message: 'Square payment integration is not configured. Please contact administrator.',
+        squareConfigured: false
+      });
+    }
+
     try {
       const result = await paymentLinkService.createInvoice(request.body as CreateInvoiceBody);
+      
+      const body = request.body as CreateInvoiceBody;
+      
+      // Log audit
+      await fastify.prisma.auditLog.create({
+        data: {
+          userId: request.user?.id,
+          action: 'CREATE_INVOICE',
+          resource: 'Invoice',
+          resourceId: result.invoice.id || '',
+          details: {
+            customerId: body.customerId,
+            itemCount: body.items.length
+          }
+        }
+      });
       
       return {
         success: true,
@@ -252,19 +360,21 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
           publicUrl: result.publicUrl,
           status: result.invoice.status,
           invoice: result.invoice
-        }
+        },
+        squareConfigured: true
       };
     } catch (error) {
       fastify.log.error('Error creating invoice:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return reply.status(500).send({ 
         error: 'Failed to create invoice',
-        message: errorMessage
+        message: errorMessage,
+        squareConfigured: isSquareConfigured()
       });
     }
   });
 
-  // POST /payments/checkout - Create a checkout session
+  // POST /payments/links/checkout - Create a checkout session
   fastify.post('/checkout', {
     preHandler: authorize(['admin', 'artist']),
     schema: {
@@ -292,24 +402,77 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
+    // Check if Square is configured before creating checkout sessions
+    if (!isSquareConfigured()) {
+      return reply.status(503).send({
+        error: 'Checkout session creation unavailable',
+        message: 'Square payment integration is not configured. Please contact administrator.',
+        squareConfigured: false
+      });
+    }
+
     try {
       const result = await paymentLinkService.createCheckoutSession(request.body as CreateCheckoutBody);
+      
+      const body = request.body as CreateCheckoutBody;
+      
+      // Log audit
+      await fastify.prisma.auditLog.create({
+        data: {
+          userId: request.user?.id,
+          action: 'CREATE_CHECKOUT_SESSION',
+          resource: 'CheckoutSession',
+          resourceId: result.checkoutId,
+          details: {
+            customerId: body.customerId,
+            itemCount: body.items.length
+          }
+        }
+      });
       
       return {
         success: true,
         data: {
           checkoutUrl: result.checkoutUrl,
           checkoutId: result.checkoutId
-        }
+        },
+        squareConfigured: true
       };
     } catch (error) {
       fastify.log.error('Error creating checkout session:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       return reply.status(500).send({ 
         error: 'Failed to create checkout session',
-        message: errorMessage
+        message: errorMessage,
+        squareConfigured: isSquareConfigured()
       });
     }
+  });
+
+  // GET /payments/links/square/status - Check Square integration status
+  fastify.get('/square/status', {
+    preHandler: authorize(['admin', 'artist'])
+  }, async () => {
+    const configured = isSquareConfigured();
+    const { 
+      SQUARE_ACCESS_TOKEN,
+      SQUARE_APPLICATION_ID,
+      SQUARE_LOCATION_ID,
+      SQUARE_ENVIRONMENT
+    } = process.env;
+    
+    return {
+      squareConfigured: configured,
+      environment: SQUARE_ENVIRONMENT || 'not set',
+      hasAccessToken: !!SQUARE_ACCESS_TOKEN,
+      hasApplicationId: !!SQUARE_APPLICATION_ID,
+      hasLocationId: !!SQUARE_LOCATION_ID,
+      missingVariables: [
+        ...(!SQUARE_ACCESS_TOKEN ? ['SQUARE_ACCESS_TOKEN'] : []),
+        ...(!SQUARE_APPLICATION_ID ? ['SQUARE_APPLICATION_ID'] : []),
+        ...(!SQUARE_LOCATION_ID ? ['SQUARE_LOCATION_ID'] : [])
+      ]
+    };
   });
 };
 

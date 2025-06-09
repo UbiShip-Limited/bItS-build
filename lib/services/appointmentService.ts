@@ -34,6 +34,11 @@ export interface AppointmentFilters {
   to?: Date;
 }
 
+/**
+ * Backend business logic service for appointments
+ * Handles database operations, validation, and business rules
+ * Note: Frontend uses AppointmentApiClient for API calls
+ */
 export class AppointmentService {
   async create(data: CreateAppointmentData): Promise<Appointment> {
     // Validate business logic first

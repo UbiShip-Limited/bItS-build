@@ -1,6 +1,6 @@
 import { type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
 import DayCell from './DayCell';
-import { DayStats } from '../hooks/useCalendarStats';
+import { DayStats } from './hooks/useCalendarStats';
 
 interface MonthViewProps {
   calendarDays: Date[];

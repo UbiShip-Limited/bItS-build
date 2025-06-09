@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, FileText, CreditCard, ExternalLink, Copy, Trash2, RefreshCw, User } from 'lucide-react';
 import CreatePaymentLinkModal from '@/src/components/payments/CreatePaymentLinkModal';
 import CreateInvoiceModal from '@/src/components/payments/CreateInvoiceModal';
@@ -10,21 +10,24 @@ import { paymentService, PaymentLink } from '@/src/lib/api/services/paymentServi
 export default function PaymentsPage() {
   const [paymentLinks, setPaymentLinks] = useState<PaymentLink[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fetchingData, setFetchingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Use ref to track fetching state without causing dependency issues
+  const fetchingDataRef = useRef(false);
+  const hasInitialLoadRef = useRef(false);
 
   const fetchPaymentLinks = useCallback(async () => {
-    if (fetchingData) {
+    if (fetchingDataRef.current) {
       console.log('⏳ Already fetching payment links, skipping...');
       return;
     }
 
-    setFetchingData(true);
+    fetchingDataRef.current = true;
     try {
       setError(null);
       const response = await paymentService.listPaymentLinks({ limit: 50 });
@@ -36,16 +39,19 @@ export default function PaymentsPage() {
     } finally {
       setLoading(false);
       setRefreshing(false);
-      setFetchingData(false);
+      fetchingDataRef.current = false;
     }
-  }, [fetchingData]);
+  }, []); // No dependencies needed - prevents infinite loop
 
   useEffect(() => {
-    fetchPaymentLinks();
+    if (!hasInitialLoadRef.current) {
+      hasInitialLoadRef.current = true;
+      fetchPaymentLinks();
+    }
   }, [fetchPaymentLinks]);
 
   const handleRefresh = () => {
-    if (fetchingData) {
+    if (fetchingDataRef.current) {
       console.log('⏳ Refresh already in progress, skipping...');
       return;
     }
@@ -59,7 +65,7 @@ export default function PaymentsPage() {
   };
 
   const handleDeleteLink = async (id: string) => {
-    if (fetchingData) {
+    if (fetchingDataRef.current) {
       alert('Please wait for the current operation to complete.');
       return;
     }
@@ -137,14 +143,14 @@ export default function PaymentsPage() {
           <h2 className="text-xl font-semibold text-white">Recent Payment Links</h2>
           <button
             onClick={handleRefresh}
-            className={`p-2 text-[#C9A449] hover:bg-[#C9A449]/10 rounded-lg border border-[#C9A449]/30 hover:border-[#C9A449]/50 transition-all duration-300 ${refreshing || fetchingData ? 'animate-spin' : ''}`}
-            disabled={refreshing || fetchingData}
+            className={`p-2 text-[#C9A449] hover:bg-[#C9A449]/10 rounded-lg border border-[#C9A449]/30 hover:border-[#C9A449]/50 transition-all duration-300 ${refreshing ? 'animate-spin' : ''}`}
+            disabled={refreshing}
           >
             <RefreshCw className="w-5 h-5" />
           </button>
         </div>
 
-        {loading || fetchingData ? (
+        {loading ? (
           <div className="p-12 text-center">
             <span className="loading loading-spinner loading-lg text-[#C9A449]"></span>
             <p className="mt-2 text-gray-400">Loading payment links...</p>
@@ -156,7 +162,7 @@ export default function PaymentsPage() {
               <button
                 onClick={fetchPaymentLinks}
                 className="mt-4 px-6 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
-                disabled={fetchingData}
+                disabled={refreshing}
               >
                 Retry
               </button>

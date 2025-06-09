@@ -105,10 +105,10 @@ export class AnalyticsService {
         businessMetrics
       ] = await Promise.all([
         this.revenueService.getRevenueMetrics(today, thisWeek, thisMonth, lastWeek, lastMonth),
-        this.appointmentService.getAppointmentMetrics(today, thisWeek, thisMonth),
+        this.appointmentService.getAppointmentMetrics(today, thisWeek),
         this.customerService.getCustomerMetrics(today, thisWeek, thisMonth),
         this.requestService.getRequestMetrics(today, thisWeek, thisMonth),
-        this.businessService.getBusinessMetrics(thisWeek, thisMonth)
+        this.businessService.getBusinessMetrics()
       ]);
 
       return {

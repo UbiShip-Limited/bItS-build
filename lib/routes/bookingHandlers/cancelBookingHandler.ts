@@ -30,14 +30,10 @@ interface CancelBookingBody {
 }
 
 // Add proper typing for fastify instance with bookingService
-interface FastifyInstanceWithBookingService {
-  bookingService: BookingService;
-}
-
-export async function cancelBookingHandler(this: FastifyInstanceWithBookingService, request: FastifyRequest<{ Params: CancelBookingParams, Body: CancelBookingBody }>, reply: FastifyReply) {
+export async function cancelBookingHandler(request: FastifyRequest<{ Params: CancelBookingParams, Body: CancelBookingBody }>, reply: FastifyReply) {
   const { id } = request.params;
   const { reason } = request.body; // Removed unused notifyCustomer
-  const bookingService: BookingService = this.bookingService;
+  const bookingService: BookingService = (request.server as any).bookingService;
   const user = request.user as UserWithRole;
 
   try {

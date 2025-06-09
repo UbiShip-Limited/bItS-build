@@ -30,8 +30,8 @@ export const isSameMonth = (date: Date, referenceDate: Date) => {
          date.getFullYear() === referenceDate.getFullYear();
 };
 
-export const generateTimeSlots = (startHour = 8, endHour = 20) => {
-  const slots = [];
+export const generateTimeSlots = (startHour = 8, endHour = 20): string[] => {
+  const slots: string[] = [];
   for (let hour = startHour; hour <= endHour; hour++) {
     slots.push(`${hour}:00`, `${hour}:30`);
   }

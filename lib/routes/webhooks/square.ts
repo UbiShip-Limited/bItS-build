@@ -117,7 +117,7 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
             where: { id: existingPayment.id },
             data: {
               status: payment.status?.toLowerCase() || 'unknown',
-              paymentDetails: payment as unknown as Record<string, unknown>,
+              paymentDetails: JSON.parse(JSON.stringify(payment)),
               updatedAt: new Date()
             }
           });
@@ -130,7 +130,7 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
               paymentMethod: payment.sourceType || 'unknown',
               squareId: payment.id || '',
               referenceId: payment.referenceId,
-              paymentDetails: payment as unknown as Record<string, unknown>
+              paymentDetails: JSON.parse(JSON.stringify(payment))
             }
           });
         }

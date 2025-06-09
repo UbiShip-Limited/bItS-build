@@ -3,7 +3,6 @@ import { apiClient } from '../apiClient';
 import { CustomerService } from './customerService';
 import { AppointmentApiClient } from './appointmentApiClient';
 import { TattooRequestApiClient } from './tattooRequestApiClient';
-import { paymentService } from './paymentService';
 import { GalleryService } from './galleryService';
 import { ImageUploadService } from './ImageUploadService';
 

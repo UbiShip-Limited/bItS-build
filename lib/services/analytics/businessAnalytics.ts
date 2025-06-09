@@ -1,5 +1,4 @@
-import { prisma } from '../../prisma/prisma';
-import { AnalyticsUtils, DateRange } from './analyticsUtils';
+import { AnalyticsUtils } from './analyticsUtils';
 import { RevenueAnalyticsService } from './revenueAnalytics';
 import { AppointmentAnalyticsService } from './appointmentAnalytics';
 import { CustomerAnalyticsService } from './customerAnalytics';
@@ -56,10 +55,7 @@ export class BusinessAnalyticsService {
   /**
    * Get comprehensive business metrics
    */
-  async getBusinessMetrics(
-    thisWeek: DateRange,
-    thisMonth: DateRange
-  ): Promise<BusinessMetrics> {
+  async getBusinessMetrics(): Promise<BusinessMetrics> {
     const [utilization, revenuePerHour, growthMetrics] = await Promise.all([
       this.appointmentService.getBookingUtilization(),
       this.revenueService.getRevenuePerHour(),

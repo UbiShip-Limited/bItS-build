@@ -1,6 +1,7 @@
 import { prisma } from '../prisma/prisma';
 import { BookingStatus } from '../types/booking';
 import { addMinutes, format, parseISO } from 'date-fns';
+import { Prisma } from '@prisma/client';
 
 export interface AvailabilitySearchParams {
   startAtMin: Date;
@@ -209,7 +210,7 @@ export class AvailabilityService {
     startAtMax: Date,
     teamMemberIds?: string[]
   ) {
-    const whereClause: any = {
+    const whereClause: Prisma.AppointmentWhereInput = {
       startTime: {
         gte: startAtMin,
         lte: startAtMax
@@ -255,7 +256,7 @@ export class AvailabilityService {
     const schedules: TeamMemberSchedule[] = [];
     
     // Generate schedules for each day in the range
-    let currentDate = new Date(startAtMin);
+    const currentDate = new Date(startAtMin);
     while (currentDate <= startAtMax) {
       const dayOfWeek = currentDate.getDay();
       const businessHour = this.defaultBusinessHours.find(bh => bh.dayOfWeek === dayOfWeek);
@@ -285,7 +286,14 @@ export class AvailabilityService {
     startAtMin: Date;
     startAtMax: Date;
     duration: number;
-    existingAppointments: any[];
+    existingAppointments: Array<{
+      id: string;
+      startTime: Date | null;
+      endTime: Date | null;
+      duration: number | null;
+      artistId: string | null;
+      status: string | null;
+    }>;
     teamMemberSchedules: TeamMemberSchedule[];
     locationId?: string;
     teamMemberIds?: string[];
@@ -339,9 +347,10 @@ export class AvailabilityService {
           // Check if this slot conflicts with existing appointments
           const hasConflict = existingAppointments.some(appointment => {
             if (appointment.artistId !== schedule.teamMemberId) return false;
+            if (!appointment.startTime) return false;
             
             const appointmentStart = new Date(appointment.startTime);
-            const appointmentEnd = new Date(appointment.endTime || addMinutes(appointmentStart, appointment.duration));
+            const appointmentEnd = new Date(appointment.endTime || addMinutes(appointmentStart, appointment.duration || 60));
             
             return (currentSlotStart < appointmentEnd && slotEnd > appointmentStart);
           });
@@ -388,7 +397,7 @@ export class AvailabilityService {
   ): Promise<boolean> {
     const endAt = addMinutes(startAt, duration);
     
-    const whereClause: any = {
+    const whereClause: Prisma.AppointmentWhereInput = {
       startTime: { lt: endAt },
       endTime: { gt: startAt },
       status: { in: [BookingStatus.SCHEDULED, BookingStatus.CONFIRMED] }
@@ -441,7 +450,7 @@ export class AvailabilityService {
     artistId?: string;
     customerName?: string;
   }>> {
-    const whereClause: any = {
+    const whereClause: Prisma.AppointmentWhereInput = {
       AND: [
         {
           OR: [

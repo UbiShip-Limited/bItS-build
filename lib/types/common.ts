@@ -12,10 +12,16 @@ export type JsonArray = JsonValue[];
 export type EventHandler<T = unknown> = (event: T) => void | Promise<void>;
 
 // Mock function type for tests
-export type MockFunction<T extends (...args: unknown[]) => unknown> = jest.Mock<
-  ReturnType<T>,
-  Parameters<T>
->;
+export type MockFunction<T extends (...args: unknown[]) => unknown> = {
+  (...args: Parameters<T>): ReturnType<T>;
+  mockReturnValue: (value: ReturnType<T>) => void;
+  mockResolvedValue: (value: Awaited<ReturnType<T>>) => void;
+  mockRejectedValue: (value: unknown) => void;
+  mockImplementation: (fn: T) => void;
+  mockClear: () => void;
+  mockReset: () => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+} & Record<string, any>;
 
 // Utility type to make all properties optional recursively
 export type DeepPartial<T> = {

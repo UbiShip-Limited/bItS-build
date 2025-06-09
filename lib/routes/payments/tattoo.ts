@@ -41,7 +41,7 @@ interface TattooRequestFinalUpdate {
 const tattooRoutes: FastifyPluginAsync = async (fastify) => {
   // Initialize services
   const paymentService = new PaymentService(fastify.prisma);
-  const bookingService = new BookingService(fastify.prisma);
+  const bookingService = new BookingService();
 
   // POST /payments/tattoo-deposit - Process a tattoo deposit payment
   fastify.post('/tattoo-deposit', {
@@ -115,7 +115,7 @@ const tattooRoutes: FastifyPluginAsync = async (fastify) => {
       if (bookingResult) {
         await fastify.prisma.appointment.update({
           where: { id: bookingResult.booking.id },
-          data: { id: paymentResult.payment.id }
+          data: { paymentId: paymentResult.payment.id }
         });
       }
       

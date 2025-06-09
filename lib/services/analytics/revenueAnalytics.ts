@@ -142,7 +142,7 @@ export class RevenueAnalyticsService {
         byPaymentType,
         byService,
         byMonth,
-        byCustomerSegment: await this.getRevenueByCustomerSegment(dateRange)
+        byCustomerSegment: await this.getRevenueByCustomerSegment()
       },
       trends: {
         growthRate: await this.calculateRevenueGrowthRate(period),
@@ -227,7 +227,7 @@ export class RevenueAnalyticsService {
   /**
    * Get revenue by customer segment
    */
-  private async getRevenueByCustomerSegment(dateRange: DateRange): Promise<Record<string, number>> {
+  private async getRevenueByCustomerSegment(): Promise<Record<string, number>> {
     // Simplified implementation - would need more complex customer segmentation logic
     return {
       new: 0,

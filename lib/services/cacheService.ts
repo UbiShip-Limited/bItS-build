@@ -10,7 +10,7 @@ interface CacheItem<T> {
  * Keeps costs low by avoiding external cache services like Redis
  */
 export class CacheService {
-  private cache: Map<string, CacheItem<any>> = new Map();
+  private cache: Map<string, CacheItem<unknown>> = new Map();
   private readonly defaultTTL = 300; // 5 minutes
   private readonly maxCacheSize = 1000; // Limit memory usage
   
@@ -30,7 +30,7 @@ export class CacheService {
       return null;
     }
     
-    return item.data;
+    return item.data as T;
   }
   
   /**

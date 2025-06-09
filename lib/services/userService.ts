@@ -42,7 +42,7 @@ export class UserService {
   /**
    * Create a new user account (for staff/admin use)
    */
-  async createUser(userData: CreateUserData, createdBy?: string): Promise<UserWithRole> {
+  async createUser(userData: CreateUserData, _createdBy?: string): Promise<UserWithRole> {
     const { email, role, password, sendInvite = false } = userData;
 
     // Validate email format
@@ -167,7 +167,7 @@ export class UserService {
     try {
       // Update in Supabase if needed
       if (email || password) {
-        const supabaseUpdates: any = {};
+        const supabaseUpdates: { email?: string; password?: string } = {};
         if (email) supabaseUpdates.email = email;
         if (password) supabaseUpdates.password = password;
 
@@ -271,20 +271,46 @@ export class UserService {
       users.map(async (user) => {
         try {
           const { data: supabaseUser } = await supabaseAdmin.auth.admin.getUserById(user.id);
-          return {
-            ...supabaseUser?.user,
-            role: user.role as UserRole,
-            createdAt: user.createdAt.toISOString(),
-            updatedAt: user.updatedAt.toISOString()
-          };
+          if (supabaseUser?.user) {
+            return {
+              ...supabaseUser.user,
+              role: user.role as UserRole
+            };
+          } else {
+            // Fallback if no Supabase user found
+            throw new Error('No Supabase user data');
+          }
         } catch (error) {
           console.error(`Error fetching Supabase data for user ${user.id}:`, error);
+          // Return a minimal UserWithRole when Supabase data is unavailable
           return {
             id: user.id,
-            email: user.email,
+            email: user.email || '',
             role: user.role as UserRole,
-            createdAt: user.createdAt.toISOString(),
-            updatedAt: user.updatedAt.toISOString()
+            created_at: user.createdAt.toISOString(),
+            updated_at: user.updatedAt.toISOString(),
+            aud: 'authenticated',
+            app_metadata: {},
+            user_metadata: {},
+            email_confirmed_at: user.createdAt.toISOString(),
+            last_sign_in_at: undefined,
+            phone: undefined,
+            phone_confirmed_at: undefined,
+            confirmation_sent_at: undefined,
+            confirmed_at: user.createdAt.toISOString(),
+            email_change_sent_at: undefined,
+            new_email: undefined,
+            invited_at: undefined,
+            action_link: undefined,
+            email_change_confirm_status: 0,
+            banned_until: undefined,
+            new_phone: undefined,
+            phone_change_sent_at: undefined,
+            phone_change_token: undefined,
+            phone_change: undefined,
+            is_sso_user: false,
+            deleted_at: undefined,
+            is_anonymous: false
           } as UserWithRole;
         }
       })

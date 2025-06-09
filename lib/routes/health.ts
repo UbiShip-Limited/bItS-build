@@ -1,5 +1,22 @@
 import { FastifyPluginAsync } from 'fastify';
 
+interface HealthCheck {
+  status: string;
+  error?: string;
+  environment?: string;
+  hasToken?: boolean;
+}
+
+interface HealthResponse {
+  status: string;
+  timestamp: string;
+  checks: {
+    database?: HealthCheck;
+    square?: HealthCheck;
+    cloudinary?: HealthCheck;
+  };
+}
+
 const healthRoutes: FastifyPluginAsync = async (fastify) => {
   // Basic health check
   fastify.get('/health', async (request, reply) => {
@@ -27,7 +44,7 @@ const healthRoutes: FastifyPluginAsync = async (fastify) => {
 
   // Detailed health check for monitoring
   fastify.get('/health/detailed', async (request, reply) => {
-    const health = {
+    const health: HealthResponse = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
       checks: {}

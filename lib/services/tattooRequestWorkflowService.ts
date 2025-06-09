@@ -6,7 +6,7 @@ import { tattooRequestImageService } from './tattooRequestImageService';
 import { auditService } from './auditService';
 import { prisma } from '../prisma/prisma';
 import { ValidationError, NotFoundError } from './errors';
-import type { TattooRequest, Appointment } from '@prisma/client';
+import type { Appointment } from '@prisma/client';
 
 /**
  * Orchestrates complex, multi-step business workflows involving tattoo requests.
@@ -79,7 +79,7 @@ export class TattooRequestWorkflowService {
         startAt: appointmentData.startAt,
         duration: appointmentData.duration,
         customerId,
-        bookingType: appointmentData.bookingType || BookingType.TATTOO_SESSION,
+        bookingType: (appointmentData.bookingType as BookingType) || BookingType.TATTOO_SESSION,
         status: BookingStatus.CONFIRMED,
         artistId: appointmentData.artistId,
         note: appointmentData.note,

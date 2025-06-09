@@ -52,12 +52,7 @@ interface CreateBookingBody {
   tattooRequestId?: string;
 }
 
-// Add proper typing for fastify instance with bookingService
-interface FastifyInstanceWithBookingService {
-  bookingService: BookingService;
-}
-
-export async function createBookingHandler(this: FastifyInstanceWithBookingService, request: FastifyRequest<{ Body: CreateBookingBody }>, reply: FastifyReply) {
+export async function createBookingHandler(request: FastifyRequest<{ Body: CreateBookingBody }>, reply: FastifyReply) {
   const {
     startAt,
     duration,
@@ -72,8 +67,8 @@ export async function createBookingHandler(this: FastifyInstanceWithBookingServi
     tattooRequestId
   } = request.body;
 
-  // bookingService needs to be available, typically via `this.bookingService` or passed in
-  const bookingService: BookingService = this.bookingService; 
+  // Access bookingService from the fastify server instance  
+  const bookingService: BookingService = (request.server as any).bookingService; 
   const user = request.user as UserWithRole; // Corrected User type
 
   try {
@@ -95,8 +90,8 @@ export async function createBookingHandler(this: FastifyInstanceWithBookingServi
       customerId,
       bookingType,
       artistId,
-      customerEmail,
-      customerPhone,
+      contactEmail: customerEmail,
+      contactPhone: customerPhone,
       note,
       priceQuote,
       status,
@@ -106,8 +101,7 @@ export async function createBookingHandler(this: FastifyInstanceWithBookingServi
     return {
       success: true,
       message: 'Booking created successfully',
-      booking: result.booking,
-      squareBooking: result.squareBooking
+      booking: result.booking
     };
   } catch (error: unknown) {
     request.log.error(error);

@@ -2,19 +2,41 @@ import { FastifyPluginAsync } from 'fastify';
 import { authorize } from '../middleware/auth';
 import { UserRole } from '../types/auth';
 import { CloudinarySignatureBody } from '../types/api';
-import CloudinaryService from '../cloudinary/index.js';
+import CloudinaryService, { type GalleryImage } from '../cloudinary/index';
+
+// TypeScript interfaces for Cloudinary API responses
+interface CloudinaryResource {
+  public_id: string;
+  folder?: string;
+  secure_url: string;
+  [key: string]: unknown;
+}
+
+interface CloudinarySearchResult {
+  total_count: number;
+  resources: CloudinaryResource[];
+}
+
+interface CloudinaryFolder {
+  name: string;
+  path: string;
+}
+
+interface CloudinaryFoldersResult {
+  folders: CloudinaryFolder[];
+}
 
 // Use mock service if no Cloudinary credentials are set
 const useMock = !process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET;
 const cloudinaryService = useMock 
-  ? await import('../cloudinary/mock.js').then(m => m.default)
-  : await import('../cloudinary/index.js').then(m => m.default);
+  ? await import('../cloudinary/mock').then(m => m.default)
+  : await import('../cloudinary/index').then(m => m.default);
 
 if (useMock) {
   console.log('⚠️  Using mock Cloudinary service - set CLOUDINARY_* env vars for real uploads');
 }
 
-const cloudinaryRoutes: FastifyPluginAsync = async (fastify, _options) => {
+const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
   // Public endpoint for tattoo request image uploads (no auth required)
   fastify.post('/signature/public', {
     schema: {
@@ -33,7 +55,7 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify, _options) => {
     // This locks the upload to only go to the specified folder
     const params = {
       folder,
-      tags: tags.join(','),
+      tags: Array.isArray(tags) ? tags : [tags], // Ensure tags is an array
       upload_preset: 'tattoo-requests' // Optional: if you have a preset configured
     };
     
@@ -62,7 +84,7 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify, _options) => {
     // This locks the upload to only go to the specified folder
     const params = {
       folder,
-      tags: tags.join(',')
+      tags: Array.isArray(tags) ? tags : [tags] // Ensure tags is an array
     };
     
     const signatureData = cloudinaryService.generateUploadSignature(params);
@@ -136,16 +158,16 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify, _options) => {
       // Check account status and list some resources
       const allResources = await CloudinaryService.cloudinary.search
         .max_results(10)
-        .execute();
+        .execute() as CloudinarySearchResult;
       
       // Check specifically for shop_content folder
       const shopContentSearch = await CloudinaryService.cloudinary.search
         .expression('folder:shop_content')
         .max_results(10)
-        .execute();
+        .execute() as CloudinarySearchResult;
       
       // Get folders
-      const folders = await CloudinaryService.cloudinary.api.root_folders();
+      const folders = await CloudinaryService.cloudinary.api.root_folders() as CloudinaryFoldersResult;
       
       const debugInfo = {
         account: {
@@ -153,20 +175,20 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify, _options) => {
           hasCredentials: !!process.env.CLOUDINARY_API_KEY
         },
         totalResources: allResources.total_count,
-        sampleResources: allResources.resources.map((r: any) => ({
+        sampleResources: allResources.resources.map((r: CloudinaryResource) => ({
           publicId: r.public_id,
           folder: r.folder,
           url: r.secure_url
         })),
         shopContentFolder: {
           totalCount: shopContentSearch.total_count,
-          resources: shopContentSearch.resources.map((r: any) => ({
+          resources: shopContentSearch.resources.map((r: CloudinaryResource) => ({
             publicId: r.public_id,
             folder: r.folder,
             url: r.secure_url
           }))
         },
-        folders: folders.folders.map((f: any) => f.name)
+        folders: folders.folders.map((f: CloudinaryFolder) => f.name)
       };
       
       console.log('Debug info:', JSON.stringify(debugInfo, null, 2));
@@ -196,7 +218,7 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify, _options) => {
       console.log(`🖼️ Gallery: Fetching images from ${targetFolder} folder...`);
       
       // Get images from specified folder
-      let images: any[] = [];
+      let images: GalleryImage[] = [];
       if (targetFolder === 'shop_content') {
         images = await CloudinaryService.getShopGalleryImages();
       } else if (targetFolder === 'site_content') {
@@ -211,13 +233,13 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify, _options) => {
       // Apply filters if provided
       if (artist) {
         images = images.filter(img => 
-          img.artist.toLowerCase().includes(artist.toLowerCase())
+          img.artist && img.artist.toLowerCase().includes(artist.toLowerCase())
         );
       }
       
       if (style) {
         images = images.filter(img => 
-          img.style.toLowerCase().includes(style.toLowerCase())
+          img.style && img.style.toLowerCase().includes(style.toLowerCase())
         );
       }
       

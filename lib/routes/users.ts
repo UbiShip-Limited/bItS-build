@@ -6,10 +6,6 @@ import { ValidationError, NotFoundError } from '../services/errors';
 
 const userService = new UserService();
 
-interface CreateUserBody extends CreateUserData {}
-
-interface UpdateUserBody extends UpdateUserData {}
-
 interface UserParams {
   id: string;
 }
@@ -146,7 +142,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     try {
-      const userData = request.body as CreateUserBody;
+      const userData = request.body as CreateUserData;
       
       // Double-check authorization
       if (!canManageUsers(request.user?.role as UserRole)) {
@@ -214,7 +210,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     try {
       const { id } = request.params as UserParams;
-      const updateData = request.body as UpdateUserBody;
+      const updateData = request.body as UpdateUserData;
       
       // Double-check authorization
       if (!canManageUsers(request.user?.role as UserRole)) {

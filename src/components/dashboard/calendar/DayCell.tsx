@@ -1,7 +1,7 @@
 import { Plus, TrendingUp } from 'lucide-react';
 import { type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
 import AppointmentCard from './AppointmentCard';
-import { DayStats } from '../hooks/useCalendarStats';
+import { DayStats } from './hooks/useCalendarStats';
 import { isToday, isSameMonth } from '../utils/calendarUtils';
 
 interface DayCellProps {

@@ -47,6 +47,7 @@ export default function CustomerPaymentHistory({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentServiceUnavailable, setPaymentServiceUnavailable] = useState(false);
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
 
   // Check if payment service is available before making calls
   const checkPaymentServiceAvailability = useCallback(async () => {
@@ -66,6 +67,8 @@ export default function CustomerPaymentHistory({
         console.warn('🚫 Payment service unavailable:', testResult.message);
         setPaymentServiceUnavailable(true);
         setError(null); // Clear any previous errors
+      } else {
+        setPaymentServiceUnavailable(false);
       }
       
       return testResult.available;
@@ -80,12 +83,19 @@ export default function CustomerPaymentHistory({
 
   const loadPaymentHistory = useCallback(async () => {
     if (!customerId) return;
+    
+    // Prevent multiple rapid calls
+    if (hasAttemptedLoad) {
+      console.log('🔄 Payment history load already attempted, skipping...');
+      return;
+    }
 
     // Check if payment service is available first
     const isAvailable = await checkPaymentServiceAvailability();
     if (!isAvailable) {
       setLoading(false);
       setPaymentServiceUnavailable(true);
+      setHasAttemptedLoad(true);
       return;
     }
 
@@ -93,6 +103,7 @@ export default function CustomerPaymentHistory({
       setLoading(true);
       setError(null);
       setPaymentServiceUnavailable(false);
+      setHasAttemptedLoad(true);
       
       // Use the payment service with customer-specific endpoint
       const response = await paymentService.getCustomerPayments(customerId, 50);
@@ -139,7 +150,7 @@ export default function CustomerPaymentHistory({
     } finally {
       setLoading(false);
     }
-  }, [customerId, checkPaymentServiceAvailability]);
+  }, [customerId, hasAttemptedLoad]);
 
   useEffect(() => {
     loadPaymentHistory();

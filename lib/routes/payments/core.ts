@@ -20,6 +20,18 @@ interface UpdatePaymentBody {
   squareId?: string;
 }
 
+// Define proper types for invoice items and payment schedule (matching PaymentLinkService expectations)
+interface InvoiceItem {
+  description: string;
+  amount: number;
+}
+
+interface PaymentScheduleItem {
+  amount: number;
+  dueDate: string;
+  type: 'DEPOSIT' | 'BALANCE';
+}
+
 interface ProcessPaymentBody {
   type: 'payment_link' | 'invoice' | 'direct_payment';
   amount: number;
@@ -35,19 +47,46 @@ interface ProcessPaymentBody {
   sourceId?: string;
   bookingId?: string;
   note?: string;
-  items?: Array<any>;
-  paymentSchedule?: any;
+  items?: InvoiceItem[];
+  paymentSchedule?: PaymentScheduleItem[];
   deliveryMethod?: 'EMAIL' | 'SMS' | 'SHARE_MANUALLY';
 }
 
-interface PaymentQueryParams {
+// Query parameters interface for GET requests
+interface PaymentListQuery {
+  customerId?: string;
+  status?: 'pending' | 'completed' | 'failed' | 'refunded';
   page?: number;
   limit?: number;
-  status?: 'pending' | 'completed' | 'failed' | 'refunded';
+  includeSquare?: boolean;
+}
+
+// Payment processing request body interface
+interface ProcessPaymentRequestBody {
+  sourceId: string;
+  amount: number;
+  customerId: string;
+  paymentType: PaymentType;
+  note?: string;
+  bookingId?: string;
+  idempotencyKey?: string;
+}
+
+// Extended payment type for adding Square data
+interface PaymentWithSquareData {
+  id: string;
+  amount: number;
+  status: string;
+  paymentType: string;
+  squareId?: string;
+  hasSquareData?: boolean;
+  [key: string]: unknown;
+}
+
+// Where clause type for Prisma queries
+interface PaymentWhereClause {
   customerId?: string;
-  paymentType?: PaymentType;
-  startDate?: string;
-  endDate?: string;
+  status?: 'pending' | 'completed' | 'failed' | 'refunded';
 }
 
 // Helper function to check if Square is configured
@@ -92,7 +131,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
-    const { customerId, status, page = 1, limit = 20, includeSquare = false } = request.query as any;
+    const { customerId, status, page = 1, limit = 20, includeSquare = false } = request.query as PaymentListQuery;
     
     // Validate customer exists if customerId is provided
     if (customerId) {
@@ -112,7 +151,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
     }
     
     // Build where clause for payment filtering
-    let whereClause: any = {};
+    const whereClause: PaymentWhereClause = {};
     
     // Artists and admins can filter by specific customer
     if (customerId) {
@@ -190,10 +229,10 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
             try {
               // Note: This would require modifying PaymentService to handle Square client initialization gracefully
               // For now, we'll just indicate that Square data could be available
-              (payment as any).hasSquareData = true;
+              (payment as PaymentWithSquareData).hasSquareData = true;
             } catch (error) {
               fastify.log.warn(`Could not fetch Square data for payment ${payment.id}: ${error.message}`);
-              (payment as any).hasSquareData = false;
+              (payment as PaymentWithSquareData).hasSquareData = false;
             }
           }
         }
@@ -355,7 +394,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
 
-    const paymentData = request.body as any;
+    const paymentData = request.body as ProcessPaymentRequestBody;
     
     try {
       const result = await paymentService.processPayment(paymentData);
@@ -403,8 +442,6 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
   });
-
-
 
   // POST /payments (legacy) - Create a simple payment record
   fastify.post('/legacy', {

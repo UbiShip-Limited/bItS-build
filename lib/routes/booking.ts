@@ -22,44 +22,38 @@ const bookingRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /bookings - Create a new booking (authenticated)
   fastify.post('/', {
     preHandler: authenticate, // Apply authentication
-    schema: createBookingSchema,
-    handler: createBookingHandler
-  });
+    schema: createBookingSchema
+  }, createBookingHandler);
 
   // POST /bookings/anonymous - Create a new booking without authentication
   fastify.post('/anonymous', {
     // preHandler is not set here for anonymous access
-    schema: createAnonymousBookingSchema,
-    handler: createAnonymousBookingHandler
-  });
+    schema: createAnonymousBookingSchema
+  }, createAnonymousBookingHandler);
 
   // GET /bookings - List all bookings
   fastify.get('/', {
     preHandler: [authenticate, authorize(['admin', 'artist'])], // Apply auth and specific roles
-    schema: listBookingsSchema,
-    handler: listBookingsHandler
-  });
+    schema: listBookingsSchema
+  }, listBookingsHandler);
 
   // GET /bookings/:id - Get booking by ID
   fastify.get('/:id', {
     preHandler: authenticate, // Apply authentication
-    schema: getBookingByIdSchema,
-    handler: getBookingByIdHandler
-  });
+    schema: getBookingByIdSchema
+  }, getBookingByIdHandler);
 
   // PUT /bookings/:id - Update booking
   fastify.put('/:id', {
     preHandler: [authenticate, authorize(['admin', 'artist'])], // Apply auth and specific roles
-    schema: updateBookingSchema,
-    handler: updateBookingHandler
-  });
+    schema: updateBookingSchema
+  }, updateBookingHandler);
 
   // POST /bookings/:id/cancel - Cancel a booking
   fastify.post('/:id/cancel', {
     preHandler: authenticate, // Apply authentication
-    schema: cancelBookingSchema,
-    handler: cancelBookingHandler
-  });
+    schema: cancelBookingSchema
+  }, cancelBookingHandler);
   
   // Add deprecation notice middleware for this route
   fastify.addHook('onRequest', (request, reply, done) => {

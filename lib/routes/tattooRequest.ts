@@ -3,7 +3,7 @@ import multipart from '@fastify/multipart';
 import { authenticate, authorize } from '../middleware/auth';
 import { UserRole } from '../types/auth';
 import { v4 as uuidv4 } from 'uuid';
-import { TattooRequestService, CreateTattooRequestData, ConvertToAppointmentData } from '../services/tattooRequestService';
+import { TattooRequestService, CreateTattooRequestData } from '../services/tattooRequestService';
 import { BookingType } from '../services/bookingService';
 import { tattooRequestImageService } from '../services/tattooRequestImageService';
 import { tattooRequestWorkflowService } from '../services/tattooRequestWorkflowService';
@@ -25,7 +25,7 @@ interface ConvertToAppointmentBody {
   startAt: string;
   duration: number;
   artistId?: string;
-  bookingType?: any;
+  bookingType?: BookingType;
   priceQuote?: number;
   note?: string;
 }
@@ -371,14 +371,16 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
       
       // Process all parts (fields and files)
       for await (const part of parts) {
-        if (part.type === 'field') {
+        if ('value' in part) {
+          // This is a field
           const value = part.value as string;
           if (part.fieldname === 'tattooRequestId') {
             tattooRequestId = value;
           } else if (part.fieldname === 'customerId') {
             customerId = value;
           }
-        } else if (part.type === 'file') {
+        } else {
+          // This is a file
           // Create temp file path
           const tempFilePath = path.join(os.tmpdir(), `upload-${uuidv4()}-${part.filename}`);
           tempFiles.push(tempFilePath);

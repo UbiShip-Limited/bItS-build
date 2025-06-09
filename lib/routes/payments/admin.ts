@@ -259,7 +259,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
               amount: Number(squarePayment.amountMoney?.amount || 0) / 100, // Convert from cents
               status: 'completed',
               paymentMethod: squarePayment.sourceType,
-              paymentDetails: squarePayment as any, // Properly cast to JSON-compatible type
+              paymentDetails: JSON.parse(JSON.stringify(squarePayment)), // Convert to JSON-compatible object for Prisma
               squareId: squarePayment.id
             }
           });
@@ -288,7 +288,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /payments/square/status - Check Square integration status
   fastify.get('/square/status', {
     preHandler: authorize(['admin'])
-  }, async (request, reply) => {
+  }, async () => {
     const configured = isSquareConfigured();
     const { 
       SQUARE_ACCESS_TOKEN,

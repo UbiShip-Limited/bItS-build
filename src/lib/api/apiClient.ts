@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { createBrowserClient } from '@supabase/ssr';
 
-// Define base API configuration - now points directly to Fastify backend
+// Define base API configuration - use Fastify backend by default
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
 
 // Debug: Log the API URL to make sure it's correct
@@ -58,7 +58,7 @@ export interface ApiError {
 }
 
 /**
- * API Client for interacting with the Fastify backend directly
+ * API Client for interacting with the Fastify backend API (localhost:3001 by default)
  */
 export class ApiClient {
   private axiosInstance: AxiosInstance;
@@ -68,7 +68,7 @@ export class ApiClient {
   private pendingRequests = new Map<string, Promise<any>>();
   
   constructor(baseURL: string = API_URL) {
-    // Now calls Fastify backend directly instead of Next.js API routes
+    // Now calls Fastify backend at localhost:3001 by default (can be overridden with NEXT_PUBLIC_BACKEND_API_URL)
     this.baseURL = baseURL;
     this.axiosInstance = axios.create({
       baseURL: baseURL,

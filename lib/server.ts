@@ -41,15 +41,15 @@ function validateEnvironment() {
   };
 
   const missingRequired = Object.entries(requiredEnvVars)
-    .filter(([_, value]) => !value)
+    .filter(([, value]) => !value)
     .map(([key]) => key);
 
   const missingSquare = Object.entries(squareEnvVars)
-    .filter(([_, value]) => !value)
+    .filter(([, value]) => !value)
     .map(([key]) => key);
 
   const missingOptional = Object.entries(optionalEnvVars)
-    .filter(([_, value]) => !value)
+    .filter(([, value]) => !value)
     .map(([key]) => key);
 
   if (missingRequired.length > 0) {

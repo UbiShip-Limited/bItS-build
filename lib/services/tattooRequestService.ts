@@ -3,8 +3,6 @@ import { NotFoundError, ValidationError } from './errors';
 import { v4 as uuidv4 } from 'uuid';
 import type { TattooRequest, Prisma } from '@prisma/client';
 import { auditService } from './auditService';
-import { tattooRequestImageService } from './tattooRequestImageService';
-import { enhancedCustomerService } from './enhancedCustomerService'; // Assuming this service exists and has a creation method
 
 // Business status flow: new → reviewed → approved/rejected → converted_to_appointment
 export type TattooRequestStatus = 'new' | 'reviewed' | 'approved' | 'rejected' | 'converted_to_appointment';
@@ -40,7 +38,7 @@ export interface ConvertToAppointmentData {
   startAt: Date;
   duration: number;
   artistId?: string;
-  bookingType?: any; // Using 'any' to avoid direct dependency on BookingService types
+  bookingType?: string; // Using string to avoid direct dependency on BookingService types
   priceQuote?: number;
   note?: string;
 }

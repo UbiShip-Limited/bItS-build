@@ -20,8 +20,7 @@ import {
   Eye,
   DollarSign
 } from 'lucide-react';
-import CreateAppointmentModal from '@/src/components/appointments/CreateAppointmentModal';
-import QuickCustomerActions from '@/src/components/customers/QuickCustomerActions';
+// Components are loaded dynamically as needed
 import { AppointmentApiClient, type AppointmentData, BookingStatus, BookingType } from '@/src/lib/api/services/appointmentApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '@/src/components/ui/Modal';
@@ -336,7 +335,6 @@ export default function AppointmentsPage() {
                                 appointmentId={appointment.id}
                                 appointmentStatus={appointment.status}
                                 currentPrice={appointment.priceQuote}
-                                depositPaid={appointment.depositPaid}
                                 variant="compact"
                                 onPaymentCreated={() => {
                                   // Refresh appointments when payment is created

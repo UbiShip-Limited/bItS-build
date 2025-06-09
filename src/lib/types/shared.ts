@@ -18,10 +18,9 @@ export enum BookingStatus {
 
 export enum PaymentType {
   CONSULTATION = 'consultation',
-  DEPOSIT = 'deposit',
-  BALANCE = 'balance',
-  FULL_PAYMENT = 'full_payment',
-  ADDITIONAL_WORK = 'additional_work'
+  DRAWING_CONSULTATION = 'drawing_consultation',
+  TATTOO_DEPOSIT = 'tattoo_deposit',
+  TATTOO_FINAL = 'tattoo_final'
 }
 
 export enum TattooRequestStatus {
@@ -35,26 +34,23 @@ export enum TattooRequestStatus {
 // Payment config
 export const PAYMENT_CONFIG = {
   MINIMUM_AMOUNTS: {
-    [PaymentType.CONSULTATION]: 50,
-    [PaymentType.DEPOSIT]: 100,
-    [PaymentType.BALANCE]: 50,
-    [PaymentType.FULL_PAYMENT]: 50,
-    [PaymentType.ADDITIONAL_WORK]: 25
+    [PaymentType.CONSULTATION]: 35,
+    [PaymentType.DRAWING_CONSULTATION]: 50,
+    [PaymentType.TATTOO_DEPOSIT]: 75,
+    [PaymentType.TATTOO_FINAL]: 100
   }
 };
 
 export const formatPaymentType = (type: PaymentType): string => {
   switch (type) {
     case PaymentType.CONSULTATION:
-      return 'Consultation Fee';
-    case PaymentType.DEPOSIT:
-      return 'Deposit Payment';
-    case PaymentType.BALANCE:
-      return 'Balance Payment';
-    case PaymentType.FULL_PAYMENT:
-      return 'Full Payment';
-    case PaymentType.ADDITIONAL_WORK:
-      return 'Additional Work';
+      return 'Consultation';
+    case PaymentType.DRAWING_CONSULTATION:
+      return 'Drawing Consultation';
+    case PaymentType.TATTOO_DEPOSIT:
+      return 'Tattoo Deposit';
+    case PaymentType.TATTOO_FINAL:
+      return 'Final Payment';
     default:
       return (type as string).charAt(0).toUpperCase() + (type as string).slice(1).replace('_', ' ');
   }

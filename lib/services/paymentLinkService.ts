@@ -1,12 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
-import SquareClient from '../square/index.js';
-import { prisma } from '../prisma/prisma.js';
+import SquareClient from '../square/index';
+import { prisma } from '../prisma/prisma';
 import { PrismaClient } from '@prisma/client';
-import { PaymentType } from './paymentService.js';
+import { PaymentType } from './paymentService';
 import type { Square } from 'square';
 import type {
   SquareApiResponse,
-  PaymentLinkResponse,
 } from '../types/square';
 
 export interface PaymentLinkParams {
@@ -53,7 +52,7 @@ export default class PaymentLinkService {
    */
   async createPaymentLink(params: PaymentLinkParams): Promise<{
     success: boolean;
-    paymentLink: any;
+    paymentLink: Square.PaymentLink;
     url: string;
   }> {
     const { 

@@ -1,5 +1,5 @@
 import { FastifyPluginAsync } from 'fastify';
-import { authorize, getUserPermissions } from '../../middleware/auth';
+import { authorize } from '../../middleware/auth';
 import PaymentLinkService from '../../services/paymentLinkService';
 import { PaymentType } from '../../services/paymentService';
 
@@ -119,6 +119,8 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const result = await paymentLinkService.createPaymentLink(request.body as CreatePaymentLinkBody);
       
+      const body = request.body as CreatePaymentLinkBody;
+      
       // Log audit
       await fastify.prisma.auditLog.create({
         data: {
@@ -127,9 +129,9 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
           resource: 'PaymentLink',
           resourceId: result.paymentLink.id,
           details: {
-            amount: request.body.amount,
-            paymentType: request.body.paymentType,
-            customerId: request.body.customerId
+            amount: body.amount,
+            paymentType: body.paymentType,
+            customerId: body.customerId
           }
         }
       });
@@ -334,6 +336,8 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const result = await paymentLinkService.createInvoice(request.body as CreateInvoiceBody);
       
+      const body = request.body as CreateInvoiceBody;
+      
       // Log audit
       await fastify.prisma.auditLog.create({
         data: {
@@ -342,8 +346,8 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
           resource: 'Invoice',
           resourceId: result.invoice.id || '',
           details: {
-            customerId: request.body.customerId,
-            itemCount: request.body.items.length
+            customerId: body.customerId,
+            itemCount: body.items.length
           }
         }
       });
@@ -410,6 +414,8 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       const result = await paymentLinkService.createCheckoutSession(request.body as CreateCheckoutBody);
       
+      const body = request.body as CreateCheckoutBody;
+      
       // Log audit
       await fastify.prisma.auditLog.create({
         data: {
@@ -418,8 +424,8 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
           resource: 'CheckoutSession',
           resourceId: result.checkoutId,
           details: {
-            customerId: request.body.customerId,
-            itemCount: request.body.items.length
+            customerId: body.customerId,
+            itemCount: body.items.length
           }
         }
       });
@@ -446,7 +452,7 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /payments/links/square/status - Check Square integration status
   fastify.get('/square/status', {
     preHandler: authorize(['admin', 'artist'])
-  }, async (request, reply) => {
+  }, async () => {
     const configured = isSquareConfigured();
     const { 
       SQUARE_ACCESS_TOKEN,

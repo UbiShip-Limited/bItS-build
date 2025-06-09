@@ -2,7 +2,7 @@ import { Plus } from 'lucide-react';
 import { format } from 'date-fns';
 import { type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
 import AppointmentCard from './AppointmentCard';
-import { DayStats } from '../hooks/useCalendarStats';
+import { DayStats } from './hooks/useCalendarStats';
 import { isToday, generateTimeSlots } from '../utils/calendarUtils';
 
 interface WeekViewProps {

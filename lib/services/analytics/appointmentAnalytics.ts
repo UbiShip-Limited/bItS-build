@@ -46,8 +46,7 @@ export class AppointmentAnalyticsService {
    */
   async getAppointmentMetrics(
     today: DateRange,
-    thisWeek: DateRange,
-    thisMonth: DateRange
+    thisWeek: DateRange
   ): Promise<AppointmentMetrics> {
     const [
       todayAppointments,
@@ -157,9 +156,9 @@ export class AppointmentAnalyticsService {
 
     // Calculate average duration in minutes
     const durations = appointments
-      .filter(apt => apt.endTime)
+      .filter(apt => apt.endTime && apt.startTime)
       .map(apt => {
-        const duration = apt.endTime!.getTime() - apt.startTime.getTime();
+        const duration = apt.endTime!.getTime() - apt.startTime!.getTime();
         return duration / (1000 * 60); // Convert to minutes
       });
 

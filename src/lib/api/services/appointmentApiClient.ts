@@ -1,7 +1,15 @@
 import { ApiClient } from '../apiClient';
 import { Customer } from './customerService';
-import { Artist } from '../../../app/data/artist-data';
 import { TattooRequest } from './tattooRequestApiClient';
+
+// Artist is a User in our system
+export interface Artist {
+  id: string;
+  email: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 // Re-export for convenience
 export { BookingType, BookingStatus } from '../../types/shared';

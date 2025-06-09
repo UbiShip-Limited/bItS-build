@@ -252,14 +252,21 @@ class PaymentService {
           message: 'Payment routes not found - backend may not be running or routes not registered'
         };
       } else if (error.response?.status === 401 || error.response?.status === 403) {
+        // Authentication errors mean the routes exist but user isn't logged in
+        // This is actually a "working" state for our purposes
         return {
           available: true,
-          message: 'Payment routes exist but require authentication'
+          message: 'Payment routes exist but require authentication - this is normal'
+        };
+      } else if (error.code === 'ECONNREFUSED' || error.message?.includes('ECONNREFUSED')) {
+        return {
+          available: false,
+          message: 'Cannot connect to backend server - please ensure the backend is running'
         };
       } else {
         return {
           available: false,
-          message: `Payment routes error: ${error.message}`
+          message: `Payment routes error: ${error.message || 'Unknown error'}`
         };
       }
     }

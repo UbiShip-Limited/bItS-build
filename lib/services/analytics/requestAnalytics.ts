@@ -136,9 +136,7 @@ export class RequestAnalyticsService {
   private async getAverageConversionTime(): Promise<number> {
     const convertedRequests = await prisma.tattooRequest.findMany({
       where: {
-        status: { in: ['approved', 'in_progress', 'completed'] },
-        createdAt: { not: null },
-        updatedAt: { not: null }
+        status: { in: ['approved', 'in_progress', 'completed'] }
       },
       select: {
         createdAt: true,

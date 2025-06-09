@@ -22,7 +22,7 @@ export async function GET() {
     let realtimeStatus = 'unknown';
     try {
       const { realtimeService } = await import('../../../../lib/services/realtimeService');
-      const stats = realtimeService.getStats();
+      realtimeService.getStats();
       realtimeStatus = 'working';
     } catch (realtimeError) {
       realtimeStatus = `error: ${realtimeError.message}`;

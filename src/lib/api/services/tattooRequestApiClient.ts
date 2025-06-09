@@ -13,6 +13,10 @@ export interface TattooRequest {
   colorPreference?: string;
   style?: string;
   status: string;
+  depositPaid: boolean;
+  depositAmount?: number;
+  finalAmount?: number;
+  paymentId?: string;
   purpose?: string;
   preferredArtist?: string;
   timeframe?: string;

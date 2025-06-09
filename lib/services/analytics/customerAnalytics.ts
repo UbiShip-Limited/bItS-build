@@ -22,7 +22,7 @@ export interface CustomerSegment {
   count: number;
   totalRevenue: number;
   averageValue: number;
-  criteria: Record<string, any>;
+  criteria: Record<string, string | number>;
 }
 
 export interface ReturningCustomerMetrics {

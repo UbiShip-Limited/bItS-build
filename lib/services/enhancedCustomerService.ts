@@ -1,7 +1,6 @@
 import { prisma } from '../prisma/prisma';
 import { NotFoundError } from './errors';
 import { AnalyticsService } from './analyticsService';
-import { CommunicationService } from './communicationService';
 import type { Customer, TattooRequest } from '@prisma/client';
 
 export interface CustomerProfile {
@@ -31,11 +30,9 @@ export interface CustomerTimeline {
  */
 export class EnhancedCustomerService {
   private analyticsService: AnalyticsService;
-  private communicationService: CommunicationService;
 
   constructor() {
     this.analyticsService = new AnalyticsService();
-    this.communicationService = new CommunicationService();
   }
 
   /**
@@ -119,7 +116,13 @@ export class EnhancedCustomerService {
       throw new NotFoundError('Customer', customerId);
     }
 
-    const events = [];
+    const events: Array<{
+      id: string;
+      type: string;
+      title: string;
+      date: Date;
+      amount?: number;
+    }> = [];
 
     // Add appointment events
     customer.appointments.forEach(apt => {

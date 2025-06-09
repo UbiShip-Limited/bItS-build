@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-import SquareClient from '../square/index.js';
-import { prisma } from '../prisma/prisma.js';
+import SquareClient from '../square/index';
+import { prisma } from '../prisma/prisma';
 import { PrismaClient, Prisma } from '@prisma/client';
 import type { Square } from 'square';
 import { PaymentType, getMinimumAmount } from '../config/pricing';

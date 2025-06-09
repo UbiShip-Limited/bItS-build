@@ -19,6 +19,9 @@ export default function CustomersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  
+  // Define the limit constant used in pagination
+  const limit = 20;
 
   // ✅ FIX: Memoize the customerService instance to prevent infinite loop
   const customerService = useMemo(() => new CustomerService(apiClient), []);

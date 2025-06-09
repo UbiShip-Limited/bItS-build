@@ -292,6 +292,14 @@ export class EnhancedAppointmentService extends AppointmentService {
       ? appointments.reduce((sum, apt) => sum + (apt.duration || 60), 0) / appointments.length 
       : 0;
 
+    // Calculate no-show rate
+    const noShowAppointments = appointments.filter(apt => apt.status === BookingStatus.NO_SHOW);
+    const noShowRate = appointments.length > 0 ? (noShowAppointments.length / appointments.length) * 100 : 0;
+
+    // Calculate conversion rate (scheduled -> completed)
+    const completedAppointments = appointments.filter(apt => apt.status === BookingStatus.COMPLETED);
+    const conversionRate = appointments.length > 0 ? (completedAppointments.length / appointments.length) * 100 : 0;
+
     // Calculate popular time slots
     const timeSlotCounts = new Map<number, number>();
     appointments.forEach(apt => {
@@ -309,10 +317,131 @@ export class EnhancedAppointmentService extends AppointmentService {
     return {
       utilization: Math.round(utilization),
       averageDuration: Math.round(averageDuration),
-      conversionRate: 85, // Would calculate from actual conversion data
-      noShowRate: 5, // Would calculate from no-show appointments
+      conversionRate: Math.round(conversionRate),
+      noShowRate: Math.round(noShowRate),
       popularTimeSlots
     };
+  }
+
+  /**
+   * Get detailed revenue analytics by appointment type
+   */
+  async getRevenueAnalytics(period: 'week' | 'month' | 'quarter' = 'month') {
+    const startDate = this.getStartDateForPeriod(period);
+    
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        startTime: { gte: startDate },
+        status: BookingStatus.COMPLETED,
+        priceQuote: { not: null }
+      },
+      select: {
+        type: true,
+        priceQuote: true,
+        startTime: true
+      }
+    });
+
+    // Revenue by service type
+    const revenueByType = appointments.reduce((acc, apt) => {
+      const type = apt.type || 'Unknown';
+      if (!acc[type]) {
+        acc[type] = { revenue: 0, count: 0 };
+      }
+      acc[type].revenue += apt.priceQuote || 0;
+      acc[type].count += 1;
+      return acc;
+    }, {} as Record<string, { revenue: number; count: number }>);
+
+    // Daily revenue trend
+    const dailyRevenue = appointments.reduce((acc, apt) => {
+      if (apt.startTime) {
+        const date = apt.startTime.toISOString().split('T')[0];
+        acc[date] = (acc[date] || 0) + (apt.priceQuote || 0);
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    const totalRevenue = appointments.reduce((sum, apt) => sum + (apt.priceQuote || 0), 0);
+    const averageAppointmentValue = appointments.length > 0 ? totalRevenue / appointments.length : 0;
+
+    return {
+      totalRevenue,
+      averageAppointmentValue: Math.round(averageAppointmentValue),
+      revenueByType: Object.entries(revenueByType).map(([type, data]) => ({
+        type,
+        revenue: data.revenue,
+        count: data.count,
+        averageValue: Math.round(data.revenue / data.count)
+      })),
+      dailyTrend: Object.entries(dailyRevenue).map(([date, revenue]) => ({
+        date,
+        revenue
+      })).sort((a, b) => a.date.localeCompare(b.date))
+    };
+  }
+
+  /**
+   * Get artist performance analytics
+   */
+  async getArtistPerformance(period: 'week' | 'month' | 'quarter' = 'month') {
+    const startDate = this.getStartDateForPeriod(period);
+    
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        startTime: { gte: startDate },
+        status: { not: BookingStatus.CANCELLED },
+        artistId: { not: null }
+      },
+      include: {
+        artist: {
+          select: { id: true, email: true }
+        }
+      }
+    });
+
+    interface ArtistStatsType {
+      artistId: string;
+      artistEmail: string;
+      totalAppointments: number;
+      completedAppointments: number;
+      totalRevenue: number;
+      totalHours: number;
+    }
+
+    const artistStats = appointments.reduce((acc, apt) => {
+      const artistId = apt.artistId!;
+      const artistEmail = apt.artist?.email || 'Unknown';
+      
+      if (!acc[artistId]) {
+        acc[artistId] = {
+          artistId,
+          artistEmail,
+          totalAppointments: 0,
+          completedAppointments: 0,
+          totalRevenue: 0,
+          totalHours: 0
+        };
+      }
+      
+      acc[artistId].totalAppointments += 1;
+      if (apt.status === BookingStatus.COMPLETED) {
+        acc[artistId].completedAppointments += 1;
+        acc[artistId].totalRevenue += apt.priceQuote || 0;
+      }
+      acc[artistId].totalHours += (apt.duration || 60) / 60;
+      
+      return acc;
+    }, {} as Record<string, ArtistStatsType>);
+
+    return Object.values(artistStats).map((stats: ArtistStatsType) => ({
+      ...stats,
+      completionRate: stats.totalAppointments > 0 ? 
+        Math.round((stats.completedAppointments / stats.totalAppointments) * 100) : 0,
+      averageRevenue: stats.completedAppointments > 0 ? 
+        Math.round(stats.totalRevenue / stats.completedAppointments) : 0,
+      utilizationHours: Math.round(stats.totalHours)
+    }));
   }
 
   /**

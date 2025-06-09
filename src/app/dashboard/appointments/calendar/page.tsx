@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, List } from 'lucide-react';
@@ -9,6 +9,19 @@ import { apiClient } from '@/src/lib/api/apiClient';
 import AppointmentCalendar from '@/src/components/dashboard/AppointmentCalendar';
 import Modal from '@/src/components/ui/Modal';
 import AppointmentForm from '@/src/components/forms/AppointmentForm';
+
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  backgroundColor: string;
+  borderColor: string;
+  textColor: string;
+  extendedProps: {
+    appointment: AppointmentData;
+  };
+}
 
 export default function AppointmentCalendarPage() {
   const router = useRouter();
@@ -19,7 +32,8 @@ export default function AppointmentCalendarPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
 
-  const appointmentService = new AppointmentApiClient(apiClient);
+  // Memoize the client to prevent recreation on every render
+  const appointmentService = useMemo(() => new AppointmentApiClient(apiClient), []);
 
   useEffect(() => {
     loadAppointments();

@@ -19,9 +19,8 @@ let sessionCache: { token: string | null; expires: number } = { token: null, exp
 async function getAuthToken(): Promise<string | null> {
   const now = Date.now();
   
-  // Use cached token if it's still valid (cache for 30 seconds)
+  // Use cached token if it's still valid (cache for 5 minutes instead of 30 seconds)
   if (sessionCache.token && sessionCache.expires > now) {
-    console.log('🔄 Using cached auth token');
     return sessionCache.token;
   }
   
@@ -34,12 +33,12 @@ async function getAuthToken(): Promise<string | null> {
     }
     
     if (session?.access_token) {
-      // Cache the token for 30 seconds
+      // Cache the token for 5 minutes (longer cache to reduce auth overhead)
       sessionCache = {
         token: session.access_token,
-        expires: now + 30000
+        expires: now + 300000 // 5 minutes
       };
-      console.log('✅ API Client: Auth token cached successfully');
+      console.log('✅ API Client: Auth token cached successfully for 5 minutes');
       return session.access_token;
     }
     
@@ -55,7 +54,7 @@ async function getAuthToken(): Promise<string | null> {
 export interface ApiError {
   status: number;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 /**
@@ -64,6 +63,9 @@ export interface ApiError {
 export class ApiClient {
   private axiosInstance: AxiosInstance;
   private baseURL: string;
+  
+  // Request deduplication cache
+  private pendingRequests = new Map<string, Promise<any>>();
   
   constructor(baseURL: string = API_URL) {
     // Now calls Fastify backend directly instead of Next.js API routes
@@ -129,44 +131,74 @@ export class ApiClient {
   }
   
   /**
-   * GET request with retry logic
+   * Generate a cache key for request deduplication
+   */
+  private getRequestKey(method: string, path: string, config?: AxiosRequestConfig): string {
+    const params = config?.params ? JSON.stringify(config.params) : '';
+    return `${method.toUpperCase()}-${path}-${params}`;
+  }
+  
+  /**
+   * GET request with retry logic and deduplication
    */
   public async get<T>(path: string, config?: AxiosRequestConfig): Promise<T> {
-    let lastError: any;
-    const maxRetries = 2;
+    const requestKey = this.getRequestKey('GET', path, config);
     
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        const response: AxiosResponse<T> = await this.axiosInstance.get(path, config);
-        return response.data;
-      } catch (error: any) {
-        lastError = error;
-        
-        // Don't retry on auth errors (401, 403)
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          throw error;
-        }
-        
-        // Don't retry on client errors (4xx except auth)
-        if (error.response?.status >= 400 && error.response?.status < 500) {
-          throw error;
-        }
-        
-        // Retry on network errors or server errors (5xx)
-        if (attempt < maxRetries) {
-          console.warn(`🔄 Retrying request (${attempt}/${maxRetries}): ${path}`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // Exponential backoff
-        }
-      }
+    // Check if the same request is already pending
+    if (this.pendingRequests.has(requestKey)) {
+      console.log(`⏳ Deduplicating GET request: ${path}`);
+      return this.pendingRequests.get(requestKey);
     }
     
-    throw lastError;
+    let lastError: unknown;
+    const maxRetries = 2;
+    
+    const requestPromise = (async () => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          const response: AxiosResponse<T> = await this.axiosInstance.get(path, config);
+          return response.data;
+        } catch (error: unknown) {
+          lastError = error;
+          
+          // Type guard to check if error is an axios error
+          const isAxiosError = error && typeof error === 'object' && 'response' in error;
+          const axiosError = isAxiosError ? error as { response?: { status?: number } } : null;
+          
+          // Don't retry on client errors (4xx) - these won't be fixed by retrying
+          if (axiosError?.response?.status && axiosError.response.status >= 400 && axiosError.response.status < 500) {
+            console.warn(`🚫 Not retrying client error ${axiosError.response.status} for ${path}`);
+            throw error;
+          }
+          
+          // Retry on network errors or server errors (5xx)
+          if (attempt < maxRetries) {
+            const backoffTime = 1000 * attempt; // Linear backoff: 1s, 2s
+            console.warn(`🔄 Retrying request (${attempt}/${maxRetries}) for ${path} in ${backoffTime}ms`);
+            await new Promise(resolve => setTimeout(resolve, backoffTime));
+          }
+        }
+      }
+      
+      throw lastError;
+    })();
+    
+    // Store the promise for deduplication
+    this.pendingRequests.set(requestKey, requestPromise);
+    
+    try {
+      const result = await requestPromise;
+      return result;
+    } finally {
+      // Clean up the pending request
+      this.pendingRequests.delete(requestKey);
+    }
   }
   
   /**
    * POST request
    */
-  public async post<T>(path: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async post<T>(path: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response: AxiosResponse<T> = await this.axiosInstance.post(path, data, config);
     return response.data;
   }
@@ -174,7 +206,7 @@ export class ApiClient {
   /**
    * PUT request
    */
-  public async put<T>(path: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
+  public async put<T>(path: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
     const response: AxiosResponse<T> = await this.axiosInstance.put(path, data, config);
     return response.data;
   }
@@ -199,6 +231,14 @@ export class ApiClient {
       }
     });
     return response.data;
+  }
+  
+  /**
+   * Clear all pending requests (useful for cleanup)
+   */
+  public clearPendingRequests(): void {
+    this.pendingRequests.clear();
+    console.log('🧹 Cleared all pending requests');
   }
 }
 

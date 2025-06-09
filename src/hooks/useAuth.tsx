@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { SupabaseClient, User, Session } from '@supabase/supabase-js';
+import { SupabaseClient, Session } from '@supabase/supabase-js';
 import { UserRole, UserWithRole } from '../../lib/types/auth';
 import { apiClient, clearAuthCache } from '../lib/api/apiClient';
 

@@ -230,6 +230,7 @@ function getSuggestions(userRole: UserRole, requiredRoles: UserRole[]): string[]
 
 // Mock authentication for test environment only
 export function mockAuthenticate(userId: string = 'test-user-id', role: UserRole = 'artist') {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   return (request: FastifyRequest, _reply: FastifyReply) => {
     if (process.env.NODE_ENV !== 'test') {
       throw new Error('Mock authentication can only be used in test environment');

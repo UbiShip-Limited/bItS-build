@@ -49,6 +49,42 @@ export const CLOUDINARY_FOLDERS = {
   TEMP: 'temp'
 } as const;
 
+// Type definitions for Cloudinary API responses
+interface CloudinaryApiResource {
+  public_id: string;
+  url: string;
+  secure_url: string;
+  format: string;
+  width: number;
+  height: number;
+  resource_type: string;
+  folder?: string;
+  tags?: string[];
+  created_at: string;
+  filename?: string;
+  context?: {
+    custom?: Record<string, string>;
+  };
+}
+
+interface CloudinarySearchResult {
+  resources: CloudinaryApiResource[];
+  total_count: number;
+  next_cursor?: string;
+}
+
+interface CloudinaryUploadOptions {
+  folder?: string;
+  tags?: string[];
+  resource_type?: 'image' | 'auto' | 'video' | 'raw';
+  context?: string;
+  public_id?: string;
+  transformation?: string;
+  format?: string;
+  quality?: string | number;
+  [key: string]: string | number | boolean | string[] | undefined;
+}
+
 // Type definitions for Cloudinary metadata and parameters
 export interface CloudinaryUploadParams {
   timestamp?: number;
@@ -106,7 +142,7 @@ export interface CustomerUploadedImage {
   customerId?: string;
   tattooRequestId?: string;
   uploadedAt: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string>;
 }
 
 /**
@@ -120,7 +156,7 @@ export const validateUploadResult = async (
     // Get resource details from Cloudinary to verify it exists
     const result = await cloudinary.api.resource(publicId, {
       context: true // Include context metadata
-    });
+    }) as CloudinaryApiResource;
     
     if (!result) return null;
     
@@ -205,7 +241,7 @@ export const uploadImage = async (
   context?: Record<string, string>
 ): Promise<CloudinaryUploadResult | null> => {
   try {
-    const uploadOptions: any = {
+    const uploadOptions: CloudinaryUploadOptions = {
       folder,
       tags,
       resource_type: 'image',
@@ -217,7 +253,7 @@ export const uploadImage = async (
         .join('|');
     }
     
-    const result = await cloudinary.uploader.upload(filePath, uploadOptions);
+    const result = await cloudinary.uploader.upload(filePath, uploadOptions) as CloudinaryApiResource;
     
     return {
       url: result.url,
@@ -229,7 +265,7 @@ export const uploadImage = async (
       secureUrl: result.secure_url,
       folder: result.folder,
       tags: result.tags,
-      context: (result.context as any)?.custom || {}
+      context: result.context?.custom || {}
     };
   } catch (error) {
     console.error('Error uploading to Cloudinary:', error);
@@ -251,9 +287,9 @@ export const getGalleryImagesByFolder = async (
       .with_field('context')
       .sort_by('created_at', 'desc')
       .max_results(maxResults)
-      .execute();
+      .execute() as CloudinarySearchResult;
     
-    return result.resources.map((resource: any) => ({
+    return result.resources.map((resource: CloudinaryApiResource) => ({
       id: resource.public_id,
       url: resource.secure_url,
       publicId: resource.public_id,
@@ -300,9 +336,9 @@ export const getCustomerUploadedImages = async (customerId?: string): Promise<Cu
       .with_field('context')
       .sort_by('created_at', 'desc')
       .max_results(500)
-      .execute();
+      .execute() as CloudinarySearchResult;
     
-    return result.resources.map((resource: any) => ({
+    return result.resources.map((resource: CloudinaryApiResource) => ({
       id: resource.public_id,
       url: resource.secure_url,
       publicId: resource.public_id,
@@ -328,9 +364,9 @@ export const getTattooRequestImages = async (tattooRequestId: string): Promise<C
       .with_field('context')
       .sort_by('created_at', 'asc')
       .max_results(50)
-      .execute();
+      .execute() as CloudinarySearchResult;
     
-    return result.resources.map((resource: any) => ({
+    return result.resources.map((resource: CloudinaryApiResource) => ({
       id: resource.public_id,
       url: resource.secure_url,
       publicId: resource.public_id,

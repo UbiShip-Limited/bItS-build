@@ -88,9 +88,7 @@ export interface TattooRequestFormData {
   customerId?: string;
 }
 
-export interface TattooRequestResponse extends TattooRequest {
-  // Response is the same as TattooRequest
-}
+
 
 /**
  * Frontend API Client for tattoo request operations
@@ -163,8 +161,8 @@ export class TattooRequestApiClient {
   /**
    * Get a tattoo request by ID
    */
-  async getTattooRequestById(id: string): Promise<TattooRequestResponse> {
-    const response = await this.client.get<TattooRequestResponse>(`${this.baseUrl}/${id}`);
+  async getTattooRequestById(id: string): Promise<TattooRequest> {
+    const response = await this.client.get<TattooRequest>(`${this.baseUrl}/${id}`);
     return response;
   }
 }

@@ -1,7 +1,3 @@
-interface CacheConfig {
-  ttl: number; // Time to live in seconds
-  maxSize: number; // Maximum cache size
-}
 
 interface CacheItem<T> {
   data: T;

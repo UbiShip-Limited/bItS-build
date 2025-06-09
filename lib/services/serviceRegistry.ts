@@ -6,6 +6,12 @@ import { WorkflowService } from './workflowService';
 import { EnhancedAppointmentService } from './enhancedAppointmentService';
 import { EnhancedCustomerService } from './enhancedCustomerService';
 
+// Import new focused appointment services
+import { AppointmentAnalyticsService } from './analytics/appointmentAnalytics';
+import { AppointmentAutomationService } from './appointment-automation';
+import { AvailabilityService } from './availabilityService';
+import { AppointmentOrchestrator } from './appointment-orchestrator';
+
 // Import existing services
 import { AppointmentService } from './appointmentService';
 import PaymentService from './paymentService';
@@ -97,6 +103,12 @@ export class ServiceRegistry {
   // Enhanced services
   private _enhancedAppointmentService?: EnhancedAppointmentService;
   private _enhancedCustomerService?: EnhancedCustomerService;
+  
+  // New focused appointment services
+  private _appointmentAnalyticsService?: AppointmentAnalyticsService;
+  private _appointmentAutomationService?: AppointmentAutomationService;
+  private _availabilityService?: AvailabilityService;
+  private _appointmentOrchestrator?: AppointmentOrchestrator;
   
   // Existing services
   private _appointmentService?: AppointmentService;
@@ -202,6 +214,57 @@ export class ServiceRegistry {
   }
 
   /**
+   * Appointment Analytics Service - Dashboard metrics and business intelligence
+   */
+  public get appointmentAnalyticsService(): AppointmentAnalyticsService {
+    if (!this._appointmentAnalyticsService) {
+      this._appointmentAnalyticsService = new AppointmentAnalyticsService();
+      this.trackServiceCreation('appointmentAnalytics');
+    }
+    return this._appointmentAnalyticsService;
+  }
+
+  /**
+   * Appointment Automation Service - Workflows and notifications
+   */
+  public get appointmentAutomationService(): AppointmentAutomationService {
+    if (!this._appointmentAutomationService) {
+      this._appointmentAutomationService = new AppointmentAutomationService();
+      this.trackServiceCreation('appointmentAutomation');
+    }
+    return this._appointmentAutomationService;
+  }
+
+  /**
+   * Availability Service - Scheduling and conflicts (consolidated)
+   */
+  public get availabilityService(): AvailabilityService {
+    if (!this._availabilityService) {
+      this._availabilityService = new AvailabilityService();
+      this.trackServiceCreation('availability');
+    }
+    return this._availabilityService;
+  }
+
+  /**
+   * @deprecated Use availabilityService instead
+   */
+  public get appointmentAvailabilityService(): AvailabilityService {
+    return this.availabilityService;
+  }
+
+  /**
+   * Appointment Orchestrator - Coordinates focused appointment services
+   */
+  public get appointmentOrchestrator(): AppointmentOrchestrator {
+    if (!this._appointmentOrchestrator) {
+      this._appointmentOrchestrator = new AppointmentOrchestrator();
+      this.trackServiceCreation('appointmentOrchestrator');
+    }
+    return this._appointmentOrchestrator;
+  }
+
+  /**
    * Base Appointment Service
    */
   public get appointmentService(): AppointmentService {
@@ -259,6 +322,12 @@ export class ServiceRegistry {
       this.enhancedAppointmentService;
       this.enhancedCustomerService;
       
+      // Initialize new focused appointment services
+      this.appointmentAnalyticsService;
+      this.appointmentAutomationService;
+      this.appointmentAvailabilityService;
+      this.appointmentOrchestrator;
+      
       // Initialize base services
       this.appointmentService;
       this.paymentService;
@@ -289,6 +358,10 @@ export class ServiceRegistry {
       workflow: this._workflowService,
       enhancedAppointments: this._enhancedAppointmentService,
       enhancedCustomers: this._enhancedCustomerService,
+      appointmentAnalytics: this._appointmentAnalyticsService,
+      appointmentAutomation: this._appointmentAutomationService,
+      appointmentAvailability: this._appointmentAvailabilityService,
+      appointmentOrchestrator: this._appointmentOrchestrator,
       appointments: this._appointmentService,
       payments: this._paymentService,
       tattooRequests: this._tattooRequestService
@@ -308,7 +381,9 @@ export class ServiceRegistry {
 
     const serviceNames = [
       'analytics', 'notification', 'search', 'communication', 'workflow',
-      'enhancedAppointments', 'enhancedCustomers', 'appointments', 'payments', 'tattooRequests'
+      'enhancedAppointments', 'enhancedCustomers', 
+      'appointmentAnalytics', 'appointmentAutomation', 'appointmentAvailability', 'appointmentOrchestrator',
+      'appointments', 'payments', 'tattooRequests'
     ];
 
     for (const serviceName of serviceNames) {
@@ -619,8 +694,14 @@ export class ServiceRegistry {
   private setupDependencies(): void {
     this.serviceDependencies = {
       workflow: ['notification', 'communication'],
-      enhancedAppointments: ['notification', 'workflow', 'communication'],
+      enhancedAppointments: ['notification', 'workflow', 'communication'], // Legacy service
       enhancedCustomers: ['analytics', 'notification'],
+      // New focused appointment services
+      appointmentAnalytics: [], // Pure analytics, no dependencies
+      appointmentAutomation: ['notification', 'communication', 'workflow'],
+      appointmentAvailability: [], // Pure scheduling logic, no dependencies
+      appointmentOrchestrator: ['appointments', 'appointmentAnalytics', 'appointmentAutomation', 'appointmentAvailability'],
+      // Core services
       analytics: [],
       notification: [],
       search: [],

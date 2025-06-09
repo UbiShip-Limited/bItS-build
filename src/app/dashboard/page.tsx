@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { useAuth } from '@/src/hooks/useAuth';
@@ -65,6 +65,17 @@ interface RecentCustomer {
   totalSpent: number;
 }
 
+interface DashboardData {
+  recentAppointments: Appointment[];
+  recentTattooRequests: TattooRequest[];
+  stats: {
+    totalAppointments: number;
+    totalTattooRequests: number;
+    totalRevenue: number;
+    pendingRequests: number;
+  };
+}
+
 export default function DashboardPage() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -80,9 +91,20 @@ export default function DashboardPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [customers, setCustomers] = useState<RecentCustomer[]>([]);
   const [requests, setRequests] = useState<TattooRequest[]>([]);
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
+    recentAppointments: [],
+    recentTattooRequests: [],
+    stats: {
+      totalAppointments: 0,
+      totalTattooRequests: 0,
+      totalRevenue: 0,
+      pendingRequests: 0
+    }
+  });
 
-  const appointmentClient = new AppointmentApiClient(apiClient);
-  const tattooRequestClient = new TattooRequestApiClient(apiClient);
+  // Memoize the clients to prevent recreation on every render
+  const appointmentClient = useMemo(() => new AppointmentApiClient(apiClient), []);
+  const tattooRequestClient = useMemo(() => new TattooRequestApiClient(apiClient), []);
 
   // Wait for authentication before loading dashboard data
   useEffect(() => {

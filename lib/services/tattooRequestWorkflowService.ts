@@ -1,5 +1,6 @@
 import { TattooRequestService, ConvertToAppointmentData } from './tattooRequestService';
-import BookingService, { BookingType, BookingStatus } from './bookingService';
+import { AppointmentService } from './appointmentService';
+import { BookingType, BookingStatus } from '../types/booking';
 import { EnhancedCustomerService } from './enhancedCustomerService';
 import { tattooRequestImageService } from './tattooRequestImageService';
 import { auditService } from './auditService';
@@ -14,12 +15,12 @@ import type { TattooRequest, Appointment } from '@prisma/client';
  */
 export class TattooRequestWorkflowService {
   private tattooRequestService: TattooRequestService;
-  private bookingService: BookingService;
+  private appointmentService: AppointmentService;
   private customerService: EnhancedCustomerService;
 
   constructor() {
     this.tattooRequestService = new TattooRequestService();
-    this.bookingService = new BookingService();
+    this.appointmentService = new AppointmentService();
     this.customerService = new EnhancedCustomerService();
   }
 
@@ -71,25 +72,28 @@ export class TattooRequestWorkflowService {
         throw new ValidationError('A customer ID is required to create an appointment.');
     }
 
-    // 3. Create the booking/appointment via the BookingService
-    let bookingResult: { success: boolean; booking?: Appointment, error?: string };
+    // 3. Create the appointment via the AppointmentService
+    let appointment: Appointment;
     try {
-      const result = await this.bookingService.createBooking({
-        ...appointmentData,
+      appointment = await this.appointmentService.create({
+        startAt: appointmentData.startAt,
+        duration: appointmentData.duration,
         customerId,
         bookingType: appointmentData.bookingType || BookingType.TATTOO_SESSION,
         status: BookingStatus.CONFIRMED,
+        artistId: appointmentData.artistId,
+        note: appointmentData.note,
+        priceQuote: appointmentData.priceQuote,
         tattooRequestId: requestId,
       });
-      bookingResult = { ...result, success: true };
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error during booking creation.';
+      const message = error instanceof Error ? error.message : 'Unknown error during appointment creation.';
       console.error(`TattooRequestWorkflowService Error: ${message}`);
-      throw new ValidationError(`Failed to create appointment booking: ${message}`);
+      throw new ValidationError(`Failed to create appointment: ${message}`);
     }
 
-    if (!bookingResult.success || !bookingResult.booking) {
-      throw new ValidationError(`Failed to create appointment booking for an unknown reason.`);
+    if (!appointment) {
+      throw new ValidationError(`Failed to create appointment for an unknown reason.`);
     }
 
     // 4. Update the tattoo request status to reflect its conversion
@@ -102,7 +106,7 @@ export class TattooRequestWorkflowService {
       resource: 'TattooRequest',
       resourceId: requestId,
       details: {
-        appointmentId: bookingResult.booking.id,
+        appointmentId: appointment.id,
         customerId,
         wasAnonymous,
       },
@@ -110,7 +114,7 @@ export class TattooRequestWorkflowService {
 
     return {
       success: true,
-      appointment: bookingResult.booking,
+      appointment: appointment,
       tattooRequest: updatedTattooRequest,
     };
   }

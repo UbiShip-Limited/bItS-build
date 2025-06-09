@@ -6,16 +6,16 @@ import { resolve } from 'path';
 import fastify from 'fastify';
 import cors from '@fastify/cors';
 
-import tattooRequestsRoutes from './routes/tattooRequest.js';
-import prismaPlugin from './plugins/prisma.js';
-import customerRoutes from './routes/customer.js';
-import paymentRoutes from './routes/payments/index.js';
-import appointmentRoutes from './routes/appointment.js';
-import auditRoutes from './routes/audit.js';
-import cloudinaryRoutes from './routes/cloudinary.js';
-import webhookRoutes from './routes/webhooks/index.js';
-import healthRoutes from './routes/health.js';
-import userRoutes from './routes/users.js';
+import tattooRequestsRoutes from './routes/tattooRequest';
+import prismaPlugin from './plugins/prisma';
+import customerRoutes from './routes/customer';
+import paymentRoutes from './routes/payments/index';
+import appointmentRoutes from './routes/appointment';
+import auditRoutes from './routes/audit';
+import cloudinaryRoutes from './routes/cloudinary';
+import webhookRoutes from './routes/webhooks/index';
+import healthRoutes from './routes/health';
+import userRoutes from './routes/users';
 
 // Environment variable validation
 function validateEnvironment() {
@@ -103,7 +103,19 @@ const build = (opts = {}) => {
   fastifyInstance.register(userRoutes, { prefix: '/users' });
   fastifyInstance.register(tattooRequestsRoutes, { prefix: '/tattoo-requests' });
   fastifyInstance.register(customerRoutes, { prefix: '/customers' });
-  fastifyInstance.register(paymentRoutes, { prefix: '/payments' });
+  
+  // Add explicit error handling for payment routes registration
+  fastifyInstance.register(async (fastify) => {
+    try {
+      console.log('🔄 Attempting to register payment routes...');
+      await fastify.register(paymentRoutes, { prefix: '/payments' });
+      console.log('✅ Payment routes registered successfully');
+    } catch (error) {
+      console.error('❌ Failed to register payment routes:', error);
+      throw error;
+    }
+  });
+  
   fastifyInstance.register(appointmentRoutes, { prefix: '/appointments' });
   fastifyInstance.register(auditRoutes, { prefix: '/audit-logs' });
   fastifyInstance.register(cloudinaryRoutes, { prefix: '/cloudinary' });

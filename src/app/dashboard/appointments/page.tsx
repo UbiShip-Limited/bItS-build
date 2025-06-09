@@ -1,9 +1,28 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { format } from 'date-fns';
 import Link from 'next/link';
-import { Calendar, Clock, DollarSign, User, Filter, Plus } from 'lucide-react';
-import { AppointmentApiClient, BookingStatus, BookingType, type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
+import { 
+  Calendar, 
+  Clock, 
+  Plus, 
+  Search, 
+  Filter,
+  MapPin,
+  User,
+  Phone,
+  Mail,
+  FileText,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Eye,
+  DollarSign
+} from 'lucide-react';
+import CreateAppointmentModal from '@/src/components/appointments/CreateAppointmentModal';
+import QuickCustomerActions from '@/src/components/customers/QuickCustomerActions';
+import { AppointmentApiClient, type AppointmentData, BookingStatus, BookingType } from '@/src/lib/api/services/appointmentApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '@/src/components/ui/Modal';
 import AppointmentForm from '@/src/components/forms/AppointmentForm';
@@ -16,10 +35,10 @@ export default function AppointmentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
-  
-  // Filters
   const [filters, setFilters] = useState({
     status: '',
+    search: '',
+    dateRange: '',
     from: '',
     to: '',
     page: 1,
@@ -34,7 +53,8 @@ export default function AppointmentsPage() {
     pages: 1
   });
 
-  const appointmentService = new AppointmentApiClient(apiClient);
+  // Memoize the client to prevent recreation on every render
+  const appointmentService = useMemo(() => new AppointmentApiClient(apiClient), []);
 
   useEffect(() => {
     loadAppointments();
@@ -46,7 +66,7 @@ export default function AppointmentsPage() {
     
     try {
       const response = await appointmentService.getAppointments({
-        status: filters.status as BookingStatus || undefined,
+        status: filters.status || undefined,
         from: filters.from || undefined,
         to: filters.to || undefined,
         page: filters.page,
@@ -196,7 +216,7 @@ export default function AppointmentsPage() {
             
             <div className="form-control justify-end">
               <button
-                onClick={() => setFilters({ status: '', from: '', to: '', page: 1, limit: 20 })}
+                onClick={() => setFilters({ status: '', search: '', dateRange: '', from: '', to: '', page: 1, limit: 20 })}
                 className="btn btn-ghost btn-block text-gray-400 hover:text-white hover:bg-[#1a1a1a]/50"
               >
                 Clear Filters
@@ -374,8 +394,8 @@ export default function AppointmentsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-400">
-                    Showing <span className="font-bold text-white">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
-                    <span className="font-bold text-white">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
+                    Showing <span className="font-bold text-white">{((filters.page - 1) * filters.limit) + 1}</span> to{' '}
+                    <span className="font-bold text-white">{Math.min(filters.page * filters.limit, pagination.total)}</span> of{' '}
                     <span className="font-bold text-white">{pagination.total}</span> results
                   </p>
                 </div>
@@ -388,7 +408,7 @@ export default function AppointmentsPage() {
                     Previous
                   </button>
                   <button className="join-item btn btn-sm btn-active bg-[#C9A449] text-[#080808] border-[#C9A449]">
-                    Page {pagination.page} of {pagination.pages}
+                    Page {filters.page} of {pagination.pages}
                   </button>
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page + 1 })}

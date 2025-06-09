@@ -1,6 +1,6 @@
 import { prisma } from '../prisma/prisma';
-import { BookingStatus, BookingType } from '../types/booking';
-import { addMinutes, startOfDay, endOfDay, format, parseISO } from 'date-fns';
+import { BookingStatus } from '../types/booking';
+import { addMinutes, format, parseISO } from 'date-fns';
 
 export interface AvailabilitySearchParams {
   startAtMin: Date;
@@ -423,5 +423,326 @@ export class AvailabilityService {
     // In a real implementation, this would save to database
     // For now, just update the in-memory default
     this.defaultBusinessHours = businessHours;
+  }
+
+  /**
+   * Check for detailed appointment conflicts with customer information
+   */
+  async checkDetailedConflicts(
+    startTime: Date, 
+    endTime: Date, 
+    artistId?: string, 
+    excludeAppointmentId?: string
+  ): Promise<Array<{
+    id: string;
+    startTime: Date;
+    endTime: Date;
+    type: string;
+    artistId?: string;
+    customerName?: string;
+  }>> {
+    const whereClause: any = {
+      AND: [
+        {
+          OR: [
+            // New appointment starts during existing appointment
+            {
+              AND: [
+                { startTime: { lte: startTime } },
+                { endTime: { gt: startTime } }
+              ]
+            },
+            // New appointment ends during existing appointment
+            {
+              AND: [
+                { startTime: { lt: endTime } },
+                { endTime: { gte: endTime } }
+              ]
+            },
+            // New appointment completely encompasses existing appointment
+            {
+              AND: [
+                { startTime: { gte: startTime } },
+                { endTime: { lte: endTime } }
+              ]
+            }
+          ]
+        },
+        { status: { not: BookingStatus.CANCELLED } }
+      ]
+    };
+
+    // If artistId is provided, check conflicts for that artist
+    if (artistId) {
+      whereClause.artistId = artistId;
+    }
+
+    // Exclude current appointment if updating
+    if (excludeAppointmentId) {
+      whereClause.id = { not: excludeAppointmentId };
+    }
+
+    const conflicts = await prisma.appointment.findMany({
+      where: whereClause,
+      include: {
+        customer: {
+          select: { name: true }
+        }
+      }
+    });
+
+    return conflicts.map(conflict => ({
+      id: conflict.id,
+      startTime: conflict.startTime!,
+      endTime: conflict.endTime!,
+      type: conflict.type || 'Unknown',
+      artistId: conflict.artistId || undefined,
+      customerName: conflict.customer?.name || 'Anonymous'
+    }));
+  }
+
+  /**
+   * Suggest alternative appointment times with advanced options
+   */
+  async suggestAlternativeTimes(
+    preferredDate: Date,
+    duration: number,
+    artistId?: string,
+    options: {
+      includeBuffer?: boolean;
+      bufferMinutes?: number;
+      respectBusinessHours?: boolean;
+      maxSuggestions?: number;
+    } = {}
+  ): Promise<Array<{
+    startTime: Date;
+    endTime: Date;
+    duration: number;
+    isAvailable: boolean;
+    artistId?: string;
+  }>> {
+    const {
+      includeBuffer = true,
+      bufferMinutes = 15,
+      respectBusinessHours = true,
+      maxSuggestions = 5
+    } = options;
+
+    const suggestions: Array<{
+      startTime: Date;
+      endTime: Date;
+      duration: number;
+      isAvailable: boolean;
+      artistId?: string;
+    }> = [];
+
+    const businessHours = this.getBusinessHoursForDay(preferredDate.getDay());
+    
+    // If business is closed, return empty array
+    if (respectBusinessHours && (!businessHours || !businessHours.isOpen)) {
+      return suggestions;
+    }
+
+    // Set up day boundaries
+    const startOfDay = new Date(preferredDate);
+    const endOfDay = new Date(preferredDate);
+
+    if (respectBusinessHours && businessHours && businessHours.isOpen) {
+      const [startHour, startMin] = businessHours.openTime.split(':').map(Number);
+      const [endHour, endMin] = businessHours.closeTime.split(':').map(Number);
+      
+      startOfDay.setHours(startHour, startMin, 0, 0);
+      endOfDay.setHours(endHour, endMin, 0, 0);
+    } else {
+      startOfDay.setHours(0, 0, 0, 0);
+      endOfDay.setHours(23, 59, 59, 999);
+    }
+
+    // Check availability every 30 minutes
+    const slotInterval = 30;
+    const effectiveDuration = includeBuffer ? duration + bufferMinutes : duration;
+
+    for (let current = new Date(startOfDay); current < endOfDay; current.setMinutes(current.getMinutes() + slotInterval)) {
+      const slotEnd = new Date(current.getTime() + effectiveDuration * 60000);
+      
+      // Don't suggest slots that extend beyond business hours
+      if (slotEnd > endOfDay) break;
+
+      const conflicts = await this.checkDetailedConflicts(current, slotEnd, artistId);
+      
+      if (conflicts.length === 0) {
+        suggestions.push({
+          startTime: new Date(current),
+          endTime: new Date(current.getTime() + duration * 60000), // Original duration for display
+          duration,
+          isAvailable: true,
+          artistId
+        });
+
+        if (suggestions.length >= maxSuggestions) break;
+      }
+    }
+
+    return suggestions;
+  }
+
+  /**
+   * Get availability for multiple artists for a given day
+   */
+  async getArtistAvailability(
+    date: Date,
+    artistIds: string[],
+    duration: number = 60
+  ): Promise<Record<string, Array<{
+    startTime: Date;
+    endTime: Date;
+    duration: number;
+    isAvailable: boolean;
+    artistId?: string;
+  }>>> {
+    const availability: Record<string, Array<{
+      startTime: Date;
+      endTime: Date;
+      duration: number;
+      isAvailable: boolean;
+      artistId?: string;
+    }>> = {};
+
+    for (const artistId of artistIds) {
+      availability[artistId] = await this.suggestAlternativeTimes(
+        date,
+        duration,
+        artistId,
+        { maxSuggestions: 10 }
+      );
+    }
+
+    return availability;
+  }
+
+  /**
+   * Find next available slot for any artist
+   */
+  async findNextAvailableSlot(
+    startDate: Date,
+    duration: number,
+    artistIds?: string[],
+    maxDaysToCheck: number = 30
+  ): Promise<{
+    startTime: Date;
+    endTime: Date;
+    duration: number;
+    isAvailable: boolean;
+    artistId?: string;
+  } | null> {
+    const currentDate = new Date(startDate);
+    const endDate = new Date(startDate.getTime() + maxDaysToCheck * 24 * 60 * 60 * 1000);
+
+    while (currentDate <= endDate) {
+      const businessHours = this.getBusinessHoursForDay(currentDate.getDay());
+      
+      if (businessHours && businessHours.isOpen) {
+        if (artistIds && artistIds.length > 0) {
+          // Check each artist
+          for (const artistId of artistIds) {
+            const slots = await this.suggestAlternativeTimes(
+              currentDate,
+              duration,
+              artistId,
+              { maxSuggestions: 1 }
+            );
+            
+            if (slots.length > 0) {
+              return slots[0];
+            }
+          }
+        } else {
+          // Check any available slot
+          const slots = await this.suggestAlternativeTimes(
+            currentDate,
+            duration,
+            undefined,
+            { maxSuggestions: 1 }
+          );
+          
+          if (slots.length > 0) {
+            return slots[0];
+          }
+        }
+      }
+
+      // Move to next day
+      currentDate.setDate(currentDate.getDate() + 1);
+      currentDate.setHours(0, 0, 0, 0);
+    }
+
+    return null;
+  }
+
+  /**
+   * Validate appointment scheduling rules
+   */
+  async validateSchedulingRules(
+    startTime: Date,
+    duration: number,
+    artistId?: string
+  ): Promise<{ valid: boolean; errors: string[] }> {
+    const errors: string[] = [];
+
+    // Check business hours
+    const dayOfWeek = startTime.getDay();
+    const businessHours = this.getBusinessHoursForDay(dayOfWeek);
+
+    if (!businessHours || !businessHours.isOpen) {
+      errors.push('Appointments cannot be scheduled on closed days');
+    } else {
+      const appointmentTime = `${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}`;
+      const endTime = new Date(startTime.getTime() + duration * 60000);
+      const appointmentEndTime = `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`;
+
+      if (this.timeToMinutes(appointmentTime) < this.timeToMinutes(businessHours.openTime)) {
+        errors.push('Appointment starts before business hours');
+      }
+
+      if (this.timeToMinutes(appointmentEndTime) > this.timeToMinutes(businessHours.closeTime)) {
+        errors.push('Appointment ends after business hours');
+      }
+    }
+
+    // Check minimum lead time (1 hour)
+    const now = new Date();
+    const minimumStartTime = new Date(now.getTime() + 60 * 60 * 1000);
+
+    if (startTime < minimumStartTime) {
+      errors.push('Appointments must be scheduled at least 1 hour in advance');
+    }
+
+    // Check maximum lead time (90 days)
+    const maximumStartTime = new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000);
+
+    if (startTime > maximumStartTime) {
+      errors.push('Appointments cannot be scheduled more than 90 days in advance');
+    }
+
+    // Check for conflicts
+    if (artistId) {
+      const endTime = new Date(startTime.getTime() + duration * 60000);
+      const conflicts = await this.checkDetailedConflicts(startTime, endTime, artistId);
+
+      if (conflicts.length > 0) {
+        errors.push('Time slot conflicts with existing appointment');
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors
+    };
+  }
+
+  // Private helper methods
+  private timeToMinutes(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
   }
 } 

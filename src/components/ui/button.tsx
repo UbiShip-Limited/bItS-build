@@ -73,7 +73,7 @@ function cn(...classes: (string | boolean | undefined | { [key: string]: boolean
     .map((c) => {
       if (typeof c === "object") {
         return Object.entries(c)
-          .filter(([_, value]) => value)
+          .filter(([, value]) => value)
           .map(([key]) => key);
       }
       return c;

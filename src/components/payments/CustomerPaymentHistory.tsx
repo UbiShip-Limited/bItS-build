@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { CreditCard, Clock, CheckCircle, AlertCircle, DollarSign } from 'lucide-react';
 import { paymentService, type PaymentLink } from '@/src/lib/api/services/paymentService';
 import { formatPaymentType } from '@/lib/config/pricing';
@@ -24,6 +24,11 @@ interface PaymentHistoryItem {
   method?: string;
 }
 
+// Track global payment service availability to prevent repeated failed calls
+let paymentServiceAvailable: boolean | null = null;
+let lastPaymentServiceCheck = 0;
+const PAYMENT_SERVICE_CHECK_INTERVAL = 60000; // Check every minute
+
 export default function CustomerPaymentHistory({
   customerId,
   customerName,
@@ -41,17 +46,53 @@ export default function CustomerPaymentHistory({
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [paymentServiceUnavailable, setPaymentServiceUnavailable] = useState(false);
 
-  useEffect(() => {
-    if (customerId) {
-      loadPaymentHistory();
+  // Check if payment service is available before making calls
+  const checkPaymentServiceAvailability = useCallback(async () => {
+    const now = Date.now();
+    
+    // Use cached result if recent
+    if (paymentServiceAvailable !== null && (now - lastPaymentServiceCheck) < PAYMENT_SERVICE_CHECK_INTERVAL) {
+      return paymentServiceAvailable;
     }
-  }, [customerId]);
+    
+    try {
+      const testResult = await paymentService.testPaymentRoutes();
+      paymentServiceAvailable = testResult.available;
+      lastPaymentServiceCheck = now;
+      
+      if (!testResult.available) {
+        console.warn('🚫 Payment service unavailable:', testResult.message);
+        setPaymentServiceUnavailable(true);
+        setError(null); // Clear any previous errors
+      }
+      
+      return testResult.available;
+    } catch (error) {
+      console.error('🚫 Payment service check failed:', error);
+      paymentServiceAvailable = false;
+      lastPaymentServiceCheck = now;
+      setPaymentServiceUnavailable(true);
+      return false;
+    }
+  }, []);
 
-  const loadPaymentHistory = async () => {
+  const loadPaymentHistory = useCallback(async () => {
+    if (!customerId) return;
+
+    // Check if payment service is available first
+    const isAvailable = await checkPaymentServiceAvailability();
+    if (!isAvailable) {
+      setLoading(false);
+      setPaymentServiceUnavailable(true);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
+      setPaymentServiceUnavailable(false);
       
       // Use the payment service with customer-specific endpoint
       const response = await paymentService.getCustomerPayments(customerId, 50);
@@ -86,11 +127,48 @@ export default function CustomerPaymentHistory({
         });
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to load payment history');
+      console.error('💳 Payment history load failed:', err.message);
+      
+      // Handle specific error types
+      if (err.message?.includes('not available') || err.message?.includes('temporarily unavailable')) {
+        setPaymentServiceUnavailable(true);
+        setError(null);
+      } else {
+        setError('Unable to load payment history');
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [customerId, checkPaymentServiceAvailability]);
+
+  useEffect(() => {
+    loadPaymentHistory();
+  }, [loadPaymentHistory]);
+
+  // Don't render anything if payment service is unavailable and variant is inline
+  if (paymentServiceUnavailable && variant === 'inline') {
+    return null;
+  }
+
+  // Show a minimal message for unavailable service
+  if (paymentServiceUnavailable) {
+    if (variant === 'summary' || variant === 'full') {
+      return (
+        <div className={`bg-[#111111] border border-[#1a1a1a] rounded-lg p-4 ${className}`}>
+          {showTitle && (
+            <h3 className="text-sm font-medium text-white mb-3">
+              Payment History {customerName && `- ${customerName}`}
+            </h3>
+          )}
+          <div className="text-center py-4">
+            <CreditCard className="w-8 h-8 text-gray-600 mx-auto mb-2" />
+            <p className="text-xs text-gray-500">Payment features not available</p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {

@@ -1,5 +1,7 @@
 import { ApiClient } from '../apiClient';
-import { BookingType, BookingStatus } from '../../types/shared';
+import { Customer } from './customerService';
+import { Artist } from '../../../app/data/artist-data';
+import { TattooRequest } from './tattooRequestApiClient';
 
 // Re-export for convenience
 export { BookingType, BookingStatus } from '../../types/shared';
@@ -17,9 +19,9 @@ export interface AppointmentData {
   priceQuote?: number;
   tattooRequestId?: string;
   squareId?: string;
-  customer?: any;
-  artist?: any;
-  tattooRequest?: any;
+  customer?: Customer;
+  artist?: Artist;
+  tattooRequest?: TattooRequest;
   // For anonymous bookings
   contactEmail?: string;
   contactPhone?: string;

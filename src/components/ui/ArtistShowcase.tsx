@@ -1,13 +1,12 @@
 "use client"
 
-import { useState } from "react"
+
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Instagram, Globe, AtSign, ChevronRight } from "lucide-react"
 
 export function ArtistShowcase() {
-  const [imageLoaded, setImageLoaded] = useState(false)
 
   return (
     <section className="min-h-screen bg-[#080808] text-white relative overflow-hidden mb">
@@ -106,7 +105,6 @@ export function ArtistShowcase() {
                   alt="Kelly Miller - Master Tattoo Artist"
                   fill
                   className="object-cover brightness-50 group-hover:brightness-60 transition-all duration-700 rounded-2xl"
-                  onLoad={() => setImageLoaded(true)}
                   priority
                 />
                 
@@ -127,7 +125,7 @@ export function ArtistShowcase() {
                 className="absolute -bottom-8 -right-4 bg-[#080808]/90 border border-[#C9A449]/30 rounded-lg p-4 backdrop-blur-sm"
               >
                 <p className="text-[#C9A449]/80 font-body text-sm italic">
-                  "Every tattoo tells a story"
+                  &ldquo;Every tattoo tells a story&rdquo;
                 </p>
               </motion.div>
             </motion.div>
@@ -166,12 +164,12 @@ export function ArtistShowcase() {
               <div className="space-y-6">
                 <p className="font-body text-white/90 text-lg leading-relaxed">
                   With over 15 years of dedicated practice, Kelly Miller has established herself as one of the 
-                  Pacific Northwest's most sought-after tattoo artists. Her journey began in the underground 
+                  Pacific Northwest&apos;s most sought-after tattoo artists. Her journey began in the underground 
                   scenes of Vancouver, where she honed her craft under the tutelage of legendary masters.
                 </p>
                 
                 <p className="font-body text-white/80 text-lg leading-relaxed italic">
-                  Kelly's distinctive approach merges classical fine art principles with contemporary tattoo 
+                  Kelly&apos;s distinctive approach merges classical fine art principles with contemporary tattoo 
                   techniques, creating pieces that transcend traditional boundaries. Each design is a collaboration 
                   between artist and canvas, resulting in deeply personal works of lasting beauty.
                 </p>

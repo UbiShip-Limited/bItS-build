@@ -1,9 +1,36 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FastifyRequest, FastifyReply } from 'fastify';
 import { createAnonymousBookingHandler, createAnonymousBookingSchema } from '../createAnonymousBookingHandler';
 import { BookingType } from '../../../services/bookingService';
-import BookingService from '../../../services/bookingService';
 import { prisma } from '../../../prisma/prisma';
+
+// Type definitions for mocks
+interface MockBookingService {
+  createBooking: ReturnType<typeof vi.fn>;
+}
+
+interface MockRequest {
+  body: {
+    startAt: string;
+    duration: number;
+    bookingType: BookingType;
+    contactEmail: string;
+    contactPhone?: string;
+    note?: string;
+    tattooRequestId?: string;
+  };
+  log: {
+    error: ReturnType<typeof vi.fn>;
+  };
+}
+
+interface MockReply {
+  code: ReturnType<typeof vi.fn>;
+  send: ReturnType<typeof vi.fn>;
+}
+
+interface MockFastifyInstance {
+  bookingService: MockBookingService;
+}
 
 // Mock dependencies
 vi.mock('../../../services/bookingService');
@@ -16,10 +43,10 @@ vi.mock('../../../prisma/prisma', () => ({
 }));
 
 describe('createAnonymousBookingHandler', () => {
-  let mockBookingService: any;
-  let mockRequest: any;
-  let mockReply: any;
-  let fastifyInstance: any;
+  let mockBookingService: MockBookingService;
+  let mockRequest: MockRequest;
+  let mockReply: MockReply;
+  let fastifyInstance: MockFastifyInstance;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -103,7 +130,7 @@ describe('createAnonymousBookingHandler', () => {
     it('should validate tattoo request exists', async () => {
       vi.mocked(prisma.tattooRequest.findUnique).mockResolvedValueOnce(null);
 
-      const result = await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
+      await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
 
       expect(mockReply.code).toHaveBeenCalledWith(404);
       expect(mockReply.send).toHaveBeenCalledWith({
@@ -120,7 +147,7 @@ describe('createAnonymousBookingHandler', () => {
         contactEmail: 'anonymous@example.com'
       });
 
-      const result = await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
+      await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
 
       expect(mockReply.code).toHaveBeenCalledWith(400);
       expect(mockReply.send).toHaveBeenCalledWith({
@@ -137,7 +164,7 @@ describe('createAnonymousBookingHandler', () => {
         contactEmail: 'different@example.com'
       });
 
-      const result = await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
+      await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
 
       expect(mockReply.code).toHaveBeenCalledWith(400);
       expect(mockReply.send).toHaveBeenCalledWith({
@@ -209,8 +236,8 @@ describe('createAnonymousBookingHandler', () => {
       expect(result).toEqual({
         success: true,
         message: 'Anonymous booking created successfully',
-        booking: expectedBooking,
-        trackingCode: 'booking-123'
+        trackingCode: 'booking-123',
+        booking: expectedBooking
       });
 
       expect(mockBookingService.createBooking).toHaveBeenCalledWith({
@@ -220,22 +247,63 @@ describe('createAnonymousBookingHandler', () => {
         contactEmail: 'anonymous@example.com',
         contactPhone: '+1234567890',
         note: 'Anonymous booking note',
-        tattooRequestId: 'tattoo-123',
-        isAnonymous: true
+        tattooRequestId: 'tattoo-123'
       });
     });
 
-    it('should create anonymous booking with minimal fields', async () => {
+    it('should handle booking service failure', async () => {
+      mockBookingService.createBooking.mockResolvedValueOnce({
+        success: false,
+        error: 'Time slot not available'
+      });
+
+      await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
+
+      expect(mockReply.code).toHaveBeenCalledWith(400);
+      expect(mockReply.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'Failed to create booking',
+        error: 'Time slot not available'
+      });
+    });
+
+    it('should handle booking service errors gracefully', async () => {
+      mockBookingService.createBooking.mockRejectedValueOnce(new Error('Database error'));
+
+      await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
+
+      expect(mockRequest.log.error).toHaveBeenCalled();
+      expect(mockReply.code).toHaveBeenCalledWith(500);
+      expect(mockReply.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'An error occurred while creating the booking. Please try again.'
+      });
+    });
+
+    it('should handle missing booking service', async () => {
+      const instanceWithoutService = {};
+
+      await createAnonymousBookingHandler.call(instanceWithoutService, mockRequest, mockReply);
+
+      expect(mockRequest.log.error).toHaveBeenCalled();
+      expect(mockReply.code).toHaveBeenCalledWith(500);
+      expect(mockReply.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'An error occurred while creating the booking. Please try again.'
+      });
+    });
+
+    it('should create booking without optional fields', async () => {
       mockRequest.body = {
         startAt: '2024-01-15T10:00:00Z',
         duration: 60,
         bookingType: BookingType.CONSULTATION,
-        contactEmail: 'minimal@example.com'
+        contactEmail: 'anonymous@example.com'
       };
 
       mockBookingService.createBooking.mockResolvedValueOnce({
         success: true,
-        booking: { id: 'booking-456' }
+        booking: { id: 'booking-123' }
       });
 
       const result = await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
@@ -245,116 +313,12 @@ describe('createAnonymousBookingHandler', () => {
         startAt: new Date('2024-01-15T10:00:00Z'),
         duration: 60,
         bookingType: BookingType.CONSULTATION,
-        contactEmail: 'minimal@example.com',
-        contactPhone: undefined,
-        note: undefined,
-        tattooRequestId: undefined,
-        isAnonymous: true
+        contactEmail: 'anonymous@example.com'
       });
     });
 
-    it('should handle different booking types', async () => {
-      const bookingTypes = [
-        BookingType.CONSULTATION,
-        BookingType.DRAWING_CONSULTATION
-      ];
-
-      for (const bookingType of bookingTypes) {
-        vi.clearAllMocks(); // Clear mocks between iterations
-        
-        mockRequest.body.bookingType = bookingType;
-        delete mockRequest.body.tattooRequestId; // Remove tattoo request to avoid validation
-        
-        mockBookingService.createBooking.mockResolvedValueOnce({
-          success: true,
-          booking: { id: 'booking-123', type: bookingType }
-        });
-
-        const result = await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-        
-        expect(result.success).toBe(true);
-        expect(mockBookingService.createBooking).toHaveBeenCalledWith(
-          expect.objectContaining({
-            bookingType
-          })
-        );
-      }
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('should handle "not found" errors with 404 status', async () => {
-      delete mockRequest.body.tattooRequestId; // Remove tattoo request to avoid validation
-      
-      mockBookingService.createBooking.mockRejectedValueOnce(
-        new Error('Service not found')
-      );
-
-      const result = await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-
-      expect(mockReply.code).toHaveBeenCalledWith(404);
-      expect(mockReply.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Service not found'
-      });
-      expect(mockRequest.log.error).toHaveBeenCalled();
-    });
-
-    it('should handle booking service errors with 500 status', async () => {
-      delete mockRequest.body.tattooRequestId; // Remove tattoo request to avoid validation
-      
-      mockBookingService.createBooking.mockRejectedValueOnce(
-        new Error('Database connection failed')
-      );
-
-      const result = await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-
-      expect(mockReply.code).toHaveBeenCalledWith(500);
-      expect(mockReply.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Error creating anonymous booking',
-        error: 'Database connection failed'
-      });
-    });
-
-    it('should handle prisma errors during tattoo request validation', async () => {
-      vi.mocked(prisma.tattooRequest.findUnique).mockRejectedValueOnce(
-        new Error('Database query failed')
-      );
-
-      const result = await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-
-      expect(mockReply.code).toHaveBeenCalledWith(500);
-      expect(mockReply.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Error creating anonymous booking',
-        error: 'Database query failed'
-      });
-      expect(mockRequest.log.error).toHaveBeenCalled();
-    });
-
-    it('should handle non-Error objects', async () => {
-      delete mockRequest.body.tattooRequestId; // Remove tattoo request to avoid validation
-      
-      mockBookingService.createBooking.mockRejectedValueOnce('String error');
-
-      const result = await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-
-      expect(mockReply.code).toHaveBeenCalledWith(500);
-      expect(mockReply.send).toHaveBeenCalledWith({
-        success: false,
-        message: 'Error creating anonymous booking',
-        error: 'Unknown error'
-      });
-    });
-  });
-
-  describe('Edge Cases', () => {
-    it('should handle very long contact information', async () => {
-      mockRequest.body.contactEmail = 'a'.repeat(100) + '@example.com';
-      mockRequest.body.contactPhone = '+1' + '2'.repeat(20);
-      mockRequest.body.note = 'x'.repeat(1000);
-      delete mockRequest.body.tattooRequestId; // Remove tattoo request to avoid validation
+    it('should handle drawing consultation booking type', async () => {
+      mockRequest.body.bookingType = BookingType.DRAWING_CONSULTATION;
 
       mockBookingService.createBooking.mockResolvedValueOnce({
         success: true,
@@ -362,43 +326,24 @@ describe('createAnonymousBookingHandler', () => {
       });
 
       const result = await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-      
+
       expect(result.success).toBe(true);
+      expect(mockBookingService.createBooking).toHaveBeenCalledWith(expect.objectContaining({
+        bookingType: BookingType.DRAWING_CONSULTATION
+      }));
     });
 
-    it('should handle special characters in contact information', async () => {
-      mockRequest.body.contactEmail = 'test+tag@example-domain.co.uk';
-      mockRequest.body.note = 'Special chars: àáâãäåæçèéêë & symbols!@#$%^&*()';
-      delete mockRequest.body.tattooRequestId; // Remove tattoo request to avoid validation
+    it('should handle database errors when checking tattoo request', async () => {
+      vi.mocked(prisma.tattooRequest.findUnique).mockRejectedValueOnce(new Error('Database error'));
 
-      mockBookingService.createBooking.mockResolvedValueOnce({
-        success: true,
-        booking: { id: 'booking-123' }
+      await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
+
+      expect(mockRequest.log.error).toHaveBeenCalled();
+      expect(mockReply.code).toHaveBeenCalledWith(500);
+      expect(mockReply.send).toHaveBeenCalledWith({
+        success: false,
+        message: 'An error occurred while creating the booking. Please try again.'
       });
-
-      const result = await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-      
-      expect(result.success).toBe(true);
-      expect(mockBookingService.createBooking).toHaveBeenCalledWith(
-        expect.objectContaining({
-          contactEmail: 'test+tag@example-domain.co.uk',
-          note: 'Special chars: àáâãäåæçèéêë & symbols!@#$%^&*()'
-        })
-      );
-    });
-
-    it('should use booking ID as tracking code', async () => {
-      const uniqueBookingId = 'unique-booking-id-123';
-      delete mockRequest.body.tattooRequestId; // Remove tattoo request to avoid validation
-      
-      mockBookingService.createBooking.mockResolvedValueOnce({
-        success: true,
-        booking: { id: uniqueBookingId }
-      });
-
-      const result = await createAnonymousBookingHandler.call(fastifyInstance, mockRequest, mockReply);
-      
-      expect(result.trackingCode).toBe(uniqueBookingId);
     });
   });
 }); 

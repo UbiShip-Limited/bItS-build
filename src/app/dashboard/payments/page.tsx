@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Link, FileText, CreditCard, ExternalLink, Copy, Trash2, RefreshCw, User } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, FileText, CreditCard, ExternalLink, Copy, Trash2, RefreshCw, User } from 'lucide-react';
 import CreatePaymentLinkModal from '@/src/components/payments/CreatePaymentLinkModal';
 import CreateInvoiceModal from '@/src/components/payments/CreateInvoiceModal';
 import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHistory';
@@ -18,11 +18,7 @@ export default function PaymentsPage() {
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchPaymentLinks();
-  }, []);
-
-  const fetchPaymentLinks = async () => {
+  const fetchPaymentLinks = useCallback(async () => {
     if (fetchingData) {
       console.log('⏳ Already fetching payment links, skipping...');
       return;
@@ -35,14 +31,18 @@ export default function PaymentsPage() {
       if (response.success) {
         setPaymentLinks(response.data);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch payment links');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch payment links');
     } finally {
       setLoading(false);
       setRefreshing(false);
       setFetchingData(false);
     }
-  };
+  }, [fetchingData]);
+
+  useEffect(() => {
+    fetchPaymentLinks();
+  }, [fetchPaymentLinks]);
 
   const handleRefresh = () => {
     if (fetchingData) {
@@ -71,8 +71,8 @@ export default function PaymentsPage() {
     try {
       await paymentService.deletePaymentLink(id);
       setPaymentLinks(paymentLinks.filter(link => link.id !== id));
-    } catch (err: any) {
-      alert(err.message || 'Failed to delete payment link');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete payment link');
     }
   };
 
@@ -86,10 +86,7 @@ export default function PaymentsPage() {
     });
   };
 
-  const handleCustomerClick = (customerId: string, customerName: string) => {
-    setSelectedCustomerId(customerId);
-    setSelectedCustomerName(customerName);
-  };
+
 
   return (
     <div>
@@ -216,7 +213,7 @@ export default function PaymentsPage() {
                         <span>Customer ID in link</span>
                       </div>
                       <div className="text-xs text-gray-500">
-                        Click "View" to see details
+                        Click &ldquo;View&rdquo; to see details
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

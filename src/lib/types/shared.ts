@@ -56,7 +56,7 @@ export const formatPaymentType = (type: PaymentType): string => {
     case PaymentType.ADDITIONAL_WORK:
       return 'Additional Work';
     default:
-      return type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ');
+      return (type as string).charAt(0).toUpperCase() + (type as string).slice(1).replace('_', ' ');
   }
 };
 

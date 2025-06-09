@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Filter, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CustomerService, type Customer, type CustomerListResponse } from '@/src/lib/api/services/customerService';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '../../../components/ui/Modal';
@@ -23,11 +23,7 @@ export default function CustomersPage() {
   const customerService = new CustomerService(apiClient);
   const limit = 20;
 
-  useEffect(() => {
-    loadCustomers();
-  }, [currentPage, searchTerm]);
-
-  const loadCustomers = async () => {
+  const loadCustomers = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -41,12 +37,16 @@ export default function CustomersPage() {
       setCustomers(response.data);
       setTotalPages(response.pagination.pages);
       setTotalCustomers(response.pagination.total);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load customers');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load customers');
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, customerService, limit]);
+
+  useEffect(() => {
+    loadCustomers();
+  }, [loadCustomers]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

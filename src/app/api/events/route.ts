@@ -1,6 +1,46 @@
 import { NextRequest } from 'next/server';
 import { realtimeService } from '../../../../lib/services/realtimeService';
-import { generateMockRealtimeEvent } from '../../../../lib/services/mockAnalyticsData';
+
+// Simple mock event generator for demo purposes
+function generateMockRealtimeEvent() {
+  const eventTypes = [
+    'appointment_created',
+    'payment_received', 
+    'request_submitted',
+    'system_alert'
+  ];
+  
+  const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+  
+  const eventData: Record<string, any> = {
+    appointment_created: {
+      appointmentId: `apt_${Date.now()}`,
+      customerId: `cust_${Math.floor(Math.random() * 1000)}`,
+      amount: 150 + Math.random() * 300
+    },
+    payment_received: {
+      paymentId: `pay_${Date.now()}`,
+      amount: 50 + Math.random() * 500,
+      customerId: `cust_${Math.floor(Math.random() * 1000)}`
+    },
+    request_submitted: {
+      requestId: `req_${Date.now()}`,
+      customerId: `cust_${Math.floor(Math.random() * 1000)}`
+    },
+    system_alert: {
+      message: 'System maintenance scheduled for tonight',
+      priority: 'medium'
+    }
+  };
+
+  return {
+    id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    type: eventType,
+    data: eventData[eventType],
+    timestamp: new Date(),
+    priority: Math.random() > 0.8 ? 'high' : 'medium'
+  };
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

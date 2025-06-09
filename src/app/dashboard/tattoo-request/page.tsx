@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Filter, FileText, User, Calendar, DollarSign } from 'lucide-react';
 import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
@@ -28,13 +29,10 @@ export default function TattooRequestsPage() {
     pages: 1
   });
 
-  const tattooRequestClient = new TattooRequestApiClient(apiClient);
+  // Memoize the client to prevent recreation on every render
+  const tattooRequestClient = useMemo(() => new TattooRequestApiClient(apiClient), []);
 
-  useEffect(() => {
-    loadTattooRequests();
-  }, [filters.status, filters.page, filters.limit]);
-
-  const loadTattooRequests = async () => {
+  const loadTattooRequests = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -47,12 +45,16 @@ export default function TattooRequestsPage() {
       
       setRequests(response.data);
       setPagination(response.pagination);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load tattoo requests');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to load tattoo requests');
     } finally {
       setLoading(false);
     }
-  };
+  }, [tattooRequestClient, filters.status, filters.page, filters.limit]);
+
+  useEffect(() => {
+    loadTattooRequests();
+  }, [loadTattooRequests]);
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -177,9 +179,11 @@ export default function TattooRequestsPage() {
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 bg-[#1a1a1a] rounded overflow-hidden border border-[#2a2a2a]">
                             {request.referenceImages && request.referenceImages.length > 0 ? (
-                              <img 
+                              <Image 
                                 src={request.referenceImages[0].url} 
                                 alt="Reference" 
+                                width={40}
+                                height={40}
                                 className="h-full w-full object-cover"
                               />
                             ) : (

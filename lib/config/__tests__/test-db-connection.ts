@@ -26,9 +26,10 @@ async function testDatabaseConnection() {
       console.log(`${index + 1}. ${req.description.substring(0, 50)}... (${req.status})`);
     });
     
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('❌ Database connection failed!');
-    console.error('Error:', error.message);
+    console.error('Error:', errorMessage);
     console.error('\nMake sure:');
     console.error('1. Your database is running');
     console.error('2. DATABASE_URL is correctly set in .env or .env.local');

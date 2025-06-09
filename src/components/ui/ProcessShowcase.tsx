@@ -1,7 +1,6 @@
 "use client"
 
 import { motion } from "framer-motion"
-import Link from "next/link"
 import { Users, PenTool, Award, ChevronRight } from "lucide-react"
 
 interface ProcessStep {

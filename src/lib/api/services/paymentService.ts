@@ -89,6 +89,16 @@ export interface PaymentListResponse {
 class PaymentService {
   private basePath = '/payments';
   private client = apiClient;
+  
+  // Enhanced cache for customer payments to prevent over-fetching
+  private paymentCache = new Map<string, { 
+    data: any; 
+    timestamp: number; 
+    promise?: Promise<any>;
+    failed?: boolean;
+  }>();
+  private readonly CACHE_DURATION = 10000; // 10 seconds cache
+  private readonly FAILED_CACHE_DURATION = 5000; // 5 seconds for failed requests
 
   /**
    * Get payments with filtering
@@ -122,23 +132,137 @@ class PaymentService {
 
   /**
    * Get payments for a specific customer using core endpoint (accessible by artists)
+   * Enhanced with better caching and error handling to prevent repeated failed calls
    */
   async getCustomerPayments(customerId: string, limit: number = 50): Promise<{
     success: boolean;
     data: any[];
     pagination?: any;
   }> {
+    const cacheKey = `customer-${customerId}-${limit}`;
+    const now = Date.now();
+    const cached = this.paymentCache.get(cacheKey);
+    
+    // Return cached data if still valid (for successful requests)
+    if (cached && !cached.failed && (now - cached.timestamp) < this.CACHE_DURATION) {
+      console.log(`📝 Using cached payments for customer ${customerId}`);
+      return cached.data;
+    }
+    
+    // For failed requests, wait longer before retrying
+    if (cached && cached.failed && (now - cached.timestamp) < this.FAILED_CACHE_DURATION) {
+      console.log(`⚠️ Skipping customer payments for ${customerId} - recent failure, waiting before retry`);
+      throw new Error('Payment service temporarily unavailable - please try again later');
+    }
+    
+    // If there's already a pending request, return that promise
+    if (cached?.promise) {
+      console.log(`⏳ Waiting for existing request for customer ${customerId}`);
+      return cached.promise;
+    }
+    
     const queryParams = new URLSearchParams();
     queryParams.append('customerId', customerId);
     queryParams.append('limit', limit.toString());
     
-    const response = await this.client.get(`/payments?${queryParams.toString()}`);
+    // Create the request promise with better error handling
+    const requestPromise = this.client.get(`/payments?${queryParams.toString()}`)
+      .then((response: any) => {
+        const result = {
+          success: true,
+          data: response.data || [],
+          pagination: response.pagination
+        };
+        
+        // Cache the successful result
+        this.paymentCache.set(cacheKey, {
+          data: result,
+          timestamp: now,
+          failed: false
+        });
+        
+        console.log(`✅ Fetched and cached ${result.data.length} payments for customer ${customerId}`);
+        return result;
+      })
+      .catch((error: any) => {
+        // Cache the failed state to prevent immediate retries
+        this.paymentCache.set(cacheKey, {
+          data: null,
+          timestamp: now,
+          failed: true
+        });
+        
+        console.error(`❌ Failed to fetch payments for customer ${customerId}:`, error.message || error);
+        
+        // Provide a more user-friendly error message
+        if (error.response?.status === 404) {
+          throw new Error('Payment service not available - this feature may not be configured yet');
+        } else if (error.response?.status === 401 || error.response?.status === 403) {
+          throw new Error('You do not have permission to view payment information');
+        } else {
+          throw new Error('Unable to load payment history at this time');
+        }
+      });
     
-    return {
-      success: true,
-      data: response.data || [],
-      pagination: response.pagination
-    };
+    // Cache the promise to prevent duplicate requests
+    this.paymentCache.set(cacheKey, {
+      data: null,
+      timestamp: now,
+      promise: requestPromise,
+      failed: false
+    });
+    
+    return requestPromise;
+  }
+
+  /**
+   * Clear cache for a specific customer (useful after payment updates)
+   */
+  clearCustomerCache(customerId: string): void {
+    const keysToDelete = Array.from(this.paymentCache.keys()).filter(key => 
+      key.startsWith(`customer-${customerId}-`)
+    );
+    keysToDelete.forEach(key => this.paymentCache.delete(key));
+    console.log(`🧹 Cleared payment cache for customer ${customerId}`);
+  }
+
+  /**
+   * Clear all cache (useful for debugging)
+   */
+  clearAllCache(): void {
+    this.paymentCache.clear();
+    console.log('🧹 Cleared all payment cache');
+  }
+
+  /**
+   * Test if payment routes are available (diagnostic method)
+   */
+  async testPaymentRoutes(): Promise<{ available: boolean; message: string }> {
+    try {
+      // Test with a simple call to see if the route exists
+      const response = await this.client.get('/payments?limit=1');
+      return {
+        available: true,
+        message: 'Payment routes are working correctly'
+      };
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return {
+          available: false,
+          message: 'Payment routes not found - backend may not be running or routes not registered'
+        };
+      } else if (error.response?.status === 401 || error.response?.status === 403) {
+        return {
+          available: true,
+          message: 'Payment routes exist but require authentication'
+        };
+      } else {
+        return {
+          available: false,
+          message: `Payment routes error: ${error.message}`
+        };
+      }
+    }
   }
 
   /**
@@ -201,7 +325,7 @@ class PaymentService {
    */
   async getPaymentLink(id: string): Promise<{ success: boolean; data: PaymentLink }> {
     // This would need to use the admin individual payment endpoint
-    const payment = await this.client.get(`${this.basePath}/${id}`);
+    const payment = await this.client.get(`${this.basePath}/${id}`) as PaymentLink;
     return {
       success: true,
       data: payment

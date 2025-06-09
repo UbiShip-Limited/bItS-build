@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Search, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { CustomerService, type Customer, type CustomerListResponse } from '@/src/lib/api/services/customerService';
@@ -20,8 +20,8 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const customerService = new CustomerService(apiClient);
-  const limit = 20;
+  // ✅ FIX: Memoize the customerService instance to prevent infinite loop
+  const customerService = useMemo(() => new CustomerService(apiClient), []);
 
   const loadCustomers = useCallback(async () => {
     setLoading(true);
@@ -30,7 +30,7 @@ export default function CustomersPage() {
     try {
       const response: CustomerListResponse = await customerService.getCustomers({
         page: currentPage,
-        limit,
+        limit: 20,
         search: searchTerm
       });
 
@@ -42,7 +42,7 @@ export default function CustomersPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm, customerService, limit]);
+  }, [currentPage, searchTerm, customerService]);
 
   useEffect(() => {
     loadCustomers();

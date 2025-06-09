@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { CustomerService, type Customer } from '@/src/lib/api/services/customerService';
 import { apiClient } from '@/src/lib/api/apiClient';
@@ -29,7 +29,8 @@ export default function CustomerSelector({
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
-  const customerService = new CustomerService(apiClient);
+  // ✅ FIX: Memoize service instance to prevent unnecessary re-instantiation
+  const customerService = useMemo(() => new CustomerService(apiClient), []);
 
   // Load selected customer on mount if value is provided
   useEffect(() => {

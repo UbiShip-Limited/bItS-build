@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Edit, Calendar, FileText, DollarSign, Clock, Mail, Phone } from 'lucide-react';
@@ -22,9 +22,10 @@ export default function CustomerDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  const customerService = new CustomerService(apiClient);
-  const appointmentService = new AppointmentApiClient(apiClient);
-  const tattooRequestService = new TattooRequestService(apiClient);
+  // ✅ FIX: Memoize service instances to prevent infinite loops
+  const customerService = useMemo(() => new CustomerService(apiClient), []);
+  const appointmentService = useMemo(() => new AppointmentApiClient(apiClient), []);
+  const tattooRequestService = useMemo(() => new TattooRequestService(apiClient), []);
 
   const loadCustomerData = useCallback(async () => {
     setLoading(true);

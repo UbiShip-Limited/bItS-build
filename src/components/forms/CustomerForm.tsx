@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Customer, CustomerService, CreateCustomerRequest, UpdateCustomerRequest } from '@/src/lib/api/services/customerService';
 import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
@@ -35,8 +35,9 @@ export default function CustomerForm({
   const [showLinkSection, setShowLinkSection] = useState(false);
   const [searchingRequests, setSearchingRequests] = useState(false);
 
-  const customerService = new CustomerService(apiClient);
-  const tattooRequestService = new TattooRequestService(apiClient);
+  // ✅ FIX: Memoize service instances to prevent unnecessary re-renders
+  const customerService = useMemo(() => new CustomerService(apiClient), []);
+  const tattooRequestService = useMemo(() => new TattooRequestService(apiClient), []);
 
   // Load anonymous tattoo requests if creating new customer
   useEffect(() => {

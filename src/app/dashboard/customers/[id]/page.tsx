@@ -13,6 +13,24 @@ import CustomerForm from '../../../../components/forms/CustomerForm';
 
 export default function CustomerDetailPage() {
   const params = useParams();
+  
+  // Handle case where params might be null
+  if (!params || !params.id) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">Invalid customer ID</p>
+          <Link
+            href="/dashboard/customers"
+            className="px-4 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
+          >
+            Back to Customers
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  
   const customerId = params.id as string;
 
   const [customer, setCustomer] = useState<Customer | null>(null);

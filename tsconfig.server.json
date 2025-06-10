@@ -2,12 +2,14 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "ESNext",
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "node",
     "outDir": "dist",
     "noEmit": false,
     "sourceMap": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "target": "ES2022"
   },
-  "include": ["lib/server.ts"]
+  "include": ["lib/**/*"],
+  "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"]
 } 

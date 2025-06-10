@@ -35,10 +35,10 @@ export default function AppointmentDetailPage() {
   const appointmentService = new AppointmentApiClient(apiClient);
 
   useEffect(() => {
-    if (params.id) {
+    if (params?.id) {
       loadAppointment(params.id as string);
     }
-  }, [params.id]);
+  }, [params?.id]);
 
   const loadAppointment = async (id: string) => {
     setLoading(true);

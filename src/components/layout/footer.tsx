@@ -16,7 +16,7 @@ export function Footer() {
           <div className="flex flex-col items-center md:items-start">
             <div className="flex items-center mb-6">
               <Image 
-                src="/logo.svg" 
+                src="/images/bowen-logo.svg" 
                 alt="Bowen Island Tattoo" 
                 width={60} 
                 height={60}

@@ -1,28 +1,16 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { CreditCard, Clock, CheckCircle, AlertCircle, DollarSign } from 'lucide-react';
-import { paymentService, type PaymentLink } from '@/src/lib/api/services/paymentService';
-import { formatPaymentType } from '@/lib/config/pricing';
-
-interface CustomerPaymentHistoryProps {
-  customerId: string;
-  customerName?: string;
-  variant?: 'full' | 'summary' | 'inline';
-  className?: string;
-  showTitle?: boolean;
-}
-
-interface PaymentHistoryItem {
-  id: string;
-  amount: number;
-  status: string;
-  paymentType: string;
-  createdAt: string;
-  appointmentId?: string;
-  tattooRequestId?: string;
-  method?: string;
-}
+import { CreditCard } from 'lucide-react';
+import { paymentService } from '@/src/lib/api/services/paymentService';
+import { 
+  PaymentHistoryInline, 
+  PaymentHistorySummary, 
+  PaymentHistoryFull,
+  calculateSummary,
+  PaymentHistoryProps,
+  PaymentHistoryItem
+} from './payment-history';
 
 // Track global payment service availability to prevent repeated failed calls
 let paymentServiceAvailable: boolean | null = null;
@@ -35,15 +23,8 @@ export default function CustomerPaymentHistory({
   variant = 'full',
   className = '',
   showTitle = true
-}: CustomerPaymentHistoryProps) {
+}: PaymentHistoryProps) {
   const [payments, setPayments] = useState<PaymentHistoryItem[]>([]);
-  const [summary, setSummary] = useState({
-    totalPaid: 0,
-    totalPayments: 0,
-    successRate: 0,
-    averageAmount: 0,
-    lastPayment: null as string | null
-  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentServiceUnavailable, setPaymentServiceUnavailable] = useState(false);
@@ -121,21 +102,6 @@ export default function CustomerPaymentHistory({
         }));
         
         setPayments(paymentHistory);
-        
-        // Calculate summary
-        const completedPayments = paymentHistory.filter(p => p.status === 'completed');
-        const totalPaid = completedPayments.reduce((sum, p) => sum + p.amount, 0);
-        const successRate = paymentHistory.length > 0 ? (completedPayments.length / paymentHistory.length) * 100 : 0;
-        const averageAmount = completedPayments.length > 0 ? totalPaid / completedPayments.length : 0;
-        const lastPayment = completedPayments.length > 0 ? completedPayments[0].createdAt : null;
-        
-        setSummary({
-          totalPaid,
-          totalPayments: paymentHistory.length,
-          successRate,
-          averageAmount,
-          lastPayment
-        });
       }
     } catch (err: any) {
       console.error('💳 Payment history load failed:', err.message);
@@ -150,11 +116,14 @@ export default function CustomerPaymentHistory({
     } finally {
       setLoading(false);
     }
-  }, [customerId, hasAttemptedLoad]);
+  }, [customerId, hasAttemptedLoad, checkPaymentServiceAvailability]);
 
   useEffect(() => {
     loadPaymentHistory();
   }, [loadPaymentHistory]);
+
+  // Calculate summary from payments
+  const summary = calculateSummary(payments);
 
   // Don't render anything if payment service is unavailable and variant is inline
   if (paymentServiceUnavailable && variant === 'inline') {
@@ -181,34 +150,6 @@ export default function CustomerPaymentHistory({
     return null;
   }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-400" />;
-      case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-400" />;
-      case 'failed':
-        return <AlertCircle className="w-4 h-4 text-red-400" />;
-      default:
-        return <CreditCard className="w-4 h-4 text-gray-400" />;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
-
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
   if (loading) {
     return (
       <div className={`p-4 ${className}`}>
@@ -226,162 +167,49 @@ export default function CustomerPaymentHistory({
   if (error) {
     return (
       <div className={`p-4 text-center text-red-400 ${className}`}>
-        <AlertCircle className="w-5 h-5 mx-auto mb-2" />
+        <CreditCard className="w-5 h-5 mx-auto mb-2" />
         <p className="text-sm">{error}</p>
       </div>
     );
   }
 
-  // Inline variant - minimal display
-  if (variant === 'inline') {
-    if (payments.length === 0) return null;
+  // Render appropriate variant
+  switch (variant) {
+    case 'inline':
+      return (
+        <PaymentHistoryInline
+          customerId={customerId}
+          customerName={customerName}
+          className={className}
+          showTitle={showTitle}
+          summary={summary}
+          paymentsCount={payments.length}
+        />
+      );
     
-    return (
-      <div className={`inline-flex items-center gap-2 text-xs text-gray-400 ${className}`}>
-        <DollarSign className="w-3 h-3" />
-        <span>${summary.totalPaid.toFixed(0)} total</span>
-        <span>•</span>
-        <span>{payments.length} payments</span>
-        {summary.lastPayment && (
-          <>
-            <span>•</span>
-            <span>Last: {formatTime(summary.lastPayment)}</span>
-          </>
-        )}
-      </div>
-    );
+    case 'summary':
+      return (
+        <PaymentHistorySummary
+          customerId={customerId}
+          customerName={customerName}
+          className={className}
+          showTitle={showTitle}
+          summary={summary}
+          paymentsCount={payments.length}
+        />
+      );
+    
+    case 'full':
+    default:
+      return (
+        <PaymentHistoryFull
+          customerId={customerId}
+          customerName={customerName}
+          className={className}
+          showTitle={showTitle}
+          payments={payments}
+          summary={summary}
+        />
+      );
   }
-
-  // Summary variant - overview stats
-  if (variant === 'summary') {
-    return (
-      <div className={`bg-[#111111] border border-[#1a1a1a] rounded-lg p-4 ${className}`}>
-        {showTitle && (
-          <h3 className="text-sm font-medium text-white mb-3">
-            Payment Summary {customerName && `- ${customerName}`}
-          </h3>
-        )}
-        
-        {payments.length === 0 ? (
-          <div className="text-center py-4">
-            <CreditCard className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-            <p className="text-sm text-gray-400">No payment history</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-2xl font-bold text-[#C9A449]">
-                ${summary.totalPaid.toFixed(0)}
-              </div>
-              <div className="text-xs text-gray-400">Total Paid</div>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-white">
-                {summary.totalPayments}
-              </div>
-              <div className="text-xs text-gray-400">Payments</div>
-            </div>
-            <div>
-              <div className="text-lg font-medium text-green-400">
-                {summary.successRate.toFixed(0)}%
-              </div>
-              <div className="text-xs text-gray-400">Success Rate</div>
-            </div>
-            <div>
-              <div className="text-lg font-medium text-white">
-                ${summary.averageAmount.toFixed(0)}
-              </div>
-              <div className="text-xs text-gray-400">Average</div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Full variant - detailed list
-  return (
-    <div className={`bg-[#111111] border border-[#1a1a1a] rounded-lg ${className}`}>
-      {showTitle && (
-        <div className="px-4 py-3 border-b border-[#1a1a1a]">
-          <h3 className="text-sm font-medium text-white">
-            Payment History {customerName && `- ${customerName}`}
-          </h3>
-        </div>
-      )}
-      
-      {payments.length === 0 ? (
-        <div className="p-6 text-center">
-          <CreditCard className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-          <p className="text-sm text-gray-400 font-medium">No payments yet</p>
-          <p className="text-xs text-gray-500 mt-1">Payment history will appear here</p>
-        </div>
-      ) : (
-        <>
-          {/* Summary stats */}
-          <div className="p-4 bg-[#080808] grid grid-cols-4 gap-4 text-center">
-            <div>
-              <div className="text-lg font-bold text-[#C9A449]">${summary.totalPaid.toFixed(0)}</div>
-              <div className="text-xs text-gray-400">Total</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-white">{summary.totalPayments}</div>
-              <div className="text-xs text-gray-400">Count</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-green-400">{summary.successRate.toFixed(0)}%</div>
-              <div className="text-xs text-gray-400">Success</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-white">${summary.averageAmount.toFixed(0)}</div>
-              <div className="text-xs text-gray-400">Average</div>
-            </div>
-          </div>
-          
-          {/* Payment list */}
-          <div className="divide-y divide-[#1a1a1a] max-h-64 overflow-y-auto">
-            {payments.slice(0, 10).map((payment) => (
-              <div key={payment.id} className="p-4 hover:bg-[#1a1a1a]/50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {getStatusIcon(payment.status)}
-                    <div>
-                      <div className="text-sm font-medium text-white">
-                        {formatPaymentType(payment.paymentType as any)}
-                      </div>
-                      <div className="text-xs text-gray-400">
-                        {formatDate(payment.createdAt)}
-                        {payment.method && ` • ${payment.method}`}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-bold text-[#C9A449]">
-                      ${payment.amount.toFixed(2)}
-                    </div>
-                    <div className={`text-xs font-medium capitalize ${
-                      payment.status === 'completed' ? 'text-green-400' :
-                      payment.status === 'pending' ? 'text-yellow-400' :
-                      payment.status === 'failed' ? 'text-red-400' :
-                      'text-gray-400'
-                    }`}>
-                      {payment.status}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          {payments.length > 10 && (
-            <div className="p-3 text-center border-t border-[#1a1a1a]">
-              <p className="text-xs text-gray-400">
-                Showing 10 of {payments.length} payments
-              </p>
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
 } 

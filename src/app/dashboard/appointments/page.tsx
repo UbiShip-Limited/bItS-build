@@ -55,11 +55,7 @@ export default function AppointmentsPage() {
   // Memoize the client to prevent recreation on every render
   const appointmentService = useMemo(() => new AppointmentApiClient(apiClient), []);
 
-  useEffect(() => {
-    loadAppointments();
-  }, [filters]);
-
-  const loadAppointments = async () => {
+  const loadAppointments = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -80,7 +76,11 @@ export default function AppointmentsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [appointmentService, filters.status, filters.from, filters.to, filters.page, filters.limit]);
+
+  useEffect(() => {
+    loadAppointments();
+  }, [loadAppointments]);
 
   const handleCreateSuccess = () => {
     setShowCreateModal(false);

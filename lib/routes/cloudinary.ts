@@ -26,17 +26,16 @@ interface CloudinaryFoldersResult {
   folders: CloudinaryFolder[];
 }
 
-// Use mock service if no Cloudinary credentials are set
-const useMock = !process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET;
-const cloudinaryService = useMock 
-  ? await import('../cloudinary/mock').then(m => m.default)
-  : await import('../cloudinary/index').then(m => m.default);
-
-if (useMock) {
-  console.log('⚠️  Using mock Cloudinary service - set CLOUDINARY_* env vars for real uploads');
-}
-
 const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
+  // Use mock service if no Cloudinary credentials are set
+  const useMock = !process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET;
+  const cloudinaryService = useMock 
+    ? await import('../cloudinary/mock').then(m => m.default)
+    : await import('../cloudinary/index').then(m => m.default);
+
+  if (useMock) {
+    console.log('⚠️  Using mock Cloudinary service - set CLOUDINARY_* env vars for real uploads');
+  }
   // Public endpoint for tattoo request image uploads (no auth required)
   fastify.post('/signature/public', {
     schema: {

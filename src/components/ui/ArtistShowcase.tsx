@@ -1,43 +1,39 @@
 "use client"
 
-
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Instagram, Globe, AtSign, ChevronRight } from "lucide-react"
 
 export function ArtistShowcase() {
+  const [isVisible, setIsVisible] = useState(false)
+  const sectionRef = useRef<HTMLDivElement>(null)
+
+  // Simple intersection observer for performance
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+        }
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    )
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
 
   return (
-    <section className="min-h-screen bg-[#080808] text-white relative overflow-hidden mb">
-      {/* Atmospheric background elements */}
+    <section ref={sectionRef} className="min-h-screen bg-[#080808] text-white relative overflow-hidden">
+      {/* Simplified background elements */}
       <div className="absolute inset-0 z-0">
-        {/* Subtle gradient vignette for dark room effect */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#080808] via-[#0a0a0a] to-[#060606]"></div>
-        
-        {/* Floating ornamental elements */}
-        <div className="absolute top-1/6 left-1/12 w-24 h-24 opacity-[0.015]">
-          <Image 
-            src="/images/bowen-logo.svg" 
-            alt="Background Logo" 
-            fill
-            sizes="96px"
-            className="object-contain brightness-0 invert rotate-12"
-          />
-        </div>
-        <div className="absolute bottom-1/4 right-1/8 w-16 h-16 opacity-[0.01] rotate-45">
-          <Image 
-            src="/images/bowen-logo.svg" 
-            alt="Background Logo" 
-            fill
-            sizes="64px"
-            className="object-contain brightness-0 invert"
-          />
-        </div>
-        
-        {/* Subtle light rays effect */}
         <div className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-[#C9A449]/5 to-transparent"></div>
-        <div className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-[#C9A449]/3 to-transparent"></div>
       </div>
 
       {/* Main content container */}
@@ -45,16 +41,15 @@ export function ArtistShowcase() {
         
         {/* Section Header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          {/* Ornamental line above title */}
+          {/* Simplified ornamental line */}
           <div className="flex items-center justify-center mb-6">
             <div className="w-16 h-[0.5px] bg-gradient-to-r from-transparent to-[#C9A449]/60"></div>
-            <div className="mx-4 flex items-center justify-center">
+            <div className="mx-4">
               <span className="text-[#C9A449] text-sm">✦</span>
             </div>
             <div className="w-16 h-[0.5px] bg-gradient-to-l from-transparent to-[#C9A449]/60"></div>
@@ -67,7 +62,7 @@ export function ArtistShowcase() {
             Master of the Craft
           </p>
 
-          {/* Ornamental divider */}
+          {/* Simplified divider */}
           <div className="flex items-center justify-center">
             <div className="w-12 h-[0.5px] bg-gradient-to-r from-[#C9A449]/80 to-[#C9A449]/20"></div>
             <div className="w-2 h-2 border border-[#C9A449]/50 rotate-45 mx-4"></div>
@@ -81,46 +76,36 @@ export function ArtistShowcase() {
             
             {/* Large portrait section */}
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              initial={{ opacity: 0, x: -30 }}
+              animate={isVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
               className="relative"
             >
-              <div 
-                className="relative aspect-[3/4] w-full max-w-md mx-auto rounded-2xl border border-[#C9A449]/10 group hover:border-[#C9A449]/20 transition-all duration-700 shadow-2xl shadow-black/40 hover:shadow-[#C9A449]/10"
-                style={{ 
-                  filter: 'drop-shadow(0 0 60px rgba(255, 255, 255, 0.02)) drop-shadow(0 0 120px rgba(201, 164, 73, 0.03))'
-                }}
-              >
-                {/* Atmospheric corner elements */}
+              {/* Fixed height container to prevent layout shifts */}
+              <div className="relative aspect-[3/4] w-full max-w-md mx-auto rounded-2xl border border-[#C9A449]/10 group hover:border-[#C9A449]/20 transition-all duration-300 shadow-2xl shadow-black/40">
+                {/* Simplified corner elements */}
                 <div className="absolute top-3 left-3 h-5 w-5 border-t border-l border-[#C9A449]/40 rounded-tl-sm"></div>
                 <div className="absolute bottom-3 right-3 h-5 w-5 border-b border-r border-[#C9A449]/40 rounded-br-sm"></div>
-                <div className="absolute top-3 right-3 h-2 w-2 border border-[#C9A449]/30 rotate-45 rounded-sm"></div>
-                <div className="absolute bottom-3 left-3 h-2 w-2 border border-[#C9A449]/30 rotate-45 rounded-sm"></div>
 
                 {/* Main portrait image */}
                 <Image
                   src="/artists/artist-kelly.jpeg"
                   alt="Kelly Miller - Master Tattoo Artist"
                   fill
-                  className="object-cover brightness-50 group-hover:brightness-60 transition-all duration-700 rounded-2xl"
+                  className="object-cover brightness-50 group-hover:brightness-60 transition-all duration-300 rounded-2xl"
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   priority
                 />
                 
-                {/* Atmospheric overlay */}
+                {/* Simplified overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#080808]/60 via-transparent to-transparent rounded-2xl"></div>
-                <div className="absolute inset-0 bg-gradient-to-br from-[#C9A449]/5 via-transparent to-[#C9A449]/8 group-hover:from-[#C9A449]/8 group-hover:to-[#C9A449]/12 transition-all duration-700 rounded-2xl"></div>
-                
-                {/* Floating light effect */}
-                <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-[#C9A449]/5 rounded-full blur-3xl group-hover:bg-[#C9A449]/8 transition-all duration-700"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-[#C9A449]/5 via-transparent to-[#C9A449]/8 group-hover:from-[#C9A449]/8 group-hover:to-[#C9A449]/12 transition-all duration-300 rounded-2xl"></div>
               </div>
 
               {/* Floating quote element */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                 transition={{ duration: 0.6, delay: 0.8 }}
                 className="absolute -bottom-8 -right-4 bg-[#080808]/90 border border-[#C9A449]/30 rounded-lg p-4 backdrop-blur-sm"
               >
@@ -132,20 +117,18 @@ export function ArtistShowcase() {
 
             {/* Bio content section */}
             <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.8, delay: 0.4 }}
+              initial={{ opacity: 0, x: 30 }}
+              animate={isVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: 30 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
               className="space-y-8"
             >
               {/* Name and title */}
               <div>
-                {/* Accent label */}
                 <div className="inline-block bg-transparent border border-[#C9A449]/50 px-3 py-1 text-xs font-semibold text-[#C9A449] mb-4 uppercase tracking-widest font-body">
                   Founder
                 </div>
 
-                <h3 className="font-heading text-4xl md:text-5xl mb-3 text-white drop-shadow-[0_0_8px_rgba(201,164,73,0.3)] tracking-wide">
+                <h3 className="font-heading text-4xl md:text-5xl mb-3 text-white tracking-wide">
                   KELLY MILLER
                 </h3>
                 
@@ -153,7 +136,7 @@ export function ArtistShowcase() {
                   Master Artist & Studio Owner
                 </p>
 
-                {/* Ornamental divider */}
+                {/* Simplified divider */}
                 <div className="flex items-center mb-6">
                   <div className="w-12 h-[0.5px] bg-gradient-to-r from-[#C9A449]/80 to-[#C9A449]/20"></div>
                   <div className="w-2 h-2 border border-[#C9A449]/50 rotate-45 mx-3"></div>
@@ -258,9 +241,6 @@ export function ArtistShowcase() {
           </div>
         </div>
       </div>
-
-      {/* Bottom atmospheric element */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#080808] to-transparent pointer-events-none"></div>
     </section>
   )
 }

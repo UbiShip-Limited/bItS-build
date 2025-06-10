@@ -139,7 +139,7 @@ export function AboutBowenIslandSection() {
             <div className="absolute bottom-2 left-2 h-4 w-4 border-b border-l border-[#C9A449]/30 rounded-bl-sm"></div>
 
             <Image 
-              src="/gallery-images/image4.jpeg" 
+              src="/images/setting-pic.jpg" 
               alt="Master Tattoo Artist at Work" 
               fill 
               className="object-cover brightness-60 group-hover:brightness-70 transition-all duration-300 rounded-2xl" 
@@ -192,7 +192,7 @@ export function AboutBowenIslandSection() {
             <div className="absolute bottom-2 right-2 h-4 w-4 border-b border-r border-[#C9A449]/30 rounded-br-sm"></div>
 
             <Image 
-              src="/gallery-images/image9.png" 
+              src="/images/prodcut-pic.jpg" 
               alt="Personalized Tattoo Experience" 
               fill 
               className="object-cover brightness-60 group-hover:brightness-70 transition-all duration-300 rounded-2xl" 

@@ -46,12 +46,44 @@ export class DuplicatePaymentError extends Error {
 }
 
 export default class PaymentService {
-  private squareClient: ReturnType<typeof SquareClient.fromEnv>;
+  private squareClient: ReturnType<typeof SquareClient.fromEnv> | null;
   private prisma: PrismaClient;
   
   constructor(prismaClient?: PrismaClient, squareClient?: ReturnType<typeof SquareClient.fromEnv>) {
-    this.squareClient = squareClient || SquareClient.fromEnv();
     this.prisma = prismaClient || prisma;
+    
+    // Initialize Square client with graceful error handling
+    if (squareClient) {
+      this.squareClient = squareClient;
+    } else {
+      try {
+        this.squareClient = SquareClient.fromEnv();
+      } catch (error) {
+        console.warn('⚠️  Square client initialization failed:', error.message);
+        console.warn('   Payment processing will be disabled until Square is properly configured');
+        this.squareClient = null;
+      }
+    }
+  }
+  
+  /**
+   * Check if Square integration is available
+   */
+  private isSquareAvailable(): boolean {
+    return this.squareClient !== null;
+  }
+  
+  /**
+   * Get Square client or throw error if not available
+   */
+  private getSquareClient(): ReturnType<typeof SquareClient.fromEnv> {
+    if (!this.squareClient) {
+      throw new PaymentValidationError(
+        'Square payment integration is not configured. Please contact administrator.',
+        'SQUARE_NOT_CONFIGURED'
+      );
+    }
+    return this.squareClient;
   }
   
   /**
@@ -184,7 +216,8 @@ export default class PaymentService {
       const referenceId = enhancedParams.bookingId || uuidv4();
       
       // 6. Process Square payment
-      const squareResponse = await this.squareClient.createPayment({
+      const squareClient = this.getSquareClient(); // This will throw if Square is not configured
+      const squareResponse = await squareClient.createPayment({
         sourceId: enhancedParams.sourceId,
         amount: enhancedParams.amount, // Square client will convert to cents internally
         currency: 'CAD',
@@ -402,7 +435,8 @@ export default class PaymentService {
       const idempotencyKey = uuidv4();
       
       // Process refund with Square
-      const refundResponse = await this.squareClient.createRefund({
+      const squareClient = this.getSquareClient(); // This will throw if Square is not configured
+      const refundResponse = await squareClient.createRefund({
         paymentId: payment.squareId,
         idempotencyKey,
         amountMoney: amount ? {

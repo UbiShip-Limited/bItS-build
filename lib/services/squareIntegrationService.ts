@@ -4,19 +4,46 @@ import { prisma } from '../prisma/prisma';
 import type { Appointment } from '@prisma/client';
 
 export class SquareIntegrationService {
-  private squareClient: ReturnType<typeof SquareClient.fromEnv>;
+  private squareClient: ReturnType<typeof SquareClient.fromEnv> | null;
   
   constructor(squareClient?: ReturnType<typeof SquareClient.fromEnv>) {
-    this.squareClient = squareClient || SquareClient.fromEnv();
+    // Initialize Square client with graceful error handling
+    if (squareClient) {
+      this.squareClient = squareClient;
+    } else {
+      try {
+        this.squareClient = SquareClient.fromEnv();
+      } catch (error) {
+        console.warn('⚠️  Square client initialization failed in SquareIntegrationService:', error.message);
+        console.warn('   Square booking sync will be disabled until Square is properly configured');
+        this.squareClient = null;
+      }
+    }
+  }
+  
+  /**
+   * Get Square client or throw error if not available
+   */
+  private getSquareClient(): ReturnType<typeof SquareClient.fromEnv> {
+    if (!this.squareClient) {
+      throw new Error('Square integration is not configured. Booking sync features are disabled.');
+    }
+    return this.squareClient;
   }
   
   async syncAppointmentToSquare(appointment: Appointment): Promise<{ squareId?: string; error?: string }> {
+    // Check if Square is configured
+    if (!this.squareClient) {
+      return { error: 'Square integration is not configured - skipping Square sync' };
+    }
+    
     // Only sync if we have a customer
     if (!appointment.customerId) {
       return { error: 'No customer ID - skipping Square sync for anonymous appointment' };
     }
     
     try {
+      const squareClient = this.getSquareClient();
       const customer = await prisma.customer.findUnique({
         where: { id: appointment.customerId }
       });
@@ -52,7 +79,7 @@ export class SquareIntegrationService {
       
       const idempotencyKey = uuidv4();
       
-      const squareBooking = await this.squareClient.createBooking({
+      const squareBooking = await squareClient.createBooking({
         startAt: appointment.startTime?.toISOString() || new Date().toISOString(),
         locationId: process.env.SQUARE_LOCATION_ID,
         customerId: squareCustomerId,
@@ -86,6 +113,7 @@ export class SquareIntegrationService {
   
   private async createSquareCustomer(customer: { id: string; name: string; email: string; phone?: string | null }): Promise<{ squareCustomerId?: string; error?: string }> {
     try {
+      const squareClient = this.getSquareClient();
       const idempotencyKey = uuidv4();
       
       // Split name into given and family name
@@ -93,7 +121,7 @@ export class SquareIntegrationService {
       const givenName = nameParts[0] || '';
       const familyName = nameParts.slice(1).join(' ') || '';
       
-      const squareCustomerResponse = await this.squareClient.createCustomer({
+      const squareCustomerResponse = await squareClient.createCustomer({
         givenName,
         familyName,
         emailAddress: customer.email,
@@ -122,6 +150,11 @@ export class SquareIntegrationService {
   }
   
   async updateSquareBooking(appointment: Appointment): Promise<{ success: boolean; newSquareId?: string; error?: string }> {
+    // Check if Square is configured
+    if (!this.squareClient) {
+      return { success: false, error: 'Square integration is not configured - skipping booking update' };
+    }
+    
     if (!appointment.squareId) {
       // Try to sync it first if it doesn't have a Square ID
       const syncResult = await this.syncAppointmentToSquare(appointment);
@@ -133,6 +166,7 @@ export class SquareIntegrationService {
     }
     
     try {
+      const squareClient = this.getSquareClient();
       const customer = await prisma.customer.findUnique({
         where: { id: appointment.customerId || '' }
       });
@@ -176,7 +210,7 @@ export class SquareIntegrationService {
       }
       
       // Create new booking
-      const squareBooking = await this.squareClient.createBooking({
+      const squareBooking = await squareClient.createBooking({
         startAt: appointment.startTime?.toISOString() || new Date().toISOString(),
         locationId: process.env.SQUARE_LOCATION_ID,
         customerId: squareCustomerId!,
@@ -210,16 +244,23 @@ export class SquareIntegrationService {
   }
   
   async cancelSquareBooking(squareId: string): Promise<{ success: boolean; notFound?: boolean; error?: string }> {
+    // Check if Square is configured
+    if (!this.squareClient) {
+      return { success: false, error: 'Square integration is not configured - cannot cancel booking' };
+    }
+    
     try {
+      const squareClient = this.getSquareClient();
+      
       // Get Square booking to get version
-      const squareBooking = await this.squareClient.getBookingById(squareId);
+      const squareBooking = await squareClient.getBookingById(squareId);
       
       if (!squareBooking?.result?.booking) {
         return { success: false, notFound: true, error: 'Square booking not found' };
       }
       
       // Cancel in Square
-      const result = await this.squareClient.cancelBooking({
+      const result = await squareClient.cancelBooking({
         bookingId: squareId,
         bookingVersion: squareBooking.result.booking.version || 0,
         idempotencyKey: `cancel-${squareId}-${Date.now()}`

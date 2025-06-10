@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply, FastifyInstance } from 'fastify';
-import { supabase } from '../supabase/supabaseClient';
+import { supabase, isSupabaseConfigured } from '../supabase/supabaseClient';
 import { UserRole, UserWithRole } from '../types/auth';
 
 // Test user for controlled test environment only
@@ -68,6 +68,17 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     request.log.warn('⚠️  Using test authentication bypass - should only be used in tests');
     request.user = TEST_USER;
     return;
+  }
+  
+  // Check if Supabase is configured
+  if (!isSupabaseConfigured()) {
+    request.log.warn('🔑 Authentication failed: Supabase is not configured');
+    return reply.status(503).send({
+      error: 'Authentication service unavailable',
+      message: 'Database authentication is not configured. Please contact administrator.',
+      code: 'AUTH_SERVICE_UNAVAILABLE',
+      details: 'The authentication system is not properly configured. Please ensure SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are set.'
+    });
   }
   
   const authHeader = request.headers.authorization;

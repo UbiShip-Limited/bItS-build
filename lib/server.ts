@@ -20,6 +20,9 @@ import userRoutes from './routes/users';
 function validateEnvironment() {
   const requiredEnvVars = {
     'DATABASE_URL': process.env.DATABASE_URL,
+  };
+
+  const databaseEnvVars = {
     'SUPABASE_URL': process.env.SUPABASE_URL,
     'SUPABASE_SERVICE_ROLE_KEY': process.env.SUPABASE_SERVICE_ROLE_KEY,
   };
@@ -43,6 +46,10 @@ function validateEnvironment() {
     .filter(([, value]) => !value)
     .map(([key]) => key);
 
+  const missingDatabase = Object.entries(databaseEnvVars)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+
   const missingSquare = Object.entries(squareEnvVars)
     .filter(([, value]) => !value)
     .map(([key]) => key);
@@ -52,10 +59,21 @@ function validateEnvironment() {
     .map(([key]) => key);
 
   if (missingRequired.length > 0) {
-    console.error('❌ Missing required environment variables:');
+    console.error('❌ Missing critical environment variables:');
     missingRequired.forEach(env => console.error(`   - ${env}`));
     console.error('\nPlease set these in your .env file and restart the server.');
     process.exit(1);
+  }
+
+  // Check database configuration status
+  const hasAllDatabaseVars = missingDatabase.length === 0;
+  if (hasAllDatabaseVars) {
+    console.log('✅ Database integration (Supabase) is configured and ready');
+  } else {
+    console.warn('⚠️  Database integration (Supabase) is not configured - authentication and database features will be limited');
+    console.warn('   Missing Supabase environment variables:');
+    missingDatabase.forEach(env => console.warn(`   - ${env}`));
+    console.warn('   Routes requiring authentication will return appropriate error messages.');
   }
 
   // Check Square configuration status

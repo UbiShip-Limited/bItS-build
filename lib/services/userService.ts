@@ -2,21 +2,34 @@ import { PrismaClient } from '@prisma/client';
 import { createClient } from '@supabase/supabase-js';
 import { UserRole, UserWithRole } from '../types/auth';
 import { ValidationError, NotFoundError } from './errors';
-import { supabase } from '../supabase/supabaseClient';
+import { supabase, isSupabaseConfigured, getSupabaseClient } from '../supabase/supabaseClient';
 
 const prisma = new PrismaClient();
 
-// Initialize Supabase with service role key for admin operations
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
+// Create Supabase admin client with graceful error handling
+let _supabaseAdmin: ReturnType<typeof createClient> | null = null;
+
+function getSupabaseAdmin() {
+  if (_supabaseAdmin) {
+    return _supabaseAdmin;
+  }
+
+  if (!isSupabaseConfigured()) {
+    throw new Error('Supabase is not configured. User management features are not available.');
+  }
+
+  const supabaseUrl = process.env.SUPABASE_URL!;
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+  _supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false
     }
-  }
-);
+  });
+
+  return _supabaseAdmin;
+}
 
 export interface CreateUserData {
   email: string;
@@ -66,6 +79,7 @@ export class UserService {
       
       if (sendInvite) {
         // Send invitation email instead of creating with password
+        const supabaseAdmin = getSupabaseAdmin();
         const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
           data: { role },
           redirectTo: `${process.env.FRONTEND_URL}/auth/set-password`
@@ -78,6 +92,7 @@ export class UserService {
         supabaseUser = data.user;
       } else if (password) {
         // Create user with password
+        const supabaseAdmin = getSupabaseAdmin();
         const { data, error } = await supabaseAdmin.auth.admin.createUser({
           email,
           password,
@@ -137,6 +152,7 @@ export class UserService {
     }
 
     // Get Supabase user data
+    const supabaseAdmin = getSupabaseAdmin();
     const { data: supabaseUser, error } = await supabaseAdmin.auth.admin.getUserById(id);
     
     if (error || !supabaseUser.user) {
@@ -171,6 +187,7 @@ export class UserService {
         if (email) supabaseUpdates.email = email;
         if (password) supabaseUpdates.password = password;
 
+        const supabaseAdmin = getSupabaseAdmin();
         const { error } = await supabaseAdmin.auth.admin.updateUserById(id, supabaseUpdates);
         
         if (error) {
@@ -189,6 +206,7 @@ export class UserService {
       });
 
       // Get updated Supabase user data
+      const supabaseAdmin = getSupabaseAdmin();
       const { data: supabaseUser, error: fetchError } = await supabaseAdmin.auth.admin.getUserById(id);
       
       if (fetchError || !supabaseUser.user) {
@@ -222,6 +240,7 @@ export class UserService {
 
     try {
       // Delete from Supabase
+      const supabaseAdmin = getSupabaseAdmin();
       const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
       
       if (error) {
@@ -270,6 +289,7 @@ export class UserService {
     const usersWithSupabaseData = await Promise.all(
       users.map(async (user) => {
         try {
+          const supabaseAdmin = getSupabaseAdmin();
           const { data: supabaseUser } = await supabaseAdmin.auth.admin.getUserById(user.id);
           if (supabaseUser?.user) {
             return {
@@ -361,6 +381,7 @@ export class UserService {
    */
   async updatePassword(userId: string, newPassword: string): Promise<void> {
     try {
+      const supabaseAdmin = getSupabaseAdmin();
       const { error } = await supabaseAdmin.auth.admin.updateUserById(userId, {
         password: newPassword
       });

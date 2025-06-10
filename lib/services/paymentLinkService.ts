@@ -38,12 +38,34 @@ export interface InvoiceParams {
 }
 
 export default class PaymentLinkService {
-  private squareClient: ReturnType<typeof SquareClient.fromEnv>;
+  private squareClient: ReturnType<typeof SquareClient.fromEnv> | null;
   private prisma: PrismaClient;
   
   constructor(prismaClient?: PrismaClient, squareClient?: ReturnType<typeof SquareClient.fromEnv>) {
-    this.squareClient = squareClient || SquareClient.fromEnv();
     this.prisma = prismaClient || prisma;
+    
+    // Initialize Square client with graceful error handling
+    if (squareClient) {
+      this.squareClient = squareClient;
+    } else {
+      try {
+        this.squareClient = SquareClient.fromEnv();
+      } catch (error) {
+        console.warn('⚠️  Square client initialization failed in PaymentLinkService:', error.message);
+        console.warn('   Payment link features will be disabled until Square is properly configured');
+        this.squareClient = null;
+      }
+    }
+  }
+  
+  /**
+   * Get Square client or throw error if not available
+   */
+  private getSquareClient(): ReturnType<typeof SquareClient.fromEnv> {
+    if (!this.squareClient) {
+      throw new Error('Square payment integration is not configured. Please contact administrator.');
+    }
+    return this.squareClient;
   }
   
   /**
@@ -81,7 +103,8 @@ export default class PaymentLinkService {
       const idempotencyKey = uuidv4();
       
       // Create payment link using Square's Checkout API
-      const response = await this.squareClient.createPaymentLink({
+      const squareClient = this.getSquareClient(); // This will throw if Square is not configured
+      const response = await squareClient.createPaymentLink({
         idempotencyKey,
         description: description || `Payment for ${paymentType}`,
         quickPay: {
@@ -201,7 +224,8 @@ export default class PaymentLinkService {
       const idempotencyKey = uuidv4();
       
       // First, create an order for the invoice
-      const orderResponse = await this.squareClient.createOrder({
+      const squareClient = this.getSquareClient(); // This will throw if Square is not configured
+      const orderResponse = await squareClient.createOrder({
         locationId: process.env.SQUARE_LOCATION_ID,
         lineItems: items.map((item, index) => ({
           name: item.description,
@@ -255,7 +279,7 @@ export default class PaymentLinkService {
       }
       
       // Create invoice with Square
-      const invoiceResponse = await this.squareClient.createInvoice({
+      const invoiceResponse = await squareClient.createInvoice({
         orderId: order.id,
         invoiceNumber,
         title: 'Bowen Island Tattoo Shop',
@@ -281,7 +305,7 @@ export default class PaymentLinkService {
       // Send the invoice if not manual delivery
       let publicUrl = invoice.publicUrl;
       if (deliveryMethod !== 'SHARE_MANUALLY' && invoice.id) {
-        const sendResponse = await this.squareClient.sendInvoice({
+        const sendResponse = await squareClient.sendInvoice({
           invoiceId: invoice.id,
           requestMethod: deliveryMethod
         });
@@ -375,7 +399,8 @@ export default class PaymentLinkService {
       const referenceId = params.appointmentId || uuidv4();
       
       // Create order with Square
-      const orderResponse = await this.squareClient.createOrder({
+      const squareClient = this.getSquareClient(); // This will throw if Square is not configured
+      const orderResponse = await squareClient.createOrder({
         locationId: process.env.SQUARE_LOCATION_ID,
         lineItems: params.items.map(item => ({
           name: item.name,

@@ -1,6 +1,5 @@
 import * as dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 /**
  * Loads environment variables from the .env file located within the `lib` directory.
@@ -8,7 +7,7 @@ import { fileURLToPath } from 'url';
  */
 function loadEnvironment() {
   // Since this file is in lib/config, we go up two levels to get to the `lib` root.
-  const libDir = path.dirname(fileURLToPath(import.meta.url));
+  const libDir = path.dirname(__dirname);
   const envPath = path.resolve(libDir, '..', '.env');
   
   const result = dotenv.config({ path: envPath });

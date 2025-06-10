@@ -84,7 +84,7 @@ export function MobileHeader({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) {
           
           {/* Mobile booking button */}
           <Link 
-            href="/booking"
+            href="/tattooRequest"
             className="font-body text-[#080808] text-sm tracking-widest uppercase mt-4 px-6 py-3 border border-[#C9A449]/30 hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 relative overflow-hidden"
             onClick={() => setIsMenuOpen(false)}
           >

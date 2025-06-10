@@ -89,7 +89,7 @@ export function ArtistShowcase() {
 
                 {/* Main portrait image */}
                 <Image
-                  src="/artists/artist-kelly.jpeg"
+                  src="/artists/artist-kelly.jpg"
                   alt="Kelly Miller - Master Tattoo Artist"
                   fill
                   className="object-cover brightness-50 group-hover:brightness-60 transition-all duration-300 rounded-2xl"

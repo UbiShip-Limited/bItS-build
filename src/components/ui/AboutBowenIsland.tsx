@@ -66,7 +66,7 @@ export function AboutBowenIslandSection() {
       </div>
 
       {/* Section Header */}
-      <div className="relative z-10 text-center py-12 px-8">
+      <div className="relative z-10 text-center py-12 px-4 sm:px-8">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -99,10 +99,10 @@ export function AboutBowenIslandSection() {
       </div>
 
       {/* Section 1 - The Studio */}
-      <div
-        ref={section1Ref}
-        className="relative z-10 min-h-screen flex flex-col md:flex-row items-center py-16 px-8 md:px-16 lg:px-24"
-      >
+              <div
+          ref={section1Ref}
+          className="relative z-10 min-h-screen flex flex-col md:flex-row items-center py-16 px-4 sm:px-8 md:px-16 lg:px-24"
+        >
         <div className="w-full md:w-1/2 mb-10 md:mb-0 overflow-hidden">
           <motion.div
             className="relative h-[400px] md:h-[600px] w-full rounded-2xl border border-[#C9A449]/10 group hover:border-[#C9A449]/20 transition-all duration-700 shadow-2xl shadow-black/20 hover:shadow-[#C9A449]/5"
@@ -168,7 +168,7 @@ export function AboutBowenIslandSection() {
       {/* Section 2 - The Setting */}
       <div
         ref={section2Ref}
-        className="relative z-10 min-h-screen flex flex-col md:flex-row-reverse items-center py-20 px-8 md:px-16 lg:px-24 bg-black/20"
+        className="relative z-10 min-h-screen flex flex-col md:flex-row-reverse items-center py-20 px-4 sm:px-8 md:px-16 lg:px-24 bg-black/20"
       >
         <div className="w-full md:w-1/2 mb-10 md:mb-0 overflow-hidden">
           <motion.div
@@ -236,7 +236,7 @@ export function AboutBowenIslandSection() {
       {/* Section 3 - The Product */}
       <div
         ref={section3Ref}
-        className="relative z-10 min-h-screen flex flex-col md:flex-row items-center py-20 px-8 md:px-16 lg:px-24"
+        className="relative z-10 min-h-screen flex flex-col md:flex-row items-center py-20 px-4 sm:px-8 md:px-16 lg:px-24"
       >
         <div className="w-full md:w-1/2 mb-10 md:mb-0 overflow-hidden">
           <motion.div

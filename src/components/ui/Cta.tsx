@@ -41,7 +41,7 @@ export function CtaSection({
   }, []);
   
   return (
-    <div className={`bg-[#080808] py-12 md:py-20 px-4 md:px-8 lg:px-16 ${className}`}>
+    <div className={`bg-[#080808] py-12 md:py-20 px-4 sm:px-8 md:px-8 lg:px-16 ${className}`}>
       <div className="container mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: 30 }}

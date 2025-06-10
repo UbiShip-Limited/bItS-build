@@ -41,7 +41,7 @@ export function ArtistShowcase() {
       </div>
 
       {/* Main content container */}
-      <div className="relative z-10 min-h-screen flex flex-col justify-center py-16 px-8 md:px-16 lg:px-24">
+      <div className="relative z-10 min-h-screen flex flex-col justify-center py-16 px-4 sm:px-8 md:px-16 lg:px-24">
         
         {/* Section Header */}
         <motion.div

@@ -122,7 +122,7 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         {/* Improved mobile interaction and accessibility */}
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col overflow-x-hidden">
           <ClientLayout>
             {children}
           </ClientLayout>

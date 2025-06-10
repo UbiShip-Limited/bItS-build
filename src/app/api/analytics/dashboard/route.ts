@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateMockDashboardMetrics } from '../../../../../lib/services/mockAnalyticsData';
 
 // The URL of your Fastify backend.
 // It's crucial to set this in your frontend's .env.local file.
@@ -30,11 +29,13 @@ export async function GET(request: NextRequest) {
     });
 
     if (!response.ok) {
-      // If the backend returns an error, log it and fall back to mock data
+      // If the backend returns an error, return the error to the client
       const errorData = await response.json();
-      console.warn(`Backend analytics service failed (status: ${response.status}), using mock data:`, errorData);
-      const mockMetrics = generateMockDashboardMetrics();
-      return NextResponse.json(mockMetrics);
+      console.error(`Backend analytics service failed (status: ${response.status}):`, errorData);
+      return NextResponse.json(
+        { error: 'Analytics service unavailable', details: errorData },
+        { status: response.status }
+      );
     }
     
     const metrics = await response.json();
@@ -45,10 +46,13 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Dashboard analytics API proxy error:', error);
     
-    // If the backend is completely unavailable, fall back to mock data
-    console.warn('Falling back to mock data due to proxy error.');
-    const mockMetrics = generateMockDashboardMetrics();
-    return NextResponse.json(mockMetrics);
+    return NextResponse.json(
+      { 
+        error: 'Analytics service unavailable',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
   }
 }
 

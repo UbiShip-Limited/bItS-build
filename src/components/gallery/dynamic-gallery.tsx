@@ -291,7 +291,7 @@ export function DynamicGallery() {
   // Error state
   if (error && !loading && galleryItems.length === 0) {
     return (
-      <div className="bg-[#080808] py-20 px-4 md:px-8 lg:px-16">
+      <div className="bg-[#080808] py-20 px-4 sm:px-8 md:px-8 lg:px-16">
         <div className="container mx-auto text-center">
           <h2 className="font-heading text-4xl md:text-5xl font-bold text-white mb-4">
             ARTIST GALLERY
@@ -328,7 +328,7 @@ export function DynamicGallery() {
   };
 
   return (
-    <div className="bg-[#080808] py-12 md:py-20 px-3 md:px-8 lg:px-16">
+    <div className="bg-[#080808] py-12 md:py-20 px-4 sm:px-6 md:px-8 lg:px-16">
       <div className="container mx-auto">
         {/* Smart Gallery Header */}
         <div className="mb-8 md:mb-12 text-center">

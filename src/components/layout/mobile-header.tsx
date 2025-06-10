@@ -48,8 +48,8 @@ export function MobileHeader({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) {
       className="fixed inset-0 bg-white z-[60] flex flex-col" 
       style={{ 
         backgroundColor: '#ffffff', 
-        width: '100vw', 
-        height: '100vh',
+        width: '100%', 
+        height: '100%',
         top: 0,
         left: 0,
         right: 0,

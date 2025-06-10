@@ -188,7 +188,7 @@ export default function NotificationCenter({ userId }: NotificationCenterProps) 
 
       {/* Notification Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-12 w-96 bg-[#111111] border border-[#C9A449]/20 rounded-lg shadow-2xl z-50 max-h-[500px] overflow-hidden">
+        <div className="absolute right-0 top-12 w-80 sm:w-96 bg-[#111111] border border-[#C9A449]/20 rounded-lg shadow-2xl z-50 max-h-[500px] overflow-hidden">
           {/* Header */}
           <div className="p-4 border-b border-[#1a1a1a] flex items-center justify-between">
             <div>

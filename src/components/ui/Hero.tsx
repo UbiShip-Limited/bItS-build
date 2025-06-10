@@ -54,7 +54,7 @@ export function TattooHero() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#080808] text-white flex flex-col justify-center">
+    <div className="relative min-h-screen overflow-hidden bg-[#080808] text-white flex flex-col justify-center w-full max-w-full">
       {/* Background layer - lowest z-index */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-b from-[#080808] via-[#080808] to-[#080808]/95"></div>
@@ -128,7 +128,7 @@ export function TattooHero() {
                       className="object-contain brightness-0 invert"
                       priority
                     />
-                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-[280px] md:w-[320px] h-[20px] bg-white/5 blur-xl rounded-full"></div>
+                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-[min(280px,80vw)] md:w-[320px] h-[20px] bg-white/5 blur-xl rounded-full hero-shadow"></div>
                   </motion.div>
                 )}
               </AnimatePresence>

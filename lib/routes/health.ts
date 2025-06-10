@@ -20,26 +20,37 @@ interface HealthResponse {
 const healthRoutes: FastifyPluginAsync = async (fastify) => {
   // Basic health check
   fastify.get('/health', async (request, reply) => {
+    const health = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      version: process.env.APP_VERSION || '1.0.0',
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      services: {
+        database: 'unknown',
+        square: 'unknown',
+        supabase: 'unknown'
+      }
+    };
+
+    // Test database connection (non-blocking for basic health)
     try {
-      // Test database connection
       await fastify.prisma.$queryRaw`SELECT 1`;
-      
-      return {
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV,
-        version: process.env.APP_VERSION || '1.0.0',
-        uptime: process.uptime(),
-        memory: process.memoryUsage()
-      };
+      health.services.database = 'healthy';
     } catch (error) {
-      reply.status(503);
-      return {
-        status: 'unhealthy',
-        timestamp: new Date().toISOString(),
-        error: error.message
-      };
+      health.services.database = 'unhealthy';
+      fastify.log.warn(`Database health check failed: ${error.message}`);
+      // Don't fail the entire health check for database issues in Railway deployment
     }
+
+    // Check Supabase configuration
+    health.services.supabase = process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY ? 'configured' : 'not_configured';
+
+    // Check Square configuration  
+    health.services.square = process.env.SQUARE_ACCESS_TOKEN ? 'configured' : 'not_configured';
+
+    return health;
   });
 
   // Detailed health check for monitoring

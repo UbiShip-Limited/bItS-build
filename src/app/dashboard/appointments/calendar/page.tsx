@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, List } from 'lucide-react';
@@ -35,12 +35,8 @@ export default function AppointmentCalendarPage() {
   // Memoize the client to prevent recreation on every render
   const appointmentService = useMemo(() => new AppointmentApiClient(apiClient), []);
 
-  useEffect(() => {
-    loadAppointments();
-  }, []);
-
   // Add dynamic loading when month changes
-  const loadAppointmentsForMonth = async (date: Date) => {
+  const loadAppointmentsForMonth = useCallback(async (date: Date) => {
     setLoading(true);
     setError(null);
     
@@ -60,9 +56,9 @@ export default function AppointmentCalendarPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [appointmentService]);
 
-  const loadAppointments = async () => {
+  const loadAppointments = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -84,7 +80,11 @@ export default function AppointmentCalendarPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [appointmentService]);
+
+  useEffect(() => {
+    loadAppointments();
+  }, [loadAppointments]);
 
   const handleDateClick = (date: Date) => {
     setSelectedDate(date);
@@ -101,7 +101,7 @@ export default function AppointmentCalendarPage() {
   };
 
   // Handle quick status changes
-  const handleStatusChange = async (appointmentId: string, newStatus: BookingStatus) => {
+  const handleStatusChange = useCallback(async (appointmentId: string, newStatus: BookingStatus) => {
     try {
       await appointmentService.updateAppointment(appointmentId, { status: newStatus });
       
@@ -117,14 +117,14 @@ export default function AppointmentCalendarPage() {
       console.error('Failed to update appointment status:', err);
       // You might want to show a toast notification here
     }
-  };
+  }, [appointmentService]);
 
-  const handleCreateSuccess = () => {
+  const handleCreateSuccess = useCallback(() => {
     setShowCreateModal(false);
     setSelectedDate(null);
     setSelectedAppointment(null);
     loadAppointments(); // Refresh data
-  };
+  }, [loadAppointments]);
 
   return (
     <div>

@@ -1,5 +1,5 @@
 // This must be the very first import to ensure environment variables are loaded before anything else.
-import './config/envLoader.js';
+import './config/envLoader.ts';
 
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
@@ -93,7 +93,10 @@ const build = (opts = {}) => {
   const fastifyInstance = fastify(opts);
 
   fastifyInstance.register(cors, {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [
+      'http://localhost:3000', // Development
+      process.env.FRONTEND_URL || 'http://localhost:3000', // Production Vercel URL
+    ],
     credentials: true,
   });
 

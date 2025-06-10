@@ -27,13 +27,13 @@ export default function DashboardPage() {
 
   // Wait for authentication before loading dashboard data
   useEffect(() => {
-    if (!authLoading && isAuthenticated && user && !dataLoading) {
+    if (!authLoading && isAuthenticated && user) {
       console.log('🔐 Authentication complete, loading dashboard data...');
       loadDashboardData();
     } else if (!authLoading && !isAuthenticated) {
       console.log('❌ Not authenticated, redirecting...');
     }
-  }, [authLoading, isAuthenticated, user, loadDashboardData, dataLoading]);
+  }, [authLoading, isAuthenticated, user, loadDashboardData]);
 
   if (loading || dataLoading) {
     return <DashboardLoading dataLoading={dataLoading} />;

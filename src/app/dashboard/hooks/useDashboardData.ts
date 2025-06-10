@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { format } from 'date-fns';
 import { AppointmentApiClient, BookingStatus } from '@/src/lib/api/services/appointmentApiClient';
 import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
@@ -69,18 +69,22 @@ export function useDashboardData(isAuthenticated: boolean, user: any) {
   const [customers, setCustomers] = useState<RecentCustomer[]>([]);
   const [requests, setRequests] = useState<TattooRequest[]>([]);
 
+  // Use a ref to track loading state to prevent dependency issues
+  const dataLoadingRef = useRef(false);
+
   // Memoize the clients to prevent recreation on every render
   const appointmentClient = useMemo(() => new AppointmentApiClient(apiClient), []);
   const tattooRequestClient = useMemo(() => new TattooRequestApiClient(apiClient), []);
 
   const loadDashboardData = useCallback(async () => {
-    // Prevent concurrent loads
-    if (dataLoading) {
+    // Prevent concurrent loads using ref instead of state
+    if (dataLoadingRef.current) {
       console.log('⏳ Data already loading, skipping...');
       return;
     }
 
     console.log('📊 Starting optimized dashboard data load...');
+    dataLoadingRef.current = true;
     setDataLoading(true);
     setLoading(true);
     setError(null);
@@ -90,6 +94,7 @@ export function useDashboardData(isAuthenticated: boolean, user: any) {
       setError('Authentication required');
       setLoading(false);
       setDataLoading(false);
+      dataLoadingRef.current = false;
       return;
     }
     
@@ -266,16 +271,17 @@ export function useDashboardData(isAuthenticated: boolean, user: any) {
     } finally {
       setLoading(false);
       setDataLoading(false);
+      dataLoadingRef.current = false;
     }
-  }, [isAuthenticated, user, dataLoading, appointmentClient, tattooRequestClient]);
+  }, [isAuthenticated, user, appointmentClient, tattooRequestClient]);
 
   const handleRefreshMetrics = useCallback(async () => {
-    if (dataLoading) {
+    if (dataLoadingRef.current) {
       console.log('⏳ Refresh already in progress, skipping...');
       return;
     }
     await loadDashboardData();
-  }, [dataLoading, loadDashboardData]);
+  }, [loadDashboardData]);
 
   return {
     // State

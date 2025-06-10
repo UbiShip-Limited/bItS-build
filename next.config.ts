@@ -13,6 +13,26 @@ const nextConfig: NextConfig = {
     // your project has type errors.
     // ignoreBuildErrors: true,
   },
+  outputFileTracingExcludes: {
+    '*': ['./lib/**/*'],
+  },
+  webpack: (config, { isServer }) => {
+    // Don't try to bundle backend Node.js modules in the frontend
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        path: false,
+        os: false,
+        'child_process': false,
+      };
+    }
+    
+    return config;
+  },
   async rewrites() {
     // Trim whitespace and ensure proper URL format
     const backendUrl = (process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001').trim();

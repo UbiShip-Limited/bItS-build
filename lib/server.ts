@@ -1,8 +1,7 @@
 // This must be the very first import to ensure environment variables are loaded before anything else.
-import './config/envLoader.ts';
+import './config/envLoader';
 
-import { fileURLToPath } from 'url';
-import { resolve } from 'path';
+
 import fastify from 'fastify';
 import cors from '@fastify/cors';
 
@@ -140,12 +139,7 @@ const start = async (fastifyInstance) => {
 };
 
 const isMainModule = () => {
-  if (import.meta.url.startsWith('file:')) {
-    const modulePath = fileURLToPath(import.meta.url);
-    const mainPath = resolve(process.argv[1]);
-    return modulePath === mainPath;
-  }
-  return false;
+  return require.main === module;
 };
 
 if (isMainModule()) {

@@ -16,67 +16,73 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
   return (
     <div className="space-y-8">
       <div className="form-control">
-        <label className="label pb-2">
-          <span className="label-text text-[#080808] font-semibold text-sm">Request Purpose<span className="text-red-500 ml-1">*</span></span>
+        <label className="block pb-2">
+          <span className="font-body text-white/90 font-medium text-sm tracking-wide">
+            Request Purpose<span className="text-red-400 ml-1">*</span>
+          </span>
         </label>
         <select
           name="purpose"
           value={formData.purpose || ''}
           onChange={handleInputChange}
           required
-          className={`select select-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808] ${
-            validationErrors?.purpose ? 'border-red-500' : ''
+          className={`w-full h-12 bg-[#080808]/50 border rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#C9A449]/40 focus:border-[#C9A449] ${
+            validationErrors?.purpose 
+              ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/30' 
+              : 'border-white/20 hover:border-white/30'
           }`}
         >
-          <option value="">Select purpose...</option>
+          <option value="" className="bg-[#080808] text-white/80">Select purpose...</option>
           {TATTOO_PURPOSES.map((purpose) => (
-            <option key={purpose} value={purpose}>
+            <option key={purpose} value={purpose} className="bg-[#080808] text-white">
               {purpose}
             </option>
           ))}
         </select>
         {validationErrors?.purpose && (
-          <p className="text-red-500 text-xs mt-2">{validationErrors.purpose}</p>
+          <p className="text-red-400 text-xs mt-2 font-body">{validationErrors.purpose}</p>
         )}
       </div>
       
       <div className="form-control">
-        <label className="label pb-2">
-          <span className="label-text text-[#080808] font-semibold text-sm">Preferred Artist (Optional)</span>
+        <label className="block pb-2">
+          <span className="font-body text-white/90 font-medium text-sm tracking-wide">Preferred Artist (Optional)</span>
         </label>
         <input
           type="text"
           name="preferredArtist"
           value={formData.preferredArtist || ''}
           onChange={handleInputChange}
-          className="input input-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808]"
+          className="w-full h-12 bg-[#080808]/50 border border-white/20 hover:border-white/30 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/40 rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none px-4"
           placeholder="Leave blank if no preference"
         />
       </div>
       
       <div className="form-control">
-        <label className="label pb-2">
-          <span className="label-text text-[#080808] font-semibold text-sm">Timeframe</span>
+        <label className="block pb-2">
+          <span className="font-body text-white/90 font-medium text-sm tracking-wide">Timeframe</span>
         </label>
         <select
           name="timeframe"
           value={formData.timeframe || ''}
           onChange={handleInputChange}
-          className="select select-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808]"
+          className="w-full h-12 bg-[#080808]/50 border border-white/20 hover:border-white/30 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/40 rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none"
         >
-          <option value="">Select timeframe...</option>
+          <option value="" className="bg-[#080808] text-white/80">Select timeframe...</option>
           {TIMEFRAMES.map((timeframe) => (
-            <option key={timeframe} value={timeframe}>
+            <option key={timeframe} value={timeframe} className="bg-[#080808] text-white">
               {timeframe}
             </option>
           ))}
         </select>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
         <div className="form-control">
-          <label className="label pb-2">
-            <span className="label-text text-[#080808] font-semibold text-sm">Email<span className="text-red-500 ml-1">*</span></span>
+          <label className="block pb-2">
+            <span className="font-body text-white/90 font-medium text-sm tracking-wide">
+              Email<span className="text-red-400 ml-1">*</span>
+            </span>
           </label>
           <input
             type="email"
@@ -84,40 +90,42 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
             value={formData.contactEmail || ''}
             onChange={handleInputChange}
             required
-            className={`input input-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808] ${
-              validationErrors?.contactEmail ? 'border-red-500' : ''
+            className={`w-full h-12 bg-[#080808]/50 border rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 px-4 ${
+              validationErrors?.contactEmail 
+                ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/30' 
+                : 'border-white/20 hover:border-white/30 focus:border-[#C9A449] focus:ring-[#C9A449]/40'
             }`}
             placeholder="your.email@example.com"
           />
           {validationErrors?.contactEmail && (
-            <p className="text-red-500 text-xs mt-2">{validationErrors.contactEmail}</p>
+            <p className="text-red-400 text-xs mt-2 font-body">{validationErrors.contactEmail}</p>
           )}
         </div>
         
         <div className="form-control">
-          <label className="label pb-2">
-            <span className="label-text text-[#080808] font-semibold text-sm">Phone</span>
+          <label className="block pb-2">
+            <span className="font-body text-white/90 font-medium text-sm tracking-wide">Phone</span>
           </label>
           <input
             type="tel"
             name="contactPhone"
             value={formData.contactPhone || ''}
             onChange={handleInputChange}
-            className="input input-bordered w-full h-12 bg-gray-50 border-[#444444]/20 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/20 rounded-md text-[#080808]"
+            className="w-full h-12 bg-[#080808]/50 border border-white/20 hover:border-white/30 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/40 rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none px-4"
             placeholder="(123) 456-7890"
           />
         </div>
       </div>
       
       <div className="form-control mt-2">
-        <label className="label pb-2">
-          <span className="label-text text-[#080808] font-semibold text-sm">Preferred Contact Method</span>
+        <label className="block pb-3">
+          <span className="font-body text-white/90 font-medium text-sm tracking-wide">Preferred Contact Method</span>
         </label>
-        <div className="flex flex-wrap gap-4 mt-1">
-          <label className={`label cursor-pointer gap-3 px-5 py-2.5 rounded-md border transition-all duration-200 hover:border-[#C9A449]/50 ${
+        <div className="flex flex-wrap gap-3 sm:gap-4 mt-1">
+          <label className={`flex items-center gap-3 px-4 sm:px-5 py-2.5 rounded-md border cursor-pointer transition-all duration-300 hover:border-[#C9A449]/50 ${
             formData.contactPreference === 'email' 
-              ? 'bg-[#C9A449]/5 border-[#C9A449]' 
-              : 'bg-white border-[#444444]/20'
+              ? 'bg-[#C9A449]/10 border-[#C9A449] shadow-md shadow-[#C9A449]/20' 
+              : 'bg-[#080808]/30 border-white/20 hover:bg-[#080808]/50'
           }`}>
             <input 
               type="radio" 
@@ -125,14 +133,24 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
               value="email"
               checked={formData.contactPreference === 'email'}
               onChange={handleInputChange}
-              className="radio radio-sm radio-primary border-[#C9A449]" 
+              className="sr-only" 
             />
-            <span className="label-text text-[#080808]">Email</span>
+            <div className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
+              formData.contactPreference === 'email' 
+                ? 'border-[#C9A449] bg-[#C9A449]' 
+                : 'border-white/40'
+            }`}>
+              {formData.contactPreference === 'email' && (
+                <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+              )}
+            </div>
+            <span className="font-body text-white/90 text-sm">Email</span>
           </label>
-          <label className={`label cursor-pointer gap-3 px-5 py-2.5 rounded-md border transition-all duration-200 hover:border-[#C9A449]/50 ${
+          
+          <label className={`flex items-center gap-3 px-4 sm:px-5 py-2.5 rounded-md border cursor-pointer transition-all duration-300 hover:border-[#C9A449]/50 ${
             formData.contactPreference === 'phone' 
-              ? 'bg-[#C9A449]/5 border-[#C9A449]' 
-              : 'bg-white border-[#444444]/20'
+              ? 'bg-[#C9A449]/10 border-[#C9A449] shadow-md shadow-[#C9A449]/20' 
+              : 'bg-[#080808]/30 border-white/20 hover:bg-[#080808]/50'
           }`}>
             <input 
               type="radio" 
@@ -140,14 +158,24 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
               value="phone"
               checked={formData.contactPreference === 'phone'}
               onChange={handleInputChange}
-              className="radio radio-sm radio-primary border-[#C9A449]" 
+              className="sr-only" 
             />
-            <span className="label-text text-[#080808]">Phone</span>
+            <div className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
+              formData.contactPreference === 'phone' 
+                ? 'border-[#C9A449] bg-[#C9A449]' 
+                : 'border-white/40'
+            }`}>
+              {formData.contactPreference === 'phone' && (
+                <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+              )}
+            </div>
+            <span className="font-body text-white/90 text-sm">Phone</span>
           </label>
-          <label className={`label cursor-pointer gap-3 px-5 py-2.5 rounded-md border transition-all duration-200 hover:border-[#C9A449]/50 ${
+          
+          <label className={`flex items-center gap-3 px-4 sm:px-5 py-2.5 rounded-md border cursor-pointer transition-all duration-300 hover:border-[#C9A449]/50 ${
             formData.contactPreference === 'either' 
-              ? 'bg-[#C9A449]/5 border-[#C9A449]' 
-              : 'bg-white border-[#444444]/20'
+              ? 'bg-[#C9A449]/10 border-[#C9A449] shadow-md shadow-[#C9A449]/20' 
+              : 'bg-[#080808]/30 border-white/20 hover:bg-[#080808]/50'
           }`}>
             <input 
               type="radio" 
@@ -155,9 +183,18 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
               value="either"
               checked={formData.contactPreference === 'either'}
               onChange={handleInputChange}
-              className="radio radio-sm radio-primary border-[#C9A449]" 
+              className="sr-only" 
             />
-            <span className="label-text text-[#080808]">Either</span>
+            <div className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
+              formData.contactPreference === 'either' 
+                ? 'border-[#C9A449] bg-[#C9A449]' 
+                : 'border-white/40'
+            }`}>
+              {formData.contactPreference === 'either' && (
+                <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
+              )}
+            </div>
+            <span className="font-body text-white/90 text-sm">Either</span>
           </label>
         </div>
       </div>

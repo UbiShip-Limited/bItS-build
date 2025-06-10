@@ -63,15 +63,41 @@ const TattooRequestForm: React.FC = () => {
   if (success && response) {
     return <TattooRequestSuccess response={response} resetForm={resetForm} />;
   }
-  
+
   return (
-    <div className="max-w-4xl mx-auto mb-20">
-      <form onSubmit={handleSubmit} className="bg-white shadow-2xl rounded-lg overflow-hidden border border-gray-100">
-        <div className="p-10">
-          <h2 className="font-heading text-3xl mb-3 text-[#080808]">Tattoo Request Form</h2>
-          <p className="text-[#444444] mb-10 max-w-2xl">
-            Fill out the form below to request a custom tattoo design. Our artists will review your request and get back to you within 2-3 business days.
-          </p>
+    <div className="max-w-4xl mx-auto mb-20 relative">
+      {/* Ornamental background for form */}
+      <div className="absolute inset-0 bg-[#080808]/95 backdrop-blur-sm rounded-lg border border-[#C9A449]/30 shadow-2xl"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-[#C9A449]/5 via-transparent to-[#C9A449]/10 rounded-lg"></div>
+      
+      <form onSubmit={handleSubmit} className="relative z-10 overflow-hidden rounded-lg">
+        <div className="p-6 sm:p-8 md:p-10">
+          {/* Form Header with ornamental styling */}
+          <div className="text-center mb-10">
+            <div className="flex items-center justify-center mb-4">
+              <div className="w-12 sm:w-16 h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/60 to-[#C9A449]/40"></div>
+              <div className="mx-3 sm:mx-4 flex items-center justify-center w-5 h-5">
+                <div className="w-3 h-3 border border-[#C9A449]/60 rotate-45"></div>
+                <div className="absolute w-1.5 h-1.5 bg-[#C9A449]/20 rotate-45"></div>
+              </div>
+              <div className="w-12 sm:w-16 h-[0.5px] bg-gradient-to-l from-transparent via-[#C9A449]/60 to-[#C9A449]/40"></div>
+            </div>
+            
+            <h2 className="font-heading text-2xl sm:text-3xl mb-3 text-white tracking-wide">Tattoo Request Form</h2>
+            
+            <div className="flex items-center justify-center mb-6">
+              <div className="w-16 sm:w-20 h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/60 to-[#C9A449]/40"></div>
+              <div className="mx-3 sm:mx-4 relative flex items-center justify-center">
+                <span className="text-[#C9A449]/80 text-xs z-10">✦</span>
+                <span className="absolute transform scale-125 text-[#C9A449]/20 text-xs">✦</span>
+              </div>
+              <div className="w-16 sm:w-20 h-[0.5px] bg-gradient-to-l from-transparent via-[#C9A449]/60 to-[#C9A449]/40"></div>
+            </div>
+            
+            <p className="text-white/70 mb-10 max-w-2xl mx-auto font-body leading-relaxed">
+              Fill out the form below to request a custom tattoo design. Our artists will review your request and get back to you within 2-3 business days.
+            </p>
+          </div>
           
           {/* Progress Steps */}
           <div className="mb-12">
@@ -80,7 +106,7 @@ const TattooRequestForm: React.FC = () => {
           
           {/* Error message */}
           {error && (
-            <div className="bg-red-50 p-5 rounded-md mb-8 text-red-800 border-l-4 border-red-500">
+            <div className="bg-red-900/20 border border-red-500/30 p-5 rounded-md mb-8 text-red-300 border-l-4 border-l-red-500">
               <p>{error}</p>
             </div>
           )}
@@ -114,14 +140,14 @@ const TattooRequestForm: React.FC = () => {
           </div>
           
           {/* Navigation Buttons */}
-          <div className="mt-12 flex justify-between">
+          <div className="mt-12 flex justify-between items-center">
             {step > 1 ? (
               <button
                 type="button"
                 onClick={goToPrevStep}
-                className="btn btn-outline border-[#444444] text-[#444444] hover:bg-[#444444] hover:text-white px-8"
+                className="group relative overflow-hidden bg-transparent border border-white/30 text-white hover:bg-white/10 hover:border-white/50 transition-all duration-300 px-6 sm:px-8 py-3 rounded-md font-body tracking-wide uppercase text-sm"
               >
-                Previous
+                <span className="relative z-10">Previous</span>
               </button>
             ) : (
               <div></div> // Empty div for spacing
@@ -131,24 +157,37 @@ const TattooRequestForm: React.FC = () => {
               <button
                 type="button"
                 onClick={goToNextStep}
-                className={`btn bg-[#C9A449] text-white hover:bg-[#C9A449]/90 border-none px-8 shadow-md ${
-                  !validateCurrentStep() ? 'opacity-70 cursor-not-allowed' : ''
+                className={`group relative overflow-hidden bg-[#C9A449] text-white hover:bg-[#C9A449]/90 border border-[#C9A449] hover:border-[#C9A449]/80 transition-all duration-300 px-6 sm:px-8 py-3 rounded-md font-body tracking-wide uppercase text-sm shadow-lg hover:shadow-xl ${
+                  !validateCurrentStep() ? 'opacity-70 cursor-not-allowed hover:bg-[#C9A449] hover:border-[#C9A449]' : ''
                 }`}
                 disabled={!validateCurrentStep()}
               >
-                Next
+                <span className="relative z-10 flex items-center">
+                  Next
+                  <svg className="ml-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
               </button>
             ) : (
               <button
                 type="submit"
                 disabled={isLoading || isUploading}
-                className="btn bg-[#C9A449] text-white hover:bg-[#C9A449]/90 border-none px-8 shadow-md"
+                className="group relative overflow-hidden bg-[#C9A449] text-white hover:bg-[#C9A449]/90 border border-[#C9A449] hover:border-[#C9A449]/80 transition-all duration-300 px-6 sm:px-8 py-3 rounded-md font-body tracking-wide uppercase text-sm shadow-lg hover:shadow-xl disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isLoading ? (
-                  <span className="loading loading-spinner loading-sm"></span>
-                ) : (
-                  'Submit Request'
-                )}
+                <span className="relative z-10 flex items-center">
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Submitting...
+                    </>
+                  ) : (
+                    'Submit Request'
+                  )}
+                </span>
               </button>
             )}
           </div>

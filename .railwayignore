@@ -1,0 +1,31 @@
+# Frontend files and directories
+src/
+.next/
+out/
+public/
+
+# Next.js configuration
+next.config.ts
+next-env.d.ts
+middleware.ts
+
+# Tailwind and PostCSS
+tailwind.config.js
+postcss.config.mjs
+
+# Test files
+coverage/
+vitest.config.ts
+
+# Documentation
+docs/
+README.md
+DEPLOYMENT.md
+
+# Development tools
+.vscode/
+.idea/
+ecosystem.config.js
+
+# Other frontend configs
+eslint.config.mjs 

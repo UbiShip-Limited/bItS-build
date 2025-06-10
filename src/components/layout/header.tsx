@@ -82,7 +82,7 @@ export function Header() {
         {/* Booking Button - More refined */}
         <div className="hidden md:block">
           <Link 
-            href="/booking"
+            href="/tattooRequest"
             className="relative group font-body text-[#080808] text-xs tracking-widest uppercase px-4 py-2 border border-[#080808]/20 hover:border-[#C9A449] hover:bg-[#C9A449]/5 transition-all duration-300 overflow-hidden"
           >
             <span className="relative z-10">Book Now</span>

@@ -19,7 +19,7 @@ export function CtaSection({
   title = "YOUR STORY AWAITS",
   description = "Discover our complete portfolio and discuss your custom design during a private consultation. Your vision becomes timeless artistry through our master craftspeople.",
   primaryButtonText = "Book Consultation",
-  primaryButtonHref = "/booking",
+  primaryButtonHref = "/tattooRequest",
   secondaryButtonText = "Contact Studio", 
   secondaryButtonHref = "/contact",
   tagline = "Private sessions • Custom designs • Full portfolio review",

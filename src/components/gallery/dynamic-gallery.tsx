@@ -14,9 +14,9 @@ import { apiClient } from "@/src/lib/api/apiClient"
 
 const galleryService = new GalleryService(apiClient);
 
-// Simplified loading strategy - Load initial batch, then load more on demand
-const INITIAL_LOAD = 12;  // Load immediately
-const LOAD_MORE_COUNT = 8; // Load when user clicks "Load More"
+// Enhanced loading strategy - Load more images for better showcase
+const INITIAL_LOAD = 18;  // Load immediately - increased for better first impression
+const LOAD_MORE_COUNT = 12; // Load when user clicks "Load More" - bigger batches
 
 export function DynamicGallery() {
   // Simplified state

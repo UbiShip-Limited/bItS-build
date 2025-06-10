@@ -13,8 +13,21 @@ import CustomerForm from '../../../../components/forms/CustomerForm';
 
 export default function CustomerDetailPage() {
   const params = useParams();
+
+  // React hooks must be called before any early returns
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [appointments, setAppointments] = useState<AppointmentData[]>([]);
+  const [tattooRequests, setTattooRequests] = useState<TattooRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  // ✅ FIX: Memoize service instances to prevent infinite loops
+  const customerService = useMemo(() => new CustomerService(apiClient), []);
+  const appointmentService = useMemo(() => new AppointmentApiClient(apiClient), []);
+  const tattooRequestService = useMemo(() => new TattooRequestService(apiClient), []);
   
-  // Handle case where params might be null
+  // Handle case where params might be null (after hooks are called)
   if (!params || !params.id) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -32,18 +45,6 @@ export default function CustomerDetailPage() {
   }
   
   const customerId = params.id as string;
-
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [appointments, setAppointments] = useState<AppointmentData[]>([]);
-  const [tattooRequests, setTattooRequests] = useState<TattooRequest[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
-
-  // ✅ FIX: Memoize service instances to prevent infinite loops
-  const customerService = useMemo(() => new CustomerService(apiClient), []);
-  const appointmentService = useMemo(() => new AppointmentApiClient(apiClient), []);
-  const tattooRequestService = useMemo(() => new TattooRequestService(apiClient), []);
 
   const loadCustomerData = useCallback(async () => {
     setLoading(true);

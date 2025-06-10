@@ -99,7 +99,7 @@ export class GalleryService {
    */
   async getMoreGalleryImages(
     currentCount: number, 
-    loadMoreCount: number = 18, 
+    loadMoreCount: number = 20, 
     filters?: Omit<GalleryFilters, 'limit' | 'offset'>
   ): Promise<GalleryImage[]> {
     console.log(`📈 GalleryService: Load More - current: ${currentCount}, loading: ${loadMoreCount} more`);

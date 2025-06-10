@@ -14,7 +14,7 @@ import CustomerForm from '../../../../components/forms/CustomerForm';
 export default function CustomerDetailPage() {
   const params = useParams();
 
-  // React hooks must be called before any early returns
+  // ✅ ALL React hooks must be called before any early returns
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [appointments, setAppointments] = useState<AppointmentData[]>([]);
   const [tattooRequests, setTattooRequests] = useState<TattooRequest[]>([]);
@@ -22,31 +22,16 @@ export default function CustomerDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  // ✅ FIX: Memoize service instances to prevent infinite loops
+  // ✅ Memoize service instances to prevent infinite loops
   const customerService = useMemo(() => new CustomerService(apiClient), []);
   const appointmentService = useMemo(() => new AppointmentApiClient(apiClient), []);
   const tattooRequestService = useMemo(() => new TattooRequestService(apiClient), []);
   
-  // Handle case where params might be null (after hooks are called)
-  if (!params || !params.id) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <p className="text-red-400 mb-4">Invalid customer ID</p>
-          <Link
-            href="/dashboard/customers"
-            className="px-4 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
-          >
-            Back to Customers
-          </Link>
-        </div>
-      </div>
-    );
-  }
-  
-  const customerId = params.id as string;
+  const customerId = params?.id as string;
 
   const loadCustomerData = useCallback(async () => {
+    if (!customerId) return;
+    
     setLoading(true);
     setError(null);
 
@@ -81,6 +66,23 @@ export default function CustomerDetailPage() {
   useEffect(() => {
     loadCustomerData();
   }, [loadCustomerData]);
+
+  // ✅ NOW we can have early returns after all hooks are defined
+  if (!params || !params.id) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-400 mb-4">Invalid customer ID</p>
+          <Link
+            href="/dashboard/customers"
+            className="px-4 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
+          >
+            Back to Customers
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const handleEditSuccess = () => {
     setShowEditModal(false);

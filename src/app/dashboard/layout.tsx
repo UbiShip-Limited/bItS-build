@@ -92,6 +92,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   ];
 
   const isActive = (href: string, exact?: boolean) => {
+    if (!pathname) return false;
+    
     if (exact) {
       return pathname === href;
     }

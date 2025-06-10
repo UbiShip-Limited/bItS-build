@@ -51,10 +51,10 @@ export default function TattooRequestDetailPage() {
   }, [tattooRequestClient]);
 
   useEffect(() => {
-    if (params.id) {
+    if (params && params.id) {
       loadTattooRequest(params.id as string);
     }
-  }, [params.id, loadTattooRequest]);
+  }, [params, loadTattooRequest]);
 
   const handleStatusUpdate = async (newStatus: string) => {
     if (!request || updating) return;

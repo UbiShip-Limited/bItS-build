@@ -5,42 +5,34 @@
 // - Phase 2: 8 more images (on user engagement)
 // - Phase 3: Extended collection (on explicit request)
 
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, ZoomIn, Loader2, RefreshCw, Eye, ChevronDown, Sparkles } from "lucide-react"
+import { X, ZoomIn, Loader2, RefreshCw, Eye } from "lucide-react"
 import { GalleryService, GalleryImage } from "@/src/lib/api/services/galleryService"
 import { apiClient } from "@/src/lib/api/apiClient"
 
 const galleryService = new GalleryService(apiClient);
 
-// 🎯 Smart loading strategy - Ensure all 26 images can load
-const PHASE_1_COUNT = 6;   // Featured images - load immediately
-const PHASE_2_COUNT = 8;   // Secondary images - load on engagement  
-const PHASE_3_COUNT = 12;  // Extended collection - load on explicit request
-const PHASE_4_COUNT = 15;  // Final batch - if more images available
-const MAX_TOTAL_IMAGES = 26; // Maximum we want to load for cost optimization
-
-type LoadingPhase = 'initial' | 'phase1' | 'phase2' | 'phase3' | 'phase4' | 'complete';
+// Simplified loading strategy - Load initial batch, then load more on demand
+const INITIAL_LOAD = 12;  // Load immediately
+const LOAD_MORE_COUNT = 8; // Load when user clicks "Load More"
 
 export function DynamicGallery() {
-  // Core state
+  // Simplified state
   const [galleryItems, setGalleryItems] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<GalleryImage | null>(null);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  
-  // Smart loading state
-  const [currentPhase, setCurrentPhase] = useState<LoadingPhase>('initial');
-  const [loadingPhase, setLoadingPhase] = useState<LoadingPhase | null>(null);
-  const [userEngaged, setUserEngaged] = useState(false);
+  const [canLoadMore, setCanLoadMore] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   
   // Mobile state
   const [isMobile, setIsMobile] = useState(false);
   
   const galleryRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Mobile detection
   useEffect(() => {
@@ -53,205 +45,86 @@ export function DynamicGallery() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Phase 1: Load featured images immediately
+  // Simple intersection observer
   useEffect(() => {
-    loadFeaturedImages();
-  }, []);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    )
 
-  // Phase 2: Load more images when user shows engagement
-  useEffect(() => {
-    if (userEngaged && currentPhase === 'phase1') {
-      loadSecondaryImages();
+    if (galleryRef.current) {
+      observer.observe(galleryRef.current)
     }
-  }, [userEngaged, currentPhase]);
 
-  const loadFeaturedImages = async () => {
+    return () => observer.disconnect()
+  }, [])
+
+  // Load initial images
+  useEffect(() => {
+    if (isVisible) {
+      loadInitialImages();
+    }
+  }, [isVisible]);
+
+  const loadInitialImages = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('🌟 Loading featured gallery images...');
+      const initialImages = await galleryService.getInitialGalleryImages(INITIAL_LOAD);
+      setGalleryItems(initialImages);
       
-      // Use the optimized initial load method
-      const featuredImages = await galleryService.getInitialGalleryImages(PHASE_1_COUNT);
-      
-      console.log(`✨ Loaded ${featuredImages.length} featured images`);
-      
-      setGalleryItems(featuredImages);
-      setCurrentPhase('phase1');
-      
-      // Set up engagement tracking
-      setupEngagementTracking();
+      // Check if we can load more
+      if (initialImages.length < INITIAL_LOAD) {
+        setCanLoadMore(false);
+      }
       
     } catch (err) {
-      console.error('❌ Failed to load featured images:', err);
+      console.error('Failed to load gallery images:', err);
       setError('Failed to load gallery images. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadSecondaryImages = async () => {
-    try {
-      setLoadingPhase('phase2');
-      
-      console.log('📈 Loading secondary images...');
-      
-      // Load more images using pagination
-      const secondaryImages = await galleryService.getMoreGalleryImages(
-        galleryItems.length,
-        PHASE_2_COUNT
-      );
-      
-      // Filter out duplicates by ID to prevent React key conflicts
-      const newSecondaryImages = secondaryImages.filter(newImg => 
-        !galleryItems.some(existingImg => existingImg.id === newImg.id)
-      );
-      
-      console.log(`📸 Loaded ${secondaryImages.length} secondary images, ${newSecondaryImages.length} new unique images`);
-      
-      setGalleryItems(prev => [...prev, ...newSecondaryImages]);
-      setCurrentPhase('phase2');
-      
-    } catch (err) {
-      console.error('❌ Failed to load secondary images:', err);
-    } finally {
-      setLoadingPhase(null);
-    }
-  };
-
-  const loadExtendedCollection = async () => {
-    try {
-      setLoadingPhase('phase3');
-      
-      console.log('🎨 Loading extended collection...');
-      
-      // Load extended collection
-      const extendedImages = await galleryService.getMoreGalleryImages(
-        galleryItems.length,
-        PHASE_3_COUNT
-      );
-      
-      // Filter out duplicates by ID to prevent React key conflicts
-      const newExtendedImages = extendedImages.filter(newImg => 
-        !galleryItems.some(existingImg => existingImg.id === newImg.id)
-      );
-      
-      console.log(`🖼️ Loaded ${extendedImages.length} extended images, ${newExtendedImages.length} new unique images`);
-      
-      const newTotal = galleryItems.length + newExtendedImages.length;
-      setGalleryItems(prev => [...prev, ...newExtendedImages]);
-      
-      // Smart phase completion logic
-      if (newTotal >= MAX_TOTAL_IMAGES || newExtendedImages.length === 0) {
-        setCurrentPhase('complete');
-      } else if (newExtendedImages.length < PHASE_3_COUNT) {
-        // If we got fewer images than requested, check if we need Phase 4
-        setCurrentPhase('phase4');
-      } else {
-        setCurrentPhase('phase3');
-      }
-      
-    } catch (err) {
-      console.error('❌ Failed to load extended collection:', err);
-      setError('Failed to load extended collection. Please try again.');
-    } finally {
-      setLoadingPhase(null);
-    }
-  };
-
-  const loadFinalBatch = async () => {
-    try {
-      setLoadingPhase('phase4');
-      
-      console.log('🏁 Loading final batch to reach 26 images...');
-      
-      // Calculate how many more images we need to reach 26
-      const remainingSlots = MAX_TOTAL_IMAGES - galleryItems.length;
-      const loadCount = Math.min(remainingSlots, PHASE_4_COUNT);
-      
-      if (loadCount <= 0) {
-        setCurrentPhase('complete');
-        return;
-      }
-      
-      // Load final batch
-      const finalImages = await galleryService.getMoreGalleryImages(
-        galleryItems.length,
-        loadCount
-      );
-      
-      // Filter out duplicates by ID to prevent React key conflicts
-      const newFinalImages = finalImages.filter(newImg => 
-        !galleryItems.some(existingImg => existingImg.id === newImg.id)
-      );
-      
-      console.log(`🏆 Loaded ${finalImages.length} final images, ${newFinalImages.length} new unique images`);
-      
-      setGalleryItems(prev => [...prev, ...newFinalImages]);
-      setCurrentPhase('complete');
-      
-    } catch (err) {
-      console.error('❌ Failed to load final batch:', err);
-      setError('Failed to load final batch. Please try again.');
-    } finally {
-      setLoadingPhase(null);
-    }
-  };
-
-  const setupEngagementTracking = useCallback(() => {
-    // Track mouse movement as engagement (desktop)
-    const handleMouseMove = () => {
-      if (!userEngaged && !isMobile) {
-        setUserEngaged(true);
-        document.removeEventListener('mousemove', handleMouseMove);
-      }
-    };
-
-    // Track scroll as engagement
-    const handleScroll = () => {
-      if (!userEngaged) {
-        setUserEngaged(true);
-        window.removeEventListener('scroll', handleScroll);
-      }
-    };
-
-    // Track touch as engagement (mobile)
-    const handleTouch = () => {
-      if (!userEngaged) {
-        setUserEngaged(true);
-        document.removeEventListener('touchstart', handleTouch);
-      }
-    };
-
-    // Track gallery hover/touch as engagement
-    const handleGalleryInteraction = () => {
-      if (!userEngaged) {
-        setUserEngaged(true);
-      }
-    };
-
-    if (!isMobile) {
-      document.addEventListener('mousemove', handleMouseMove);
-    }
-    document.addEventListener('touchstart', handleTouch);
-    window.addEventListener('scroll', handleScroll);
+  const loadMoreImages = async () => {
+    if (loadingMore || !canLoadMore) return;
     
-    if (galleryRef.current) {
-      galleryRef.current.addEventListener('mouseenter', handleGalleryInteraction);
-      galleryRef.current.addEventListener('touchstart', handleGalleryInteraction);
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('touchstart', handleTouch);
-      window.removeEventListener('scroll', handleScroll);
-      if (galleryRef.current) {
-        galleryRef.current.removeEventListener('mouseenter', handleGalleryInteraction);
-        galleryRef.current.removeEventListener('touchstart', handleGalleryInteraction);
+    try {
+      setLoadingMore(true);
+      
+      const moreImages = await galleryService.getMoreGalleryImages(
+        galleryItems.length,
+        LOAD_MORE_COUNT
+      );
+      
+      // Filter out duplicates
+      const newImages = moreImages.filter(newImg => 
+        !galleryItems.some(existingImg => existingImg.id === newImg.id)
+      );
+      
+      if (newImages.length === 0) {
+        setCanLoadMore(false);
+      } else {
+        setGalleryItems(prev => [...prev, ...newImages]);
+        
+        // Check if we got fewer images than requested
+        if (newImages.length < LOAD_MORE_COUNT) {
+          setCanLoadMore(false);
+        }
       }
-    };
-  }, [userEngaged, isMobile]);
+      
+    } catch (err) {
+      console.error('Failed to load more images:', err);
+      setError('Failed to load more images. Please try again.');
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // Handle escape key for modal
   useEffect(() => {
@@ -265,29 +138,6 @@ export function DynamicGallery() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  // Smart placeholder component
-  const SmartPlaceholder = ({ count, phase }: { count: number; phase: string }) => (
-    <div className={`grid ${isMobile ? 'grid-cols-1 gap-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6'}`}>
-      {Array.from({ length: count }, (_, index) => (
-        <motion.div
-          key={`placeholder-${phase}-${index}`}
-          className="relative overflow-hidden rounded-lg bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] animate-pulse"
-          style={{ height: `${isMobile ? '200px' : Math.floor(Math.random() * 100) + 200 + 'px'}` }}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3, delay: index * 0.1 }}
-        >
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <Sparkles className="w-6 h-6 text-[#C9A449]/40 mx-auto mb-2" />
-              <p className="text-[#C9A449]/60 text-sm">Loading...</p>
-            </div>
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  );
-
   // Error state
   if (error && !loading && galleryItems.length === 0) {
     return (
@@ -298,7 +148,7 @@ export function DynamicGallery() {
           </h2>
           <div className="text-red-400 mb-4">{error}</div>
           <button
-            onClick={loadFeaturedImages}
+            onClick={loadInitialImages}
             className="inline-flex items-center gap-2 bg-[#C9A449] text-[#080808] px-6 py-3 rounded-lg hover:bg-[#C9A449]/80 transition-colors"
           >
             <RefreshCw size={20} />
@@ -309,29 +159,16 @@ export function DynamicGallery() {
     );
   }
 
-  const getTotalImages = () => galleryItems.length;
-  const getPhaseDescription = () => {
-    switch (currentPhase) {
-      case 'phase1':
-        return `Featured Collection (${getTotalImages()} of 26 images)`;
-      case 'phase2':
-        return `Expanded Gallery (${getTotalImages()} of 26 images)`;
-      case 'phase3':
-        return `Extended Collection (${getTotalImages()} of 26 images)`;
-      case 'phase4':
-        return `Nearly Complete (${getTotalImages()} of 26 images)`;
-      case 'complete':
-        return `Complete Collection (${getTotalImages()} images)`;
-      default:
-        return 'Loading...';
-    }
-  };
-
   return (
-    <div className="bg-[#080808] py-12 md:py-20 px-4 sm:px-6 md:px-8 lg:px-16">
+    <div ref={galleryRef} className="bg-[#080808] py-12 md:py-20 px-4 sm:px-6 md:px-8 lg:px-16">
       <div className="container mx-auto">
-        {/* Smart Gallery Header */}
-        <div className="mb-8 md:mb-12 text-center">
+        {/* Gallery Header */}
+        <motion.div 
+          className="mb-8 md:mb-12 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6 }}
+        >
           <div className="inline-block relative mb-3">
             <div className="absolute -top-3 -left-3 h-4 w-4 border-t border-l border-[#C9A449]"></div>
             <div className="absolute -top-3 -right-3 h-4 w-4 border-t border-r border-[#C9A449]"></div>
@@ -348,41 +185,43 @@ export function DynamicGallery() {
             to quality, creativity, and personal expression.
           </p>
           
-          {/* Phase indicator */}
-          {!loading && (
+          {/* Simple image counter */}
+          {!loading && galleryItems.length > 0 && (
             <div className="inline-flex items-center gap-2 text-[#C9A449]/80 text-sm">
               <Eye size={16} />
-              <span className={isMobile ? 'text-xs' : 'text-sm'}>{getPhaseDescription()}</span>
+              <span className={isMobile ? 'text-xs' : 'text-sm'}>
+                {galleryItems.length} {galleryItems.length === 1 ? 'image' : 'images'} loaded
+              </span>
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Loading State */}
         {loading && (
           <div className="flex flex-col justify-center items-center py-12 md:py-20">
             <Loader2 className="animate-spin text-[#C9A449] mb-4" size={isMobile ? 36 : 48} />
-            <p className={`text-white/60 font-body ${isMobile ? 'text-sm' : 'text-base'}`}>Loading featured artwork...</p>
+            <p className={`text-white/60 font-body ${isMobile ? 'text-sm' : 'text-base'}`}>Loading gallery...</p>
           </div>
         )}
 
-        {/* Gallery Grid - Enhanced for mobile */}
+        {/* Simplified Gallery Grid */}
         {!loading && galleryItems.length > 0 && (
-          <div 
-            ref={galleryRef} 
-            className={`${
-              isMobile 
-                ? 'grid grid-cols-1 gap-4' 
-                : 'columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-6 space-y-4 md:space-y-6'
-            }`}
+          <motion.div 
+            className={isMobile 
+              ? 'grid grid-cols-1 gap-4' 
+              : 'columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-6 space-y-4 md:space-y-6'
+            }
+            initial={{ opacity: 0 }}
+            animate={isVisible ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
           >
             {galleryItems.map((item, index) => (
               <motion.div
                 key={item.id}
-                layoutId={`gallery-item-${item.id}`}
                 className={`relative overflow-hidden rounded-lg ${isMobile ? 'mb-4' : 'mb-4 md:mb-6 break-inside-avoid'}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
+                transition={{ duration: 0.4, delay: Math.min(index * 0.05, 1) }}
                 onMouseEnter={() => !isMobile && setHoveredItem(item.id)}
                 onMouseLeave={() => !isMobile && setHoveredItem(null)}
                 onClick={() => setSelectedItem(item)}
@@ -397,21 +236,21 @@ export function DynamicGallery() {
                     src={item.thumbnailUrl || item.url}
                     alt={item.alt}
                     fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105 group-active:scale-95"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                     sizes={isMobile ? "100vw" : "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"}
                     loading={index < 6 ? "eager" : "lazy"}
                   />
 
-                  {/* Overlay */}
+                  {/* Simplified overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#080808]/80 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
 
-                  {/* Corner accents - adjusted for mobile */}
+                  {/* Corner accents */}
                   <div className={`absolute -top-1 -left-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-t border-l border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
                   <div className={`absolute -top-1 -right-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-t border-r border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
                   <div className={`absolute -bottom-1 -left-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-b border-l border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
                   <div className={`absolute -bottom-1 -right-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-b border-r border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
 
-                  {/* Info overlay - Always visible on mobile */}
+                  {/* Info overlay */}
                   <div className={`absolute bottom-0 left-0 right-0 p-3 md:p-4 transition-transform duration-300 ${
                     isMobile || hoveredItem === item.id ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
                   }`}>
@@ -423,7 +262,7 @@ export function DynamicGallery() {
                     </p>
                   </div>
 
-                  {/* Zoom icon - adjusted for mobile */}
+                  {/* Zoom icon */}
                   <div className={`absolute ${isMobile ? 'top-3 right-3' : 'top-4 right-4'} bg-[#C9A449] ${isMobile ? 'p-1.5' : 'p-2'} rounded-full transition-opacity duration-300 ${
                     isMobile || hoveredItem === item.id ? "opacity-100" : "opacity-0"
                   }`}>
@@ -432,117 +271,45 @@ export function DynamicGallery() {
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
 
-        {/* Loading placeholders for secondary images */}
-        {loadingPhase === 'phase2' && (
-          <div className="mt-6 md:mt-8">
-            <SmartPlaceholder count={isMobile ? 2 : 4} phase="secondary" />
-          </div>
-        )}
-
-        {/* Loading placeholders for extended collection */}
-        {loadingPhase === 'phase3' && (
-          <div className="mt-6 md:mt-8">
-            <SmartPlaceholder count={isMobile ? 3 : 6} phase="extended" />
-          </div>
-        )}
-
-        {/* Loading placeholders for final batch */}
-        {loadingPhase === 'phase4' && (
-          <div className="mt-6 md:mt-8">
-            <SmartPlaceholder count={isMobile ? 2 : 3} phase="final" />
-          </div>
-        )}
-
-        {/* Smart Load More Button - Phase 3 - Enhanced for mobile */}
-        {!loading && currentPhase === 'phase2' && (
+        {/* Simplified Load More Button */}
+        {!loading && galleryItems.length > 0 && canLoadMore && (
           <div className="text-center mt-8 md:mt-12 px-4">
             <motion.button
-              onClick={loadExtendedCollection}
-              disabled={loadingPhase === 'phase3'}
+              onClick={loadMoreImages}
+              disabled={loadingMore}
               className={`group inline-flex items-center gap-3 bg-[#C9A449] text-[#080808] ${
                 isMobile ? 'px-6 py-3 text-sm' : 'px-8 py-4'
               } rounded-lg hover:bg-[#C9A449]/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-medium w-full sm:w-auto justify-center`}
               whileHover={{ scale: isMobile ? 1 : 1.02 }}
               whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
             >
-              {loadingPhase === 'phase3' ? (
+              {loadingMore ? (
                 <>
                   <Loader2 className="animate-spin" size={20} />
-                  <span className={isMobile ? 'text-sm' : 'text-base'}>Loading Extended Collection...</span>
+                  <span className={isMobile ? 'text-sm' : 'text-base'}>Loading More...</span>
                 </>
               ) : (
                 <>
-                  <ChevronDown size={20} className="group-hover:translate-y-0.5 transition-transform" />
-                  <span className={isMobile ? 'text-sm' : 'text-base'}>View Extended Collection</span>
+                  <Eye size={20} />
+                  <span className={isMobile ? 'text-sm' : 'text-base'}>Load More Images</span>
                 </>
               )}
             </motion.button>
-            <p className={`text-white/60 ${isMobile ? 'text-xs' : 'text-sm'} mt-3`}>
-              Discover more from our complete portfolio ({getTotalImages()}/26 images)
-            </p>
           </div>
         )}
 
-        {/* Smart Load More Button - Phase 4 - Enhanced for mobile */}
-        {!loading && (currentPhase === 'phase3' || currentPhase === 'phase4') && (
-          <div className="text-center mt-8 md:mt-12 px-4">
-            <motion.button
-              onClick={loadFinalBatch}
-              disabled={loadingPhase === 'phase4'}
-              className={`group inline-flex items-center gap-3 bg-[#C9A449] text-[#080808] ${
-                isMobile ? 'px-6 py-3 text-sm' : 'px-8 py-4'
-              } rounded-lg hover:bg-[#C9A449]/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-medium w-full sm:w-auto justify-center`}
-              whileHover={{ scale: isMobile ? 1 : 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {loadingPhase === 'phase4' ? (
-                <>
-                  <Loader2 className="animate-spin" size={20} />
-                  <span className={isMobile ? 'text-sm' : 'text-base'}>Loading Final Images...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={20} className="group-hover:scale-110 transition-transform" />
-                  <span className={isMobile ? 'text-sm' : 'text-base'}>Complete Collection ({MAX_TOTAL_IMAGES - getTotalImages()} more)</span>
-                </>
-              )}
-            </motion.button>
-            <p className={`text-white/60 ${isMobile ? 'text-xs' : 'text-sm'} mt-3 px-2`}>
-              Load the remaining images to reach our full 26-image collection
-            </p>
-          </div>
-        )}
-
-        {/* Collection Complete Indicator */}
-        {currentPhase === 'complete' && (
-          <div className="text-center mt-8 md:mt-12">
-            <div className="inline-flex items-center gap-2 text-[#C9A449] font-medium">
-              <Sparkles size={20} />
-              <span className={isMobile ? 'text-sm' : 'text-base'}>Complete Collection Loaded</span>
-            </div>
-            <p className={`text-white/60 ${isMobile ? 'text-xs' : 'text-sm'} mt-2`}>
-              Book a consultation to discuss your custom piece
-            </p>
-          </div>
-        )}
-
-        {/* Error for phase loading */}
+        {/* Error for loading more */}
         {error && galleryItems.length > 0 && (
           <div className="text-center mt-6 md:mt-8 px-4">
             <div className={`text-red-400 mb-4 ${isMobile ? 'text-sm' : 'text-base'}`}>{error}</div>
             <button
-              onClick={() => {
-                if (currentPhase === 'phase1') {
-                  loadSecondaryImages();
-                } else if (currentPhase === 'phase2') {
-                  loadExtendedCollection();
-                } else {
-                  loadFinalBatch();
-                }
-              }}
+              onClick={loadMoreImages}
               className={`inline-flex items-center gap-2 bg-[#C9A449] text-[#080808] ${
                 isMobile ? 'px-4 py-2 text-sm' : 'px-6 py-3'
               } rounded-lg hover:bg-[#C9A449]/80 transition-colors w-full sm:w-auto justify-center`}
@@ -561,7 +328,7 @@ export function DynamicGallery() {
         )}
       </div>
 
-      {/* Enhanced Modal - Better mobile experience */}
+      {/* Simplified Modal */}
       <AnimatePresence>
         {selectedItem && (
           <motion.div
@@ -572,16 +339,15 @@ export function DynamicGallery() {
             onClick={() => setSelectedItem(null)}
           >
             <motion.div
-              layoutId={`gallery-item-${selectedItem.id}`}
               className={`relative ${
                 isMobile 
                   ? 'w-full h-full max-h-[90vh]' 
                   : 'max-w-4xl max-h-[90vh] w-full'
               } overflow-hidden rounded-lg bg-[#080808] border border-[#C9A449]/20`}
               onClick={(e) => e.stopPropagation()}
-              initial={{ scale: 0.8 }}
+              initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              exit={{ scale: 0.8 }}
+              exit={{ scale: 0.9 }}
             >
               <div className={`relative aspect-auto w-full h-full ${isMobile ? 'max-h-[85vh]' : 'max-h-[80vh]'}`}>
                 <Image
@@ -594,7 +360,7 @@ export function DynamicGallery() {
                 />
               </div>
 
-              {/* Close button - Enhanced for mobile */}
+              {/* Close button */}
               <button
                 onClick={() => setSelectedItem(null)}
                 className={`absolute ${isMobile ? 'top-2 right-2' : 'top-4 right-4'} bg-[#C9A449] ${
@@ -604,7 +370,7 @@ export function DynamicGallery() {
                 <X size={isMobile ? 18 : 20} className="text-[#080808]" />
               </button>
 
-              {/* Info panel - Enhanced for mobile */}
+              {/* Info panel */}
               <div className={`absolute bottom-0 left-0 right-0 ${isMobile ? 'p-4' : 'p-6'} bg-gradient-to-t from-[#080808] to-transparent`}>
                 <div className="h-[1px] w-full bg-gradient-to-r from-[#C9A449]/0 via-[#C9A449] to-[#C9A449]/0 mb-3 md:mb-4"></div>
                 <h3 className={`text-white ${isMobile ? 'text-lg' : 'text-xl'} font-medium mb-1`}>

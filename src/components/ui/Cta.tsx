@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
@@ -28,6 +28,8 @@ export function CtaSection({
   
   // Mobile state
   const [isMobile, setIsMobile] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
   // Mobile detection
   useEffect(() => {
@@ -39,14 +41,31 @@ export function CtaSection({
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Simple intersection observer for performance
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+        }
+      },
+      { threshold: 0.1, rootMargin: '50px' }
+    )
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [])
   
   return (
-    <div className={`bg-[#080808] py-12 md:py-20 px-4 sm:px-8 md:px-8 lg:px-16 ${className}`}>
+    <div ref={sectionRef} className={`bg-[#080808] py-12 md:py-20 px-4 sm:px-8 md:px-8 lg:px-16 ${className}`}>
       <div className="container mx-auto">
         <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6 }}
           className="text-center"
         >
@@ -60,10 +79,9 @@ export function CtaSection({
           </div>
 
           <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            initial={{ opacity: 0, y: 15 }}
+            animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
             className={`font-heading ${
               isMobile 
                 ? 'text-2xl leading-tight' 
@@ -74,10 +92,9 @@ export function CtaSection({
           </motion.h2>
           
           <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            initial={{ opacity: 0, y: 15 }}
+            animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
             className={`text-white/80 max-w-2xl mx-auto font-body mb-6 md:mb-8 leading-relaxed ${
               isMobile 
                 ? 'text-base px-4' 
@@ -88,10 +105,9 @@ export function CtaSection({
           </motion.p>
           
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            initial={{ opacity: 0, y: 15 }}
+            animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
             className={`flex ${
               isMobile 
                 ? 'flex-col gap-4' 
@@ -123,10 +139,9 @@ export function CtaSection({
           </motion.div>
 
           <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.5 }}
+            initial={{ opacity: 0, y: 15 }}
+            animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
             className={`text-[#C9A449]/60 font-body italic ${
               isMobile 
                 ? 'text-xs px-2' 
@@ -135,17 +150,6 @@ export function CtaSection({
           >
             {tagline}
           </motion.p>
-
-          {/* Additional ornamental elements for enhanced visual appeal */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className={`${isMobile ? 'mt-8 mb-8' : 'mt-12 mb-12'} flex justify-center`}
-          >
-            {/* Decorative elements can be added here if needed */}
-          </motion.div>
         </motion.div>
       </div>
     </div>

@@ -112,7 +112,8 @@ const build = (opts = {}) => {
   fastifyInstance.register(cors, {
     origin: [
       'http://localhost:3000', // Development
-      process.env.FRONTEND_URL || 'http://localhost:3000', // Production Vercel URL
+      'https://b-it-s-build.vercel.app', // Production Vercel URL
+      process.env.FRONTEND_URL || 'http://localhost:3000', // Fallback/alternative production URL
     ],
     credentials: true,
   });

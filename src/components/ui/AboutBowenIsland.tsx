@@ -192,7 +192,7 @@ export function AboutBowenIslandSection() {
             <div className="absolute bottom-2 right-2 h-4 w-4 border-b border-r border-[#C9A449]/30 rounded-br-sm"></div>
 
             <Image 
-              src="/images/prodcut-pic.jpg" 
+              src="/images/prodcut-pic.jpeg" 
               alt="Personalized Tattoo Experience" 
               fill 
               className="object-cover brightness-60 group-hover:brightness-70 transition-all duration-300 rounded-2xl" 

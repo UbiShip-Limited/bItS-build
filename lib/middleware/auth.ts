@@ -121,11 +121,42 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     
     request.log.info(`🔑 Supabase auth successful for user: ${data.user.id}`);
     
-    // Get user role from database
-    let userWithRole = await request.server.prisma.user.findUnique({
-      where: { id: data.user.id },
-      select: { role: true, email: true }
-    });
+    // Enhanced database connection handling with retry logic
+    let userWithRole;
+    const maxRetries = 3;
+    let retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+      try {
+        // Get user role from database
+        userWithRole = await request.server.prisma.user.findUnique({
+          where: { id: data.user.id },
+          select: { role: true, email: true }
+        });
+        
+        break; // Success, exit retry loop
+        
+      } catch (dbError) {
+        retryCount++;
+        request.log.error(dbError, `Database query failed (attempt ${retryCount}/${maxRetries})`);
+        
+        // Check if it's a connection error that might be retryable
+        const isConnectionError = dbError.name === 'PrismaClientInitializationError' || 
+                                  dbError.name === 'PrismaClientKnownRequestError' ||
+                                  dbError.message.includes('database server') ||
+                                  dbError.message.includes('connection');
+        
+        if (!isConnectionError || retryCount >= maxRetries) {
+          // If not a connection error or max retries reached, throw the error
+          throw dbError;
+        }
+        
+        // Wait before retrying (exponential backoff)
+        const delay = Math.pow(2, retryCount) * 500; // 500ms, 1s, 2s
+        request.log.warn(`⏳ Retrying database connection in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
     
     // If user doesn't exist in local database but exists in Supabase, create them with default role
     if (!userWithRole) {
@@ -144,6 +175,17 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
         request.log.info(`🔑 Auto-created user record with role: ${userWithRole.role}`);
       } catch (createError) {
         request.log.error(createError, `Failed to auto-create user record for ${data.user.id}`);
+        
+        // Check if it's a database connection error
+        if (createError.name === 'PrismaClientInitializationError') {
+          return reply.status(503).send({ 
+            error: 'Database service unavailable',
+            message: 'Unable to connect to the database. Please try again later.',
+            code: 'DATABASE_CONNECTION_FAILED',
+            details: 'The authentication system cannot connect to the database. This is likely a temporary issue. Please try again in a few moments or contact support if the problem persists.'
+          });
+        }
+        
         return reply.status(500).send({ 
           error: 'Failed to initialize user account',
           message: 'Please contact an administrator',
@@ -162,6 +204,26 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     };
   } catch (err) {
     request.log.error(err, 'Authentication error');
+    
+    // Enhanced error handling for different types of database errors
+    if (err.name === 'PrismaClientInitializationError') {
+      return reply.status(503).send({ 
+        error: 'Database service unavailable',
+        message: 'Unable to connect to the database. Please try again later.',
+        code: 'DATABASE_CONNECTION_FAILED',
+        details: 'The authentication system cannot connect to the database. This is likely a temporary issue. Please try again in a few moments or contact support if the problem persists.'
+      });
+    }
+    
+    if (err.name === 'PrismaClientKnownRequestError' || err.name === 'PrismaClientUnknownRequestError') {
+      return reply.status(503).send({ 
+        error: 'Database query failed',
+        message: 'There was an issue with the database query. Please try again.',
+        code: 'DATABASE_QUERY_FAILED',
+        details: 'The authentication system encountered a database error. Please try again or contact support if the problem persists.'
+      });
+    }
+    
     return reply.status(500).send({ 
       error: 'Authentication failed',
       message: 'An internal server error occurred during authentication',

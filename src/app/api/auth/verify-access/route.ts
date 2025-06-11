@@ -1,162 +1,58 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Helper function to extract client IP address from request
-function getClientIP(request: NextRequest): string {
-  // Try different header sources for the real IP
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIP = request.headers.get('x-real-ip');
-  const cfConnectingIP = request.headers.get('cf-connecting-ip'); // Cloudflare
-  
-  if (forwarded) {
-    // x-forwarded-for can contain multiple IPs, take the first one
-    return forwarded.split(',')[0].trim();
-  }
-  
-  if (realIP) {
-    return realIP.trim();
-  }
-  
-  if (cfConnectingIP) {
-    return cfConnectingIP.trim();
-  }
-  
-  // Fallback - this won't be available in Vercel edge functions
-  return 'unknown IP';
-}
-
-// Handle OPTIONS for CORS preflight
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Max-Age': '86400',
-    },
-  });
-}
-
-// Production staff access verification - Updated for deployment
 export async function POST(request: NextRequest) {
-  // Add CORS headers to response
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  };
-
+  console.log('🔍 Staff access verification API called');
+  
   try {
-    // Parse JSON body with better error handling
-    let body;
-    try {
-      const text = await request.text();
-      if (!text) {
-        return NextResponse.json(
-          { success: false, error: 'Empty request body' }, 
-          { status: 400, headers }
-        );
-      }
-      body = JSON.parse(text);
-    } catch (parseError) {
-      console.error('Failed to parse request body:', parseError);
-      return NextResponse.json(
-        { success: false, error: 'Invalid JSON in request body' }, 
-        { status: 400, headers }
-      );
-    }
-
+    // Get the request body
+    const body = await request.json();
+    console.log('📥 Request body received');
+    
     const { accessCode } = body;
-
-    // Validate input
-    if (!accessCode || typeof accessCode !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'Access code is required and must be a string' }, 
-        { status: 400, headers }
-      );
+    
+    // Simple validation
+    if (!accessCode) {
+      console.log('❌ No access code provided');
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Access code required' 
+      });
     }
     
-    // Get the staff access code from environment variables
+    // Get environment variable
     const correctAccessCode = process.env.STAFF_ACCESS_CODE;
+    console.log('🔑 Environment access code configured:', !!correctAccessCode);
     
-    // If no access code is configured, deny access for security
     if (!correctAccessCode) {
-      console.warn('⚠️ STAFF_ACCESS_CODE not configured - denying access');
-      return NextResponse.json(
-        { success: false, error: 'Access code system not configured' }, 
-        { status: 503, headers }
-      );
+      console.log('❌ STAFF_ACCESS_CODE not configured in environment');
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Access code system not configured' 
+      });
     }
     
-    // Verify the access code (case-sensitive comparison)
+    // Simple comparison
     const isValid = accessCode === correctAccessCode;
-    
-    // Get client IP for logging
-    const clientIP = getClientIP(request);
-    
-    // Log the attempt (without exposing the actual codes)
-    console.log(`🔐 Staff access attempt: ${isValid ? 'SUCCESS' : 'FAILED'} from ${clientIP}`);
+    console.log('🔐 Access code validation result:', isValid);
     
     if (isValid) {
-      return NextResponse.json(
-        { success: true }, 
-        { status: 200, headers }
-      );
+      console.log('✅ Access code verified successfully');
+      return NextResponse.json({ success: true });
     } else {
-      // Add a small delay to prevent rapid brute force attempts
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      return NextResponse.json(
-        { success: false, error: 'Invalid access code' }, 
-        { status: 401, headers }
-      );
+      console.log('❌ Invalid access code provided');
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid access code' 
+      });
     }
     
   } catch (error) {
-    console.error('Access code verification error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error during verification' }, 
-      { status: 500, headers }
-    );
+    console.error('💥 API Error:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Server error' 
+    });
   }
 }
 
-// Handle unsupported methods explicitly
-export async function GET() {
-  return NextResponse.json(
-    { error: 'Method GET not allowed. Use POST to verify access code.' }, 
-    { 
-      status: 405,
-      headers: {
-        'Allow': 'POST, OPTIONS',
-        'Access-Control-Allow-Origin': '*',
-      }
-    }
-  );
-}
-
-export async function PUT() {
-  return NextResponse.json(
-    { error: 'Method PUT not allowed. Use POST to verify access code.' }, 
-    { 
-      status: 405,
-      headers: {
-        'Allow': 'POST, OPTIONS',
-        'Access-Control-Allow-Origin': '*',
-      }
-    }
-  );
-}
-
-export async function DELETE() {
-  return NextResponse.json(
-    { error: 'Method DELETE not allowed. Use POST to verify access code.' }, 
-    { 
-      status: 405,
-      headers: {
-        'Allow': 'POST, OPTIONS',
-        'Access-Control-Allow-Origin': '*',
-      }
-    }
-  );
-} 
+ 

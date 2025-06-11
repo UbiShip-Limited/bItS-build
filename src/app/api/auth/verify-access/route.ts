@@ -24,10 +24,57 @@ function getClientIP(request: NextRequest): string {
   return 'unknown IP';
 }
 
-// Production staff access verification
+// Handle OPTIONS for CORS preflight
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+}
+
+// Production staff access verification - Updated for deployment
 export async function POST(request: NextRequest) {
+  // Add CORS headers to response
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+
   try {
-    const { accessCode } = await request.json();
+    // Parse JSON body with better error handling
+    let body;
+    try {
+      const text = await request.text();
+      if (!text) {
+        return NextResponse.json(
+          { success: false, error: 'Empty request body' }, 
+          { status: 400, headers }
+        );
+      }
+      body = JSON.parse(text);
+    } catch (parseError) {
+      console.error('Failed to parse request body:', parseError);
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON in request body' }, 
+        { status: 400, headers }
+      );
+    }
+
+    const { accessCode } = body;
+
+    // Validate input
+    if (!accessCode || typeof accessCode !== 'string') {
+      return NextResponse.json(
+        { success: false, error: 'Access code is required and must be a string' }, 
+        { status: 400, headers }
+      );
+    }
     
     // Get the staff access code from environment variables
     const correctAccessCode = process.env.STAFF_ACCESS_CODE;
@@ -37,7 +84,7 @@ export async function POST(request: NextRequest) {
       console.warn('⚠️ STAFF_ACCESS_CODE not configured - denying access');
       return NextResponse.json(
         { success: false, error: 'Access code system not configured' }, 
-        { status: 503 }
+        { status: 503, headers }
       );
     }
     
@@ -51,22 +98,65 @@ export async function POST(request: NextRequest) {
     console.log(`🔐 Staff access attempt: ${isValid ? 'SUCCESS' : 'FAILED'} from ${clientIP}`);
     
     if (isValid) {
-      return NextResponse.json({ success: true });
+      return NextResponse.json(
+        { success: true }, 
+        { status: 200, headers }
+      );
     } else {
       // Add a small delay to prevent rapid brute force attempts
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       return NextResponse.json(
         { success: false, error: 'Invalid access code' }, 
-        { status: 401 }
+        { status: 401, headers }
       );
     }
     
   } catch (error) {
     console.error('Access code verification error:', error);
     return NextResponse.json(
-      { success: false, error: 'Verification failed' }, 
-      { status: 500 }
+      { success: false, error: 'Internal server error during verification' }, 
+      { status: 500, headers }
     );
   }
+}
+
+// Handle unsupported methods explicitly
+export async function GET() {
+  return NextResponse.json(
+    { error: 'Method GET not allowed. Use POST to verify access code.' }, 
+    { 
+      status: 405,
+      headers: {
+        'Allow': 'POST, OPTIONS',
+        'Access-Control-Allow-Origin': '*',
+      }
+    }
+  );
+}
+
+export async function PUT() {
+  return NextResponse.json(
+    { error: 'Method PUT not allowed. Use POST to verify access code.' }, 
+    { 
+      status: 405,
+      headers: {
+        'Allow': 'POST, OPTIONS',
+        'Access-Control-Allow-Origin': '*',
+      }
+    }
+  );
+}
+
+export async function DELETE() {
+  return NextResponse.json(
+    { error: 'Method DELETE not allowed. Use POST to verify access code.' }, 
+    { 
+      status: 405,
+      headers: {
+        'Allow': 'POST, OPTIONS',
+        'Access-Control-Allow-Origin': '*',
+      }
+    }
+  );
 } 

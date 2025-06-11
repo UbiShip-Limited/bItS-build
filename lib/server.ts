@@ -16,6 +16,7 @@ import webhookRoutes from './routes/webhooks/index';
 import healthRoutes from './routes/health';
 import userRoutes from './routes/users';
 import authRoutes from './routes/auth';
+import eventsRoutes from './routes/events';
 
 // Environment variable validation
 function validateEnvironment() {
@@ -124,6 +125,7 @@ const build = (opts = {}) => {
   fastifyInstance.register(healthRoutes);
   fastifyInstance.register(authRoutes, { prefix: '/auth' });
   fastifyInstance.register(userRoutes, { prefix: '/users' });
+  fastifyInstance.register(eventsRoutes, { prefix: '/events' });
   fastifyInstance.register(tattooRequestsRoutes, { prefix: '/tattoo-requests' });
   fastifyInstance.register(customerRoutes, { prefix: '/customers' });
   

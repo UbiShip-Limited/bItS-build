@@ -71,7 +71,7 @@ export async function middleware(request: NextRequest) {
     // For admin-only routes, check if user has admin role
     if (isAdminOnlyRoute) {
       // Check user role from our database
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/users/me`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001'}/users/me`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json'

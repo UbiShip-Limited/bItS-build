@@ -35,9 +35,9 @@ export default function LoginPage() {
     setIsCheckingAccess(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
       console.log('🔍 DEBUG: Using API URL:', apiUrl);
-      console.log('🔍 DEBUG: Environment variable:', process.env.NEXT_PUBLIC_API_URL);
+      console.log('🔍 DEBUG: Environment variable:', process.env.NEXT_PUBLIC_BACKEND_API_URL);
       const response = await fetch(`${apiUrl}/auth/verify-staff-access`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

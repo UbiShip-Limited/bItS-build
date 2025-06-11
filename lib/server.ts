@@ -15,6 +15,7 @@ import cloudinaryRoutes from './routes/cloudinary';
 import webhookRoutes from './routes/webhooks/index';
 import healthRoutes from './routes/health';
 import userRoutes from './routes/users';
+import authRoutes from './routes/auth';
 
 // Environment variable validation
 function validateEnvironment() {
@@ -121,6 +122,7 @@ const build = (opts = {}) => {
   fastifyInstance.register(prismaPlugin);
 
   fastifyInstance.register(healthRoutes);
+  fastifyInstance.register(authRoutes, { prefix: '/auth' });
   fastifyInstance.register(userRoutes, { prefix: '/users' });
   fastifyInstance.register(tattooRequestsRoutes, { prefix: '/tattoo-requests' });
   fastifyInstance.register(customerRoutes, { prefix: '/customers' });

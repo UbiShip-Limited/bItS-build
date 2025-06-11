@@ -24,7 +24,7 @@ function getClientIP(request: NextRequest): string {
   return 'unknown IP';
 }
 
-// Staff access verification endpoint - requires STAFF_ACCESS_CODE environment variable
+// Production staff access verification
 export async function POST(request: NextRequest) {
   try {
     const { accessCode } = await request.json();

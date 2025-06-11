@@ -115,6 +115,16 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
   
   fastify.log.info('🔄 Registering core payment routes...');
 
+  // GET /payments/health - Simple health check (no auth required)
+  fastify.get('/health', async (request, reply) => {
+    return {
+      status: 'ok',
+      squareConfigured: isSquareConfigured(),
+      timestamp: new Date().toISOString(),
+      message: 'Payments route is working'
+    };
+  });
+
   // GET /payments - Get customer's payments with optional Square data
   fastify.get('/', {
     preHandler: authorize(['artist', 'admin']),

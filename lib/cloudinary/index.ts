@@ -294,7 +294,7 @@ export const getGalleryImagesByFolder = async (
       url: resource.secure_url,
       publicId: resource.public_id,
       alt: resource.context?.custom?.alt || resource.filename || 'Tattoo artwork',
-      artist: resource.context?.custom?.artist || 'Unknown Artist',
+      artist: resource.context?.custom?.artist || 'Kelly Miller',
       style: resource.context?.custom?.style || 'Mixed',
       width: resource.width,
       height: resource.height,

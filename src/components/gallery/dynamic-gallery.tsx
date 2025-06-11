@@ -258,7 +258,7 @@ export function DynamicGallery() {
                       {item.alt === item.publicId ? 'Tattoo Artwork' : item.alt}
                     </h3>
                     <p className={`text-white/80 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                      {item.artist === 'Unknown Artist' ? 'Our Artists' : item.artist}
+                      {item.artist}
                     </p>
                   </div>
 
@@ -377,7 +377,7 @@ export function DynamicGallery() {
                   {selectedItem.alt === selectedItem.publicId ? 'Tattoo Artwork' : selectedItem.alt}
                 </h3>
                 <p className={`text-white/80 ${isMobile ? 'text-sm' : 'text-base'}`}>
-                  Artist: {selectedItem.artist === 'Unknown Artist' ? 'Our Artists' : selectedItem.artist}
+                  Artist: {selectedItem.artist}
                 </p>
               </div>
             </motion.div>

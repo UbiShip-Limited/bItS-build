@@ -1,5 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Helper function to extract client IP address from request
+function getClientIP(request: NextRequest): string {
+  // Try different header sources for the real IP
+  const forwarded = request.headers.get('x-forwarded-for');
+  const realIP = request.headers.get('x-real-ip');
+  const cfConnectingIP = request.headers.get('cf-connecting-ip'); // Cloudflare
+  
+  if (forwarded) {
+    // x-forwarded-for can contain multiple IPs, take the first one
+    return forwarded.split(',')[0].trim();
+  }
+  
+  if (realIP) {
+    return realIP.trim();
+  }
+  
+  if (cfConnectingIP) {
+    return cfConnectingIP.trim();
+  }
+  
+  // Fallback - this won't be available in Vercel edge functions
+  return 'unknown IP';
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { accessCode } = await request.json();
@@ -19,8 +43,11 @@ export async function POST(request: NextRequest) {
     // Verify the access code (case-sensitive comparison)
     const isValid = accessCode === correctAccessCode;
     
+    // Get client IP for logging
+    const clientIP = getClientIP(request);
+    
     // Log the attempt (without exposing the actual codes)
-    console.log(`🔐 Staff access attempt: ${isValid ? 'SUCCESS' : 'FAILED'} from ${request.ip || 'unknown IP'}`);
+    console.log(`🔐 Staff access attempt: ${isValid ? 'SUCCESS' : 'FAILED'} from ${clientIP}`);
     
     if (isValid) {
       return NextResponse.json({ success: true });

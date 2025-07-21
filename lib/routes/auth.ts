@@ -1,9 +1,12 @@
 import { FastifyPluginAsync } from 'fastify';
+import { authRateLimit } from '../middleware/rateLimiting';
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
   
   // Staff access code verification endpoint
-  fastify.post('/verify-staff-access', async (request, reply) => {
+  fastify.post('/verify-staff-access', {
+    preHandler: authRateLimit()
+  }, async (request, reply) => {
     try {
       const { accessCode } = request.body as { accessCode: string };
       

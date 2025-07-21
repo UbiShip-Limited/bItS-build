@@ -141,15 +141,15 @@ export function DynamicGallery() {
   // Error state
   if (error && !loading && galleryItems.length === 0) {
     return (
-      <div className="bg-[#080808] py-20 px-4 sm:px-8 md:px-8 lg:px-16">
+      <div className="bg-obsidian py-20 px-6 sm:px-8 md:px-12 lg:px-20">
         <div className="container mx-auto text-center">
-          <h2 className="font-heading text-4xl md:text-5xl font-bold text-white mb-4">
-            ARTIST GALLERY
+          <h2 className="font-heading text-4xl md:text-5xl font-bold text-white mb-6 tracking-wide uppercase">
+            Artist Gallery
           </h2>
-          <div className="text-red-400 mb-4">{error}</div>
+          <div className="text-red-400 mb-6">{error}</div>
           <button
             onClick={loadInitialImages}
-            className="inline-flex items-center gap-2 bg-[#C9A449] text-[#080808] px-6 py-3 rounded-lg hover:bg-[#C9A449]/80 transition-colors"
+            className="inline-flex items-center gap-2 bg-gold text-obsidian px-6 py-3 hover:bg-gold/90 transition-all duration-300 font-body uppercase tracking-wider text-sm"
           >
             <RefreshCw size={20} />
             Try Again
@@ -160,7 +160,7 @@ export function DynamicGallery() {
   }
 
   return (
-    <div ref={galleryRef} className="bg-[#080808] py-12 md:py-20 px-4 sm:px-6 md:px-8 lg:px-16">
+    <div ref={galleryRef} className="bg-obsidian py-16 md:py-24 px-6 sm:px-8 md:px-12 lg:px-20">
       <div className="container mx-auto">
         {/* Gallery Header */}
         <motion.div 
@@ -169,27 +169,27 @@ export function DynamicGallery() {
           animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
           transition={{ duration: 0.6 }}
         >
-          <div className="inline-block relative mb-3">
-            <div className="absolute -top-3 -left-3 h-4 w-4 border-t border-l border-[#C9A449]"></div>
-            <div className="absolute -top-3 -right-3 h-4 w-4 border-t border-r border-[#C9A449]"></div>
-            <div className="absolute -bottom-3 -left-3 h-4 w-4 border-b border-l border-[#C9A449]"></div>
-            <div className="absolute -bottom-3 -right-3 h-4 w-4 border-b border-r border-[#C9A449]"></div>
-            <h2 className={`font-heading ${isMobile ? 'text-3xl' : 'text-4xl md:text-5xl'} font-bold text-white px-4 md:px-6`}>
-              ARTIST GALLERY
+          <div className="inline-block relative mb-6">
+            <div className="absolute -top-3 -left-3 h-4 w-4 border-t border-l border-gold/50"></div>
+            <div className="absolute -top-3 -right-3 h-4 w-4 border-t border-r border-gold/50"></div>
+            <div className="absolute -bottom-3 -left-3 h-4 w-4 border-b border-l border-gold/50"></div>
+            <div className="absolute -bottom-3 -right-3 h-4 w-4 border-b border-r border-gold/50"></div>
+            <h2 className={`font-heading ${isMobile ? 'text-3xl' : 'text-4xl md:text-5xl lg:text-6xl'} font-medium text-white px-6 md:px-8 tracking-wide uppercase`}>
+              Artist Gallery
             </h2>
           </div>
-          <div className="h-[2px] w-32 md:w-40 mx-auto bg-gradient-to-r from-[#C9A449] to-[#C9A449]/0 mb-2"></div>
-          <div className="h-[2px] w-32 md:w-40 mx-auto bg-gradient-to-l from-[#C9A449] to-[#C9A449]/0 mb-4 md:mb-6"></div>
-          <p className={`text-white/80 max-w-2xl mx-auto font-body ${isMobile ? 'text-base px-2' : 'text-lg'} mb-4`}>
+          <div className="h-px w-32 md:w-40 mx-auto bg-gradient-to-r from-gold to-gold/0 mb-2"></div>
+          <div className="h-px w-32 md:w-40 mx-auto bg-gradient-to-l from-gold to-gold/0 mb-6 md:mb-8"></div>
+          <p className={`text-white/80 max-w-2xl mx-auto font-body ${isMobile ? 'text-base px-4' : 'text-lg'} mb-6 leading-relaxed`}>
             Discover our curated collection of tattoo artistry. Each piece represents our commitment 
             to quality, creativity, and personal expression.
           </p>
           
           {/* Simple image counter */}
           {!loading && galleryItems.length > 0 && (
-            <div className="inline-flex items-center gap-2 text-[#C9A449]/80 text-sm">
+            <div className="inline-flex items-center gap-2 text-gold/80">
               <Eye size={16} />
-              <span className={isMobile ? 'text-xs' : 'text-sm'}>
+              <span className={`font-body ${isMobile ? 'text-xs' : 'text-sm'} tracking-wide`}>
                 {galleryItems.length} {galleryItems.length === 1 ? 'image' : 'images'} loaded
               </span>
             </div>
@@ -198,9 +198,9 @@ export function DynamicGallery() {
 
         {/* Loading State */}
         {loading && (
-          <div className="flex flex-col justify-center items-center py-12 md:py-20">
-            <Loader2 className="animate-spin text-[#C9A449] mb-4" size={isMobile ? 36 : 48} />
-            <p className={`text-white/60 font-body ${isMobile ? 'text-sm' : 'text-base'}`}>Loading gallery...</p>
+          <div className="flex flex-col justify-center items-center py-16 md:py-24">
+            <Loader2 className="animate-spin text-gold mb-6" size={isMobile ? 36 : 48} />
+            <p className={`text-white/60 font-body ${isMobile ? 'text-sm' : 'text-base'} tracking-wide`}>Loading gallery...</p>
           </div>
         )}
 
@@ -231,7 +231,7 @@ export function DynamicGallery() {
                     : `${Math.max(200, Math.min(400, item.height * 0.3))}px`,
                 }}
               >
-                <div className="relative w-full h-full group cursor-pointer border border-[#C9A449]/0 hover:border-[#C9A449]/40 transition-all duration-300">
+                <div className="relative w-full h-full group cursor-pointer border border-gold/0 hover:border-gold/40 transition-all duration-300 overflow-hidden">
                   <Image
                     src={item.thumbnailUrl || item.url}
                     alt={item.alt}
@@ -242,13 +242,13 @@ export function DynamicGallery() {
                   />
 
                   {/* Simplified overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#080808]/80 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-obsidian/80 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
 
                   {/* Corner accents */}
-                  <div className={`absolute -top-1 -left-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-t border-l border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
-                  <div className={`absolute -top-1 -right-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-t border-r border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
-                  <div className={`absolute -bottom-1 -left-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-b border-l border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
-                  <div className={`absolute -bottom-1 -right-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-b border-r border-[#C9A449] opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                  <div className={`absolute -top-1 -left-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-t border-l border-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                  <div className={`absolute -top-1 -right-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-t border-r border-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                  <div className={`absolute -bottom-1 -left-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-b border-l border-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                  <div className={`absolute -bottom-1 -right-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-b border-r border-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
 
                   {/* Info overlay */}
                   <div className={`absolute bottom-0 left-0 right-0 p-3 md:p-4 transition-transform duration-300 ${
@@ -263,10 +263,10 @@ export function DynamicGallery() {
                   </div>
 
                   {/* Zoom icon */}
-                  <div className={`absolute ${isMobile ? 'top-3 right-3' : 'top-4 right-4'} bg-[#C9A449] ${isMobile ? 'p-1.5' : 'p-2'} rounded-full transition-opacity duration-300 ${
+                  <div className={`absolute ${isMobile ? 'top-3 right-3' : 'top-4 right-4'} bg-gold ${isMobile ? 'p-1.5' : 'p-2'} rounded-full transition-opacity duration-300 shadow-subtle ${
                     isMobile || hoveredItem === item.id ? "opacity-100" : "opacity-0"
                   }`}>
-                    <ZoomIn size={isMobile ? 14 : 16} className="text-[#080808]" />
+                    <ZoomIn size={isMobile ? 14 : 16} className="text-obsidian" />
                   </div>
                 </div>
               </motion.div>
@@ -276,13 +276,13 @@ export function DynamicGallery() {
 
         {/* Simplified Load More Button */}
         {!loading && galleryItems.length > 0 && canLoadMore && (
-          <div className="text-center mt-8 md:mt-12 px-4">
+          <div className="text-center mt-12 md:mt-16 px-4">
             <motion.button
               onClick={loadMoreImages}
               disabled={loadingMore}
-              className={`group inline-flex items-center gap-3 bg-[#C9A449] text-[#080808] ${
+              className={`group inline-flex items-center gap-3 bg-gold text-obsidian ${
                 isMobile ? 'px-6 py-3 text-sm' : 'px-8 py-4'
-              } rounded-lg hover:bg-[#C9A449]/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-medium w-full sm:w-auto justify-center`}
+              } hover:bg-gold/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-body font-medium uppercase tracking-wider w-full sm:w-auto justify-center shadow-subtle hover:shadow-elegant`}
               whileHover={{ scale: isMobile ? 1 : 1.02 }}
               whileTap={{ scale: 0.98 }}
               initial={{ opacity: 0, y: 20 }}

@@ -13,6 +13,7 @@ import path from 'path';
 import os from 'os';
 import { NotFoundError, ValidationError } from '../services/errors';
 import CloudinaryService from '../cloudinary/index.js';
+import { readRateLimit, writeRateLimit, publicSubmissionRateLimit } from '../middleware/rateLimiting';
 
 // Type definitions for request bodies and queries
 interface TattooRequestQueryParams {
@@ -44,7 +45,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /tattoo-requests - List tattoo requests (admin dashboard)
   fastify.get('/', {
-    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[]), readRateLimit()],
     schema: {
       querystring: {
         type: 'object',
@@ -103,6 +104,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
   
   // POST /tattoo-requests - Submit new tattoo request (public endpoint)
   fastify.post('/', {
+    preHandler: publicSubmissionRateLimit(),
     schema: {
       body: {
         type: 'object',
@@ -171,7 +173,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
   
   // PUT /tattoo-requests/:id/status - Update status (admin workflow)
   fastify.put('/:id/status', {
-    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[]), writeRateLimit()],
     schema: {
       params: {
         type: 'object',
@@ -214,7 +216,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /tattoo-requests/:id/convert-to-appointment - Convert to appointment (admin action)
   fastify.post('/:id/convert-to-appointment', {
-    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[]), writeRateLimit()],
     schema: {
       params: {
         type: 'object',
@@ -279,7 +281,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /tattoo-requests/:id/link-images - Link existing Cloudinary images to tattoo request
   fastify.post('/:id/link-images', {
-    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[]), writeRateLimit()],
     schema: {
       params: {
         type: 'object',
@@ -331,6 +333,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /tattoo-requests/upload-images - Upload reference images (public endpoint)
   fastify.post('/upload-images', {
+    preHandler: publicSubmissionRateLimit(),
     schema: {
       description: 'Upload reference images for tattoo requests',
       consumes: ['multipart/form-data'],

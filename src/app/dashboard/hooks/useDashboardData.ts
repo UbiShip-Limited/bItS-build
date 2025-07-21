@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { AppointmentApiClient, BookingStatus } from '@/src/lib/api/services/appointmentApiClient';
 import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
+import { analyticsService } from '@/src/lib/api/services/analyticsService';
 
 export interface DashboardStats {
   todayAppointments: number;

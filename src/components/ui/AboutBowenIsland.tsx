@@ -28,7 +28,7 @@ export function AboutBowenIslandSection() {
   }, [])
 
   return (
-    <div ref={sectionRef} className="bg-[#080808] text-white relative min-h-screen">
+    <div ref={sectionRef} className="bg-obsidian text-white relative min-h-screen">
       {/* Simplified background elements */}
       <div className="absolute inset-0 z-0 opacity-[0.02]">
         <div className="absolute top-1/4 left-1/12 w-32 h-32">
@@ -51,38 +51,38 @@ export function AboutBowenIslandSection() {
           transition={{ duration: 0.6 }}
         >
           {/* Simplified ornamental line */}
-          <div className="flex items-center justify-center mb-6">
-            <div className="w-16 h-[0.5px] bg-gradient-to-r from-transparent to-[#C9A449]/60"></div>
+          <div className="flex items-center justify-center mb-8">
+            <div className="w-16 h-px bg-gradient-to-r from-transparent to-gold/60"></div>
             <div className="mx-4">
-              <span className="text-[#C9A449] text-sm">✦</span>
+              <span className="text-gold text-sm">✦</span>
             </div>
-            <div className="w-16 h-[0.5px] bg-gradient-to-l from-transparent to-[#C9A449]/60"></div>
+            <div className="w-16 h-px bg-gradient-to-l from-transparent to-gold/60"></div>
           </div>
 
-          <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl text-white mb-4 tracking-wide uppercase">
+          <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl text-white mb-6 tracking-wide uppercase">
             About
           </h2>
-          <p className="font-body text-2xl text-[#C9A449]/80 mb-4 uppercase tracking-widest font-light">
+          <p className="font-body text-2xl text-gold/80 mb-6 uppercase tracking-[0.2em] font-light">
             Bowen Island Tattoo
           </p>
 
           {/* Simplified divider */}
           <div className="flex items-center justify-center">
-            <div className="w-12 h-[0.5px] bg-gradient-to-r from-[#C9A449]/80 to-[#C9A449]/20"></div>
-            <div className="w-2 h-2 border border-[#C9A449]/50 rotate-45 mx-4"></div>
-            <div className="w-12 h-[0.5px] bg-gradient-to-l from-[#C9A449]/80 to-[#C9A449]/20"></div>
+            <div className="w-12 h-px bg-gradient-to-r from-gold/80 to-gold/20"></div>
+            <div className="w-2 h-2 border border-gold/50 rotate-45 mx-4"></div>
+            <div className="w-12 h-px bg-gradient-to-l from-gold/80 to-gold/20"></div>
           </div>
         </motion.div>
       </div>
 
       {/* Section 1 - The Studio */}
-      <div className="relative z-10 min-h-[80vh] flex flex-col md:flex-row items-center py-16 px-4 sm:px-8 md:px-16 lg:px-24">
+      <div className="relative z-10 min-h-[80vh] flex flex-col md:flex-row items-center py-20 px-6 sm:px-8 md:px-12 lg:px-20 max-w-7xl mx-auto">
         <div className="w-full md:w-1/2 mb-10 md:mb-0 overflow-hidden">
           {/* Fixed height container to prevent layout shifts */}
-          <div className="relative h-[400px] md:h-[600px] w-full rounded-2xl border border-[#C9A449]/10 group hover:border-[#C9A449]/20 transition-all duration-300 shadow-2xl shadow-black/20">
+          <div className="relative h-[400px] md:h-[600px] w-full rounded-2xl border border-gold/10 group hover:border-gold/20 transition-all duration-300 shadow-elegant overflow-hidden">
             {/* Simplified corner elements */}
-            <div className="absolute top-2 left-2 h-4 w-4 border-t border-l border-[#C9A449]/30 rounded-tl-sm"></div>
-            <div className="absolute bottom-2 right-2 h-4 w-4 border-b border-r border-[#C9A449]/30 rounded-br-sm"></div>
+            <div className="absolute top-2 left-2 h-4 w-4 border-t border-l border-gold/30 rounded-tl-sm"></div>
+            <div className="absolute bottom-2 right-2 h-4 w-4 border-b border-r border-gold/30 rounded-br-sm"></div>
 
             <Image 
               src="/images/shop-pic2.png" 
@@ -94,7 +94,7 @@ export function AboutBowenIslandSection() {
             />
             
             {/* Simplified overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#C9A449]/5 via-transparent to-[#C9A449]/10 group-hover:from-[#C9A449]/8 group-hover:to-[#C9A449]/15 transition-all duration-300 rounded-2xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-gold/10 group-hover:from-gold/8 group-hover:to-gold/15 transition-all duration-300"></div>
           </div>
         </div>
 

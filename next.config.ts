@@ -16,6 +16,19 @@ const nextConfig: NextConfig = {
   outputFileTracingExcludes: {
     '*': ['./lib/**/*'],
   },
+  experimental: {
+    turbo: {
+      resolveAlias: {
+        fs: false,
+        net: false,
+        tls: false,
+        crypto: false,
+        path: false,
+        os: false,
+        'child_process': false,
+      },
+    },
+  },
   webpack: (config, { isServer }) => {
     // Don't try to bundle backend Node.js modules in the frontend
     if (!isServer) {

@@ -216,3 +216,30 @@ model AuditLog {
   
   @@map("audit_logs")
 }
+
+model BusinessHours {
+  id         String   @id @default(uuid())
+  dayOfWeek  Int      // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  openTime   String   // Format: "HH:MM" e.g., "09:00"
+  closeTime  String   // Format: "HH:MM" e.g., "17:00"
+  isOpen     Boolean  @default(true)
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @map("updated_at")
+  
+  @@unique([dayOfWeek])
+  @@map("business_hours")
+}
+
+model SpecialHours {
+  id         String   @id @default(uuid())
+  date       DateTime @db.Date // Specific date for special hours
+  openTime   String?  // Format: "HH:MM", null if closed
+  closeTime  String?  // Format: "HH:MM", null if closed
+  isClosed   Boolean  @default(false)
+  reason     String?  // e.g., "Holiday", "Special Event"
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @map("updated_at")
+  
+  @@unique([date])
+  @@map("special_hours")
+}

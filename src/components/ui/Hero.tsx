@@ -54,15 +54,15 @@ export function TattooHero() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#080808] text-white flex flex-col justify-center w-full max-w-full">
+    <div className="relative min-h-screen overflow-hidden bg-obsidian text-white flex flex-col justify-center w-full max-w-full">
       {/* Background layer - lowest z-index */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#080808] via-[#080808] to-[#080808]/95"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-obsidian via-obsidian to-obsidian/95"></div>
       </div>
 
       {/* Central ornamental divider - middle z-index - hidden on very small screens */}
       <div className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 z-10 hidden sm:block">
-        <div className="h-full w-full bg-gradient-to-b from-transparent via-[#C9A449]/50 to-transparent"></div>
+        <div className="h-full w-full bg-gradient-to-b from-transparent via-gold/50 to-transparent"></div>
       </div>
 
       {/* Main content container - highest z-index */}
@@ -70,19 +70,19 @@ export function TattooHero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }} // Faster fade-in
-        className="relative z-20 flex flex-col items-center justify-start w-full h-full my-auto pt-4 pb-12 sm:pt-6 sm:pb-16 md:pt-10"
+        className="relative z-20 flex flex-col items-center justify-start w-full h-full my-auto pt-8 pb-16 sm:pt-12 sm:pb-20 md:pt-16"
         style={{ marginTop: "-2rem" }}
       >
         {/* Main content */}
         <motion.div
-          className="relative w-full max-w-5xl mx-auto text-center bg-[#080808]/75 px-3 sm:px-6 md:px-8 py-6 sm:py-10 md:py-12 rounded-lg backdrop-blur-sm flex flex-col items-center justify-center border border-white/10"
+          className="relative w-full max-w-5xl mx-auto text-center bg-obsidian/75 px-6 sm:px-8 md:px-12 py-8 sm:py-12 md:py-16 rounded-lg backdrop-blur-sm flex flex-col items-center justify-center border border-white/10"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* Logo area - contains both images that fade in/out */}
           <motion.div 
-            className="mt-3 sm:mt-5 md:mt-5 relative aspect-square" 
+            className="mt-6 sm:mt-8 md:mt-8 relative aspect-square" 
             variants={itemVariants}
             style={{ 
               width: "min(280px, 85%)", 

@@ -1,5 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
-//import { authenticate, authorize } from '../middleware/auth';
+import { authenticate, authorize } from '../middleware/auth';
+import { readRateLimit, writeRateLimit } from '../middleware/rateLimiting';
 
 // Type definitions for request bodies and queries
 interface CustomerQueryParams {
@@ -24,13 +25,11 @@ interface UpdateCustomerBody {
 
 const customerRoutes: FastifyPluginAsync = async (fastify) => {
   // Apply authentication to all routes
-  // TODO: Re-enable auth after testing
-  // fastify.addHook('preHandler', authenticate);
+  fastify.addHook('preHandler', authenticate);
   
   // GET /customers - List all customers (admin/artist only)
   fastify.get('/', {
-    // TODO: Re-enable auth after testing
-    // preHandler: authorize(['artist', 'admin']),
+    preHandler: [authorize(['artist', 'admin']), readRateLimit()],
     schema: {
       querystring: {
         type: 'object',
@@ -76,8 +75,7 @@ const customerRoutes: FastifyPluginAsync = async (fastify) => {
   
   // GET /customers/:id - Get a specific customer
   fastify.get('/:id', {
-    // TODO: Re-enable auth after testing
-    // preHandler: authorize(['artist', 'admin']),
+    preHandler: [authorize(['artist', 'admin']), readRateLimit()],
     schema: {
       params: {
         type: 'object',
@@ -113,6 +111,7 @@ const customerRoutes: FastifyPluginAsync = async (fastify) => {
   
   // POST /customers - Create a new customer
   fastify.post('/', {
+    preHandler: [authorize(['artist', 'admin']), writeRateLimit()],
     schema: {
       body: {
         type: 'object',
@@ -162,8 +161,7 @@ const customerRoutes: FastifyPluginAsync = async (fastify) => {
   
   // PUT /customers/:id - Update customer information
   fastify.put('/:id', {
-    // TODO: Re-enable auth after testing
-    // preHandler: authorize(['artist', 'admin']),
+    preHandler: [authorize(['artist', 'admin']), writeRateLimit()],
     schema: {
       params: {
         type: 'object',
@@ -227,8 +225,7 @@ const customerRoutes: FastifyPluginAsync = async (fastify) => {
   
   // DELETE /customers/:id - Delete a customer (admin only)
   fastify.delete('/:id', {
-    // TODO: Re-enable auth after testing
-    // preHandler: authorize(['admin']),
+    preHandler: [authorize(['admin']), writeRateLimit()],
     schema: {
       params: {
         type: 'object',

@@ -1,0 +1,257 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { analyticsService, type DashboardMetrics } from '@/src/lib/api/services/analyticsService';
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  Users, 
+  Calendar, 
+  FileText,
+  Download,
+  RefreshCw
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import RevenueChart from './RevenueChart';
+import CustomerSegmentation from './CustomerSegmentation';
+import AppointmentMetrics from './AppointmentMetrics';
+import BusinessTrends from './BusinessTrends';
+
+export default function AnalyticsDashboard() {
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [timeframe, setTimeframe] = useState('today');
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    loadMetrics();
+  }, [timeframe]);
+
+  const loadMetrics = async () => {
+    try {
+      setLoading(true);
+      const data = await analyticsService.getDashboardMetrics(timeframe);
+      setMetrics(data);
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+      toast.error('Failed to load analytics data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadMetrics();
+    setRefreshing(false);
+    toast.success('Analytics refreshed');
+  };
+
+  const handleExport = async (type: 'revenue' | 'appointments' | 'customers' | 'full') => {
+    try {
+      await analyticsService.exportAnalytics(type, 'csv');
+      toast.success(`${type} report downloaded`);
+    } catch (error) {
+      console.error('Error exporting analytics:', error);
+      toast.error('Failed to export analytics');
+    }
+  };
+
+  if (loading || !metrics) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="loading loading-spinner loading-lg text-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-white">Analytics Dashboard</h2>
+          <p className="text-gray-400">Track your business performance and insights</p>
+        </div>
+        <div className="flex gap-4">
+          <select
+            value={timeframe}
+            onChange={(e) => setTimeframe(e.target.value)}
+            className="select select-bordered bg-base-200"
+          >
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last7days">Last 7 Days</option>
+            <option value="last30days">Last 30 Days</option>
+            <option value="thisMonth">This Month</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="thisYear">This Year</option>
+          </select>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="btn btn-ghost btn-sm"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Key Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Revenue Card */}
+        <div className="card bg-base-200 border border-[#C9A449]/20">
+          <div className="card-body">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm text-gray-400">Total Revenue</p>
+                <p className="text-2xl font-bold text-white">
+                  ${metrics.revenue.thisMonth.toLocaleString()}
+                </p>
+                <p className={`text-sm mt-1 flex items-center gap-1 ${
+                  metrics.revenue.trend === 'up' ? 'text-success' : 'text-error'
+                }`}>
+                  {metrics.revenue.trend === 'up' ? (
+                    <TrendingUp className="w-3 h-3" />
+                  ) : (
+                    <TrendingDown className="w-3 h-3" />
+                  )}
+                  {Math.abs(metrics.revenue.growthRate)}% vs last period
+                </p>
+              </div>
+              <div className="p-3 bg-primary/20 rounded-lg">
+                <DollarSign className="w-6 h-6 text-primary" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Customers Card */}
+        <div className="card bg-base-200 border border-[#C9A449]/20">
+          <div className="card-body">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm text-gray-400">Total Customers</p>
+                <p className="text-2xl font-bold text-white">
+                  {metrics.overview.totalCustomers}
+                </p>
+                <p className="text-sm mt-1 text-gray-400">
+                  +{metrics.customers.new} new this month
+                </p>
+              </div>
+              <div className="p-3 bg-info/20 rounded-lg">
+                <Users className="w-6 h-6 text-info" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Appointments Card */}
+        <div className="card bg-base-200 border border-[#C9A449]/20">
+          <div className="card-body">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm text-gray-400">Appointments</p>
+                <p className="text-2xl font-bold text-white">
+                  {metrics.appointments.thisWeek}
+                </p>
+                <p className="text-sm mt-1 text-gray-400">
+                  {metrics.appointments.completionRate}% completion rate
+                </p>
+              </div>
+              <div className="p-3 bg-success/20 rounded-lg">
+                <Calendar className="w-6 h-6 text-success" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Requests Card */}
+        <div className="card bg-base-200 border border-[#C9A449]/20">
+          <div className="card-body">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm text-gray-400">Active Requests</p>
+                <p className="text-2xl font-bold text-white">
+                  {metrics.requests.pending}
+                </p>
+                <p className="text-sm mt-1 text-gray-400">
+                  {metrics.requests.conversionRate}% conversion rate
+                </p>
+              </div>
+              <div className="p-3 bg-warning/20 rounded-lg">
+                <FileText className="w-6 h-6 text-warning" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts and Detailed Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Chart */}
+        <RevenueChart 
+          data={metrics.trends.revenue} 
+          breakdown={metrics.revenue.breakdown}
+        />
+
+        {/* Customer Segmentation */}
+        <CustomerSegmentation 
+          segments={metrics.customers}
+          retentionRate={metrics.customers.retentionRate}
+        />
+
+        {/* Appointment Metrics */}
+        <AppointmentMetrics 
+          metrics={metrics.appointments}
+          trends={metrics.trends.appointments}
+        />
+
+        {/* Business Trends */}
+        <BusinessTrends 
+          revenue={metrics.trends.revenue}
+          appointments={metrics.trends.appointments}
+          customers={metrics.trends.customers}
+        />
+      </div>
+
+      {/* Export Options */}
+      <div className="card bg-base-200 border border-[#C9A449]/20">
+        <div className="card-body">
+          <h3 className="text-lg font-semibold text-white mb-4">Export Reports</h3>
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => handleExport('revenue')}
+              className="btn btn-sm"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Revenue Report
+            </button>
+            <button
+              onClick={() => handleExport('appointments')}
+              className="btn btn-sm"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Appointments Report
+            </button>
+            <button
+              onClick={() => handleExport('customers')}
+              className="btn btn-sm"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Customer Report
+            </button>
+            <button
+              onClick={() => handleExport('full')}
+              className="btn btn-sm btn-primary"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Full Analytics Report
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -3,6 +3,7 @@ import { authorize } from '../middleware/auth';
 import { UserRole } from '../types/auth';
 import { CloudinarySignatureBody } from '../types/api';
 import CloudinaryService, { type GalleryImage } from '../cloudinary/index';
+import { uploadRateLimit, readRateLimit, writeRateLimit } from '../middleware/rateLimiting';
 
 // TypeScript interfaces for Cloudinary API responses
 interface CloudinaryResource {
@@ -38,6 +39,7 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
   }
   // Public endpoint for tattoo request image uploads (no auth required)
   fastify.post('/signature/public', {
+    preHandler: uploadRateLimit(),
     schema: {
       body: {
         type: 'object',
@@ -66,7 +68,7 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
 
   // Generate upload signature for authenticated users
   fastify.post('/signature', {
-    preHandler: authorize(['artist', 'admin', 'customer'] as UserRole[]),
+    preHandler: [authorize(['artist', 'admin', 'customer'] as UserRole[]), uploadRateLimit()],
     schema: {
       body: {
         type: 'object',
@@ -94,7 +96,7 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
   
   // Validate and process an upload after frontend direct upload
   fastify.post('/validate', {
-    preHandler: authorize(['artist', 'admin', 'customer'] as UserRole[]),
+    preHandler: [authorize(['artist', 'admin', 'customer'] as UserRole[]), writeRateLimit()],
     schema: {
       body: {
         type: 'object',
@@ -120,7 +122,9 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
 
 
   // Generate signature specifically for tattoo request uploads
-  fastify.post('/signature/tattoo-request', async (request, reply) => {
+  fastify.post('/signature/tattoo-request', {
+    preHandler: uploadRateLimit()
+  }, async (request, reply) => {
     try {
       const { tattooRequestId, customerId } = request.body as { 
         tattooRequestId: string; 
@@ -150,7 +154,9 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
 
 
   // Debug endpoint to check what's in Cloudinary account
-  fastify.get('/debug', async (request, reply) => {
+  fastify.get('/debug', {
+    preHandler: readRateLimit()
+  }, async (request, reply) => {
     try {
       console.log('🔍 Debug: Checking Cloudinary account...');
       
@@ -202,7 +208,9 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // Get gallery images from specified folder (defaults to shop_content for backward compatibility)
-  fastify.get('/gallery', async (request, reply) => {
+  fastify.get('/gallery', {
+    preHandler: readRateLimit()
+  }, async (request, reply) => {
     try {
       const { artist, style, tags, limit, folder } = request.query as {
         artist?: string;
@@ -268,7 +276,9 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // Get customer uploaded images
-  fastify.get('/customer-uploads', async (request, reply) => {
+  fastify.get('/customer-uploads', {
+    preHandler: readRateLimit()
+  }, async (request, reply) => {
     try {
       const { customerId } = request.query as { customerId?: string };
       

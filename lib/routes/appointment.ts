@@ -5,6 +5,7 @@ import { AppointmentService } from '../services/appointmentService';
 import { SquareIntegrationService } from '../services/squareIntegrationService';
 import { BookingStatus, BookingType } from '../types/booking';
 import { AppointmentError } from '../services/errors';
+import { readRateLimit, writeRateLimit } from '../middleware/rateLimiting';
 
 // Type definitions for request bodies and queries
 interface AppointmentQueryParams {
@@ -85,7 +86,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /appointments - List all appointments
   fastify.get('/', {
-    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[]), readRateLimit()],
     schema: {
       querystring: {
         type: 'object',
@@ -123,7 +124,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
   
   // GET /appointments/:id - Get a specific appointment
   fastify.get('/:id', {
-    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[]), readRateLimit()],
     schema: {
       params: {
         type: 'object',
@@ -141,7 +142,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
   
   // POST /appointments - Create a new appointment
   fastify.post('/', {
-    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[]), writeRateLimit()],
     schema: {
       body: {
         type: 'object',
@@ -219,7 +220,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
   
   // PUT /appointments/:id - Update an appointment
   fastify.put('/:id', {
-    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[]), writeRateLimit()],
     schema: {
       params: {
         type: 'object',
@@ -280,7 +281,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
   
   // POST /appointments/:id/cancel - Cancel an appointment
   fastify.post('/:id/cancel', {
-    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[]), writeRateLimit()],
     schema: {
       params: {
         type: 'object',
@@ -323,8 +324,33 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
     };
   });
   
+  // GET /appointments/:id/notifications - Get notification status for an appointment
+  fastify.get('/:id/notifications', {
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[]), readRateLimit()],
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string' }
+        }
+      }
+    }
+  }, async (request) => {
+    const { id } = request.params as { id: string };
+    
+    const notificationStatus = await appointmentService.getNotificationStatus(id);
+    
+    return {
+      success: true,
+      appointmentId: id,
+      ...notificationStatus
+    };
+  });
+  
   // POST /appointments/anonymous - Create anonymous appointment (no auth required)
   fastify.post('/anonymous', {
+    preHandler: writeRateLimit(),
     schema: {
       body: {
         type: 'object',

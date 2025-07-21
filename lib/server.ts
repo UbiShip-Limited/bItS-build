@@ -17,6 +17,9 @@ import healthRoutes from './routes/health';
 import userRoutes from './routes/users';
 import authRoutes from './routes/auth';
 import eventsRoutes from './routes/events';
+import analyticsRoutes from './routes/analytics';
+import notificationRoutes from './routes/notifications';
+import businessHoursRoutes from './routes/businessHours';
 
 // Environment variable validation
 function validateEnvironment() {
@@ -145,6 +148,9 @@ const build = (opts = {}) => {
   fastifyInstance.register(auditRoutes, { prefix: '/audit-logs' });
   fastifyInstance.register(cloudinaryRoutes, { prefix: '/cloudinary' });
   fastifyInstance.register(webhookRoutes, { prefix: '/webhooks' });
+  fastifyInstance.register(analyticsRoutes, { prefix: '/analytics' });
+  fastifyInstance.register(notificationRoutes, { prefix: '/notifications' });
+  fastifyInstance.register(businessHoursRoutes, { prefix: '/business-hours' });
   
   return fastifyInstance;
 };

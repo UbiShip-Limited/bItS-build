@@ -9,6 +9,7 @@ import { DashboardHeader, DashboardContent, DashboardLoading, DashboardError } f
 import StatsGrid from '@/src/components/dashboard/StatsGrid';
 import EnhancedStatsGrid from '@/src/components/dashboard/EnhancedStatsGrid';
 import WorkflowGuide from '@/src/components/dashboard/WorkflowGuide';
+import QuickAnalytics from '@/src/components/dashboard/QuickAnalytics';
 
 export default function DashboardPage() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
@@ -65,9 +66,14 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Workflow Guide */}
-          <div className="mb-8">
-            <WorkflowGuide />
+          {/* Analytics and Workflow Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="lg:col-span-2">
+              <WorkflowGuide />
+            </div>
+            <div className="lg:col-span-1">
+              <QuickAnalytics />
+            </div>
           </div>
 
           {/* Main Content */}

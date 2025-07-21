@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { prisma } from '../../prisma/prisma';
 import { SquareWebhookPayload } from '../../types/api';
 import { Square } from 'square';
+import { webhookRateLimit } from '../../middleware/rateLimiting';
 
 interface SquareWebhookRequest extends FastifyRequest {
   rawBody?: string;
@@ -11,6 +12,7 @@ interface SquareWebhookRequest extends FastifyRequest {
 const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /webhooks/square - Handle Square webhook events
   fastify.post('/square', {
+    preHandler: webhookRateLimit(),
     config: {
       rawBody: true // Need raw body for signature verification
     },
@@ -69,6 +71,14 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
         case 'checkout.created':
         case 'checkout.updated':
           await handleCheckoutEvent(event.data as { object: { checkout: { id: string; status: string; order?: { reference_id?: string } } } });
+          break;
+          
+        case 'booking.created':
+          await handleBookingCreated(event.data as { object: { booking: Square.Booking } });
+          break;
+          
+        case 'booking.updated':
+          await handleBookingUpdated(event.data as { object: { booking: Square.Booking } });
           break;
           
         default:
@@ -211,6 +221,118 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
       });
     } catch (error) {
       fastify.log.error('Error handling checkout event:', error);
+    }
+  }
+  
+  async function handleBookingCreated(data: { object: { booking: Square.Booking } }) {
+    const booking = data.object.booking;
+    try {
+      // Find the appointment by Square ID
+      const appointment = await prisma.appointment.findUnique({
+        where: { squareId: booking.id },
+        include: { customer: true }
+      });
+      
+      if (appointment) {
+        // Update appointment to track that Square has created the booking
+        await prisma.appointment.update({
+          where: { id: appointment.id },
+          data: {
+            status: 'scheduled', // Update status to scheduled
+            updatedAt: new Date()
+          }
+        });
+        
+        // Create audit log for booking creation
+        await prisma.auditLog.create({
+          data: {
+            action: 'booking_created_webhook',
+            resource: 'appointment',
+            resourceId: appointment.id,
+            resourceType: 'appointment',
+            details: {
+              squareBookingId: booking.id,
+              customerName: appointment.customer?.name,
+              startAt: booking.startAt,
+              status: booking.status,
+              // Square automatically sends notifications at this point
+              notificationsSent: true,
+              notificationType: 'square_automatic'
+            }
+          }
+        });
+        
+        fastify.log.info(`Square booking created and notifications sent for appointment ${appointment.id}`);
+      }
+    } catch (error) {
+      fastify.log.error('Error handling booking created event:', error);
+    }
+  }
+  
+  async function handleBookingUpdated(data: { object: { booking: Square.Booking } }) {
+    const booking = data.object.booking;
+    try {
+      // Find the appointment by Square ID
+      const appointment = await prisma.appointment.findUnique({
+        where: { squareId: booking.id },
+        include: { customer: true }
+      });
+      
+      if (appointment) {
+        // Map Square booking status to our appointment status
+        let appointmentStatus = appointment.status;
+        if (booking.status === 'CANCELLED') {
+          appointmentStatus = 'cancelled';
+        } else if (booking.status === 'ACCEPTED') {
+          appointmentStatus = 'confirmed';
+        } else if (booking.status === 'NO_SHOW') {
+          appointmentStatus = 'no_show';
+        }
+        
+        // Update appointment with new status and time if changed
+        const updateData: any = {
+          status: appointmentStatus,
+          updatedAt: new Date()
+        };
+        
+        // Update start time if it changed
+        if (booking.startAt && new Date(booking.startAt).getTime() !== appointment.startTime?.getTime()) {
+          updateData.startTime = new Date(booking.startAt);
+          // Calculate new end time based on duration
+          if (appointment.duration) {
+            updateData.endTime = new Date(new Date(booking.startAt).getTime() + appointment.duration * 60000);
+          }
+        }
+        
+        await prisma.appointment.update({
+          where: { id: appointment.id },
+          data: updateData
+        });
+        
+        // Create audit log for booking update
+        await prisma.auditLog.create({
+          data: {
+            action: 'booking_updated_webhook',
+            resource: 'appointment',
+            resourceId: appointment.id,
+            resourceType: 'appointment',
+            details: {
+              squareBookingId: booking.id,
+              customerName: appointment.customer?.name,
+              newStatus: booking.status,
+              startAt: booking.startAt,
+              previousStartTime: appointment.startTime,
+              // Square automatically sends update notifications
+              updateNotificationSent: true,
+              notificationType: 'square_automatic'
+            }
+          }
+        });
+        
+        fastify.log.info(`Square booking updated for appointment ${appointment.id}, status: ${booking.status}`);
+      }
+    } catch (error) {
+      fastify.log.error('Error handling booking updated event:', error);
     }
   }
 };

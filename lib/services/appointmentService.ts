@@ -291,6 +291,54 @@ export class AppointmentService {
     return appointment;
   }
   
+  /**
+   * Get notification status for an appointment
+   * Checks if Square notifications are enabled and retrieves communication history
+   */
+  async getNotificationStatus(id: string): Promise<{
+    squareNotificationsEnabled: boolean;
+    communicationHistory: Array<{
+      id: string;
+      type: string;
+      sentAt: Date;
+      details: any;
+    }>;
+  }> {
+    const appointment = await this.findById(id);
+    
+    // Check if Square notifications are enabled (appointment has squareId)
+    const squareNotificationsEnabled = !!appointment.squareId;
+    
+    // Get communication history from audit logs
+    const communicationLogs = await prisma.auditLog.findMany({
+      where: {
+        resourceId: id,
+        action: {
+          in: [
+            'appointment_confirmation',
+            'appointment_reminder',
+            'aftercare_instructions',
+            'booking_created_webhook',
+            'booking_updated_webhook'
+          ]
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    const communicationHistory = communicationLogs.map(log => ({
+      id: log.id,
+      type: log.action,
+      sentAt: log.createdAt,
+      details: log.details
+    }));
+    
+    return {
+      squareNotificationsEnabled,
+      communicationHistory
+    };
+  }
+  
   async list(filters: AppointmentFilters, page: number = 1, limit: number = 20) {
     const where: Prisma.AppointmentWhereInput = {};
     

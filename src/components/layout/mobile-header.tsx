@@ -58,10 +58,10 @@ export function MobileHeader({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) {
       data-testid="mobile-header"
     >
       {/* Ornamental top border */}
-      <div className="absolute top-0 left-0 w-full h-[0.5px] bg-white"></div>
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent"></div>
       
-      <div ref={menuRef} className="container mx-auto px-4 pt-20 pb-8 flex flex-col h-full">
-        <nav className="flex flex-col space-y-5 items-center text-center">
+      <div ref={menuRef} className="container mx-auto px-6 pt-20 pb-8 flex flex-col h-full">
+        <nav className="flex flex-col space-y-6 items-center text-center">
           {[
             { name: "Home", path: "/" },
             { name: "Artists", path: "/artists" },
@@ -73,31 +73,31 @@ export function MobileHeader({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) {
             <Link 
               key={item.name} 
               href={item.path}
-              className="font-heading text-xl text-[#080808] hover:text-[#C9A449] transition-colors duration-300 relative group"
+              className="font-heading text-xl text-obsidian hover:text-gold transition-colors duration-300 relative group"
               onClick={() => setIsMenuOpen(false)}
             >
               {item.name}
               {/* Subtle decorative element */}
-              <div className="absolute -bottom-1 left-1/2 w-0 h-[1px] bg-[#C9A449] group-hover:w-full transition-all duration-300 -translate-x-1/2"></div>
+              <div className="absolute -bottom-1 left-1/2 w-0 h-px bg-gold group-hover:w-full transition-all duration-300 -translate-x-1/2"></div>
             </Link>
           ))}
           
           {/* Mobile booking button */}
           <Link 
             href="/tattooRequest"
-            className="font-body text-[#080808] text-sm tracking-widest uppercase mt-4 px-6 py-3 border border-[#C9A449]/30 hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 relative overflow-hidden"
+            className="font-body text-obsidian text-sm tracking-[0.15em] uppercase mt-6 px-6 py-3 border border-gold/30 hover:bg-gold/10 hover:border-gold transition-all duration-300 relative overflow-hidden"
             onClick={() => setIsMenuOpen(false)}
           >
             <span className="relative z-10">Book a Consultation</span>
-            <div className="absolute inset-0 bg-gradient-to-r from-[#C9A449]/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-gold/5 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
           </Link>
         </nav>
 
         {/* Ornamental divider */}
         <div className="my-8 flex items-center justify-center">
-          <div className="w-16 h-[0.5px] bg-gradient-to-r from-transparent to-[#C9A449]/40"></div>
-          <div className="mx-4 w-2 h-2 border border-[#C9A449]/50 rotate-45"></div>
-          <div className="w-16 h-[0.5px] bg-gradient-to-l from-transparent to-[#C9A449]/40"></div>
+          <div className="w-16 h-px bg-gradient-to-r from-transparent to-gold/40"></div>
+          <div className="mx-4 w-2 h-2 border border-gold/50 rotate-45"></div>
+          <div className="w-16 h-px bg-gradient-to-l from-transparent to-gold/40"></div>
         </div>
 
         {/* Close Button */}

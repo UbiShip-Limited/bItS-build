@@ -3,6 +3,7 @@ import { UserService, CreateUserData, UpdateUserData } from '../services/userSer
 import { authenticate, authorize } from '../middleware/auth';
 import { UserRole, canManageUsers } from '../types/auth';
 import { ValidationError, NotFoundError } from '../services/errors';
+import { readRateLimit, writeRateLimit } from '../middleware/rateLimiting';
 
 const userService = new UserService();
 
@@ -19,7 +20,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
   
   // GET /users/me - Get current user profile
   fastify.get('/me', {
-    preHandler: [authenticate, authorize(['artist', 'assistant', 'admin'] as UserRole[])]
+    preHandler: [authenticate, authorize(['artist', 'assistant', 'admin'] as UserRole[]), readRateLimit()]
   }, async (request, reply) => {
     try {
       const user = request.user;
@@ -46,7 +47,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /users - List all users (admin only)
   fastify.get('/', {
-    preHandler: [authenticate, authorize(['admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['admin'] as UserRole[]), readRateLimit()],
     schema: {
       querystring: {
         type: 'object',
@@ -79,7 +80,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /users/:id - Get user by ID (admin only)
   fastify.get('/:id', {
-    preHandler: [authenticate, authorize(['admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['admin'] as UserRole[]), readRateLimit()],
     schema: {
       params: {
         type: 'object',
@@ -124,7 +125,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /users - Create new user (admin only)
   fastify.post('/', {
-    preHandler: [authenticate, authorize(['admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['admin'] as UserRole[]), writeRateLimit()],
     schema: {
       body: {
         type: 'object',
@@ -186,7 +187,7 @@ const userRoutes: FastifyPluginAsync = async (fastify) => {
 
   // PUT /users/:id - Update user (admin only)
   fastify.put('/:id', {
-    preHandler: [authenticate, authorize(['admin'] as UserRole[])],
+    preHandler: [authenticate, authorize(['admin'] as UserRole[]), writeRateLimit()],
     schema: {
       params: {
         type: 'object',

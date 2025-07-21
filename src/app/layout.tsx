@@ -14,11 +14,7 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  // Mobile-specific optimizations
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#C9A449" },
-    { media: "(prefers-color-scheme: dark)", color: "#080808" },
-  ],
+  metadataBase: new URL('https://bowenislandtattoo.com'),
   // App-like experience on mobile
   appleWebApp: {
     capable: true,
@@ -100,22 +96,6 @@ export default function RootLayout({
         
         {/* Prevent phone number detection */}
         <meta name="format-detection" content="telephone=no" />
-        
-        {/* Optimize font loading for mobile */}
-        <link 
-          rel="preload" 
-          href="/fonts/heading-font.woff2" 
-          as="font" 
-          type="font/woff2" 
-          crossOrigin=""
-        />
-        <link 
-          rel="preload" 
-          href="/fonts/body-font.woff2" 
-          as="font" 
-          type="font/woff2" 
-          crossOrigin=""
-        />
       </head>
       <body 
         className="antialiased bg-[#080808] text-white selection:bg-[#C9A449]/20 selection:text-[#C9A449]"

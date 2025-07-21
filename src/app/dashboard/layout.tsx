@@ -15,7 +15,9 @@ import {
   LogOut,
   Bell,
   ChevronLeft,
-  Loader2
+  Loader2,
+  BarChart3,
+  Clock
 } from 'lucide-react';
 import NotificationCenter from '@/src/components/dashboard/NotificationCenter';
 
@@ -62,6 +64,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       exact: true
     },
     { 
+      href: '/dashboard/analytics', 
+      icon: BarChart3, 
+      label: 'Analytics',
+      badge: 'NEW',
+      badgeColor: 'badge-success'
+    },
+    { 
       href: '/dashboard/appointments', 
       icon: Calendar, 
       label: 'Appointments',
@@ -83,6 +92,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       href: '/dashboard/payments', 
       icon: CreditCard, 
       label: 'Payments' 
+    },
+    { 
+      href: '/dashboard/notifications', 
+      icon: Bell, 
+      label: 'Notifications' 
+    },
+    { 
+      href: '/dashboard/business-hours', 
+      icon: Clock, 
+      label: 'Business Hours' 
     },
     { 
       href: '/dashboard/settings', 
@@ -298,11 +317,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="flex items-center gap-3">
                 <NotificationCenter userId="admin-user" />
                 <button className="btn btn-ghost btn-sm text-gray-400 hover:text-white 
-                                 border border-transparent hover:border-[#C9A449]/20">
+                                 border border-transparent hover:border-gold/20 tracking-wider uppercase">
                   Quick Add
                 </button>
-                <button className="btn btn-sm bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] 
-                                 border-0 font-medium shadow-lg shadow-[#C9A449]/20">
+                <button className="btn btn-sm bg-gold hover:bg-gold/90 text-obsidian 
+                                 border-0 font-medium shadow-elegant tracking-wider uppercase">
                   New Appointment
                 </button>
               </div>

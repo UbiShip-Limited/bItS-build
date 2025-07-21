@@ -65,36 +65,36 @@ const TattooRequestForm: React.FC = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto mb-20 relative">
+    <div className="max-w-4xl mx-auto mb-24 relative">
       {/* Ornamental background for form */}
-      <div className="absolute inset-0 bg-[#080808]/95 backdrop-blur-sm rounded-lg border border-[#C9A449]/30 shadow-2xl"></div>
-      <div className="absolute inset-0 bg-gradient-to-br from-[#C9A449]/5 via-transparent to-[#C9A449]/10 rounded-lg"></div>
+      <div className="absolute inset-0 bg-obsidian/95 backdrop-blur-sm rounded-lg border border-gold/30 shadow-elegant"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-gold/10 rounded-lg"></div>
       
       <form onSubmit={handleSubmit} className="relative z-10 overflow-hidden rounded-lg">
-        <div className="p-6 sm:p-8 md:p-10">
+        <div className="p-8 sm:p-10 md:p-12">
           {/* Form Header with ornamental styling */}
-          <div className="text-center mb-10">
-            <div className="flex items-center justify-center mb-4">
-              <div className="w-12 sm:w-16 h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/60 to-[#C9A449]/40"></div>
-              <div className="mx-3 sm:mx-4 flex items-center justify-center w-5 h-5">
-                <div className="w-3 h-3 border border-[#C9A449]/60 rotate-45"></div>
-                <div className="absolute w-1.5 h-1.5 bg-[#C9A449]/20 rotate-45"></div>
-              </div>
-              <div className="w-12 sm:w-16 h-[0.5px] bg-gradient-to-l from-transparent via-[#C9A449]/60 to-[#C9A449]/40"></div>
-            </div>
-            
-            <h2 className="font-heading text-2xl sm:text-3xl mb-3 text-white tracking-wide">Tattoo Request Form</h2>
-            
+          <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-6">
-              <div className="w-16 sm:w-20 h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/60 to-[#C9A449]/40"></div>
-              <div className="mx-3 sm:mx-4 relative flex items-center justify-center">
-                <span className="text-[#C9A449]/80 text-xs z-10">✦</span>
-                <span className="absolute transform scale-125 text-[#C9A449]/20 text-xs">✦</span>
+              <div className="w-12 sm:w-16 h-px bg-gradient-to-r from-transparent via-gold/60 to-gold/40"></div>
+              <div className="mx-3 sm:mx-4 flex items-center justify-center w-5 h-5">
+                <div className="w-3 h-3 border border-gold/60 rotate-45"></div>
+                <div className="absolute w-1.5 h-1.5 bg-gold/20 rotate-45"></div>
               </div>
-              <div className="w-16 sm:w-20 h-[0.5px] bg-gradient-to-l from-transparent via-[#C9A449]/60 to-[#C9A449]/40"></div>
+              <div className="w-12 sm:w-16 h-px bg-gradient-to-l from-transparent via-gold/60 to-gold/40"></div>
             </div>
             
-            <p className="text-white/70 mb-10 max-w-2xl mx-auto font-body leading-relaxed">
+            <h2 className="font-heading text-2xl sm:text-3xl mb-4 text-white tracking-wide uppercase">Tattoo Request Form</h2>
+            
+            <div className="flex items-center justify-center mb-8">
+              <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-gold/60 to-gold/40"></div>
+              <div className="mx-3 sm:mx-4 relative flex items-center justify-center">
+                <span className="text-gold/80 text-xs z-10">✦</span>
+                <span className="absolute transform scale-125 text-gold/20 text-xs">✦</span>
+              </div>
+              <div className="w-16 sm:w-20 h-px bg-gradient-to-l from-transparent via-gold/60 to-gold/40"></div>
+            </div>
+            
+            <p className="text-white/70 mb-12 max-w-2xl mx-auto font-body leading-relaxed px-4">
               Fill out the form below to request a custom tattoo design. Our artists will review your request and get back to you within 2-3 business days.
             </p>
           </div>

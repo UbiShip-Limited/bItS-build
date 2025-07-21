@@ -225,6 +225,21 @@ export class AvailabilityService {
   }
 
   /**
+   * Update business hours from database
+   * This method should be called when business hours are updated via API
+   */
+  async updateBusinessHours(businessHours?: BusinessHours[]): Promise<void> {
+    if (businessHours) {
+      await this.businessHoursManager.updateBusinessHours(businessHours);
+      // Re-initialize dependent services with new business hours
+      this.squareProfilesManager = new SquareProfilesManager(
+        this.businessHoursManager.getAllBusinessHours(),
+        this.appointmentRepository
+      );
+    }
+  }
+
+  /**
    * Check if business is open on a specific day
    */
   isOpenOnDay(dayOfWeek: number): boolean {

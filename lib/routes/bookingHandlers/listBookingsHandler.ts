@@ -52,8 +52,11 @@ export async function listBookingsHandler(request: FastifyRequest<{ Querystring:
   const skip = (page - 1) * limit;
   const where: WhereClause = {};
 
-  if (startDate) where.startTime = { gte: new Date(startDate) };
-  if (endDate) where.endTime = { lte: new Date(endDate) }; // Note: Original code used endTime, but filter was on startTime. This might be a bug or intentional. Keeping as endTime for now.
+  if (startDate || endDate) {
+    where.startTime = {};
+    if (startDate) where.startTime.gte = new Date(startDate);
+    if (endDate) where.startTime.lte = new Date(endDate);
+  }
   if (status) where.status = status;
   if (type) where.type = type;
   if (customerId) where.customerId = customerId;

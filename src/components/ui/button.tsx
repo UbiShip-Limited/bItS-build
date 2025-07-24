@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { cn } from "@/src/lib/utils/cn";
 
 type ButtonProps = {
   href?: string;
@@ -12,6 +13,7 @@ type ButtonProps = {
   onClick?: (e: React.MouseEvent<HTMLButtonElement | HTMLAnchorElement>) => void;
   children: React.ReactNode;
   icon?: React.ReactNode;
+  type?: "button" | "submit" | "reset";
 };
 
 export function Button({
@@ -27,26 +29,26 @@ export function Button({
 }: ButtonProps) {
   // Base classes for all button variants with refined Bowen Island styling
   const baseClasses = cn(
-    "font-body tracking-[0.15em] uppercase transition-all duration-300 relative overflow-hidden group inline-flex items-center justify-center",
+    "font-body tracking-[0.02em] uppercase transition-all duration-800 ease-smooth relative overflow-hidden group inline-flex items-center justify-center rounded-2xl",
     {
-      // Primary - Gold background
-      "bg-gold text-obsidian hover:bg-gold/90 border border-gold shadow-subtle hover:shadow-elegant": variant === "primary",
-      // Secondary - Obsidian background
-      "bg-obsidian text-white hover:bg-obsidian/90 border border-obsidian shadow-subtle": variant === "secondary",
-      // Outline - Transparent with border
-      "bg-transparent text-obsidian hover:bg-gold/5 border border-obsidian/20 hover:border-gold": variant === "outline",
-      // Ghost - No border
-      "bg-transparent text-obsidian hover:text-gold border-0 p-0": variant === "ghost",
-      // Link - Underlined text
-      "bg-transparent text-gold hover:text-gold/80 border-0 underline underline-offset-4 decoration-1 p-0": variant === "link",
+      // Primary - Refined gold background
+      "bg-gold-500/90 text-obsidian hover:bg-gold-500 border border-gold-500/80 shadow-refined hover:shadow-refined-lg backdrop-blur-sm": variant === "primary",
+      // Secondary - Refined obsidian background
+      "bg-obsidian/90 text-white hover:bg-obsidian border border-obsidian/80 shadow-refined hover:shadow-refined-lg backdrop-blur-sm": variant === "secondary",
+      // Outline - Refined transparent with border
+      "bg-transparent text-gold-500/90 hover:bg-gold-500/10 border border-gold-500/30 hover:border-gold-500/50 hover:text-gold-500 backdrop-blur-sm": variant === "outline",
+      // Ghost - No border with subtle hover
+      "bg-transparent text-obsidian/90 hover:text-gold-500/80 border-0 p-0 hover:bg-gold-500/5 rounded-xl": variant === "ghost",
+      // Link - Refined underlined text
+      "bg-transparent text-gold-500/90 hover:text-gold-500 border-0 underline underline-offset-4 decoration-1 p-0": variant === "link",
       
-      // Sizes with consistent padding
-      "px-4 py-2 text-xs": size === "sm" && variant !== "ghost" && variant !== "link",
-      "px-6 py-2.5 text-sm": size === "md" && variant !== "ghost" && variant !== "link",
-      "px-8 py-3 text-base": size === "lg" && variant !== "ghost" && variant !== "link",
+      // Refined sizes with better padding
+      "px-6 py-3 text-xs min-h-[40px]": size === "sm" && variant !== "ghost" && variant !== "link",
+      "px-8 py-3.5 text-sm min-h-[48px]": size === "md" && variant !== "ghost" && variant !== "link",
+      "px-10 py-4 text-base min-h-[56px]": size === "lg" && variant !== "ghost" && variant !== "link",
       
-      // Disabled state
-      "opacity-50 cursor-not-allowed": isDisabled,
+      // Refined disabled state
+      "opacity-30 cursor-not-allowed hover:bg-current hover:border-current": isDisabled,
     },
     className
   );
@@ -57,9 +59,9 @@ export function Button({
       <Link href={href} className={baseClasses} onClick={onClick}>
         {icon && <span className="mr-2 inline-flex relative z-10">{icon}</span>}
         <span className="relative z-10">{children}</span>
-        {/* Subtle hover effect overlay */}
+        {/* Refined hover effect overlay */}
         {(variant === "primary" || variant === "secondary" || variant === "outline") && (
-          <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-800" />
         )}
       </Link>
     );
@@ -75,26 +77,11 @@ export function Button({
     >
       {icon && <span className="mr-2 inline-flex relative z-10">{icon}</span>}
       <span className="relative z-10">{children}</span>
-      {/* Subtle hover effect overlay */}
+      {/* Refined hover effect overlay */}
       {(variant === "primary" || variant === "secondary" || variant === "outline") && (
-        <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-600" />
       )}
     </button>
   );
 }
 
-// Utility function for class names if it doesn't exist elsewhere
-function cn(...classes: (string | boolean | undefined | { [key: string]: boolean })[]): string {
-  return classes
-    .filter(Boolean)
-    .map((c) => {
-      if (typeof c === "object") {
-        return Object.entries(c)
-          .filter(([, value]) => value)
-          .map(([key]) => key);
-      }
-      return c;
-    })
-    .flat()
-    .join(" ");
-}

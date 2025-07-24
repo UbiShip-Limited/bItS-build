@@ -27,8 +27,16 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "setup:admin": "tsx scripts/setup-admin.ts",
+    "seed:emails": "tsx scripts/seedEmailTemplates.ts",
+    "test:email": "tsx scripts/testEmailFlow.ts",
+    "check:users": "tsx scripts/checkUserRole.ts",
+    "update:user-role": "tsx scripts/updateUserRole.ts",
     "import:square": "tsx scripts/importSquareData.ts",
-    "update:cloudinary-artist": "tsx scripts/updateCloudinaryArtist.ts"
+    "import:square:enhanced": "tsx scripts/importSquareDataEnhanced.ts",
+    "import:payments:manual": "tsx scripts/importManualPayments.ts",
+    "update:cloudinary-artist": "tsx scripts/updateCloudinaryArtist.ts",
+    "sync:square-bookings": "tsx scripts/syncSquareBookings.ts",
+    "create:square-test-data": "tsx scripts/createSquareTestData.ts"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",
@@ -38,9 +46,12 @@
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
+    "@tabler/icons-react": "^3.34.1",
     "axios": "^1.9.0",
+    "chalk": "^5.4.1",
     "chart.js": "^4.5.0",
     "cloudinary": "^2.6.1",
+    "csv-parse": "^6.1.0",
     "date-fns": "^4.1.0",
     "fastify": "^4.28.1",
     "fastify-plugin": "^4.0.0",
@@ -53,6 +64,7 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.56.3",
     "react-icons": "^5.5.0",
+    "resend": "^4.7.0",
     "square": "^42.2.0",
     "uuid": "^11.1.0",
     "zod": "^3.24.4"

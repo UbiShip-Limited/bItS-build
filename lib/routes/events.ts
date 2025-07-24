@@ -32,7 +32,16 @@ const eventsRoutes: FastifyPluginAsync = async (fastify) => {
     // Parse event types or use defaults
     const eventTypesList = eventTypes 
       ? eventTypes.split(',')
-      : ['appointment_created', 'payment_received', 'request_submitted'];
+      : [
+          'appointment_created', 
+          'payment_received', 
+          'request_submitted',
+          'request_reviewed',
+          'request_approved',
+          'request_rejected',
+          'appointment_approved',
+          'email_sent'
+        ];
 
     try {
       // Get initial events
@@ -58,9 +67,16 @@ const eventsRoutes: FastifyPluginAsync = async (fastify) => {
       // Send keep-alive ping every 30 seconds
       const keepAliveInterval = setInterval(() => {
         try {
-          reply.raw.write(': keep-alive\n\n');
+          // Check if connection is still alive before writing
+          if (!reply.raw.destroyed && !reply.raw.writableEnded) {
+            reply.raw.write(': keep-alive\n\n');
+          } else {
+            clearInterval(keepAliveInterval);
+            fastify.log.info(`SSE keep-alive stopped - connection closed for user ${userId}`);
+          }
         } catch (error) {
           clearInterval(keepAliveInterval);
+          fastify.log.warn(`SSE keep-alive write failed for user ${userId}:`, error.message);
         }
       }, 30000);
 
@@ -72,7 +88,27 @@ const eventsRoutes: FastifyPluginAsync = async (fastify) => {
 
       request.raw.on('error', (error) => {
         clearInterval(keepAliveInterval);
-        fastify.log.error(`SSE connection error for user ${userId}:`, error);
+        const errorMessage = error?.message || 'Unknown error';
+        const errorCode = error?.code || 'UNKNOWN';
+        
+        // Log specific error types with more context
+        if (errorCode === 'ECONNRESET') {
+          fastify.log.warn(`SSE connection reset by client for user ${userId}`);
+        } else if (errorCode === 'EPIPE') {
+          fastify.log.warn(`SSE broken pipe for user ${userId} - client disconnected`);
+        } else {
+          fastify.log.error(`SSE connection error for user ${userId}:`, {
+            code: errorCode,
+            message: errorMessage,
+            stack: error?.stack
+          });
+        }
+      });
+
+      // Handle response errors
+      reply.raw.on('error', (error) => {
+        clearInterval(keepAliveInterval);
+        fastify.log.error(`SSE response error for user ${userId}:`, error);
       });
 
       // Keep connection alive

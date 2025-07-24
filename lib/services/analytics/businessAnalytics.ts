@@ -47,10 +47,17 @@ export interface PredictiveMetrics {
  * Service for business analytics, growth tracking, and predictive metrics
  */
 export class BusinessAnalyticsService {
-  private revenueService = new RevenueAnalyticsService();
-  private appointmentService = new AppointmentAnalyticsService();
-  private customerService = new CustomerAnalyticsService();
-  private requestService = new RequestAnalyticsService();
+  private revenueService: RevenueAnalyticsService;
+  private appointmentService: AppointmentAnalyticsService;
+  private customerService: CustomerAnalyticsService;
+  private requestService: RequestAnalyticsService;
+
+  constructor(prisma: any) {
+    this.revenueService = new RevenueAnalyticsService(prisma);
+    this.appointmentService = new AppointmentAnalyticsService(prisma);
+    this.customerService = new CustomerAnalyticsService(prisma);
+    this.requestService = new RequestAnalyticsService(prisma);
+  }
 
   /**
    * Get comprehensive business metrics

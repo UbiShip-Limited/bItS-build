@@ -1,6 +1,8 @@
 interface Appointment {
   id: string;
   clientName: string;
+  clientEmail?: string;
+  clientPhone?: string;
   date: string;
   time: string;
   service: string;
@@ -26,10 +28,10 @@ export default function AppointmentsTable({ appointments }: AppointmentsTablePro
       <table className="w-full">
         <thead>
           <tr>
-            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-wider">Time</th>
-            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-wider">Client</th>
-            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-wider">Service</th>
-            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-wider">Status</th>
+            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-[0.02em]">Time</th>
+            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-[0.02em]">Client</th>
+            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-[0.02em]">Service</th>
+            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-[0.02em]">Status</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[#1a1a1a]">
@@ -43,7 +45,14 @@ export default function AppointmentsTable({ appointments }: AppointmentsTablePro
             appointments.map((appointment, index) => (
               <tr key={appointment.id} className="transition-colors hover:bg-[#1a1a1a]/50">
                 <td className="px-5 py-4 text-white font-medium">{appointment.time}</td>
-                <td className="px-5 py-4 text-gray-300">{appointment.clientName}</td>
+                <td className="px-5 py-4">
+                  <div>
+                    <div className="text-gray-300 font-medium">{appointment.clientName}</div>
+                    {appointment.clientPhone && (
+                      <div className="text-gray-500 text-sm">{appointment.clientPhone}</div>
+                    )}
+                  </div>
+                </td>
                 <td className="px-5 py-4 text-gray-300">{appointment.service}</td>
                 <td className="px-5 py-4">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(appointment.status)}`}>

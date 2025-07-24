@@ -3,6 +3,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { Button } from "@/src/components/ui/button";
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
+import { GAEvents } from '@/src/lib/analytics/ga-events';
 
 interface CtaSectionProps {
   title?: string;
@@ -16,13 +19,13 @@ interface CtaSectionProps {
 }
 
 export function CtaSection({ 
-  title = "YOUR STORY AWAITS",
-  description = "Discover our complete portfolio and discuss your custom design during a private consultation. Your vision becomes timeless artistry through our master craftspeople.",
+  title = "Ready for your next tattoo?",
+  description = "Experience the difference of professional tattooing in a private island setting. We work with clients who value quality craftsmanship and are ready to invest in artwork that will last a lifetime.",
   primaryButtonText = "Book Consultation",
   primaryButtonHref = "/tattooRequest",
   secondaryButtonText = "Contact Studio", 
   secondaryButtonHref = "/contact",
-  tagline = "Private sessions • Custom designs • Full portfolio review",
+  tagline = "Professional artists • Private studio • Quality focused",
   className = ""
 }: CtaSectionProps) {
   
@@ -61,7 +64,7 @@ export function CtaSection({
   }, [])
   
   return (
-    <div ref={sectionRef} className={`bg-[#080808] py-12 md:py-20 px-4 sm:px-8 md:px-8 lg:px-16 ${className}`}>
+    <div ref={sectionRef} className={`bg-gradient-to-b from-obsidian via-[#0f0f0f] to-obsidian ${layout.sectionY.large} ${layout.padding.mobile} ${layout.padding.tablet} ${layout.padding.desktop} ${className}`}>
       <div className="container mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -69,24 +72,24 @@ export function CtaSection({
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          {/* Ornamental divider */}
-          <div className="flex items-center justify-center mb-6 md:mb-8">
-            <div className={`${isMobile ? 'w-16' : 'w-24'} h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/60 to-transparent`}></div>
-            <div className={`mx-4 md:mx-6 ${isMobile ? 'w-2 h-2' : 'w-3 h-3'} border border-[#C9A449]/50 rotate-45 relative`}>
-              <div className="absolute inset-1 bg-[#C9A449]/30 rotate-45"></div>
+          {/* Refined ornamental divider */}
+          <div className="flex items-center justify-center mb-8 md:mb-10">
+            <div className={isMobile ? components.ornament.lineLong : `${components.ornament.lineLong} w-36`}></div>
+            <div className={`mx-6 md:mx-8 ${components.ornament.dot} relative ${isMobile ? '' : 'w-3 h-3'}`}>
+              <div className="absolute inset-0 bg-gold-500/10 rounded-full blur-md scale-[2]"></div>
             </div>
-            <div className={`${isMobile ? 'w-16' : 'w-24'} h-[0.5px] bg-gradient-to-l from-transparent via-[#C9A449]/60 to-transparent`}></div>
+            <div className={isMobile ? components.ornament.lineLong : `${components.ornament.lineLong} w-36`}></div>
           </div>
 
           <motion.h2 
             initial={{ opacity: 0, y: 15 }}
             animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className={`font-heading ${
+            className={`${
               isMobile 
-                ? 'text-2xl leading-tight' 
-                : 'text-3xl md:text-4xl lg:text-5xl'
-            } text-white mb-4 md:mb-6 tracking-wide px-2`}
+                ? `${typography.text2xl} ${typography.leadingTight}` 
+                : typography.h1
+            } ${colors.textPrimary} mb-6 md:mb-8 px-2`}
           >
             {title}
           </motion.h2>
@@ -95,10 +98,10 @@ export function CtaSection({
             initial={{ opacity: 0, y: 15 }}
             animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className={`text-white/80 max-w-2xl mx-auto font-body mb-6 md:mb-8 leading-relaxed ${
+            className={`${colors.textSecondary} max-w-2xl mx-auto mb-8 md:mb-10 ${
               isMobile 
-                ? 'text-base px-4' 
-                : 'text-lg'
+                ? `${typography.paragraph} px-4` 
+                : typography.paragraphLarge
             }`}
           >
             {description}
@@ -114,38 +117,35 @@ export function CtaSection({
                 : 'flex-col sm:flex-row gap-6'
             } justify-center items-center mb-6 md:mb-8 px-4`}
           >
-            <Link 
+            <Button 
               href={primaryButtonHref}
-              className={`group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 ${
-                isMobile 
-                  ? 'w-full px-8 py-4 text-sm' 
-                  : 'px-10 py-4 text-sm'
-              } font-body tracking-widest uppercase font-medium shadow-[0_8px_30px_rgba(201,164,73,0.2)] hover:shadow-[0_12px_40px_rgba(201,164,73,0.4)] transform hover:scale-105 active:scale-95 flex items-center justify-center min-h-[48px]`}
+              variant="outline"
+              size={isMobile ? "lg" : "lg"}
+              className={isMobile ? "w-full" : ""}
+              onClick={() => GAEvents.ctaButtonClicked(primaryButtonText)}
             >
-              <span className="relative z-10">{primaryButtonText}</span>
-              <div className="absolute inset-0 bg-[#C9A449]/5 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
-            </Link>
+              {primaryButtonText}
+            </Button>
             
-            <Link
+            <Button
               href={secondaryButtonHref}
-              className={`border border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white hover:border-white/40 transition-all duration-300 ${
-                isMobile 
-                  ? 'w-full px-8 py-4 text-sm' 
-                  : 'px-10 py-4 text-sm'
-              } font-body tracking-widest uppercase font-medium shadow-[0_8px_30px_rgba(255,255,255,0.1)] hover:shadow-[0_12px_40px_rgba(255,255,255,0.2)] transform hover:scale-105 active:scale-95 flex items-center justify-center min-h-[48px]`}
+              variant="secondary"
+              size={isMobile ? "lg" : "lg"}
+              className={isMobile ? "w-full" : ""}
+              onClick={() => GAEvents.ctaButtonClicked(secondaryButtonText)}
             >
               {secondaryButtonText}
-            </Link>
+            </Button>
           </motion.div>
 
           <motion.p 
             initial={{ opacity: 0, y: 15 }}
             animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className={`text-[#C9A449]/60 font-body italic ${
+            className={`${colors.textAccentMuted} italic ${typography.fontLight} ${
               isMobile 
-                ? 'text-xs px-2' 
-                : 'text-sm'
+                ? `${typography.textXs} px-2` 
+                : typography.textSm
             }`}
           >
             {tagline}

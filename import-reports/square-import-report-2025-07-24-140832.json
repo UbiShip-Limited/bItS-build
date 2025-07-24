@@ -1,0 +1,32 @@
+{
+  "startTime": "2025-07-24T21:08:31.721Z",
+  "options": {
+    "dryRun": true,
+    "importCustomers": true,
+    "importPayments": true,
+    "importAppointments": false,
+    "batchSize": 100
+  },
+  "results": {
+    "customers": {
+      "imported": 0,
+      "skipped": 0,
+      "errors": 0,
+      "details": []
+    },
+    "payments": {
+      "imported": 0,
+      "skipped": 0,
+      "errors": 0,
+      "details": []
+    },
+    "appointments": {
+      "imported": 0,
+      "skipped": 0,
+      "errors": 0,
+      "details": []
+    }
+  },
+  "errors": [],
+  "endTime": "2025-07-24T21:08:32.148Z"
+}

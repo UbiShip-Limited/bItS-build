@@ -1,5 +1,5 @@
-import { prisma } from '../../prisma/prisma';
 import { AnalyticsUtils, DateRange } from './analyticsUtils';
+import type { PrismaClient } from '@prisma/client';
 
 export interface RevenueMetrics {
   today: { amount: number; trend: number; currency: string };
@@ -33,11 +33,13 @@ export interface RevenueBreakdown {
  * Service for revenue analytics and calculations
  */
 export class RevenueAnalyticsService {
+  constructor(private prisma: PrismaClient) {}
+
   /**
    * Get revenue for a specific period
    */
   async getRevenueForPeriod(start: Date, end: Date): Promise<number> {
-    const result = await prisma.payment.aggregate({
+    const result = await this.prisma.payment.aggregate({
       where: {
         status: 'completed',
         createdAt: { gte: start, lte: end }
@@ -102,7 +104,7 @@ export class RevenueAnalyticsService {
   async getRevenueBreakdown(period: string = 'month'): Promise<RevenueBreakdown> {
     const dateRange = AnalyticsUtils.getDateRange(period, new Date());
     
-    const payments = await prisma.payment.findMany({
+    const payments = await this.prisma.payment.findMany({
       where: {
         status: 'completed',
         createdAt: {
@@ -174,7 +176,7 @@ export class RevenueAnalyticsService {
     touchups: number;
     deposits: number;
   }> {
-    const payments = await prisma.payment.findMany({
+    const payments = await this.prisma.payment.findMany({
       where: {
         status: 'completed',
         createdAt: { gte: start, lte: end }

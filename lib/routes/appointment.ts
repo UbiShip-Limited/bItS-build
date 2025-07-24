@@ -348,6 +348,56 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
     };
   });
   
+  // POST /appointments/bulk-update - Bulk update appointments
+  fastify.post('/bulk-update', {
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[]), writeRateLimit()],
+    schema: {
+      body: {
+        type: 'object',
+        required: ['appointmentIds', 'updates'],
+        properties: {
+          appointmentIds: { 
+            type: 'array',
+            items: { type: 'string' },
+            minItems: 1
+          },
+          updates: {
+            type: 'object',
+            properties: {
+              status: { 
+                type: 'string', 
+                enum: Object.values(BookingStatus)
+              }
+            }
+          }
+        }
+      }
+    }
+  }, async (request) => {
+    const { appointmentIds, updates } = request.body as { 
+      appointmentIds: string[]; 
+      updates: { status?: BookingStatus } 
+    };
+    
+    try {
+      const results = await appointmentService.bulkUpdateStatus(
+        appointmentIds,
+        updates.status!,
+        request.user?.id
+      );
+      
+      return {
+        success: true,
+        updated: results.updated,
+        failed: results.failed,
+        message: `Successfully updated ${results.updated} appointments`
+      };
+    } catch (error) {
+      request.log.error('Bulk update failed:', error);
+      throw error;
+    }
+  });
+
   // POST /appointments/anonymous - Create anonymous appointment (no auth required)
   fastify.post('/anonymous', {
     preHandler: writeRateLimit(),

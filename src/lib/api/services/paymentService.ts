@@ -166,7 +166,7 @@ class PaymentService {
     queryParams.append('limit', limit.toString());
     
     // Create the request promise with better error handling
-    const requestPromise = this.client.get(`/payments?${queryParams.toString()}`)
+    const requestPromise = this.client.get(`${this.basePath}?${queryParams.toString()}`)
       .then((response: any) => {
         const result = {
           success: true,
@@ -240,7 +240,7 @@ class PaymentService {
   async testPaymentRoutes(): Promise<{ available: boolean; message: string }> {
     try {
       // Test with a simple call to see if the route exists
-      const response = await this.client.get('/payments?limit=1');
+      const response = await this.client.get(`${this.basePath}?limit=1`);
       return {
         available: true,
         message: 'Payment routes are working correctly'
@@ -324,7 +324,7 @@ class PaymentService {
     data: PaymentLink[];
     cursor?: string;
   }> {
-    return this.client.get('/payments/links', { params });
+    return this.client.get(`${this.basePath}/links`, { params });
   }
 
   /**
@@ -343,7 +343,7 @@ class PaymentService {
    * Delete a payment link
    */
   async deletePaymentLink(id: string): Promise<{ success: boolean; message: string }> {
-    return this.client.delete(`/payments/links/${id}`);
+    return this.client.delete(`${this.basePath}/links/${id}`);
   }
 
   /**

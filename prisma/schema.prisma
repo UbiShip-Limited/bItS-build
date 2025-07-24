@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/.prisma/client"
@@ -14,124 +8,115 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// schema.prisma // This comment can be removed or kept, it's just a marker
-// The generator client and datasource db blocks below were duplicates and have been removed.
-
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String?
-  role      String   @default("artist") // artist, assistant, admin
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @map("updated_at")
-  
+  id           String        @id @default(uuid())
+  email        String        @unique
+  password     String?
+  role         String        @default("artist")
+  createdAt    DateTime      @default(now()) @map("created_at")
+  updatedAt    DateTime      @default(now()) @map("updated_at")
   appointments Appointment[]
-  
+
   @@map("users")
 }
 
 model Customer {
-  id        String   @id @default(uuid())
-  name      String
-  email     String?  @unique
-  phone     String?
-  notes     String?
-  squareId  String?  @unique @map("square_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @map("updated_at")
-  
-  appointments    Appointment[]
-  tattooRequests  TattooRequest[]
-  payments        Payment[]
-  paymentLinks    PaymentLink[]
+  id               String            @id @default(uuid())
+  name             String
+  email            String?           @unique
+  phone            String?
+  notes            String?
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @default(now()) @map("updated_at")
+  squareId         String?           @unique @map("square_id")
+  appointments     Appointment[]
   checkoutSessions CheckoutSession[]
-  
+  paymentLinks     PaymentLink[]
+  payments         Payment[]
+  tattooRequests   TattooRequest[]
+
   @@map("customers")
 }
 
 model Appointment {
-  id              String    @id @default(uuid())
-  customerId      String?   @map("customer_id")
-  artistId        String?   @map("artist_id")
+  id              String         @id @default(uuid())
+  customerId      String?        @map("customer_id")
+  artistId        String?        @map("artist_id")
   date            DateTime?
-  startTime       DateTime? @map("start_time")
-  endTime         DateTime? @map("end_time")
-  duration        Int?      // Duration in minutes
-  status          String    @default("pending") // pending, scheduled, confirmed, completed, cancelled, no_show
-  type            String?   // consultation, drawing_consultation, tattoo_session
+  duration        Int?
+  status          String         @default("pending")
   notes           String?
-  priceQuote      Float?    @map("price_quote")
-  squareId        String?   @unique @map("square_id")
-  paymentId       String?   @map("payment_id")
-  tattooRequestId String?   @map("tattoo_request_id")
-  contactEmail    String?   @map("contact_email")
-  contactPhone    String?   @map("contact_phone")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @default(now()) @map("updated_at")
-  
-  customer      Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  artist        User?          @relation(fields: [artistId], references: [id], onDelete: SetNull)
-  payment       Payment?       @relation(fields: [paymentId], references: [id], onDelete: SetNull)
-  tattooRequest TattooRequest? @relation(fields: [tattooRequestId], references: [id], onDelete: SetNull)
-  invoices      Invoice[]
-  
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @default(now()) @map("updated_at")
+  endTime         DateTime?      @map("end_time")
+  paymentId       String?        @map("payment_id")
+  priceQuote      Float?         @map("price_quote")
+  squareId        String?        @unique @map("square_id")
+  startTime       DateTime?      @map("start_time")
+  tattooRequestId String?        @map("tattoo_request_id")
+  type            String?
+  contactEmail    String?        @map("contact_email")
+  contactPhone    String?        @map("contact_phone")
+  artist          User?          @relation(fields: [artistId], references: [id])
+  customer        Customer?      @relation(fields: [customerId], references: [id])
+  payment         Payment?       @relation(fields: [paymentId], references: [id])
+  tattooRequest   TattooRequest? @relation(fields: [tattooRequestId], references: [id])
+  invoices        Invoice[]
+
   @@map("appointments")
 }
 
 model TattooRequest {
-  id               String        @id @default(uuid())
-  customerId       String?       @map("customer_id")
-  contactEmail     String?       @map("contact_email")
-  contactPhone     String?       @map("contact_phone")
-  trackingToken    String?       @unique @map("tracking_token")
-  description      String
-  placement        String?
-  size             String?
-  colorPreference  String?       @map("color_preference")
-  style            String?
-  referenceImages  Json          @default("[]") @map("reference_images")
-  status           String        @default("new") // new, reviewed, approved, rejected, deposit_paid, in_progress, completed
-  depositPaid      Boolean       @default(false) @map("deposit_paid")
-  depositAmount    Float?        @map("deposit_amount")
-  finalAmount      Float?        @map("final_amount")
-  paymentId        String?       @map("payment_id")
-  createdAt        DateTime      @default(now()) @map("created_at")
-  updatedAt        DateTime      @default(now()) @map("updated_at")
-  purpose          String?       // new_tattoo, cover_up, touch_up, consultation
-  preferredArtist  String?       @map("preferred_artist")
-  timeframe        String?
-  contactPreference String?      @map("contact_preference") // email, phone, either
-  additionalNotes  String?       @map("additional_notes")
-  
-  customer         Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  payment          Payment?      @relation(fields: [paymentId], references: [id], onDelete: SetNull)
-  images           Image[]
-  appointments     Appointment[]
-  
+  id                String        @id @default(uuid())
+  customerId        String?       @map("customer_id")
+  description       String
+  placement         String?
+  size              String?
+  colorPreference   String?       @map("color_preference")
+  style             String?
+  referenceImages   Json          @default("[]") @map("reference_images")
+  status            String        @default("new")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @default(now()) @map("updated_at")
+  depositAmount     Float?        @map("deposit_amount")
+  depositPaid       Boolean       @default(false) @map("deposit_paid")
+  finalAmount       Float?        @map("final_amount")
+  paymentId         String?       @map("payment_id")
+  contactEmail      String?       @map("contact_email")
+  contactPhone      String?       @map("contact_phone")
+  trackingToken     String?       @unique @map("tracking_token")
+  additionalNotes   String?       @map("additional_notes")
+  contactPreference String?       @map("contact_preference")
+  preferredArtist   String?       @map("preferred_artist")
+  purpose           String?
+  timeframe         String?
+  appointments      Appointment[]
+  images            Image[]
+  customer          Customer?     @relation(fields: [customerId], references: [id])
+  payment           Payment?      @relation(fields: [paymentId], references: [id])
+
   @@map("tattoo_requests")
 }
 
 model Payment {
-  id             String        @id @default(uuid())
+  id             String          @id @default(uuid())
   amount         Float
-  status         String        @default("pending") // pending, completed, failed, refunded, partially_refunded
-  paymentMethod  String?       @map("payment_method")
-  paymentType    String?       @map("payment_type") // consultation, drawing_consultation, tattoo_deposit, tattoo_final
-  paymentDetails Json?         @map("payment_details")
-  refundDetails  Json?         @map("refund_details")
-  squareId       String?       @unique @map("square_id")
-  customerId     String?       @map("customer_id")
-  bookingId      String?       @map("booking_id")
-  referenceId    String?       @map("reference_id")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @default(now()) @map("updated_at")
-  
-  customer       Customer?     @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  invoices       Invoice[]
+  status         String          @default("pending")
+  paymentMethod  String?         @map("payment_method")
+  paymentDetails Json?           @map("payment_details")
+  squareId       String?         @unique @map("square_id")
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @default(now()) @map("updated_at")
+  bookingId      String?         @map("booking_id")
+  customerId     String?         @map("customer_id")
+  paymentType    String?         @map("payment_type")
+  referenceId    String?         @map("reference_id")
+  refundDetails  Json?           @map("refund_details")
   appointments   Appointment[]
+  invoices       Invoice[]
+  customer       Customer?       @relation(fields: [customerId], references: [id])
   tattooRequests TattooRequest[]
-  
-  // Add indexes for performance
+
   @@index([customerId])
   @@index([status])
   @@index([paymentType])
@@ -141,32 +126,30 @@ model Payment {
 }
 
 model Image {
-  id              String   @id @default(uuid())
-  tattooRequestId String?  @map("tattoo_request_id")
+  id              String         @id @default(uuid())
+  tattooRequestId String?        @map("tattoo_request_id")
   url             String
-  publicId        String   @map("public_id")
+  publicId        String         @map("public_id")
   metadata        Json?
-  createdAt       DateTime @default(now()) @map("created_at")
-  
-  tattooRequest   TattooRequest? @relation(fields: [tattooRequestId], references: [id], onDelete: SetNull)
-  
+  createdAt       DateTime       @default(now()) @map("created_at")
+  tattooRequest   TattooRequest? @relation(fields: [tattooRequestId], references: [id])
+
   @@map("images")
 }
 
 model Invoice {
-  id            String   @id @default(uuid())
-  appointmentId String?  @map("appointment_id")
-  paymentId     String?  @map("payment_id")
+  id            String       @id @default(uuid())
+  appointmentId String?      @map("appointment_id")
+  paymentId     String?      @map("payment_id")
   amount        Float
-  status        String   @default("pending") // pending, paid, canceled
+  status        String       @default("pending")
   description   String?
-  metadata      Json?    // For storing Square invoice ID, order ID, etc.
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @default(now()) @map("updated_at")
-  
-  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
-  payment       Payment?     @relation(fields: [paymentId], references: [id], onDelete: SetNull)
-  
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @default(now()) @map("updated_at")
+  metadata      Json?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+  payment       Payment?     @relation(fields: [paymentId], references: [id])
+
   @@map("invoices")
 }
 
@@ -176,70 +159,81 @@ model PaymentLink {
   customerId    String    @map("customer_id")
   appointmentId String?   @map("appointment_id")
   amount        Float
-  status        String    @default("active") // active, used, expired, cancelled
+  status        String    @default("active")
   url           String
-  metadata      Json?     // For storing additional data like payment type, tattoo request ID, etc.
+  metadata      Json?
   deletedAt     DateTime? @map("deleted_at")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @default(now()) @map("updated_at")
-  
   customer      Customer  @relation(fields: [customerId], references: [id])
-  
+
   @@map("payment_links")
 }
 
 model CheckoutSession {
-  id            String    @id @default(uuid())
-  squareOrderId String    @map("square_order_id")
-  customerId    String    @map("customer_id")
-  appointmentId String?   @map("appointment_id")
-  status        String    @default("pending") // pending, completed, expired, cancelled
-  metadata      Json?     // For storing redirect URL, items, etc.
-  expiresAt     DateTime  @map("expires_at")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @default(now()) @map("updated_at")
-  
-  customer      Customer  @relation(fields: [customerId], references: [id])
-  
+  id            String   @id @default(uuid())
+  squareOrderId String   @map("square_order_id")
+  customerId    String   @map("customer_id")
+  appointmentId String?  @map("appointment_id")
+  status        String   @default("pending")
+  metadata      Json?
+  expiresAt     DateTime @map("expires_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @default(now()) @map("updated_at")
+  customer      Customer @relation(fields: [customerId], references: [id])
+
   @@map("checkout_sessions")
 }
 
 model AuditLog {
-  id          String   @id @default(uuid())
-  userId      String?  @map("user_id")
-  action      String
-  resource    String
-  resourceId  String?  @map("resource_id")
-  resourceType String? @map("resource_type") // For identifying the type of resource (payment, appointment, etc.)
-  details     Json?
-  createdAt   DateTime @default(now()) @map("created_at")
-  
+  id           String   @id @default(uuid())
+  userId       String?  @map("user_id")
+  action       String
+  resource     String
+  resourceId   String?  @map("resource_id")
+  details      Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+  resourceType String?  @map("resource_type")
+
   @@map("audit_logs")
 }
 
 model BusinessHours {
-  id         String   @id @default(uuid())
-  dayOfWeek  Int      // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-  openTime   String   // Format: "HH:MM" e.g., "09:00"
-  closeTime  String   // Format: "HH:MM" e.g., "17:00"
-  isOpen     Boolean  @default(true)
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @default(now()) @map("updated_at")
-  
-  @@unique([dayOfWeek])
+  id        String   @id @default(uuid())
+  dayOfWeek Int      @unique
+  openTime  String
+  closeTime String
+  isOpen    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
   @@map("business_hours")
 }
 
 model SpecialHours {
-  id         String   @id @default(uuid())
-  date       DateTime @db.Date // Specific date for special hours
-  openTime   String?  // Format: "HH:MM", null if closed
-  closeTime  String?  // Format: "HH:MM", null if closed
-  isClosed   Boolean  @default(false)
-  reason     String?  // e.g., "Holiday", "Special Event"
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @default(now()) @map("updated_at")
-  
-  @@unique([date])
+  id        String   @id @default(uuid())
+  date      DateTime @unique @db.Date
+  openTime  String?
+  closeTime String?
+  isClosed  Boolean  @default(false)
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
   @@map("special_hours")
+}
+
+model EmailTemplate {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  displayName String
+  subject     String
+  body        String
+  htmlBody    String?
+  variables   Json
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @map("updated_at")
+
+  @@map("email_templates")
 }

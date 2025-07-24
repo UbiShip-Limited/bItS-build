@@ -2,6 +2,8 @@ import { v4 as uuidv4 } from 'uuid';
 import SquareClient from '../square/index';
 import { prisma } from '../prisma/prisma';
 import type { Appointment } from '@prisma/client';
+import { BookingStatus } from '../types/booking';
+import type { Square } from 'square';
 
 export class SquareIntegrationService {
   private squareClient: ReturnType<typeof SquareClient.fromEnv> | null;
@@ -297,6 +299,256 @@ export class SquareIntegrationService {
     }
   }
   
+  /**
+   * Sync all Square bookings to local database
+   * This method fetches bookings from Square and creates/updates local appointments
+   */
+  async syncSquareBookingsToLocal(startDate?: Date, endDate?: Date): Promise<{
+    synced: number;
+    created: number;
+    updated: number;
+    errors: Array<{ bookingId: string; error: string }>;
+  }> {
+    if (!this.squareClient) {
+      console.warn('Square integration is not configured - skipping booking sync');
+      return { synced: 0, created: 0, updated: 0, errors: [] };
+    }
+
+    const results = {
+      synced: 0,
+      created: 0,
+      updated: 0,
+      errors: [] as Array<{ bookingId: string; error: string }>
+    };
+
+    try {
+      const squareClient = this.getSquareClient();
+      
+      // Set date range (default: last 7 days to next 30 days)
+      const startAt = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const endAt = endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+      console.log(`Syncing Square bookings from ${startAt.toISOString()} to ${endAt.toISOString()}`);
+
+      // Fetch bookings from Square
+      let cursor: string | undefined;
+      do {
+        const response = await squareClient.getBookings(
+          cursor,
+          50, // Limit per page
+          startAt.toISOString(),
+          endAt.toISOString()
+        );
+
+        if (response?.result?.bookings) {
+          for (const squareBooking of response.result.bookings) {
+            try {
+              await this.syncSingleSquareBooking(squareBooking, results);
+            } catch (error) {
+              results.errors.push({
+                bookingId: squareBooking.id || 'unknown',
+                error: error instanceof Error ? error.message : 'Unknown error'
+              });
+            }
+          }
+        }
+
+        cursor = response?.cursor;
+      } while (cursor);
+
+      console.log(`Square booking sync completed: ${results.synced} synced, ${results.created} created, ${results.updated} updated, ${results.errors.length} errors`);
+      
+      // Log sync completion
+      await prisma.auditLog.create({
+        data: {
+          action: 'square_booking_sync_completed',
+          resource: 'system',
+          resourceId: 'square_sync',
+          resourceType: 'integration',
+          details: JSON.stringify(results)
+        }
+      });
+
+    } catch (error) {
+      console.error('Square booking sync failed:', error);
+      await this.logSquareError('booking_sync_failed', 'system', error);
+    }
+
+    return results;
+  }
+
+  /**
+   * Sync a single Square booking to local database
+   */
+  private async syncSingleSquareBooking(
+    squareBooking: Square.Booking,
+    results: { synced: number; created: number; updated: number }
+  ): Promise<void> {
+    if (!squareBooking.id) {
+      throw new Error('Square booking missing ID');
+    }
+
+    results.synced++;
+
+    // Check if appointment already exists
+    const existingAppointment = await prisma.appointment.findUnique({
+      where: { squareId: squareBooking.id }
+    });
+
+    // Map Square status to our status
+    const status = this.mapSquareStatusToLocal(squareBooking.status);
+
+    // Get customer by Square ID if available
+    let customerId: string | null = null;
+    if (squareBooking.customerId) {
+      const customer = await prisma.customer.findFirst({
+        where: { squareId: squareBooking.customerId }
+      });
+      
+      if (customer) {
+        customerId = customer.id;
+      } else {
+        // Try to fetch customer from Square and create locally
+        const squareCustomer = await this.fetchAndCreateCustomerFromSquare(squareBooking.customerId);
+        if (squareCustomer) {
+          customerId = squareCustomer.id;
+        }
+      }
+    }
+
+    // Extract appointment data
+    const startTime = squareBooking.startAt ? new Date(squareBooking.startAt) : new Date();
+    const duration = squareBooking.appointmentSegments?.[0]?.durationMinutes || 60;
+    const endTime = new Date(startTime.getTime() + duration * 60000);
+
+    // Extract notes and type from seller note
+    const sellerNote = squareBooking.sellerNote || '';
+    const typeMatch = sellerNote.match(/^(consultation|drawing_consultation|tattoo_session)/);
+    const type = typeMatch ? typeMatch[1] : 'tattoo_session';
+    const notes = sellerNote.replace(/^(consultation|drawing_consultation|tattoo_session)\s*-?\s*/, '').trim() || undefined;
+
+    if (existingAppointment) {
+      // Update existing appointment
+      await prisma.appointment.update({
+        where: { id: existingAppointment.id },
+        data: {
+          customerId,
+          startTime,
+          endTime,
+          duration,
+          status,
+          type,
+          notes: notes || existingAppointment.notes,
+          updatedAt: new Date()
+        }
+      });
+      results.updated++;
+    } else {
+      // Create new appointment
+      await prisma.appointment.create({
+        data: {
+          squareId: squareBooking.id,
+          customerId,
+          startTime,
+          endTime,
+          duration,
+          status,
+          type,
+          notes
+        }
+      });
+      results.created++;
+    }
+  }
+
+  /**
+   * Map Square booking status to our local status
+   */
+  private mapSquareStatusToLocal(squareStatus?: string): BookingStatus {
+    const statusMap: Record<string, BookingStatus> = {
+      'PENDING': BookingStatus.PENDING,
+      'CANCELLED_BY_CUSTOMER': BookingStatus.CANCELLED,
+      'CANCELLED_BY_SELLER': BookingStatus.CANCELLED,
+      'DECLINED': BookingStatus.CANCELLED,
+      'ACCEPTED': BookingStatus.CONFIRMED,
+      'NO_SHOW': BookingStatus.NO_SHOW
+    };
+
+    return statusMap[squareStatus || ''] || BookingStatus.SCHEDULED;
+  }
+
+  /**
+   * Fetch customer from Square and create locally
+   */
+  private async fetchAndCreateCustomerFromSquare(squareCustomerId: string): Promise<{ id: string } | null> {
+    if (!this.squareClient) return null;
+
+    try {
+      const squareClient = this.getSquareClient();
+      const response = await squareClient.getCustomerById(squareCustomerId);
+      
+      if (response?.result?.customer) {
+        const squareCustomer = response.result.customer;
+        
+        // Create customer in local database
+        const customer = await prisma.customer.create({
+          data: {
+            squareId: squareCustomer.id || squareCustomerId,
+            name: `${squareCustomer.givenName || ''} ${squareCustomer.familyName || ''}`.trim() || 'Unknown Customer',
+            email: squareCustomer.emailAddress || `${squareCustomerId}@square.customer`,
+            phone: squareCustomer.phoneNumber
+          }
+        });
+
+        return customer;
+      }
+    } catch (error) {
+      console.error(`Failed to fetch Square customer ${squareCustomerId}:`, error);
+    }
+
+    return null;
+  }
+
+  /**
+   * Check if Square integration is properly configured
+   */
+  isConfigured(): boolean {
+    return this.squareClient !== null;
+  }
+
+  /**
+   * Get Square configuration status with details
+   */
+  getConfigurationStatus(): {
+    isConfigured: boolean;
+    hasAccessToken: boolean;
+    hasLocationId: boolean;
+    environment: string;
+    warnings: string[];
+  } {
+    const warnings: string[] = [];
+    
+    if (!process.env.SQUARE_ACCESS_TOKEN) {
+      warnings.push('SQUARE_ACCESS_TOKEN is not set');
+    }
+    
+    if (!process.env.SQUARE_LOCATION_ID) {
+      warnings.push('SQUARE_LOCATION_ID is not set');
+    }
+
+    if (!process.env.SQUARE_WEBHOOK_SIGNATURE_KEY) {
+      warnings.push('SQUARE_WEBHOOK_SIGNATURE_KEY is not set - webhooks will not work');
+    }
+
+    return {
+      isConfigured: this.squareClient !== null,
+      hasAccessToken: !!process.env.SQUARE_ACCESS_TOKEN,
+      hasLocationId: !!process.env.SQUARE_LOCATION_ID,
+      environment: process.env.SQUARE_ENVIRONMENT || 'sandbox',
+      warnings
+    };
+  }
+
   private async logSquareError(action: string, appointmentId: string, error: Error | unknown) {
     try {
       // Extract error message and details properly

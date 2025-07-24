@@ -1,16 +1,16 @@
 import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import { Client, Environment } from 'square';
+import { SquareClient, SquareEnvironment } from 'square';
 import { addDays, subDays } from 'date-fns';
 
 const prisma = new PrismaClient();
 
 // Initialize Square client
-const squareClient = new Client({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN!,
+const squareClient = new SquareClient({
+  token: process.env.SQUARE_ACCESS_TOKEN!,
   environment: process.env.SQUARE_ENVIRONMENT === 'production' 
-    ? Environment.Production 
-    : Environment.Sandbox,
+    ? SquareEnvironment.Production 
+    : SquareEnvironment.Sandbox,
 });
 
 interface ImportOptions {
@@ -78,8 +78,8 @@ async function importSquareCustomers(dryRun: boolean) {
   const stats = { imported: 0, skipped: 0, errors: 0 };
   
   try {
-    const response = await squareClient.customersApi.listCustomers();
-    const customers = response.result.customers || [];
+    const response = await squareClient.customers.list({}) as any;
+    const customers = response.data || [];
     
     console.log(`Found ${customers.length} customers in Square`);
 
@@ -134,15 +134,13 @@ async function importSquarePayments(startDate: Date, endDate: Date, dryRun: bool
   const stats = { imported: 0, skipped: 0, errors: 0 };
   
   try {
-    const response = await squareClient.paymentsApi.listPayments(
-      startDate.toISOString(),
-      endDate.toISOString(),
-      undefined,
-      undefined,
-      process.env.SQUARE_LOCATION_ID
-    );
+    const response = await squareClient.payments.list({
+      beginTime: startDate.toISOString(),
+      endTime: endDate.toISOString(),
+      locationId: process.env.SQUARE_LOCATION_ID
+    }) as any;
     
-    const payments = response.result.payments || [];
+    const payments = response.data || [];
     console.log(`Found ${payments.length} payments in Square`);
 
     for (const squarePayment of payments) {

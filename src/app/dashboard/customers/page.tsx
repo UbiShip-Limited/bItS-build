@@ -7,6 +7,8 @@ import { CustomerService, type Customer, type CustomerListResponse } from '@/src
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '../../../components/ui/Modal';
 import CustomerForm from '../../../components/forms/CustomerForm';
+import { DashboardPageLayout, DashboardCard } from '../components';
+import { DashboardEmptyState } from '../components/DashboardEmptyState';
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -78,25 +80,30 @@ export default function CustomersPage() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8 pb-6 border-b border-[#1a1a1a]">
-        <div>
-          <h1 className="text-3xl font-heading font-bold text-white mb-2 tracking-wide">Customers</h1>
-          <p className="text-gray-400 text-lg">Manage your customer database</p>
-        </div>
-        <div>
-          <button 
-            onClick={() => setShowCreateModal(true)}
-            className="bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] px-6 py-3 rounded-lg flex items-center gap-2 font-medium shadow-lg shadow-[#C9A449]/20 transition-all duration-300"
-          >
-            <Plus className="w-4 h-4" />
-            New Customer
-          </button>
-        </div>
-      </div>
+    <DashboardPageLayout
+      title="Customers"
+      description="Manage your customer database"
+      breadcrumbs={[
+        { label: 'Customers' }
+      ]}
+      actions={[
+        {
+          label: 'New Customer',
+          onClick: () => setShowCreateModal(true),
+          icon: <Plus className="w-4 h-4" />,
+          variant: 'primary'
+        }
+      ]}
+      loading={loading}
+      error={error}
+      onRetry={loadCustomers}
+    >
 
       {/* Search Bar */}
-      <div className="bg-[#111111] border border-[#1a1a1a] rounded-2xl shadow-2xl p-6 mb-6 hover:border-[#C9A449]/20 transition-all duration-300">
+      <DashboardCard
+        title="Search Customers"
+        className="mb-6"
+      >
         <form onSubmit={handleSearch} className="flex gap-4">
           <div className="flex-1">
             <div className="relative">
@@ -117,10 +124,14 @@ export default function CustomersPage() {
             Search
           </button>
         </form>
-      </div>
+      </DashboardCard>
 
       {/* Customers Table */}
-      <div className="bg-[#111111] border border-[#1a1a1a] rounded-2xl shadow-2xl overflow-hidden hover:border-[#C9A449]/20 transition-all duration-300">
+      <DashboardCard
+        title="Customer List"
+        subtitle={`${totalCustomers} total customers`}
+        noPadding
+      >
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
@@ -143,21 +154,27 @@ export default function CustomersPage() {
             </div>
           </div>
         ) : customers.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <p className="text-gray-400 mb-4 text-lg font-medium">
-                {searchTerm ? 'No customers found matching your search.' : 'No customers yet.'}
-              </p>
-              {!searchTerm && (
-                <button 
-                  onClick={() => setShowCreateModal(true)}
-                  className="px-6 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
-                >
-                  Create First Customer
-                </button>
-              )}
-            </div>
-          </div>
+          <DashboardEmptyState
+            icon={Users}
+            title={searchTerm ? 'No customers found' : 'No customers yet'}
+            description={searchTerm 
+              ? 'Try adjusting your search terms or clear the search to see all customers.' 
+              : 'Start building your customer database by adding your first customer.'
+            }
+            actions={searchTerm ? [
+              {
+                label: 'Clear Search',
+                onClick: () => setSearchTerm(''),
+                variant: 'secondary'
+              }
+            ] : [
+              {
+                label: 'Create First Customer',
+                onClick: () => setShowCreateModal(true),
+                variant: 'primary'
+              }
+            ]}
+          />
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -312,7 +329,7 @@ export default function CustomersPage() {
             </div>
           </>
         )}
-      </div>
+      </DashboardCard>
 
       {/* Create Customer Modal */}
       <Modal
@@ -346,6 +363,6 @@ export default function CustomersPage() {
           />
         )}
       </Modal>
-    </div>
+    </DashboardPageLayout>
   );
 }

@@ -1,6 +1,6 @@
-import { prisma } from '../../prisma/prisma';
 import { BookingStatus } from '../../types/booking';
 import { AnalyticsUtils, DateRange } from './analyticsUtils';
+import type { PrismaClient } from '@prisma/client';
 
 export interface AppointmentMetrics {
   today: { count: number; completed: number; remaining: number };
@@ -30,11 +30,13 @@ export interface AppointmentEfficiencyMetrics {
  * Service for appointment analytics and calculations
  */
 export class AppointmentAnalyticsService {
+  constructor(private prisma: PrismaClient) {}
+
   /**
    * Get appointment count for a specific period
    */
   async getAppointmentCountForPeriod(start: Date, end: Date): Promise<number> {
-    return prisma.appointment.count({
+    return this.prisma.appointment.count({
       where: {
         startTime: { gte: start, lte: end }
       }
@@ -91,7 +93,7 @@ export class AppointmentAnalyticsService {
    * Get completed appointments for a period
    */
   private async getCompletedAppointmentsForPeriod(start: Date, end: Date): Promise<number> {
-    return prisma.appointment.count({
+    return this.prisma.appointment.count({
       where: {
         startTime: { gte: start, lte: end },
         status: BookingStatus.COMPLETED
@@ -104,18 +106,18 @@ export class AppointmentAnalyticsService {
    */
   private async getAppointmentStatsForPeriod(start: Date, end: Date): Promise<AppointmentStats> {
     const [scheduled, completed, cancelled] = await Promise.all([
-      prisma.appointment.count({
+      this.prisma.appointment.count({
         where: {
           startTime: { gte: start, lte: end }
         }
       }),
-      prisma.appointment.count({
+      this.prisma.appointment.count({
         where: {
           startTime: { gte: start, lte: end },
           status: BookingStatus.COMPLETED
         }
       }),
-      prisma.appointment.count({
+      this.prisma.appointment.count({
         where: {
           startTime: { gte: start, lte: end },
           status: BookingStatus.CANCELLED
@@ -136,13 +138,13 @@ export class AppointmentAnalyticsService {
     const [totalAppointments, completedAppointments, noShows, appointments] = await Promise.all([
       this.getAppointmentCountForPeriod(thirtyDaysAgo, now),
       this.getCompletedAppointmentsForPeriod(thirtyDaysAgo, now),
-      prisma.appointment.count({
+      this.prisma.appointment.count({
         where: {
           startTime: { gte: thirtyDaysAgo, lte: now },
           status: 'no_show'
         }
       }),
-      prisma.appointment.findMany({
+      this.prisma.appointment.findMany({
         where: {
           startTime: { gte: thirtyDaysAgo, lte: now },
           endTime: { not: null }

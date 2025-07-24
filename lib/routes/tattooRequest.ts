@@ -14,6 +14,7 @@ import os from 'os';
 import { NotFoundError, ValidationError } from '../services/errors';
 import CloudinaryService from '../cloudinary/index.js';
 import { readRateLimit, writeRateLimit, publicSubmissionRateLimit } from '../middleware/rateLimiting';
+import { getRecaptchaService } from '../services/recaptchaService';
 
 // Type definitions for request bodies and queries
 interface TattooRequestQueryParams {
@@ -132,7 +133,9 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
                 publicId: { type: 'string' }
               }
             }
-          }
+          },
+          recaptchaToken: { type: 'string' },
+          honeypot: { type: 'string' } // Bot trap field
         },
         // Either customerId OR contactEmail must be provided
         oneOf: [
@@ -143,11 +146,39 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     try {
-      const requestData = request.body as CreateTattooRequestData;
+      const requestData = request.body as CreateTattooRequestData & { 
+        recaptchaToken?: string;
+        honeypot?: string;
+      };
+      
+      // Check honeypot field (should be empty)
+      if (requestData.honeypot) {
+        request.log.warn('Honeypot triggered for tattoo request');
+        return reply.status(400).send({ error: 'Invalid request' });
+      }
+      
+      // Verify reCAPTCHA if token provided and service is available
+      if (requestData.recaptchaToken) {
+        try {
+          const recaptchaService = getRecaptchaService();
+          const isValid = await recaptchaService.verify(requestData.recaptchaToken, 'tattoo_request');
+          
+          if (!isValid) {
+            request.log.warn('reCAPTCHA verification failed for tattoo request');
+            return reply.status(400).send({ error: 'Security verification failed. Please try again.' });
+          }
+        } catch (error) {
+          // If reCAPTCHA service not initialized, log but don't block
+          request.log.warn('reCAPTCHA service not available:', error);
+        }
+      }
+      
+      // Remove security fields before passing to service
+      const { recaptchaToken, honeypot, ...tattooRequestData } = requestData;
       
       // Create via service (handles all business logic)
       const tattooRequest = await tattooRequestService.create(
-        requestData,
+        tattooRequestData,
         request.user?.id
       );
       
@@ -199,6 +230,46 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
       const { status } = request.body as { status: 'new' | 'reviewed' | 'approved' | 'rejected' | 'converted_to_appointment' };
       
       const updated = await tattooRequestService.updateStatus(id, status, request.user?.id);
+      return updated;
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        return reply.status(404).send({ error: error.message });
+      }
+      
+      if (error instanceof ValidationError) {
+        return reply.status(400).send({ error: error.message });
+      }
+      
+      request.log.error(error);
+      return reply.status(500).send({ error: 'Internal server error' });
+    }
+  });
+
+  // PUT /tattoo-requests/:id - Update tattoo request (general update)
+  fastify.put('/:id', {
+    preHandler: [authenticate, authorize(['artist', 'admin'] as UserRole[]), writeRateLimit()],
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string' }
+        }
+      },
+      body: {
+        type: 'object',
+        properties: {
+          customerId: { type: 'string' },
+          notes: { type: 'string' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      const updateData = request.body as { customerId?: string; notes?: string };
+      
+      const updated = await tattooRequestService.update(id, updateData, request.user?.id);
       return updated;
     } catch (error) {
       if (error instanceof NotFoundError) {

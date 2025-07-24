@@ -61,7 +61,15 @@ export class RealtimeService {
         .filter(event => {
           // Filter by user (if specified) or global events
           const isUserEvent = !event.userId || event.userId === subscription.userId;
-          const isGlobalEvent = !event.userId && ['payment_received', 'appointment_created'].includes(event.type);
+          const isGlobalEvent = !event.userId && [
+            'payment_received', 
+            'appointment_created', 
+            'request_submitted',
+            'request_reviewed',
+            'request_approved',
+            'request_rejected',
+            'appointment_approved'
+          ].includes(event.type);
           
           return (isUserEvent || isGlobalEvent) && 
                  subscription.eventTypes.includes(event.type);
@@ -125,6 +133,106 @@ export class RealtimeService {
       data,
       userId
     });
+  }
+  
+  /**
+   * Notify when a tattoo request is reviewed
+   */
+  async notifyRequestReviewed(requestId: string, customerId?: string): Promise<void> {
+    await this.addEvent({
+      type: 'request_reviewed',
+      data: { requestId, customerId, message: 'Your tattoo request has been reviewed' },
+      userId: undefined // Global event for admin
+    });
+    
+    // Also notify the customer if they have an ID
+    if (customerId) {
+      await this.notifyUser(customerId, 'request_reviewed', {
+        requestId,
+        message: 'Your tattoo request has been reviewed by the artist'
+      });
+    }
+  }
+  
+  /**
+   * Notify when a tattoo request is approved
+   */
+  async notifyRequestApproved(requestId: string, customerId?: string): Promise<void> {
+    await this.addEvent({
+      type: 'request_approved',
+      data: { requestId, customerId, message: 'Tattoo request approved' },
+      userId: undefined // Global event for admin
+    });
+    
+    // Also notify the customer if they have an ID
+    if (customerId) {
+      await this.notifyUser(customerId, 'request_approved', {
+        requestId,
+        message: 'Great news! Your tattoo request has been approved'
+      });
+    }
+  }
+  
+  /**
+   * Notify when a tattoo request is rejected
+   */
+  async notifyRequestRejected(requestId: string, customerId?: string): Promise<void> {
+    await this.addEvent({
+      type: 'request_rejected',
+      data: { requestId, customerId, message: 'Tattoo request declined' },
+      userId: undefined // Global event for admin
+    });
+    
+    // Also notify the customer if they have an ID
+    if (customerId) {
+      await this.notifyUser(customerId, 'request_rejected', {
+        requestId,
+        message: 'Your tattoo request has been declined. Please contact us for more information.'
+      });
+    }
+  }
+  
+  /**
+   * Notify when an appointment is approved/confirmed
+   */
+  async notifyAppointmentApproved(appointmentId: string, customerId?: string): Promise<void> {
+    await this.addEvent({
+      type: 'appointment_approved',
+      data: { appointmentId, customerId, message: 'Appointment confirmed' },
+      userId: undefined // Global event for admin
+    });
+    
+    // Also notify the customer if they have an ID
+    if (customerId) {
+      await this.notifyUser(customerId, 'appointment_approved', {
+        appointmentId,
+        message: 'Your appointment has been confirmed!'
+      });
+    }
+  }
+  
+  /**
+   * Create a notification with custom data (alias for notifyUser for backward compatibility)
+   */
+  async sendNotification(notification: { 
+    type: string; 
+    title: string; 
+    message: string; 
+    severity?: 'info' | 'warning' | 'error' | 'success';
+    metadata?: any;
+    userId?: string;
+  }): Promise<void> {
+    const { userId, ...data } = notification;
+    
+    if (userId) {
+      await this.notifyUser(userId, notification.type, data);
+    } else {
+      await this.addEvent({
+        type: notification.type,
+        data,
+        userId: undefined
+      });
+    }
   }
   
   /**

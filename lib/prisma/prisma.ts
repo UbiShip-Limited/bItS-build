@@ -24,9 +24,18 @@ const getPrismaConfig = () => {
   // Add datasources configuration for production
   if (isProduction) {
     // Ensure connection pooling and timeout settings for production
+    const databaseUrl = new URL(process.env.DATABASE_URL || '');
+    
+    // Add connection pool and timeout parameters
+    databaseUrl.searchParams.set('connection_limit', '10');
+    databaseUrl.searchParams.set('pool_timeout', '10');
+    databaseUrl.searchParams.set('connect_timeout', '10');
+    databaseUrl.searchParams.set('statement_timeout', '30000'); // 30 seconds
+    databaseUrl.searchParams.set('idle_in_transaction_session_timeout', '30000');
+    
     config.datasources = {
       db: {
-        url: process.env.DATABASE_URL
+        url: databaseUrl.toString()
       }
     };
   }
@@ -67,18 +76,34 @@ export const checkDatabaseConnection = async (client: PrismaClient, maxRetries =
     try {
       console.log(`🔄 Testing database connection (attempt ${retries + 1}/${maxRetries})...`);
       
-      // Test basic connectivity
-      await client.$executeRaw`SELECT 1 as connection_test`;
+      // Test basic connectivity with timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timeout')), 5000)
+      );
+      
+      const queryPromise = client.$executeRaw`SELECT 1 as connection_test`;
+      
+      await Promise.race([queryPromise, timeoutPromise]);
       
       console.log('✅ Database connection successful');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       retries++;
-      console.error(`❌ Database connection failed (attempt ${retries}/${maxRetries}):`, error.message);
+      const errorMessage = error.message || 'Unknown error';
+      console.error(`❌ Database connection failed (attempt ${retries}/${maxRetries}):`, errorMessage);
+      
+      // Log specific error types
+      if (errorMessage.includes('P1001')) {
+        console.error('🔴 Cannot reach database server - check network connectivity');
+      } else if (errorMessage.includes('P1002')) {
+        console.error('🔴 Database server timeout - server may be overloaded');
+      } else if (errorMessage.includes('P1003')) {
+        console.error('🔴 Database does not exist at specified location');
+      }
       
       if (retries >= maxRetries) {
         console.error('🔴 Max database connection retries exceeded');
-        throw new Error(`Database connection failed after ${maxRetries} attempts: ${error.message}`);
+        throw new Error(`Database connection failed after ${maxRetries} attempts: ${errorMessage}`);
       }
       
       // Wait before retrying (exponential backoff)

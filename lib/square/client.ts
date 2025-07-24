@@ -73,6 +73,10 @@ export class SquareClient extends BaseSquareClient {
     return this.customers.getCustomers(cursor, limit, sortField, sortOrder);
   }
 
+  async getCustomerById(customerId: string) {
+    return this.customers.getCustomerById(customerId);
+  }
+
   async createCustomer(params: Parameters<CustomersService['createCustomer']>[0]) {
     return this.customers.createCustomer(params);
   }

@@ -4,12 +4,25 @@ import { readRateLimit } from '../middleware/rateLimiting';
 import { UserRole } from '../types/auth';
 import { z } from 'zod';
 
-// Schema for date range query parameters
+// Zod schema for date range query parameters (for runtime validation)
 const dateRangeSchema = z.object({
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
   timeframe: z.enum(['today', 'yesterday', 'last7days', 'last30days', 'thisMonth', 'lastMonth', 'thisYear', 'custom']).optional(),
 });
+
+// JSON Schema for Fastify route validation
+const dateRangeJsonSchema = {
+  type: 'object',
+  properties: {
+    startDate: { type: 'string', format: 'date-time' },
+    endDate: { type: 'string', format: 'date-time' },
+    timeframe: { 
+      type: 'string', 
+      enum: ['today', 'yesterday', 'last7days', 'last30days', 'thisMonth', 'lastMonth', 'thisYear', 'custom'] 
+    }
+  }
+};
 
 const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
   const { analyticsService } = fastify.services;
@@ -18,7 +31,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/dashboard', {
     preHandler: [authenticate, authorize(['admin', 'artist'] as UserRole[]), readRateLimit()],
     schema: {
-      querystring: dateRangeSchema,
+      querystring: dateRangeJsonSchema,
       response: {
         200: {
           type: 'object',
@@ -40,8 +53,11 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
+    let timeframe: string | undefined;
     try {
-      const { startDate, endDate, timeframe } = request.query as z.infer<typeof dateRangeSchema>;
+      const queryParams = request.query as z.infer<typeof dateRangeSchema>;
+      timeframe = queryParams.timeframe;
+      const { startDate, endDate } = queryParams;
       
       // Calculate date range based on timeframe or custom dates
       const dateRange = { startDate: new Date(), endDate: new Date() };
@@ -85,17 +101,43 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
         dateRange.endDate = new Date(endDate);
       }
 
-      const metrics = await analyticsService.getDashboardMetrics(dateRange);
+      // Pass the timeframe string to the service, not the dateRange object
+      const metrics = await analyticsService.getDashboardMetrics(timeframe || 'today');
       
       return reply.send({
         success: true,
         data: metrics
       });
     } catch (error) {
-      fastify.log.error('Error fetching dashboard metrics:', error);
+      // Enhanced error logging with context
+      fastify.log.error({
+        msg: 'Error fetching dashboard metrics',
+        error: error instanceof Error ? {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        } : error,
+        context: {
+          timeframe: timeframe || 'today',
+          userId: request.user?.id,
+          timestamp: new Date().toISOString(),
+          endpoint: '/analytics/dashboard'
+        }
+      });
+      
+      // More detailed error for debugging
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorDetails = process.env.NODE_ENV === 'development' ? {
+        message: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined,
+        timeframe: timeframe || 'today',
+        timestamp: new Date().toISOString()
+      } : undefined;
+      
       return reply.status(500).send({
         success: false,
-        error: 'Failed to fetch dashboard metrics'
+        error: 'Failed to fetch dashboard metrics',
+        details: errorDetails
       });
     }
   });
@@ -104,7 +146,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/revenue', {
     preHandler: [authenticate, authorize(['admin'] as UserRole[]), readRateLimit()],
     schema: {
-      querystring: dateRangeSchema,
+      querystring: dateRangeJsonSchema,
       response: {
         200: {
           type: 'object',
@@ -126,8 +168,11 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
+    let timeframe: string | undefined;
     try {
-      const { startDate, endDate, timeframe } = request.query as z.infer<typeof dateRangeSchema>;
+      const queryParams = request.query as z.infer<typeof dateRangeSchema>;
+      timeframe = queryParams.timeframe;
+      const { startDate, endDate } = queryParams;
       
       const dateRange = { startDate: new Date(), endDate: new Date() };
       
@@ -161,17 +206,42 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
         dateRange.endDate = new Date(endDate);
       }
 
-      const revenueData = await analyticsService.getRevenueBreakdown(dateRange);
+      // Convert timeframe to period for getRevenueBreakdown
+      let period = 'month'; // default
+      if (timeframe === 'last7days') period = 'week';
+      else if (timeframe === 'today' || timeframe === 'yesterday') period = 'day';
+      else if (timeframe === 'thisMonth' || timeframe === 'lastMonth') period = 'month';
+      
+      const revenueData = await analyticsService.getRevenueBreakdown(period);
       
       return reply.send({
         success: true,
         data: revenueData
       });
     } catch (error) {
-      fastify.log.error('Error fetching revenue analytics:', error);
+      // Enhanced error logging with context
+      fastify.log.error({
+        msg: 'Error fetching revenue analytics',
+        error: error instanceof Error ? {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        } : error,
+        context: {
+          timeframe: timeframe || undefined,
+          userId: request.user?.id,
+          timestamp: new Date().toISOString(),
+          endpoint: '/analytics/revenue'
+        }
+      });
+      
       return reply.status(500).send({
         success: false,
-        error: 'Failed to fetch revenue analytics'
+        error: 'Failed to fetch revenue analytics',
+        details: process.env.NODE_ENV === 'development' ? {
+          message: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        } : undefined
       });
     }
   });
@@ -180,7 +250,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/customers', {
     preHandler: [authenticate, authorize(['admin', 'artist'] as UserRole[]), readRateLimit()],
     schema: {
-      querystring: dateRangeSchema,
+      querystring: dateRangeJsonSchema,
       response: {
         200: {
           type: 'object',
@@ -226,7 +296,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/appointments', {
     preHandler: [authenticate, authorize(['admin', 'artist'] as UserRole[]), readRateLimit()],
     schema: {
-      querystring: dateRangeSchema,
+      querystring: dateRangeJsonSchema,
       response: {
         200: {
           type: 'object',
@@ -295,7 +365,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/requests', {
     preHandler: [authenticate, authorize(['admin', 'artist'] as UserRole[]), readRateLimit()],
     schema: {
-      querystring: dateRangeSchema,
+      querystring: dateRangeJsonSchema,
       response: {
         200: {
           type: 'object',
@@ -460,7 +530,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get('/notifications', {
     preHandler: [authenticate, authorize(['admin', 'artist'] as UserRole[]), readRateLimit()],
     schema: {
-      querystring: dateRangeSchema,
+      querystring: dateRangeJsonSchema,
       response: {
         200: {
           type: 'object',

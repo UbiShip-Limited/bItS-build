@@ -18,7 +18,10 @@ import {
   XCircle,
   AlertCircle,
   Eye,
-  DollarSign
+  DollarSign,
+  RefreshCw,
+  CloudOff,
+  Cloud
 } from 'lucide-react';
 // Components are loaded dynamically as needed
 import { AppointmentApiClient, type AppointmentData, BookingStatus, BookingType } from '@/src/lib/api/services/appointmentApiClient';
@@ -27,6 +30,9 @@ import Modal from '@/src/components/ui/Modal';
 import AppointmentForm from '@/src/components/forms/AppointmentForm';
 import QuickPaymentActions from '@/src/components/payments/QuickPaymentActions';
 import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHistory';
+import { DashboardPageLayout, DashboardCard } from '../components';
+import { DashboardEmptyState } from '../components/DashboardEmptyState';
+import { toast } from '@/src/lib/toast';
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<AppointmentData[]>([]);
@@ -34,6 +40,7 @@ export default function AppointmentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
+  const [syncingSquare, setSyncingSquare] = useState(false);
   const [filters, setFilters] = useState({
     status: '',
     search: '',
@@ -51,6 +58,10 @@ export default function AppointmentsPage() {
     limit: 20,
     pages: 1
   });
+
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   // Memoize the client to prevent recreation on every render
   const appointmentService = useMemo(() => new AppointmentApiClient(apiClient), []);
@@ -100,6 +111,76 @@ export default function AppointmentsPage() {
     }
   };
 
+  const handleSquareSync = async () => {
+    setSyncingSquare(true);
+    setError(null);
+    
+    try {
+      // Call the Square sync endpoint and reload appointments after
+      await apiClient.post('/square-sync/run', {});
+      loadAppointments();
+      // Show success message
+      const syncMessage = 'Square sync started. This may take a few moments.';
+      // Wait a bit and then reload appointments
+      setTimeout(() => {
+        loadAppointments();
+      }, 3000);
+      
+      // You could also poll the sync status endpoint here
+    } catch (error) {
+      console.error('Failed to start Square sync:', error);
+      setError(error instanceof Error ? error.message : 'Failed to start Square sync');
+
+      // Show error message
+      toast.error('Failed to start Square sync');
+
+    } finally {
+      setSyncingSquare(false);
+    }
+  };
+
+  // Bulk selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set(appointments.map(apt => apt.id));
+      setSelectedIds(allIds);
+    } else {
+      setSelectedIds(new Set());
+    }
+  };
+
+  const handleSelectOne = (id: string, checked: boolean) => {
+    const newSelectedIds = new Set(selectedIds);
+    if (checked) {
+      newSelectedIds.add(id);
+    } else {
+      newSelectedIds.delete(id);
+    }
+    setSelectedIds(newSelectedIds);
+  };
+
+  const handleBulkStatusUpdate = async (newStatus: BookingStatus) => {
+    if (selectedIds.size === 0) return;
+    
+    setBulkUpdating(true);
+    try {
+      // Call bulk update endpoint
+      const response = await apiClient.post('/appointments/bulk-update', {
+        appointmentIds: Array.from(selectedIds),
+        updates: { status: newStatus }
+      });
+      
+      toast.success(`Updated ${selectedIds.size} appointments`);
+      setSelectedIds(new Set());
+      loadAppointments();
+    } catch (error) {
+      console.error('Failed to bulk update:', error);
+      toast.error('Failed to update appointments');
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     const colors = {
       [BookingStatus.PENDING]: 'badge-warning',
@@ -138,38 +219,48 @@ export default function AppointmentsPage() {
   };
 
   return (
-    <div className="p-8">
-      {/* Page Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-heading font-bold text-white mb-2 tracking-wide">Appointments</h1>
-          <p className="text-gray-400 text-lg">Manage all your appointments</p>
-        </div>
-        <div className="flex gap-3">
-          <Link
-            href="/dashboard/appointments/calendar"
-            className="btn btn-ghost btn-sm text-gray-400 border border-[#1a1a1a] hover:border-[#C9A449]/30 hover:text-[#C9A449]"
-          >
-            <Calendar className="w-4 h-4" />
-            Calendar View
-          </Link>
-          <button 
-            onClick={() => setShowCreateModal(true)}
-            className="btn btn-sm bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] border-0 shadow-lg shadow-[#C9A449]/20"
-          >
-            <Plus className="w-4 h-4" />
-            New Appointment
-          </button>
-        </div>
-      </div>
+    <DashboardPageLayout
+      title="Appointments"
+      description="Manage all your appointments"
+      breadcrumbs={[
+        { label: 'Appointments' }
+      ]}
+      actions={[
+        {
+          label: "Today's Schedule",
+          href: '/dashboard/appointments/today',
+          icon: <Calendar className="w-4 h-4" />,
+          variant: 'secondary'
+        },
+        {
+          label: 'Calendar View',
+          href: '/dashboard/appointments/calendar',
+          icon: <Calendar className="w-4 h-4" />,
+          variant: 'secondary'
+        },
+        {
+          label: syncingSquare ? 'Syncing...' : 'Sync Square',
+          onClick: syncingSquare ? undefined : handleSquareSync,
+          icon: <RefreshCw className={`w-4 h-4 ${syncingSquare ? 'animate-spin' : ''}`} />,
+          variant: 'secondary'
+        },
+        {
+          label: 'New Appointment',
+          onClick: () => setShowCreateModal(true),
+          icon: <Plus className="w-4 h-4" />,
+          variant: 'primary'
+        }
+      ]}
+      loading={loading}
+      error={error}
+      onRetry={loadAppointments}
+    >
 
       {/* Filters */}
-      <div className="card bg-[#111111] shadow-2xl hover:shadow-[#C9A449]/10 hover:shadow-2xl transition-all duration-300 border border-[#1a1a1a] hover:border-[#C9A449]/20 mb-6">
-        <div className="card-body">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-[#C9A449]" />
-            <span className="font-semibold text-white text-lg">Filters</span>
-          </div>
+      <DashboardCard
+        title="Filters"
+        className="mb-6"
+      >
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="form-control">
               <label className="label">
@@ -222,43 +313,83 @@ export default function AppointmentsPage() {
               </button>
             </div>
           </div>
+      </DashboardCard>
+
+      {/* Bulk Actions Bar */}
+      {selectedIds.size > 0 && (
+        <div className="mb-4 p-4 bg-[#111111] rounded-xl border border-[#1a1a1a] flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <span className="text-white font-medium">
+              {selectedIds.size} appointment{selectedIds.size !== 1 ? 's' : ''} selected
+            </span>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="text-gray-400 hover:text-white text-sm"
+            >
+              Clear selection
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">Bulk update status:</span>
+            <select
+              onChange={(e) => {
+                if (e.target.value) {
+                  handleBulkStatusUpdate(e.target.value as BookingStatus);
+                }
+              }}
+              disabled={bulkUpdating}
+              className="select select-sm select-bordered bg-[#0a0a0a] border-[#1a1a1a] text-white focus:border-[#C9A449]/50"
+              defaultValue=""
+            >
+              <option value="" disabled>Choose status...</option>
+              <option value={BookingStatus.CONFIRMED}>Confirm Selected</option>
+              <option value={BookingStatus.COMPLETED}>Mark as Completed</option>
+              <option value={BookingStatus.CANCELLED}>Cancel Selected</option>
+              <option value={BookingStatus.NO_SHOW}>Mark as No Show</option>
+            </select>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Appointments Table */}
-      <div className="card bg-[#111111] shadow-2xl hover:shadow-[#C9A449]/10 hover:shadow-2xl transition-all duration-300 border border-[#1a1a1a] hover:border-[#C9A449]/20 overflow-hidden">
-        {loading ? (
-          <div className="p-8 text-center">
-            <span className="loading loading-spinner loading-lg text-[#C9A449]"></span>
-            <p className="mt-2 text-gray-400">Loading appointments...</p>
-          </div>
-        ) : error ? (
-          <div className="p-8 text-center">
-            <div className="alert alert-error bg-red-500/10 border border-red-500/30">
-              <span className="text-red-400">{error}</span>
-              <button 
-                onClick={loadAppointments}
-                className="btn btn-sm btn-ghost text-red-400 hover:bg-red-500/10"
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        ) : appointments.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">
-            <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-600" />
-            <p className="text-lg font-medium">No appointments found</p>
-          </div>
+      <DashboardCard
+        title="Appointments List"
+        subtitle={`Showing ${appointments.length} appointments`}
+        noPadding
+      >
+        {appointments.length === 0 ? (
+          <DashboardEmptyState
+            icon={Calendar}
+            title="No appointments found"
+            description="You don't have any appointments yet. Create your first appointment to get started."
+            actions={[
+              {
+                label: 'Create Appointment',
+                onClick: () => setShowCreateModal(true),
+                variant: 'primary'
+              }
+            ]}
+          />
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="table">
                 <thead>
                   <tr>
+                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider w-12">
+                      <input
+                        type="checkbox"
+                        checked={appointments.length > 0 && selectedIds.size === appointments.length}
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        className="checkbox checkbox-sm border-[#1a1a1a] checked:border-[#C9A449] [--chkbg:#C9A449] [--chkfg:#080808]"
+                      />
+                    </th>
                     <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Client</th>
                     <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Date & Time</th>
                     <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Type</th>
                     <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Status</th>
+                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Square</th>
                     <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Price</th>
                     <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Payment</th>
                     <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider text-right">Actions</th>
@@ -267,8 +398,29 @@ export default function AppointmentsPage() {
                 <tbody className="divide-y divide-[#1a1a1a]">
                   {appointments.map((appointment) => {
                     const { date, time } = formatDateTime(appointment.startTime);
+                    const isPaid = appointment.priceQuote && appointment.priceQuote > 0; // This will be improved when payment data is available
+                    const hasSquareSync = !!appointment.squareId;
+                    const isFirstTime = false; // This will be improved when we can check customer history
+                    
                     return (
-                      <tr key={appointment.id} className="hover:bg-[#1a1a1a]/50 transition-colors">
+                      <tr 
+                        key={appointment.id} 
+                        className={`hover:bg-[#1a1a1a]/50 transition-colors border-l-4 ${
+                          appointment.status === BookingStatus.CONFIRMED ? 'border-l-green-500' :
+                          appointment.status === BookingStatus.PENDING ? 'border-l-[#C9A449]' :
+                          appointment.status === BookingStatus.CANCELLED ? 'border-l-red-500' :
+                          appointment.status === BookingStatus.COMPLETED ? 'border-l-gray-500' :
+                          'border-l-transparent'
+                        }`}
+                      >
+                        <td className="w-12">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.has(appointment.id)}
+                            onChange={(e) => handleSelectOne(appointment.id, e.target.checked)}
+                            className="checkbox checkbox-sm border-[#1a1a1a] checked:border-[#C9A449] [--chkbg:#C9A449] [--chkfg:#080808]"
+                          />
+                        </td>
                         <td>
                           <div className="flex items-center gap-3">
                             <div className="avatar placeholder">
@@ -314,6 +466,23 @@ export default function AppointmentsPage() {
                           }`}>
                             {appointment.status.replace('_', ' ')}
                           </span>
+                        </td>
+                        <td>
+                          <div className="flex items-center justify-center">
+                            {appointment.squareId ? (
+                              <div className="tooltip" data-tip="Synced with Square">
+                                <Cloud className="w-5 h-5 text-green-500" />
+                              </div>
+                            ) : appointment.customerId ? (
+                              <div className="tooltip" data-tip="Not synced with Square">
+                                <CloudOff className="w-5 h-5 text-gray-500" />
+                              </div>
+                            ) : (
+                              <div className="tooltip" data-tip="Anonymous booking">
+                                <span className="text-xs text-gray-600">N/A</span>
+                              </div>
+                            )}
+                          </div>
                         </td>
                         <td>
                           {appointment.priceQuote ? (
@@ -420,7 +589,7 @@ export default function AppointmentsPage() {
             </div>
           </>
         )}
-      </div>
+      </DashboardCard>
 
       {/* Create/Edit Appointment Modal */}
       <Modal
@@ -441,6 +610,6 @@ export default function AppointmentsPage() {
           }}
         />
       </Modal>
-    </div>
+    </DashboardPageLayout>
   );
 }

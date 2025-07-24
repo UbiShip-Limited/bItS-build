@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { X, Copy, Send, DollarSign } from 'lucide-react';
 import { paymentService, PaymentType, CreatePaymentLinkParams } from '@/src/lib/api/services/paymentService';
+import { toast } from '@/src/lib/toast';
 
 interface CreatePaymentLinkModalProps {
   isOpen: boolean;
@@ -65,12 +66,15 @@ export default function CreatePaymentLinkModal({
       if (response.success) {
         setSuccess(true);
         setPaymentLinkUrl(response.data.url);
+        toast.success('Payment link created successfully!');
         if (onSuccess) {
           onSuccess(response.data);
         }
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || 'Failed to create payment link');
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to create payment link';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -79,7 +83,7 @@ export default function CreatePaymentLinkModal({
   const copyToClipboard = () => {
     if (paymentLinkUrl) {
       navigator.clipboard.writeText(paymentLinkUrl);
-      // You could add a toast notification here
+      toast.success('Payment link copied to clipboard!');
     }
   };
 

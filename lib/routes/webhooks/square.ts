@@ -228,13 +228,58 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
     const booking = data.object.booking;
     try {
       // Find the appointment by Square ID
-      const appointment = await prisma.appointment.findUnique({
+      let appointment = await prisma.appointment.findUnique({
         where: { squareId: booking.id },
         include: { customer: true }
       });
       
-      if (appointment) {
-        // Update appointment to track that Square has created the booking
+      if (!appointment) {
+        // This is a new booking created directly in Square - sync it to our system
+        fastify.log.info(`New Square booking detected: ${booking.id}, syncing to local database`);
+        
+        // Find customer by Square ID
+        let customerId: string | null = null;
+        if (booking.customerId) {
+          const customer = await prisma.customer.findFirst({
+            where: { squareId: booking.customerId }
+          });
+          
+          if (customer) {
+            customerId = customer.id;
+          } else {
+            fastify.log.warn(`Square customer ${booking.customerId} not found locally`);
+          }
+        }
+        
+        // Extract appointment details
+        const startTime = booking.startAt ? new Date(booking.startAt) : new Date();
+        const duration = booking.appointmentSegments?.[0]?.durationMinutes || 60;
+        const endTime = new Date(startTime.getTime() + duration * 60000);
+        
+        // Extract notes and type from seller note
+        const sellerNote = booking.sellerNote || '';
+        const typeMatch = sellerNote.match(/^(consultation|drawing_consultation|tattoo_session)/);
+        const type = typeMatch ? typeMatch[1] : 'tattoo_session';
+        const notes = sellerNote.replace(/^(consultation|drawing_consultation|tattoo_session)\s*-?\s*/, '').trim() || undefined;
+        
+        // Create the appointment
+        appointment = await prisma.appointment.create({
+          data: {
+            squareId: booking.id,
+            customerId,
+            startTime,
+            endTime,
+            duration,
+            status: 'scheduled',
+            type,
+            notes
+          },
+          include: { customer: true }
+        });
+        
+        fastify.log.info(`Created local appointment ${appointment.id} from Square booking ${booking.id}`);
+      } else {
+        // Update existing appointment
         await prisma.appointment.update({
           where: { id: appointment.id },
           data: {
@@ -242,28 +287,29 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
             updatedAt: new Date()
           }
         });
-        
-        // Create audit log for booking creation
-        await prisma.auditLog.create({
-          data: {
-            action: 'booking_created_webhook',
-            resource: 'appointment',
-            resourceId: appointment.id,
-            resourceType: 'appointment',
-            details: {
-              squareBookingId: booking.id,
-              customerName: appointment.customer?.name,
-              startAt: booking.startAt,
-              status: booking.status,
-              // Square automatically sends notifications at this point
-              notificationsSent: true,
-              notificationType: 'square_automatic'
-            }
-          }
-        });
-        
-        fastify.log.info(`Square booking created and notifications sent for appointment ${appointment.id}`);
       }
+      
+      // Create audit log for booking creation
+      await prisma.auditLog.create({
+        data: {
+          action: 'booking_created_webhook',
+          resource: 'appointment',
+          resourceId: appointment.id,
+          resourceType: 'appointment',
+          details: {
+            squareBookingId: booking.id,
+            customerName: appointment.customer?.name,
+            startAt: booking.startAt,
+            status: booking.status,
+            createdFromSquare: !appointment.id,
+            // Square automatically sends notifications at this point
+            notificationsSent: true,
+            notificationType: 'square_automatic'
+          }
+        }
+      });
+      
+      fastify.log.info(`Square booking created and notifications sent for appointment ${appointment.id}`);
     } catch (error) {
       fastify.log.error('Error handling booking created event:', error);
     }
@@ -273,12 +319,65 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
     const booking = data.object.booking;
     try {
       // Find the appointment by Square ID
-      const appointment = await prisma.appointment.findUnique({
+      let appointment = await prisma.appointment.findUnique({
         where: { squareId: booking.id },
         include: { customer: true }
       });
       
-      if (appointment) {
+      if (!appointment) {
+        // This booking doesn't exist locally - create it
+        fastify.log.info(`Square booking ${booking.id} not found locally, creating from webhook`);
+        
+        // Find customer by Square ID
+        let customerId: string | null = null;
+        if (booking.customerId) {
+          const customer = await prisma.customer.findFirst({
+            where: { squareId: booking.customerId }
+          });
+          
+          if (customer) {
+            customerId = customer.id;
+          }
+        }
+        
+        // Extract appointment details
+        const startTime = booking.startAt ? new Date(booking.startAt) : new Date();
+        const duration = booking.appointmentSegments?.[0]?.durationMinutes || 60;
+        const endTime = new Date(startTime.getTime() + duration * 60000);
+        
+        // Map Square booking status to our appointment status
+        let appointmentStatus = 'scheduled';
+        if (booking.status === 'CANCELLED') {
+          appointmentStatus = 'cancelled';
+        } else if (booking.status === 'ACCEPTED') {
+          appointmentStatus = 'confirmed';
+        } else if (booking.status === 'NO_SHOW') {
+          appointmentStatus = 'no_show';
+        }
+        
+        // Extract notes and type from seller note
+        const sellerNote = booking.sellerNote || '';
+        const typeMatch = sellerNote.match(/^(consultation|drawing_consultation|tattoo_session)/);
+        const type = typeMatch ? typeMatch[1] : 'tattoo_session';
+        const notes = sellerNote.replace(/^(consultation|drawing_consultation|tattoo_session)\s*-?\s*/, '').trim() || undefined;
+        
+        // Create the appointment
+        appointment = await prisma.appointment.create({
+          data: {
+            squareId: booking.id,
+            customerId,
+            startTime,
+            endTime,
+            duration,
+            status: appointmentStatus,
+            type,
+            notes
+          },
+          include: { customer: true }
+        });
+        
+        fastify.log.info(`Created local appointment ${appointment.id} from Square booking update ${booking.id}`);
+      } else {
         // Map Square booking status to our appointment status
         let appointmentStatus = appointment.status;
         if (booking.status === 'CANCELLED') {

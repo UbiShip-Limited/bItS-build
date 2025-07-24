@@ -28,6 +28,7 @@ export interface PaginatedResponse<T> {
 export interface CloudinarySignatureBody {
   folder?: string;
   tags?: string[];
+  context?: Record<string, string>;
 }
 
 export interface CloudinaryValidateBody {

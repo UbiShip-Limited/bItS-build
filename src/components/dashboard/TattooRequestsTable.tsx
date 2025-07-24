@@ -21,10 +21,10 @@ export default function TattooRequestsTable({ requests }: TattooRequestsTablePro
       <table className="w-full">
         <thead>
           <tr>
-            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-wider">Client</th>
-            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-wider">Design</th>
-            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-wider">Date</th>
-            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-wider">Status</th>
+            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-[0.02em]">Client</th>
+            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-[0.02em]">Design</th>
+            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-[0.02em]">Date</th>
+            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-[0.02em]">Status</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-[#1a1a1a]">
@@ -37,10 +37,24 @@ export default function TattooRequestsTable({ requests }: TattooRequestsTablePro
           ) : (
             requests.map((request, index) => (
               <tr key={request.id} className="transition-colors hover:bg-[#1a1a1a]/50">
-                <td className="px-5 py-4 text-white font-medium">
-                  {request.customer?.name || 'Anonymous'}
+                <td className="px-5 py-4">
+                  <div>
+                    <div className="text-white font-medium">
+                      {request.customer?.name || 'Anonymous'}
+                    </div>
+                    <div className="text-gray-400 text-sm">
+                      {request.customer?.email || request.contactEmail || 'No email'}
+                    </div>
+                  </div>
                 </td>
-                <td className="px-5 py-4 text-gray-300">{request.description}</td>
+                <td className="px-5 py-4">
+                  <div>
+                    <div className="text-gray-300 line-clamp-1">{request.description}</div>
+                    <div className="text-gray-500 text-sm">
+                      {[request.style, request.placement, request.size].filter(Boolean).join(' • ')}
+                    </div>
+                  </div>
+                </td>
                 <td className="px-5 py-4 text-gray-300">
                   {format(new Date(request.createdAt), 'MMM dd')}
                 </td>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { businessHoursService, type BusinessHours, type SpecialHours } from '@/src/lib/api/services/businessHoursService';
 import { Clock, Calendar, Save, X, Plus, Edit2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/src/lib/toast';
 
 export default function BusinessHoursManager() {
   const [businessHours, setBusinessHours] = useState<BusinessHours[]>([]);

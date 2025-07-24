@@ -7,7 +7,9 @@ interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'appointment_created' | 'payment_received' | 'request_submitted' | 'system_alert';
+  type: 'appointment_created' | 'payment_received' | 'request_submitted' | 'system_alert' | 
+        'request_reviewed' | 'request_approved' | 'request_rejected' | 'appointment_approved' |
+        'email_sent';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   timestamp: Date;
   read: boolean;
@@ -28,8 +30,8 @@ export default function NotificationCenter({ userId }: NotificationCenterProps) 
   // Connect to Server-Sent Events
   useEffect(() => {
     const connectToEvents = () => {
-      // In a real implementation, this would be your backend SSE endpoint
-      const eventSource = new EventSource(`/api/events?userId=${userId}`);
+      const apiUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
+      const eventSource = new EventSource(`${apiUrl}/events?userId=${userId}`);
       eventSourceRef.current = eventSource;
 
       eventSource.onopen = () => {
@@ -90,6 +92,11 @@ export default function NotificationCenter({ userId }: NotificationCenterProps) 
       case 'appointment_created': return 'New Appointment';
       case 'payment_received': return 'Payment Received';
       case 'request_submitted': return 'New Request';
+      case 'request_reviewed': return 'Request Reviewed';
+      case 'request_approved': return 'Request Approved';
+      case 'request_rejected': return 'Request Rejected';
+      case 'appointment_approved': return 'Appointment Confirmed';
+      case 'email_sent': return 'Email Sent';
       case 'system_alert': return 'System Alert';
       default: return 'Notification';
     }
@@ -103,18 +110,33 @@ export default function NotificationCenter({ userId }: NotificationCenterProps) 
         return `Payment of $${data?.amount || 0} received`;
       case 'request_submitted':
         return 'New tattoo request needs review';
+      case 'request_reviewed':
+        return data?.message || 'Tattoo request has been reviewed';
+      case 'request_approved':
+        return data?.message || 'Tattoo request has been approved';
+      case 'request_rejected':
+        return data?.message || 'Tattoo request has been declined';
+      case 'appointment_approved':
+        return data?.message || 'Appointment has been confirmed';
+      case 'email_sent':
+        return data?.message || 'Email notification sent';
       case 'system_alert':
         return data?.message || 'System notification';
       default:
-        return 'New notification';
+        return data?.message || 'New notification';
     }
   };
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'appointment_created': return Calendar;
+      case 'appointment_approved': return CheckCircle;
       case 'payment_received': return DollarSign;
       case 'request_submitted': return FileText;
+      case 'request_reviewed': return FileText;
+      case 'request_approved': return CheckCircle;
+      case 'request_rejected': return AlertCircle;
+      case 'email_sent': return Bell;
       case 'system_alert': return AlertCircle;
       default: return Bell;
     }

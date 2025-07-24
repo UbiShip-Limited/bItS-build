@@ -29,6 +29,13 @@ export class CustomersService extends BaseSquareClient {
     };
   }
 
+  // Get a customer by ID
+  async getCustomerById(customerId: string): Promise<SquareCustomerResponse> {
+    return this.client.customers.get({
+      customerId
+    });
+  }
+
   // Create a customer method
   async createCustomer(params: {
     givenName?: string;

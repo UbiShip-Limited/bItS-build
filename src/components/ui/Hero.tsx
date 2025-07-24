@@ -3,22 +3,27 @@
 import React, { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { Button } from "./button"
 import { ChevronRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { Spotlight } from "./spotlight-new"
+import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants'
+
 
 export function TattooHero() {
   const [currentImage, setCurrentImage] = useState<"none" | "outline" | "cougar">("none")
+  const [isLoaded, setIsLoaded] = useState(false)
   
   useEffect(() => {
-    // Simplified animation sequence with one timer
+    // Enhanced animation sequence
     const sequence = async () => {
       // Short delay before starting animations
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setIsLoaded(true);
       await new Promise(resolve => setTimeout(resolve, 300));
       setCurrentImage("outline");
       
       // Transition from outline to cougar
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 2000));
       setCurrentImage("cougar");
     };
     
@@ -29,68 +34,85 @@ export function TattooHero() {
     }
   }, [])
 
-  // Simplified animation variants
+  // Refined animation variants with consistent timing
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1, // Reduced stagger time for more subtle effect
-        duration: 0.5
+        staggerChildren: 0.08,
+        duration: 0.5,
+        ease: [0.4, 0, 0.2, 1]
       },
     },
   }
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 10 }, // Reduced y offset for subtler animation
+    hidden: { opacity: 0, y: 16 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.4, // Shorter duration for crisper animations
-        ease: "easeOut",
+        duration: 0.3,
+        ease: [0.4, 0, 0.2, 1],
       },
     },
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-obsidian text-white flex flex-col justify-center w-full max-w-full">
-      {/* Background layer - lowest z-index */}
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-obsidian via-[#0a0a0a] to-obsidian text-white flex items-center justify-center w-full">
+      {/* Subtle spotlight effect with gold tints */}
+      <Spotlight 
+        gradientFirst="radial-gradient(68.54% 68.72% at 55.02% 31.46%, hsla(210, 100%, 85%, .08) 0, hsla(210, 100%, 55%, .02) 50%, hsla(210, 100%, 45%, 0) 80%)"
+        gradientSecond="radial-gradient(68.54% 68.72% at 55.02% 31.46%, hsla(210, 100%, 85%, .06) 0, hsla(210, 100%, 55%, .02) 50%, hsla(210, 100%, 45%, 0) 80%)"
+        gradientThird="radial-gradient(68.54% 68.72% at 55.02% 31.46%, hsla(210, 100%, 85%, .04) 0, hsla(210, 100%, 45%, .02) 80%, transparent 100%)"
+        translateY={-350}
+        width={560}
+        height={1380}
+        smallWidth={240}
+        duration={7}
+        xOffset={100}
+      />
+      
+      {/* Additional ambient glow effects */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-obsidian via-obsidian to-obsidian/95"></div>
+        <div className="hero-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold-500/5 rounded-full blur-[100px] animate-pulse" />
+        <div className="hero-shadow absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-gold-500/8 rounded-full blur-[60px]" />
+        <div className="hero-shadow absolute bottom-1/3 right-1/4 w-[300px] h-[300px] bg-gold-500/8 rounded-full blur-[60px]" />
+      </div>
+      
+      {/* Gradient mesh background */}
+      <div className="absolute inset-0 z-0 opacity-30">
+        <div className="absolute inset-0 bg-gradient-to-br from-gold-500/10 via-transparent to-gold-500/5" />
+        <div className="absolute inset-0 bg-gradient-to-tl from-gold-500/5 via-transparent to-transparent" />
       </div>
 
-      {/* Central ornamental divider - middle z-index - hidden on very small screens */}
-      <div className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 z-10 hidden sm:block">
-        <div className="h-full w-full bg-gradient-to-b from-transparent via-gold/50 to-transparent"></div>
+      {/* Subtle central divider */}
+      <div className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 z-10 hidden lg:block">
+        <div className="h-full w-full bg-gradient-to-b from-transparent via-gold-500/10 to-transparent"></div>
       </div>
 
       {/* Main content container - highest z-index */}
       <motion.div 
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }} // Faster fade-in
-        className="relative z-20 flex flex-col items-center justify-start w-full h-full my-auto pt-8 pb-16 sm:pt-12 sm:pb-20 md:pt-16"
-        style={{ marginTop: "-2rem" }}
+        animate={{ opacity: isLoaded ? 1 : 0 }}
+        transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
+        className="relative z-20 flex flex-col items-center justify-center w-full h-screen max-h-screen overflow-hidden px-4 sm:px-6 md:px-8 py-16 sm:py-20"
       >
         {/* Main content */}
         <motion.div
-          className="relative w-full max-w-5xl mx-auto text-center bg-obsidian/75 px-6 sm:px-8 md:px-12 py-8 sm:py-12 md:py-16 rounded-lg backdrop-blur-sm flex flex-col items-center justify-center border border-white/10"
+          className="relative w-full max-w-4xl mx-auto text-center flex flex-col items-center justify-center mt-8 sm:mt-12 md:mt-16"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {/* Logo area - contains both images that fade in/out */}
+          {/* Logo area - enhanced with glow effect */}
           <motion.div 
-            className="mt-6 sm:mt-8 md:mt-8 relative aspect-square" 
+            className="relative aspect-square w-[160px] h-[160px] sm:w-[200px] sm:h-[200px] md:w-[240px] md:h-[240px] lg:w-[280px] lg:h-[280px]" 
             variants={itemVariants}
-            style={{ 
-              width: "min(280px, 85%)", 
-              height: "min(280px, 85%)",
-              maxWidth: "600px",
-              maxHeight: "600px"
-            }}
           >
+            {/* Ambient glow behind logo */}
+            <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-[40px] sm:blur-[60px] scale-125 sm:scale-150 animate-pulse" />
             <div className="relative w-full h-full mx-auto">
               {/* Simplified image transition using AnimatePresence */}
               <AnimatePresence mode="sync">
@@ -119,192 +141,167 @@ export function TattooHero() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.7 }}
-                    className="absolute inset-0 scale-115" 
+                    className="absolute inset-0" 
                   >
                     <Image
                       src="/images/cougar.svg"
                       alt="Bowen Island Tattoo Logo"
                       fill
                       className="object-contain brightness-0 invert"
+                      style={{ transform: 'scale(1.05)' }}
                       priority
                     />
-                    <div className="absolute -bottom-4 sm:-bottom-8 left-1/2 -translate-x-1/2 w-[min(200px,70vw)] md:w-[320px] h-[15px] sm:h-[20px] bg-white/5 blur-xl rounded-full hero-shadow"></div>
+                    {/* Enhanced glow effect */}
+                    <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-64 h-8 bg-gold-500/20 blur-2xl rounded-full" />
+                    <div className="absolute inset-0 bg-gradient-radial from-gold-500/10 via-transparent to-transparent scale-150" />
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
           </motion.div>
 
-          {/* Ornamental line above title - mobile optimized */}
-          <motion.div className="mt-4 sm:mt-5 md:mt-5 w-full" variants={itemVariants}>
-            <div className="relative">
-              <OrnamentalLine
-                centerElement={
-                  <div className="flex items-center justify-center w-4 sm:w-6 md:w-6 h-4 sm:h-6 md:h-6">
-                    <div className="w-3 sm:w-4 md:w-4 h-3 sm:h-4 md:h-4 border border-[#C9A449]/80 rotate-45"></div>
-                    <div className="absolute w-1.5 sm:w-2 md:w-2 h-1.5 sm:h-2 md:h-2 bg-[#C9A449]/30 rotate-45"></div>
-                  </div>
-                }
-                lineWidth="w-16 sm:w-32 md:w-36"
-              />
-              {/* Horizontal line passing through - mobile optimized */}
-              <div className="absolute top-1/2 left-[10%] right-[10%] sm:left-0 sm:right-0 h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/40 to-transparent -translate-y-1/2"></div>
-            </div>
-          </motion.div>
-
-          {/* Title - mobile optimized */}
+          {/* Title - enhanced typography with gradient */}
           <motion.h1
-            className="font-heading text-2xl sm:text-3xl md:text-5xl lg:text-6xl tracking-wide text-white mb-3 sm:mb-4 md:mb-5 uppercase flex justify-center items-center flex-wrap gap-x-2 sm:gap-x-3 md:gap-x-3"
+            className={`${typography.fontBrand} text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold ${typography.leadingTight} mt-6 sm:mt-8 mb-3 sm:mb-4 px-4`}
             variants={itemVariants}
           >
-            <span className="inline-block font-medium tracking-wide">Bowen</span>
-            <span className="inline-block text-xl sm:text-2xl md:text-3xl lg:text-4xl tracking-[0.1em] sm:tracking-[0.2em] md:tracking-[0.3em] font-light text-white/90">
-              Island
+            <span className="bg-gradient-to-r from-white via-white to-gold-500/80 bg-clip-text text-transparent">
+              Bowen Island Tattoo
             </span>
-            <span className="inline-block font-medium tracking-wide">Tattoo</span>
           </motion.h1>
 
-          {/* Tagline - mobile optimized */}
+          {/* Tagline - enhanced with better hierarchy */}
           <motion.p
-            className="font-body text-lg sm:text-xl md:text-xl text-[#FFFFFF]/80 max-w-xs sm:max-w-sm md:max-w-lg mx-auto mb-4 sm:mb-5 md:mb-7 italic leading-relaxed px-2 sm:px-0"
+            className={`${typography.textLg} sm:${typography.textXl} md:${typography.text2xl} ${colors.textProminent} max-w-3xl mx-auto mb-2 sm:mb-3 ${typography.trackingWide} px-6`}
             variants={itemVariants}
           >
-            Where artistry meets tranquility. A private studio experience unlike any other.
+            Where artistry meets experience
           </motion.p>
 
           <motion.p
-            className="font-body text-lg sm:text-xl md:text-xl text-[#FFFFFF]/80 max-w-xs sm:max-w-sm md:max-w-lg mx-auto mb-4 sm:mb-5 md:mb-7 italic leading-relaxed px-2 sm:px-0"
+            className={`${typography.textSm} sm:${typography.paragraph} md:${typography.paragraphLarge} ${colors.textSecondary} max-w-2xl mx-auto mb-6 sm:mb-8 px-6`}
             variants={itemVariants}
           >
-           By appointment only.
+           Professional tattoo services in a private island setting.<br className="hidden sm:block" />
+           <span className={`${colors.textMuted} italic block mt-1 sm:mt-2`}>Quality work. Experienced artists. By appointment only.</span>
           </motion.p>
 
-          {/* Ornamental line below tagline - mobile optimized */}
-          <motion.div className="mb-5 sm:mb-6 md:mb-8 w-full" variants={itemVariants}>
-            <div className="relative">
-              <OrnamentalLine
-                centerElement={
-                  <div className="relative flex items-center justify-center">
-                    <span className="text-[#C9A449] text-xs sm:text-sm md:text-sm z-10">✦</span>
-                    <span className="absolute -mt-0.5 transform scale-125 sm:scale-150 text-[#C9A449]/20 text-xs sm:text-sm md:text-sm">✦</span>
-                  </div>
-                }
-                lineWidth="w-20 sm:w-36 md:w-40"
-              />
-              {/* Horizontal line passing through - mobile optimized */}
-              <div className="absolute top-1/2 left-[10%] right-[10%] sm:left-0 sm:right-0 h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/40 to-transparent -translate-y-1/2"></div>
+          {/* Enhanced ornamental divider */}
+          <motion.div className="mb-6 sm:mb-8 flex items-center justify-center" variants={itemVariants}>
+            <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-gold-500/20" />
+            <div className="mx-4 sm:mx-6 relative">
+              <div className="w-3 h-3 bg-gold-500/40 rounded-full" />
+              <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-md scale-[3] animate-pulse" />
             </div>
+            <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-l from-transparent via-gold-500/40 to-gold-500/20" />
           </motion.div>
 
-          {/* CTA Buttons - mobile optimized */}
+          {/* CTA Buttons - refined with new button system */}
           <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-6 w-full sm:w-auto px-4 sm:px-0"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto px-4 sm:px-0"
             variants={itemVariants}
           >
-            <Link href="/tattooRequest">
-              <Button
-                className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 w-full sm:w-auto px-4 sm:px-6 h-12 sm:h-14"
-                size="lg"
+            <Link href="/tattooRequest" className="w-full sm:w-auto">
+              <button
+                className={`${components.button.base} ${components.button.sizes.medium} md:${components.button.sizes.large} bg-gold-500 text-obsidian hover:bg-gold-400 ${effects.transitionNormal} w-full sm:w-auto group shadow-lg hover:shadow-xl hover:shadow-gold-500/20`}
               >
-                <span className="relative z-10 flex items-center font-body tracking-widest uppercase text-xs sm:text-sm md:text-sm font-medium">
+                <span className="relative z-10 flex items-center justify-center">
                   Book Your Session
-                  <ChevronRight className="ml-1 sm:ml-2 h-4 sm:h-5 w-4 sm:w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                  <ChevronRight className="ml-2 h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
                 </span>
-              </Button>
+              </button>
             </Link>
 
-            <Link href="/gallery">
-              <Button
-                variant="outline"
-                className="border-white/20 bg-transparent text-white hover:bg-white/10 hover:text-white hover:border-white/40 transition-all duration-300 w-full sm:w-auto px-4 sm:px-6 h-12 sm:h-14"
-                size="lg"
+            <Link href="#gallery" className="w-full sm:w-auto">
+              <button
+                className={`${components.button.base} ${components.button.sizes.medium} md:${components.button.sizes.large} ${components.button.variants.secondary} w-full sm:w-auto`}
               >
-                <span className="font-body tracking-widest uppercase text-xs sm:text-sm md:text-sm font-medium">
-                  Explore Gallery
-                </span>
-              </Button>
+                Explore Gallery
+              </button>
             </Link>
           </motion.div>
         </motion.div>
 
-        {/* Corner ornaments - mobile optimized */}
-        <CornerOrnament position="top-left" />
-        <CornerOrnament position="top-right" />
-        <CornerOrnament position="bottom-left" />
-        <CornerOrnament position="bottom-right" />
+        {/* Enhanced corner ornaments - hidden on small screens */}
+        <div className="hidden md:block">
+          <CornerOrnament position="top-left" />
+          <CornerOrnament position="top-right" />
+          <CornerOrnament position="bottom-left" />
+          <CornerOrnament position="bottom-right" />
+        </div>
+        
+        {/* Floating particles effect */}
+        {isLoaded && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {[...Array(5)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1.5 h-1.5 bg-gold-500/20 rounded-full"
+                initial={{ 
+                  x: `${20 + i * 15}%`,
+                  y: "110%",
+                  opacity: 0 
+                }}
+                animate={{ 
+                  y: "-10%",
+                  opacity: [0, 0.6, 0],
+                  x: `${20 + i * 15 + (i % 2 ? 10 : -10)}%`
+                }}
+                transition={{
+                  duration: 15 + i * 3,
+                  repeat: Infinity,
+                  delay: i * 2.5,
+                  ease: "linear"
+                }}
+              />
+            ))}
+          </div>
+        )}
       </motion.div>
     </div>
   )
 }
 
-interface OrnamentalLineProps {
-  centerElement: React.ReactNode;
-  lineWidth?: string;
-}
-
-const OrnamentalLine: React.FC<OrnamentalLineProps> = ({
-  centerElement,
-  lineWidth = "w-16 md:w-20",
-}) => {
-  return (
-    <div className="flex items-center justify-center">
-      <div
-        className={`${lineWidth} h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/80 to-[#C9A449]/50`}
-      ></div>
-      <div className="mx-2 sm:mx-4 md:mx-4">{centerElement}</div>
-      <div
-        className={`${lineWidth} h-[0.5px] bg-gradient-to-l from-transparent via-[#C9A449]/80 to-[#C9A449]/50`}
-      ></div>
-    </div>
-  );
-};
+// Removed OrnamentalLine component - using standardized ornaments from globalStyleConstants
 
 interface CornerOrnamentProps {
   position: "top-left" | "top-right" | "bottom-left" | "bottom-right";
 }
 
 const CornerOrnament: React.FC<CornerOrnamentProps> = ({ position }) => {
-  // Mobile-optimized sizing - smaller on mobile, hidden on very small screens
-  const baseClasses = "absolute w-[6%] sm:w-[8%] md:w-[8%] h-[4%] sm:h-[6%] md:h-[8%] m-2 sm:m-4 md:m-6 hidden xs:block";
+  // Enhanced corner ornaments with gradient effect
+  const baseClasses = "absolute w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 m-4 sm:m-6 md:m-8 lg:m-12";
   let positionClasses = "";
-  let horizontalLineClasses = "";
-  let verticalLineClasses = "";
+  let cornerStyle = "";
 
   switch (position) {
     case "top-left":
       positionClasses = "top-0 left-0";
-      horizontalLineClasses =
-        "absolute top-0 left-0 w-full h-[0.5px] bg-gradient-to-r from-[#C9A449]/50 sm:from-[#C9A449]/70 to-transparent";
-      verticalLineClasses =
-        "absolute top-0 left-0 h-full w-[0.5px] bg-gradient-to-b from-[#C9A449]/50 sm:from-[#C9A449]/70 to-transparent";
+      cornerStyle = "border-t-2 border-l-2 border-gold-500/20 rounded-tl-3xl";
       break;
     case "top-right":
       positionClasses = "top-0 right-0";
-      horizontalLineClasses =
-        "absolute top-0 right-0 w-full h-[0.5px] bg-gradient-to-l from-[#C9A449]/50 sm:from-[#C9A449]/70 to-transparent";
-      verticalLineClasses =
-        "absolute top-0 right-0 h-full w-[0.5px] bg-gradient-to-b from-[#C9A449]/50 sm:from-[#C9A449]/70 to-transparent";
+      cornerStyle = "border-t-2 border-r-2 border-gold-500/20 rounded-tr-3xl";
       break;
     case "bottom-left":
       positionClasses = "bottom-0 left-0";
-      horizontalLineClasses =
-        "absolute bottom-0 left-0 w-full h-[0.5px] bg-gradient-to-r from-[#C9A449]/50 sm:from-[#C9A449]/70 to-transparent";
-      verticalLineClasses =
-        "absolute bottom-0 left-0 h-full w-[0.5px] bg-gradient-to-t from-[#C9A449]/50 sm:from-[#C9A449]/70 to-transparent";
+      cornerStyle = "border-b-2 border-l-2 border-gold-500/20 rounded-bl-3xl";
       break;
     case "bottom-right":
       positionClasses = "bottom-0 right-0";
-      horizontalLineClasses =
-        "absolute bottom-0 right-0 w-full h-[0.5px] bg-gradient-to-l from-[#C9A449]/50 sm:from-[#C9A449]/70 to-transparent";
-      verticalLineClasses =
-        "absolute bottom-0 right-0 h-full w-[0.5px] bg-gradient-to-t from-[#C9A449]/50 sm:from-[#C9A449]/70 to-transparent";
+      cornerStyle = "border-b-2 border-r-2 border-gold-500/20 rounded-br-3xl";
       break;
   }
 
   return (
-    <div className={`${baseClasses} ${positionClasses}`}>
-      <div className={horizontalLineClasses}></div>
-      <div className={verticalLineClasses}></div>
-    </div>
+    <motion.div 
+      className={`${baseClasses} ${positionClasses}`}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 1, delay: 0.5 }}
+    >
+      <div className={`absolute inset-0 ${cornerStyle}`}></div>
+      <div className={`absolute inset-0 ${cornerStyle} opacity-50 blur-sm`}></div>
+    </motion.div>
   );
 };

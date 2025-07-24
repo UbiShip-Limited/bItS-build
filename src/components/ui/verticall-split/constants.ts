@@ -3,26 +3,26 @@ import { BaseSection } from './types';
 export const BASE_SECTIONS: BaseSection[] = [
   {
     id: 1,
-    title: "WILDLIFE REALISM",
-    subtitle: "NATURE'S FINEST DETAIL",
-    description: "Specializing in breathtaking animal portraits and wildlife scenes. From majestic cougars to delicate songbirds, we bring nature's beauty to life with stunning photorealistic precision.",
-    accent: "Lifelike",
+    title: "Custom Work",
+    subtitle: "Personalized Design Process",
+    description: "Every piece begins with your story. We collaborate closely from initial concept to final design, ensuring each tattoo is uniquely yours. Our detailed consultation process means no two pieces are ever the same.",
+    accent: "Custom",
     fallbackImage: "/images/shop-pic2.png"
   },
   {
     id: 2,
-    title: "CUSTOM DESIGNS",
-    subtitle: "YOUR VISION, OUR ARTISTRY", 
-    description: "Transform your ideas into wearable masterpieces. We collaborate closely with you from concept to completion, ensuring every line, shade, and detail perfectly captures your personal story.",
-    accent: "Exclusive",
+    title: "Professional Quality",
+    subtitle: "Experience You Can Trust", 
+    description: "With over 15 years of professional experience, we use only the highest quality materials and maintain the strictest safety standards. Our commitment to excellence shows in every line and shade.",
+    accent: "Professional",
     fallbackImage: "/images/shop-pic2.png"
   },
   {
     id: 3,
-    title: "ISLAND SANCTUARY",
-    subtitle: "PRIVATE STUDIO EXPERIENCE",
-    description: "Escape to our exclusive island studio where tranquility meets artistry. Enjoy complete privacy, stunning natural views, and a healing environment that enhances your tattoo journey.",
-    accent: "Serene",
+    title: "Island Experience like no other",
+    subtitle: "Private Studio Setting",
+    description: "Escape to our peaceful Bowen Island studio where you can focus completely on your tattoo experience. Our private, appointment-only approach ensures you receive the attention and care you deserve.",
+    accent: "Private",
     fallbackImage: "/images/shop-pic2.png"
   }
 ]; 

@@ -1,8 +1,14 @@
 import React from 'react';
-import { TattooFormResponse } from '../../../hooks/useTattooRequestForm';
+import { Button } from '@/src/components/ui/button';
+
+interface ResponseData {
+  id: string;
+  message: string;
+  trackingToken?: string;
+}
 
 interface TattooRequestSuccessProps {
-  response: TattooFormResponse;
+  response: ResponseData;
   resetForm: () => void;
 }
 
@@ -75,8 +81,8 @@ const TattooRequestSuccess: React.FC<TattooRequestSuccessProps> = ({ response, r
                 <p className="font-body font-medium text-white text-lg tracking-wide">{response.id}</p>
               </div>
               <div>
-                <p className="text-white/50 text-sm font-body mb-1">Description</p>
-                <p className="text-white/90 font-body leading-relaxed">{response.description}</p>
+                <p className="text-white/50 text-sm font-body mb-1">Message</p>
+                <p className="text-white/90 font-body leading-relaxed">{response.message}</p>
               </div>
               <div>
                 <p className="text-white/50 text-sm font-body mb-1">Tracking Code</p>
@@ -110,18 +116,17 @@ const TattooRequestSuccess: React.FC<TattooRequestSuccessProps> = ({ response, r
         
         {/* Action Button */}
         <div className="text-center">
-          <button
+          <Button
             type="button"
             onClick={resetForm}
-            className="group relative overflow-hidden bg-transparent border border-[#C9A449] text-[#C9A449] hover:bg-[#C9A449]/10 hover:border-[#C9A449]/80 transition-all duration-300 px-8 py-3 rounded-md font-body tracking-wide uppercase text-sm shadow-md hover:shadow-lg"
+            variant="outline"
+            size="lg"
           >
-            <span className="relative z-10 flex items-center">
-              Submit Another Request
-              <svg className="ml-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </span>
-          </button>
+            Submit Another Request
+            <svg className="ml-2 w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Button>
         </div>
       </div>
     </div>

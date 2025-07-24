@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { notificationService, type NotificationSettings, type NotificationStats } from '@/src/lib/api/services/notificationService';
 import { Bell, MessageSquare, Mail, ExternalLink, TrendingUp } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/src/lib/toast';
 
 export default function NotificationCenter() {
   const [settings, setSettings] = useState<NotificationSettings | null>(null);

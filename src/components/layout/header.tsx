@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { MobileHeader } from "./mobile-header";
+import { Button } from "@/src/components/ui/button";
+import { GAEvents } from '@/src/lib/analytics/ga-events';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,84 +26,74 @@ export function Header() {
     };
   }, []);
 
-  // Consistent spacing with refined background effects
+  // Consistent responsive padding system with extended top coverage
   const headerClasses = hasMounted && scrolled 
-    ? "py-3 bg-white/95 backdrop-blur-md border-b border-gold/10 shadow-elegant" 
-    : "py-4 bg-white/90 backdrop-blur-sm border-b border-transparent";
+    ? "pt-4 pb-3 md:pt-5 md:pb-4" 
+    : "pt-8 pb-6 md:pt-10 md:pb-8";
+
+  const navigationItems = [
+    { name: "Home", path: "/" },
+    { name: "Artists", path: "/artists" },
+    { name: "Gallery", path: "/gallery" },
+    { name: "Services", path: "/services" },
+    { name: "FAQ", path: "#faq" },
+    { name: "Aftercare", path: "#aftercare" },
+    { name: "About", path: "/about" },
+    { name: "Contact", path: "/contact" },
+  ];
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${headerClasses}`}>
-      {/* Subtle ornamental top line */}
-      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold/30 to-transparent"></div>
-      
-      <div className="container mx-auto px-6 flex items-center justify-between">
-        {/* Logo - Tighter and more modern */}
-        <Link href="/" className="relative z-10 group">
-          <div className="flex items-center">
-            <div className="relative">
-              <Image 
-                src="/images/bowen-logo.svg" 
-                alt="Bowen Island Tattoo" 
-                width={48} 
-                height={48}
-                className="mr-3 transform group-hover:scale-105 transition-transform duration-300"
-              />
-              {/* Subtle glow effect on hover */}
-              <div className="absolute inset-0 rounded-full bg-gold/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md"></div>
+    <header className={`fixed top-0 left-0 right-0 z-50 min-h-[80px] transition-all duration-500 ${headerClasses}`}>
+      <div className="container mx-auto px-6 md:px-8 h-full">
+        {/* Main header layout with improved spacing */}
+        <div className="flex items-center justify-between h-full">
+          
+          {/* Desktop Navigation - Centered with uniform spacing */}
+          <nav className="hidden md:flex items-center justify-center flex-1">
+            <div className="flex items-center space-x-8 lg:space-x-10">
+              {navigationItems.map((item) => (
+                <Link 
+                  key={item.name} 
+                  href={item.path}
+                  className="relative font-body text-lg tracking-tight text-white hover:text-gold transition-all duration-300 group drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] py-2"
+                  onClick={() => GAEvents.navigationItemClicked(item.name)}
+                >
+                  {item.name}
+                  {/* Refined underline effect */}
+                  <div className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-gradient-to-r from-gold via-gold/80 to-transparent group-hover:w-full transition-all duration-300"></div>
+                </Link>
+              ))}
             </div>
-            <div className="font-heading text-lg text-obsidian">
-              <span className="block leading-tight font-medium">Bowen Island</span>
-              <span className="block text-gold -mt-0.5 text-sm tracking-wider font-normal">Tattoo</span>
-            </div>
-          </div>
-        </Link>
+          </nav>
 
-        {/* Desktop Navigation - Consistent spacing */}
-        <nav className="hidden md:flex items-center space-x-8">
-          {[
-            { name: "Home", path: "/" },
-            { name: "Artists", path: "/artists" },
-            { name: "Gallery", path: "/gallery" },
-            { name: "Services", path: "/services" },
-            { name: "About", path: "/about" },
-            { name: "Contact", path: "/contact" },
-          ].map((item) => (
-            <Link 
-              key={item.name} 
-              href={item.path}
-              className="relative font-body text-sm tracking-wide text-obsidian hover:text-gold transition-colors duration-300 group"
+          {/* Action Section - Consistent spacing */}
+          <div className="flex items-center space-x-4">
+            {/* Desktop Booking Button */}
+            <div className="hidden md:block">
+              <Button 
+                href="/tattooRequest"
+                variant="outline"
+                size="md"
+              >
+                Book Now
+              </Button>
+            </div>
+
+            {/* Mobile Menu Button */}
+            <button 
+              className="md:hidden relative p-2 rounded-sm border border-transparent hover:border-white/20 transition-all duration-300"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
             >
-              {item.name}
-              {/* Subtle underline effect */}
-              <div className="absolute -bottom-1 left-0 w-0 h-px bg-gradient-to-r from-gold to-transparent group-hover:w-full transition-all duration-300"></div>
-            </Link>
-          ))}
-        </nav>
+              {isMenuOpen ? (
+                <X className="h-6 w-6 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
+              ) : (
+                <Menu className="h-6 w-6 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
+              )}
+            </button>
+          </div>
 
-        {/* Booking Button - More refined */}
-        <div className="hidden md:block">
-          <Link 
-            href="/tattooRequest"
-            className="relative group font-body text-obsidian text-xs tracking-[0.15em] uppercase px-5 py-2.5 border border-obsidian/20 hover:border-gold hover:bg-gold/5 transition-all duration-300 overflow-hidden"
-          >
-            <span className="relative z-10">Book Now</span>
-            {/* Subtle background effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-gold/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          </Link>
         </div>
-
-        {/* Mobile Menu Button - Smaller and more refined */}
-        <button 
-          className="md:hidden relative z-10 p-2 rounded-sm border border-transparent hover:border-gold/20 hover:bg-gold/5 transition-all duration-300"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-        >
-          {isMenuOpen ? (
-            <X className="h-5 w-5 text-obsidian" />
-          ) : (
-            <Menu className="h-5 w-5 text-obsidian" />
-          )}
-        </button>
       </div>
 
       {/* Mobile Menu Component */}

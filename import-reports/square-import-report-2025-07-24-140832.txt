@@ -1,0 +1,29 @@
+Square Data Import Report
+========================
+Date: 2025-07-24 14:08:31
+Duration: 0.4 seconds
+Mode: DRY RUN
+Date Range: 2024-07-24 to 2025-07-24
+
+Results Summary
+==============
+
+Customers:
+  - Imported: 0
+  - Skipped (existing): 0
+  - Errors: 0
+  - Total processed: 0
+
+Payments:
+  - Imported: 0
+  - Skipped (existing): 0
+  - Errors: 0
+  - Total processed: 0
+  - Total value: $0.00
+
+Appointments:
+  - Note: Square API does not support historical booking imports
+
+Errors Summary
+=============
+Total errors: 0

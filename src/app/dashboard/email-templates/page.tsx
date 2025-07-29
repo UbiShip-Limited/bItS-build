@@ -35,8 +35,7 @@ export default function EmailTemplatesPage() {
   return (
     <DashboardPageLayout
       title="Email Templates"
-      subtitle="Manage and customize email templates for customer communications"
-      icon={<Mail className="w-8 h-8 text-primary" />}
+      description="Manage and customize email templates for customer communications"
     >
       {editingTemplate ? (
         <EmailTemplateEditor

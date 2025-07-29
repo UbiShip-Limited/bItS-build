@@ -324,7 +324,7 @@ export default function AppointmentForm({
           )}
           <Button
             type="submit"
-            disabled={loading}
+            isDisabled={loading}
             variant="primary"
             size="md"
           >

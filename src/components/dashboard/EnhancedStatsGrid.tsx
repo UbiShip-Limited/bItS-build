@@ -217,9 +217,6 @@ export default function EnhancedStatsGrid({ metrics, loading = false, onRefresh 
                 <Clock className="w-3.5 h-3.5 text-blue-400" />
                 <div className="text-xs text-blue-400">
                   <span className="font-medium">Next: {metrics.todayAppointments.nextAppointment}</span>
-                  {metrics.todayAppointments.nextAppointmentCustomer && (
-                    <span className="block text-blue-300 mt-0.5">{metrics.todayAppointments.nextAppointmentCustomer}</span>
-                  )}
                 </div>
               </div>
             </div>

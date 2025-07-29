@@ -72,13 +72,33 @@ export default function QuickActionsPanel({
       
       <div className="grid grid-cols-2 gap-3">
         {actions.map((action) => {
-          const Component = action.link ? Link : 'button';
-          const props = action.link ? { href: action.link } : { onClick: () => handleActionClick(action) };
-          
+          if (action.link) {
+            return (
+              <Link
+                key={action.id}
+                href={action.link}
+                className={`
+                  p-4 rounded-lg border transition-all duration-200
+                  flex flex-col items-center text-center gap-2
+                  ${action.color}
+                  hover:scale-105 hover:shadow-lg
+                `}
+              >
+                <div className="p-2 rounded-lg bg-current/10">
+                  {action.icon}
+                </div>
+                <div>
+                  <p className="font-medium text-sm">{action.title}</p>
+                  <p className="text-xs opacity-70 mt-0.5">{action.description}</p>
+                </div>
+              </Link>
+            );
+          }
+
           return (
-            <Component
+            <button
               key={action.id}
-              {...props}
+              onClick={() => handleActionClick(action)}
               className={`
                 p-4 rounded-lg border transition-all duration-200
                 flex flex-col items-center text-center gap-2
@@ -87,15 +107,13 @@ export default function QuickActionsPanel({
               `}
             >
               <div className="p-2 rounded-lg bg-current/10">
-                {React.cloneElement(action.icon as React.ReactElement, { 
-                  className: "w-5 h-5" 
-                })}
+                {action.icon}
               </div>
               <div>
                 <p className="font-medium text-sm">{action.title}</p>
                 <p className="text-xs opacity-70 mt-0.5">{action.description}</p>
               </div>
-            </Component>
+            </button>
           );
         })}
       </div>

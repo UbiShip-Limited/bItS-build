@@ -188,7 +188,7 @@ export function StructuredData({ type = 'homepage', pageTitle, pageDescription }
     }
   };
 
-  let schemaData = [businessData, websiteData];
+  let schemaData: any[] = [businessData, websiteData];
 
   if (type === 'artist') {
     schemaData.push(artistData);

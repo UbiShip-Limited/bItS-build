@@ -198,13 +198,24 @@ export default function AnalyticsDashboard() {
 
         {/* Customer Segmentation */}
         <CustomerSegmentation 
-          segments={metrics.customers?.segments || { newCustomers: 0, regularCustomers: 0, vipCustomers: 0 }}
+          segments={{
+            new: metrics.customers?.segments?.newCustomers || 0,
+            returning: metrics.customers?.segments?.regularCustomers || 0,
+            vip: metrics.customers?.segments?.vipCustomers || 0,
+            retentionRate: metrics.customers?.returning?.rate || 0
+          }}
           retentionRate={metrics.customers?.returning?.rate || 0}
         />
 
         {/* Appointment Metrics */}
         <AppointmentMetrics 
-          metrics={metrics.appointments}
+          metrics={{
+            today: metrics.appointments?.today?.count || 0,
+            thisWeek: metrics.appointments?.week?.scheduled || 0,
+            completionRate: metrics.appointments?.metrics?.conversionRate || 0,
+            noShowRate: metrics.appointments?.metrics?.noShowRate || 0,
+            utilizationRate: metrics.appointments?.metrics?.rebookingRate || 0
+          }}
           trends={[]}
         />
 

@@ -277,7 +277,7 @@ export default function BusinessHoursManager() {
                     </label>
                     <input
                       type="time"
-                      value={newSpecialHours.openTime}
+                      value={newSpecialHours.openTime ?? ''}
                       onChange={(e) => setNewSpecialHours({ ...newSpecialHours, openTime: e.target.value })}
                       className="input input-bordered"
                     />
@@ -288,7 +288,7 @@ export default function BusinessHoursManager() {
                     </label>
                     <input
                       type="time"
-                      value={newSpecialHours.closeTime}
+                      value={newSpecialHours.closeTime ?? ''}
                       onChange={(e) => setNewSpecialHours({ ...newSpecialHours, closeTime: e.target.value })}
                       className="input input-bordered"
                     />

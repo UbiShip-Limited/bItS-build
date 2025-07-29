@@ -212,6 +212,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           label: 'Email Templates' 
         },
         { 
+          href: '/dashboard/email-automation', 
+          icon: Mail, 
+          label: 'Email Automation',
+          badge: 'NEW',
+          badgeColor: 'badge-primary'
+        },
+        { 
           href: '/dashboard/notifications', 
           icon: Bell, 
           label: 'Notifications' 
@@ -442,7 +449,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <h2 className="text-xl lg:text-2xl font-heading font-bold text-white tracking-wide">
                   {(() => {
                     for (const section of navItems) {
-                      const activeItem = section.items.find(item => isActive(item.href, item.exact));
+                      const activeItem = section.items.find(item => {
+                        const exact = 'exact' in item ? item.exact : undefined;
+                        return isActive(item.href, exact);
+                      });
                       if (activeItem) return activeItem.label;
                     }
                     return 'Dashboard';

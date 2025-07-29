@@ -21,19 +21,23 @@ model User {
 }
 
 model Customer {
-  id               String            @id @default(uuid())
-  name             String
-  email            String?           @unique
-  phone            String?
-  notes            String?
-  createdAt        DateTime          @default(now()) @map("created_at")
-  updatedAt        DateTime          @default(now()) @map("updated_at")
-  squareId         String?           @unique @map("square_id")
-  appointments     Appointment[]
-  checkoutSessions CheckoutSession[]
-  paymentLinks     PaymentLink[]
-  payments         Payment[]
-  tattooRequests   TattooRequest[]
+  id                   String            @id @default(uuid())
+  name                 String
+  email                String?           @unique
+  phone                String?
+  notes                String?
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @default(now()) @map("updated_at")
+  squareId             String?           @unique @map("square_id")
+  lastActivityDate     DateTime?         @map("last_activity_date")
+  emailUnsubscribed    Boolean           @default(false) @map("email_unsubscribed")
+  emailPreferences     Json?             @map("email_preferences")
+  appointments         Appointment[]
+  checkoutSessions     CheckoutSession[]
+  paymentLinks         PaymentLink[]
+  payments             Payment[]
+  tattooRequests       TattooRequest[]
+  emailAutomationLogs  EmailAutomationLog[]
 
   @@map("customers")
 }
@@ -57,11 +61,12 @@ model Appointment {
   type            String?
   contactEmail    String?        @map("contact_email")
   contactPhone    String?        @map("contact_phone")
-  artist          User?          @relation(fields: [artistId], references: [id])
-  customer        Customer?      @relation(fields: [customerId], references: [id])
-  payment         Payment?       @relation(fields: [paymentId], references: [id])
-  tattooRequest   TattooRequest? @relation(fields: [tattooRequestId], references: [id])
-  invoices        Invoice[]
+  artist               User?                @relation(fields: [artistId], references: [id])
+  customer             Customer?            @relation(fields: [customerId], references: [id])
+  payment              Payment?             @relation(fields: [paymentId], references: [id])
+  tattooRequest        TattooRequest?       @relation(fields: [tattooRequestId], references: [id])
+  invoices             Invoice[]
+  emailAutomationLogs  EmailAutomationLog[]
 
   @@map("appointments")
 }
@@ -90,10 +95,11 @@ model TattooRequest {
   preferredArtist   String?       @map("preferred_artist")
   purpose           String?
   timeframe         String?
-  appointments      Appointment[]
-  images            Image[]
-  customer          Customer?     @relation(fields: [customerId], references: [id])
-  payment           Payment?      @relation(fields: [paymentId], references: [id])
+  appointments         Appointment[]
+  images               Image[]
+  customer             Customer?            @relation(fields: [customerId], references: [id])
+  payment              Payment?             @relation(fields: [paymentId], references: [id])
+  emailAutomationLogs  EmailAutomationLog[]
 
   @@map("tattoo_requests")
 }
@@ -236,4 +242,42 @@ model EmailTemplate {
   updatedAt   DateTime @default(now()) @map("updated_at")
 
   @@map("email_templates")
+}
+
+model EmailAutomationLog {
+  id                String   @id @default(uuid())
+  customerId        String?  @map("customer_id")
+  appointmentId     String?  @map("appointment_id")
+  tattooRequestId   String?  @map("tattoo_request_id")
+  emailType         String   @map("email_type")
+  emailAddress      String   @map("email_address")
+  templateId        String   @map("template_id")
+  sentAt            DateTime @map("sent_at")
+  status            String   @default("sent") // sent, failed, bounced
+  error             String?
+  metadata          Json?
+  
+  customer          Customer?      @relation(fields: [customerId], references: [id])
+  appointment       Appointment?   @relation(fields: [appointmentId], references: [id])
+  tattooRequest     TattooRequest? @relation(fields: [tattooRequestId], references: [id])
+  
+  @@unique([customerId, appointmentId, emailType, sentAt])
+  @@index([customerId])
+  @@index([appointmentId])
+  @@index([emailType])
+  @@index([sentAt])
+  @@map("email_automation_logs")
+}
+
+model EmailAutomationSetting {
+  id                String   @id @default(uuid())
+  emailType         String   @unique @map("email_type")
+  enabled           Boolean  @default(true)
+  timingHours       Int?     @map("timing_hours") // Hours before/after event
+  timingMinutes     Int?     @map("timing_minutes") // Minutes before/after event
+  businessHoursOnly Boolean  @default(true) @map("business_hours_only")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @map("updated_at")
+  
+  @@map("email_automation_settings")
 }

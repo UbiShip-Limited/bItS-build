@@ -128,7 +128,18 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     
     while (retryCount < maxRetries) {
       try {
-        // Get user role from database
+        // Get user role from database with connection check
+        try {
+          await request.server.prisma.$queryRaw`SELECT 1`; // Quick connection test
+        } catch (connError) {
+          request.log.warn('Database connection test failed, attempting reconnect...');
+          try {
+            await request.server.prisma.$connect();
+          } catch (reconnectError) {
+            request.log.error('Database reconnection failed:', reconnectError);
+          }
+        }
+        
         userWithRole = await request.server.prisma.user.findUnique({
           where: { id: data.user.id },
           select: { role: true, email: true }

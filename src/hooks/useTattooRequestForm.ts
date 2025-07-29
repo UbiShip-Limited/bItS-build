@@ -30,7 +30,7 @@ interface ResponseData {
   trackingToken?: string;
 }
 
-interface ValidationErrors {
+interface InternalValidationErrors {
   [key: string]: string;
 }
 
@@ -40,7 +40,7 @@ interface UseTattooRequestFormReturn {
   error: string | null;
   success: boolean;
   response: ResponseData | null;
-  validationErrors: ValidationErrors | null;
+  validationErrors: InternalValidationErrors | null;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   submitRequest: () => Promise<void>;
   resetForm: () => void;
@@ -103,7 +103,7 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [response, setResponse] = useState<ResponseData | null>(null);
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors | null>(null);
+  const [validationErrors, setValidationErrors] = useState<InternalValidationErrors | null>(null);
   const [hasSavedData, setHasSavedData] = useState(false);
 
   // Check for saved data on component mount
@@ -187,7 +187,7 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
 
   const validateForm = (): boolean => {
     console.log('🔍 Validating form...', formData);
-    const errors: ValidationErrors = {};
+    const errors: InternalValidationErrors = {};
     
     if (!formData.contactEmail) {
       errors.contactEmail = 'Email is required';
@@ -356,7 +356,10 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
       console.log('✅ API response received:', tattooRequestData);
       
       setSuccess(true);
-      setResponse(tattooRequestData);
+      setResponse({
+        id: tattooRequestData.id,
+        message: 'Request submitted successfully'
+      });
       
       // Clear saved data on successful submission
       clearSavedData();

@@ -32,7 +32,7 @@ export default function SquareSyncStatus() {
 
   const fetchStatus = async () => {
     try {
-      const response = await apiClient.get('/square-sync/status');
+      const response = await apiClient.get('/square-sync/status') as SquareSyncStatus;
       setStatus(response);
     } catch (error) {
       console.error('Failed to fetch Square sync status:', error);
@@ -56,7 +56,7 @@ export default function SquareSyncStatus() {
       
       // Poll for status updates more frequently during sync
       const pollInterval = setInterval(async () => {
-        const response = await apiClient.get('/square-sync/status');
+        const response = await apiClient.get('/square-sync/status') as SquareSyncStatus;
         setStatus(response);
         
         if (!response.isRunning) {

@@ -8,14 +8,36 @@ import refundRoutes from './refunds';
 import paymentLinkRoutes from './paymentLinks';
 
 const paymentRoutes: FastifyPluginAsync = async (fastify) => {
-  // Apply authentication middleware to all routes in this plugin
-  fastify.addHook('preHandler', authenticate);
+  // Apply authentication middleware to all routes EXCEPT health check
+  fastify.addHook('preHandler', async (request, reply) => {
+    // Skip auth for health check and test endpoints
+    // Check both the URL and the route path to handle prefixes correctly
+    const path = request.routerPath || request.url;
+    const url = request.url;
+    if (path === '/payments/health' || 
+        path === '/payments/test' ||
+        path === '/payments/debug' ||
+        path === '/payments/simple' ||
+        url === '/health' || 
+        url === '/test' ||
+        url === '/debug' ||
+        url === '/simple' ||
+        url.startsWith('/health?') ||
+        url.startsWith('/test?') ||
+        url.startsWith('/debug?') ||
+        url.startsWith('/simple?')) {
+      fastify.log.info('Skipping auth for health/test/debug/simple endpoint');
+      return;
+    }
+    // Apply auth for all other routes
+    return authenticate(request, reply);
+  });
   
   fastify.log.info('🔄 Starting payment routes registration...');
 
   // Register sub-routes with unique prefixes to avoid conflicts
   try {
-    fastify.register(coreRoutes, { prefix: '/' });              // Core payment operations at /payments/
+    fastify.register(coreRoutes);              // Core payment operations at /payments/ (no prefix needed)
     fastify.register(adminRoutes, { prefix: '/admin' });        // Admin operations at /payments/admin/
     fastify.register(consultationRoutes, { prefix: '/consultation' }); // Consultation payments at /payments/consultation/
     fastify.register(tattooRoutes, { prefix: '/tattoo' });      // Tattoo payments at /payments/tattoo/

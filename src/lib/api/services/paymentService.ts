@@ -194,14 +194,18 @@ class PaymentService {
         
         console.error(`❌ Failed to fetch payments for customer ${customerId}:`, error.message || error);
         
-        // Provide a more user-friendly error message
-        if (error.response?.status === 404) {
-          throw new Error('Payment service not available - this feature may not be configured yet');
-        } else if (error.response?.status === 401 || error.response?.status === 403) {
-          throw new Error('You do not have permission to view payment information');
-        } else {
-          throw new Error('Unable to load payment history at this time');
-        }
+        // Return a failed response instead of throwing
+        const errorMessage = error.response?.status === 404
+          ? 'Payment service not available - this feature may not be configured yet'
+          : error.response?.status === 401 || error.response?.status === 403
+          ? 'You do not have permission to view payment information'
+          : 'Unable to load payment history at this time';
+        
+        return {
+          success: false,
+          data: [],
+          error: errorMessage
+        };
       });
     
     // Cache the promise to prevent duplicate requests

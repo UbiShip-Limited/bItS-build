@@ -22,22 +22,32 @@ const getPrismaConfig = () => {
   };
 
   // Add datasources configuration for production
-  if (isProduction) {
-    // Ensure connection pooling and timeout settings for production
-    const databaseUrl = new URL(process.env.DATABASE_URL || '');
-    
-    // Add connection pool and timeout parameters
-    databaseUrl.searchParams.set('connection_limit', '10');
-    databaseUrl.searchParams.set('pool_timeout', '10');
-    databaseUrl.searchParams.set('connect_timeout', '10');
-    databaseUrl.searchParams.set('statement_timeout', '30000'); // 30 seconds
-    databaseUrl.searchParams.set('idle_in_transaction_session_timeout', '30000');
-    
-    config.datasources = {
-      db: {
-        url: databaseUrl.toString()
+  if (isProduction || process.env.DATABASE_URL?.includes('supabase')) {
+    try {
+      // Ensure connection pooling and timeout settings for production
+      const databaseUrl = new URL(process.env.DATABASE_URL || '');
+      
+      // Add connection pool and timeout parameters for Supabase
+      databaseUrl.searchParams.set('connection_limit', '25'); // Increased for Supabase
+      databaseUrl.searchParams.set('pool_timeout', '20'); // Increased timeout
+      databaseUrl.searchParams.set('connect_timeout', '30'); // Increased connection timeout
+      databaseUrl.searchParams.set('statement_timeout', '30000'); // 30 seconds
+      databaseUrl.searchParams.set('idle_in_transaction_session_timeout', '30000');
+      
+      // For Supabase pooler, ensure proper SSL mode
+      if (databaseUrl.hostname.includes('pooler.supabase.com')) {
+        databaseUrl.searchParams.set('sslmode', 'require');
+        databaseUrl.searchParams.set('pgbouncer', 'true');
       }
-    };
+      
+      config.datasources = {
+        db: {
+          url: databaseUrl.toString()
+        }
+      };
+    } catch (error) {
+      console.error('❌ Failed to parse DATABASE_URL:', error);
+    }
   }
 
   return config;

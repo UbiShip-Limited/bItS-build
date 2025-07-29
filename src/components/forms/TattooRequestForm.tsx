@@ -70,10 +70,8 @@ const TattooRequestForm: React.FC = () => {
     }
     
     console.log('✅ Proceeding with form submission');
-    const result = await submitRequest();
-    if (result) {
-      GAEvents.tattooRequestSubmitted();
-    }
+    await submitRequest();
+    GAEvents.tattooRequestSubmitted();
   };
 
   const handleRestoreData = () => {

@@ -22,10 +22,14 @@ import analyticsRoutes from './routes/analytics';
 import notificationRoutes from './routes/notifications';
 import businessHoursRoutes from './routes/businessHours';
 import emailTemplatesRoutes from './routes/emailTemplates';
+import emailAutomationRoutes from './routes/emailAutomation';
 import squareSyncRoutes from './routes/square-sync';
+import databaseHealthRoutes from './routes/database-health';
 import { initializeRecaptchaService } from './services/recaptchaService';
 import { SquareIntegrationService } from './services/squareIntegrationService';
 import { SquareBookingSyncJob } from './jobs/squareBookingSync';
+import { EmailAutomationService } from './services/emailAutomationService';
+import { RealtimeService } from './services/realtimeService';
 
 // Environment variable validation
 function validateEnvironment() {
@@ -160,7 +164,16 @@ const build = (opts = {}) => {
   fastifyInstance.register(prismaPlugin);
   fastifyInstance.register(servicesPlugin);
 
+  // Initialize email automation after services are loaded
+  fastifyInstance.register(async (fastify) => {
+    await fastify.after();
+    if (process.env.ENABLE_EMAIL_AUTOMATION !== 'false') {
+      await setupEmailAutomation(fastify);
+    }
+  });
+
   fastifyInstance.register(healthRoutes);
+  fastifyInstance.register(databaseHealthRoutes, { prefix: '/database' });
   fastifyInstance.register(authRoutes, { prefix: '/auth' });
   fastifyInstance.register(userRoutes, { prefix: '/users' });
   fastifyInstance.register(eventsRoutes, { prefix: '/events' });
@@ -175,7 +188,14 @@ const build = (opts = {}) => {
       console.log('✅ Payment routes registered successfully');
     } catch (error) {
       console.error('❌ Failed to register payment routes:', error);
-      throw error;
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        code: error.code
+      });
+      // Don't re-throw - allow server to start even if payment routes fail
+      // This ensures other routes remain accessible
+      console.error('⚠️  Server will continue without payment routes');
     }
   });
   
@@ -187,6 +207,7 @@ const build = (opts = {}) => {
   fastifyInstance.register(notificationRoutes, { prefix: '/notifications' });
   fastifyInstance.register(businessHoursRoutes, { prefix: '/business-hours' });
   fastifyInstance.register(emailTemplatesRoutes, { prefix: '/email-templates' });
+  fastifyInstance.register(emailAutomationRoutes, { prefix: '/email-automation' });
   fastifyInstance.register(squareSyncRoutes, { prefix: '/square-sync' });
   
   return fastifyInstance;
@@ -257,6 +278,55 @@ const setupSquareSync = (fastifyInstance) => {
   });
   process.on('SIGTERM', () => {
     clearInterval(syncInterval);
+  });
+};
+
+// Function to set up email automation
+const setupEmailAutomation = async (fastifyInstance) => {
+  // Check if email automation is enabled
+  const ENABLE_EMAIL_AUTOMATION = process.env.ENABLE_EMAIL_AUTOMATION !== 'false';
+  
+  if (!ENABLE_EMAIL_AUTOMATION) {
+    fastifyInstance.log.info('Email automation is disabled');
+    return;
+  }
+  
+  fastifyInstance.log.info('Setting up email automation service...');
+  
+  try {
+    // Get the realtime service from the fastify instance
+    const realtimeService = fastifyInstance.services?.realtimeService || new RealtimeService();
+    
+    // Create email automation service instance
+    const emailAutomationService = new EmailAutomationService(realtimeService);
+    
+    // Initialize the service
+    await emailAutomationService.initialize();
+    
+    // Store reference for cleanup
+    fastifyInstance.decorate('emailAutomationService', emailAutomationService);
+    
+    // Also store in services for consistency
+    if (!fastifyInstance.services) {
+      fastifyInstance.decorate('services', {});
+    }
+    fastifyInstance.services.emailAutomationService = emailAutomationService;
+    
+    fastifyInstance.log.info('Email automation service initialized successfully');
+  } catch (error) {
+    fastifyInstance.log.error('Failed to initialize email automation:', error);
+  }
+  
+  // Clean up on shutdown
+  process.on('SIGINT', () => {
+    if (fastifyInstance.emailAutomationService) {
+      fastifyInstance.emailAutomationService.stop();
+    }
+  });
+  process.on('SIGTERM', () => {
+    if (fastifyInstance.emailAutomationService) {
+      fastifyInstance.emailAutomationService.stop();
+    }
   });
 };
 

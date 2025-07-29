@@ -111,24 +111,20 @@ export function MobileHeader({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) {
 
             <div className="mt-auto">
               <div className="flex justify-center space-x-6 mb-8">
-                <Button 
+                <a 
                   href="https://instagram.com/bowenislandtattoo" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  variant="ghost"
-                  size="sm"
-                  className="w-12 h-12 p-0 rounded-full"
+                  className="w-12 h-12 p-0 rounded-full border border-white/20 hover:border-gold text-white hover:text-gold transition-all duration-300 flex items-center justify-center"
                 >
                   <Instagram size={20} />
-                </Button>
-                <Button 
+                </a>
+                <a 
                   href="mailto:info@bowenislandtattoo.com"
-                  variant="ghost"
-                  size="sm"
-                  className="w-12 h-12 p-0 rounded-full"
+                  className="w-12 h-12 p-0 rounded-full border border-white/20 hover:border-gold text-white hover:text-gold transition-all duration-300 flex items-center justify-center"
                 >
                   <AtSign size={20} />
-                </Button>
+                </a>
               </div>
               <div className="text-center text-white/70 text-sm font-body">
                 <p>Bowen Island, BC, Canada</p>

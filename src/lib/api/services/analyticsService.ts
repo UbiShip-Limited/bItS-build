@@ -163,7 +163,7 @@ class AnalyticsService {
 
     if (format === 'csv') {
       // Create a download link for CSV
-      const blob = new Blob([response.data], { type: 'text/csv' });
+      const blob = new Blob([(response as any).data], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -172,7 +172,7 @@ class AnalyticsService {
       window.URL.revokeObjectURL(url);
     }
 
-    return response.data;
+    return (response as any).data;
   }
 }
 

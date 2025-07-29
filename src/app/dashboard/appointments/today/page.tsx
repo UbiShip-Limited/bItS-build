@@ -183,30 +183,26 @@ export default function TodaySchedulePage() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6 no-print">
-        <DashboardCard className="text-center">
+        <DashboardCard title="Total" className="text-center">
           <div className="text-3xl font-bold text-white">{stats.total}</div>
-          <div className="text-sm text-gray-400">Total</div>
         </DashboardCard>
-        <DashboardCard className="text-center">
+        <DashboardCard title="Confirmed" className="text-center">
           <div className="text-3xl font-bold text-green-400">{stats.confirmed}</div>
-          <div className="text-sm text-gray-400">Confirmed</div>
         </DashboardCard>
-        <DashboardCard className="text-center">
+        <DashboardCard title="Pending" className="text-center">
           <div className="text-3xl font-bold text-[#C9A449]">{stats.pending}</div>
-          <div className="text-sm text-gray-400">Pending</div>
         </DashboardCard>
-        <DashboardCard className="text-center">
+        <DashboardCard title="Completed" className="text-center">
           <div className="text-3xl font-bold text-gray-400">{stats.completed}</div>
-          <div className="text-sm text-gray-400">Completed</div>
         </DashboardCard>
-        <DashboardCard className="text-center">
+        <DashboardCard title="No Show" className="text-center">
           <div className="text-3xl font-bold text-orange-400">{stats.noShow}</div>
-          <div className="text-sm text-gray-400">No Show</div>
         </DashboardCard>
       </div>
 
       {/* Schedule Table */}
       <DashboardCard
+        title="Today's Schedule"
         noPadding
         className="print-schedule"
       >

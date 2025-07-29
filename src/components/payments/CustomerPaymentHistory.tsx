@@ -89,22 +89,47 @@ export default function CustomerPaymentHistory({
       // Use the payment service with customer-specific endpoint
       const response = await paymentService.getCustomerPayments(customerId, 50);
       
-      if (response.success) {
-        const paymentHistory = response.data.map(payment => ({
-          id: payment.id,
-          amount: payment.amount,
-          status: payment.status,
-          paymentType: payment.paymentType || 'other',
-          createdAt: payment.createdAt,
-          appointmentId: payment.appointmentId,
-          tattooRequestId: payment.tattooRequestId,
-          method: payment.paymentMethod
-        }));
-        
-        setPayments(paymentHistory);
+      if (response && response.success) {
+        // Handle both empty arrays (new customers) and populated arrays
+        if (response.data && Array.isArray(response.data)) {
+          if (response.data.length === 0) {
+            console.log(`📝 No payment history found for customer ${customerName || customerId} - likely a new customer`);
+            setPayments([]);
+            setError(null); // This is not an error - just no history yet
+          } else {
+            const paymentHistory = response.data.map(payment => ({
+              id: payment.id,
+              amount: payment.amount,
+              status: payment.status,
+              paymentType: payment.paymentType || 'other',
+              createdAt: payment.createdAt,
+              appointmentId: payment.appointmentId,
+              tattooRequestId: payment.tattooRequestId,
+              method: payment.paymentMethod
+            }));
+            
+            setPayments(paymentHistory);
+            console.log(`✅ Loaded ${paymentHistory.length} payments for customer ${customerName || customerId}`);
+          }
+        } else {
+          // Handle unexpected data format
+          console.warn('💳 Unexpected payment data format:', response.data);
+          setPayments([]);
+        }
+      } else {
+        // Handle case where response is null or success is false
+        console.warn('💳 Payment response invalid:', response);
+        setPayments([]);
+        if (!response) {
+          setError('No response from payment service');
+        } else if (!response.success) {
+          // When success is false, treat as service unavailable
+          setPaymentServiceUnavailable(true);
+          setError(null);
+        }
       }
     } catch (err: any) {
-      console.error('💳 Payment history load failed:', err.message);
+      console.error('💳 Payment history load failed:', err.message || err);
       
       // Handle specific error types
       if (err.message?.includes('not available') || err.message?.includes('temporarily unavailable')) {

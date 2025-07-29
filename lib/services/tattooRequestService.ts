@@ -368,7 +368,7 @@ export class TattooRequestService {
    */
   private validateStatusTransition(currentStatus: string, newStatus: TattooRequestStatus): void {
     const validTransitions: Record<string, TattooRequestStatus[]> = {
-      'new': ['reviewed'],
+      'new': ['reviewed', 'approved', 'rejected'],
       'reviewed': ['approved', 'rejected'],
       'approved': ['converted_to_appointment'],
       'rejected': [], // Terminal state

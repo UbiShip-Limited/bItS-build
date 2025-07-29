@@ -522,6 +522,258 @@ Bowen Island Tattoo Shop`,
         variables: {
           customerName: 'Customer name'
         }
+      },
+      {
+        name: 'appointment_reminder_24h',
+        displayName: '24 Hour Appointment Reminder',
+        subject: 'Reminder: Your appointment is tomorrow - {{appointmentTime}}',
+        body: `Hi {{customerName}},
+
+This is a friendly reminder that you have an appointment tomorrow at Bowen Island Tattoo Shop.
+
+Appointment Details:
+- Date: {{appointmentDate}}
+- Time: {{appointmentTime}}
+- Duration: {{duration}}
+- Artist: {{artistName}}
+- Type: {{appointmentType}}
+
+Important Reminders:
+- Please arrive 10 minutes early
+- Eat a good meal before your appointment
+- Stay hydrated
+- Wear comfortable clothing
+- Bring a valid ID
+
+If you need to reschedule or cancel, please let us know at least 24 hours in advance by calling (604) 123-4567.
+
+We're looking forward to seeing you!
+
+Best regards,
+Bowen Island Tattoo Shop`,
+        htmlBody: `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #1a1a1a; color: white; padding: 20px; text-align: center; }
+    .content { padding: 20px; background-color: #f9f9f9; }
+    .details { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; }
+    .reminder { background-color: #fff3cd; padding: 15px; margin: 15px 0; border-radius: 5px; border-left: 4px solid #ffc107; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Appointment Reminder</h1>
+    </div>
+    <div class="content">
+      <p>Hi {{customerName}},</p>
+      <p>This is a friendly reminder that you have an appointment <strong>tomorrow</strong> at Bowen Island Tattoo Shop.</p>
+      
+      <div class="details">
+        <h3>Appointment Details:</h3>
+        <ul>
+          <li><strong>Date:</strong> {{appointmentDate}}</li>
+          <li><strong>Time:</strong> {{appointmentTime}}</li>
+          <li><strong>Duration:</strong> {{duration}}</li>
+          <li><strong>Artist:</strong> {{artistName}}</li>
+          <li><strong>Type:</strong> {{appointmentType}}</li>
+        </ul>
+      </div>
+      
+      <div class="reminder">
+        <h3>Important Reminders:</h3>
+        <ul>
+          <li>Please arrive 10 minutes early</li>
+          <li>Eat a good meal before your appointment</li>
+          <li>Stay hydrated</li>
+          <li>Wear comfortable clothing</li>
+          <li>Bring a valid ID</li>
+        </ul>
+      </div>
+      
+      <p>If you need to reschedule or cancel, please let us know at least 24 hours in advance by calling <strong>(604) 123-4567</strong>.</p>
+      
+      <p>We're looking forward to seeing you!</p>
+    </div>
+    <div class="footer">
+      <p>Best regards,<br>Bowen Island Tattoo Shop</p>
+    </div>
+  </div>
+</body>
+</html>`,
+        variables: {
+          customerName: 'Customer name',
+          appointmentDate: 'Appointment date (formatted)',
+          appointmentTime: 'Appointment time',
+          duration: 'Appointment duration',
+          artistName: 'Artist name',
+          appointmentType: 'Type of appointment'
+        }
+      },
+      {
+        name: 'appointment_reminder_2h',
+        displayName: '2 Hour Appointment Reminder',
+        subject: 'Reminder: Your appointment is in 2 hours',
+        body: `Hi {{customerName}},
+
+Just a quick reminder that your appointment is coming up in 2 hours!
+
+Appointment Time: {{appointmentTime}}
+Artist: {{artistName}}
+
+Don't forget:
+- Arrive 10 minutes early
+- Bring your ID
+- Have a meal before arriving
+
+See you soon!
+
+Bowen Island Tattoo Shop
+(604) 123-4567`,
+        variables: {
+          customerName: 'Customer name',
+          appointmentTime: 'Appointment time',
+          artistName: 'Artist name'
+        }
+      },
+      {
+        name: 'review_request',
+        displayName: 'Review Request',
+        subject: 'How was your experience with us?',
+        body: `Hi {{customerName}},
+
+We hope you're loving your new tattoo! It's been a week since your {{appointmentType}} with {{artistName}}, and we'd love to hear about your experience.
+
+Your feedback helps us improve our services and lets other clients know what to expect. Would you mind taking a moment to share your thoughts?
+
+You can leave a review on:
+- Google: [Google Review Link]
+- Facebook: [Facebook Page]
+- Instagram: @bowenislandtattoo
+
+Thank you for choosing Bowen Island Tattoo Shop. We appreciate your trust in us and hope to see you again!
+
+Best regards,
+Bowen Island Tattoo Shop Team`,
+        htmlBody: `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #1a1a1a; color: white; padding: 20px; text-align: center; }
+    .content { padding: 20px; background-color: #f9f9f9; }
+    .review-links { background-color: white; padding: 20px; margin: 20px 0; border-radius: 5px; text-align: center; }
+    .review-links a { display: inline-block; margin: 10px; padding: 10px 20px; background-color: #1a1a1a; color: white; text-decoration: none; border-radius: 5px; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>How was your experience?</h1>
+    </div>
+    <div class="content">
+      <p>Hi {{customerName}},</p>
+      <p>We hope you're loving your new tattoo! It's been a week since your {{appointmentType}} with {{artistName}}, and we'd love to hear about your experience.</p>
+      
+      <p>Your feedback helps us improve our services and lets other clients know what to expect. Would you mind taking a moment to share your thoughts?</p>
+      
+      <div class="review-links">
+        <h3>Leave a review on:</h3>
+        <a href="#">Google Review</a>
+        <a href="#">Facebook</a>
+        <a href="#">Instagram</a>
+      </div>
+      
+      <p>Thank you for choosing Bowen Island Tattoo Shop. We appreciate your trust in us and hope to see you again!</p>
+    </div>
+    <div class="footer">
+      <p>Best regards,<br>Bowen Island Tattoo Shop Team</p>
+    </div>
+  </div>
+</body>
+</html>`,
+        variables: {
+          customerName: 'Customer name',
+          appointmentType: 'Type of appointment',
+          artistName: 'Artist name'
+        }
+      },
+      {
+        name: 're_engagement',
+        displayName: 'Re-engagement Campaign',
+        subject: 'We miss you at Bowen Island Tattoo Shop!',
+        body: `Hi {{customerName}},
+
+It's been a while since we've seen you at Bowen Island Tattoo Shop, and we wanted to check in!
+
+Whether you're thinking about:
+- Adding to your existing tattoo
+- Starting a new piece
+- Getting a touch-up
+- Or just have questions about tattoo care
+
+We're here to help! Our talented artists are always creating amazing new work, and we'd love to help bring your next tattoo idea to life.
+
+What's new at the shop:
+- Fresh designs and flash available
+- New guest artists visiting regularly
+- Updated safety protocols for your peace of mind
+
+Ready to book your next session? Reply to this email or call us at (604) 123-4567.
+
+We hope to see you again soon!
+
+Best regards,
+Bowen Island Tattoo Shop Team
+
+P.S. If you no longer wish to receive emails from us, you can unsubscribe at any time.`,
+        variables: {
+          customerName: 'Customer name'
+        }
+      },
+      {
+        name: 'abandoned_request_recovery',
+        displayName: 'Abandoned Request Recovery',
+        subject: 'Still thinking about that tattoo?',
+        body: `Hi {{customerName}},
+
+We noticed you started a tattoo request with us but haven't completed it yet. We understand that getting a tattoo is a big decision, and we're here to help with any questions you might have!
+
+Your tattoo idea: {{description}}
+
+Common questions we can help with:
+- Design refinement and customization
+- Pricing and payment options
+- Artist availability and scheduling
+- Tattoo placement and sizing advice
+- Aftercare information
+
+Don't let your dream tattoo remain just an idea! Our artists are excited to work with you to create something truly special.
+
+{{#if trackingUrl}}
+Continue where you left off: {{trackingUrl}}
+{{/if}}
+
+Or feel free to:
+- Reply to this email with any questions
+- Call us at (604) 123-4567
+- Visit us at the shop
+
+We're here to help make your tattoo journey as smooth as possible!
+
+Best regards,
+Bowen Island Tattoo Shop Team`,
+        variables: {
+          customerName: 'Customer name',
+          description: 'Tattoo request description',
+          trackingUrl: 'URL to track request (if available)'
+        }
       }
     ];
   }

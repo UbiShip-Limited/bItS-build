@@ -298,9 +298,9 @@ export class TattooRequestService {
       }
     });
     
-    // Notify if customer was linked
-    if (data.customerId && this.realtimeService) {
-      await this.realtimeService.notifyRequestUpdated(id, data.customerId);
+    // Notify real-time listeners about the update
+    if (this.realtimeService) {
+      await this.realtimeService.notifyRequestSubmitted(id, data.customerId);
     }
     
     return updatedRequest;

@@ -85,7 +85,11 @@ export function createRetryablePrismaClient(prisma: PrismaClient): PrismaClient 
           // Wrap the method with retry logic
           return async (...args: any[]) => {
             return withDatabaseRetry(
-              () => modelMethod.apply(modelTarget, args),
+              () => {
+                // Use Function.prototype.apply with proper typing
+                const method = modelMethod as Function;
+                return method.apply(modelTarget, args);
+              },
               {
                 onRetry: (error, attempt) => {
                   console.warn(`Database operation failed (attempt ${attempt}):`, error.message);

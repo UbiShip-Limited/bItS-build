@@ -9,9 +9,13 @@ const databaseHealthRoutes: FastifyPluginAsync = async (fastify) => {
       await fastify.prisma.$queryRaw`SELECT 1 as health_check`;
       
       // Get connection pool stats if available (optional)
-      let poolStats = null;
+      let poolStats: any = null;
       try {
-        poolStats = await fastify.prisma.$metrics?.json();
+        if (fastify.prisma && (fastify.prisma as any).$metrics) {
+          poolStats = await (fastify.prisma as any).$metrics.json();
+        } else {
+          poolStats = 'Metrics not enabled';
+        }
       } catch (metricsError) {
         // Metrics not enabled, which is fine
         poolStats = 'Metrics not enabled';

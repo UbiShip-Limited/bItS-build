@@ -347,11 +347,11 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
         
         // Map Square booking status to our appointment status
         let appointmentStatus = 'scheduled';
-        if (booking.status === 'CANCELLED') {
+        if ((booking.status as string) === 'CANCELLED') {
           appointmentStatus = 'cancelled';
-        } else if (booking.status === 'ACCEPTED') {
+        } else if ((booking.status as string) === 'ACCEPTED') {
           appointmentStatus = 'confirmed';
-        } else if (booking.status === 'NO_SHOW') {
+        } else if ((booking.status as string) === 'NO_SHOW') {
           appointmentStatus = 'no_show';
         }
         
@@ -380,11 +380,11 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
       } else {
         // Map Square booking status to our appointment status
         let appointmentStatus = appointment.status;
-        if (booking.status === 'CANCELLED') {
+        if ((booking.status as string) === 'CANCELLED') {
           appointmentStatus = 'cancelled';
-        } else if (booking.status === 'ACCEPTED') {
+        } else if ((booking.status as string) === 'ACCEPTED') {
           appointmentStatus = 'confirmed';
-        } else if (booking.status === 'NO_SHOW') {
+        } else if ((booking.status as string) === 'NO_SHOW') {
           appointmentStatus = 'no_show';
         }
         

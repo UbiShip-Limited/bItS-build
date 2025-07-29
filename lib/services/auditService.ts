@@ -9,7 +9,21 @@ export type AuditAction =
   | 'LINK_IMAGES'
   | 'CONVERTED_TO_APPOINTMENT'
   | 'LOGIN_SUCCESS'
-  | 'LOGIN_FAILURE';
+  | 'LOGIN_FAILURE'
+  | 'APPOINTMENT_CONFIRMATION_SENT'
+  | 'APPOINTMENT_REMINDER_SENT'
+  | 'AFTERCARE_INSTRUCTIONS_SENT'
+  | 'TATTOO_REQUEST_CONFIRMATION_SENT'
+  | 'EMAIL_AUTOMATION_ERROR'
+  | 'EMAIL_SKIPPED'
+  | 'EMAIL_SENT'
+  | 'EMAIL_FAILED'
+  | 'EMAIL_SEND_FAILED'
+  | 'business_hours_initialized'
+  | 'business_hours_updated'
+  | 'special_hours_created'
+  | 'special_hours_updated'
+  | 'special_hours_deleted';
 
 export type AuditResource = 
   | 'TattooRequest'
@@ -18,7 +32,12 @@ export type AuditResource =
   | 'User'
   | 'Payment'
   | 'Invoice'
-  | 'Auth';
+  | 'Auth'
+  | 'Email'
+  | 'EmailTemplate'
+  | 'EmailAutomation'
+  | 'business_hours'
+  | 'special_hours';
 
 export interface AuditLogData {
   userId?: string;
@@ -29,6 +48,12 @@ export interface AuditLogData {
 }
 
 export class AuditService {
+  private prisma: any;
+
+  constructor(prisma?: any) {
+    this.prisma = prisma || require('../prisma/prisma').prisma;
+  }
+
   /**
    * Creates an audit log entry.
    * This centralizes audit logging across the application.
@@ -36,7 +61,7 @@ export class AuditService {
    */
   async log(logData: AuditLogData): Promise<void> {
     try {
-      await prisma.auditLog.create({
+      await this.prisma.auditLog.create({
         data: {
           userId: logData.userId,
           action: logData.action,

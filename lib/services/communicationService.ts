@@ -222,7 +222,18 @@ Bowen Island Tattoo Shop Team
       action: 'APPOINTMENT_REMINDER_SENT',
       resource: 'Appointment',
       resourceId: appointment.id,
-      details: { ...results, hoursBeforeAppointment }
+      userId: (appointment as any).userId || undefined,
+      details: {
+        hoursBeforeAppointment,
+        email: results.email ? {
+          success: results.email.success,
+          id: (results.email as any).id || 'unknown'
+        } : undefined,
+        sms: results.sms ? {
+          success: results.sms.success,
+          id: (results.sms as any).id || 'unknown'
+        } : undefined
+      }
     });
     
     return results;
@@ -303,7 +314,13 @@ Bowen Island Tattoo Shop Team
       action: 'AFTERCARE_INSTRUCTIONS_SENT',
       resource: 'Appointment',
       resourceId: appointment.id,
-      details: results
+      userId: (appointment as any).userId || undefined,
+      details: {
+        email: results.email ? {
+          success: results.email.success,
+          id: (results.email as any).id || 'unknown'
+        } : undefined
+      }
     });
     
     return results;

@@ -143,13 +143,6 @@ export class AvailabilityService {
   }
 
   /**
-   * Update business hours
-   */
-  async updateBusinessHours(businessHours: BusinessHours[]): Promise<void> {
-    await this.businessHoursManager.updateBusinessHours(businessHours);
-  }
-
-  /**
    * Check for detailed appointment conflicts with customer information
    */
   async checkDetailedConflicts(
@@ -232,6 +225,13 @@ export class AvailabilityService {
     if (businessHours) {
       await this.businessHoursManager.updateBusinessHours(businessHours);
       // Re-initialize dependent services with new business hours
+      this.squareProfilesManager = new SquareProfilesManager(
+        this.businessHoursManager.getAllBusinessHours(),
+        this.appointmentRepository
+      );
+    } else {
+      // Reload from database by creating a new manager
+      this.businessHoursManager = new BusinessHoursManager();
       this.squareProfilesManager = new SquareProfilesManager(
         this.businessHoursManager.getAllBusinessHours(),
         this.appointmentRepository

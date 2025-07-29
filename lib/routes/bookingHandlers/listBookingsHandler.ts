@@ -29,12 +29,11 @@ interface ListBookingsQuery {
 }
 
 interface WhereClause {
-  startTime?: { gte: Date };
-  endTime?: { lte: Date };
   status?: string;
   type?: string;
   customerId?: string;
   artistId?: string;
+  startTime?: { gte?: Date; lte?: Date };
 }
 
 export async function listBookingsHandler(request: FastifyRequest<{ Querystring: ListBookingsQuery }>, reply: FastifyReply) {

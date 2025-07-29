@@ -136,10 +136,14 @@ const businessHoursRoutes: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     try {
       const { dayOfWeek } = request.params as { dayOfWeek: number };
+      const requestBody = request.body as any;
       const validatedData = businessHoursSchema.parse({
-        ...request.body,
+        ...requestBody,
         dayOfWeek
       });
+
+      // Get old values before update for audit log
+      const oldValues = await prisma.businessHours.findUnique({ where: { dayOfWeek } });
 
       // Update or create business hours
       const updated = await prisma.businessHours.upsert({
@@ -169,8 +173,19 @@ const businessHoursRoutes: FastifyPluginAsync = async (fastify) => {
         userId: request.user?.id,
         details: {
           dayOfWeek,
-          oldValues: await prisma.businessHours.findUnique({ where: { dayOfWeek } }),
-          newValues: validatedData
+          oldValues: oldValues ? {
+            id: oldValues.id,
+            openTime: oldValues.openTime,
+            closeTime: oldValues.closeTime,
+            isOpen: oldValues.isOpen,
+            dayOfWeek: oldValues.dayOfWeek
+          } : null,
+          newValues: {
+            openTime: validatedData.openTime,
+            closeTime: validatedData.closeTime,
+            isOpen: validatedData.isOpen,
+            dayOfWeek: validatedData.dayOfWeek
+          }
         }
       });
 
@@ -404,7 +419,14 @@ const businessHoursRoutes: FastifyPluginAsync = async (fastify) => {
         userId: request.user?.id,
         details: {
           date,
-          deletedRecord: deleted
+          deletedRecord: {
+            id: deleted.id,
+            date: deleted.date.toISOString(),
+            reason: deleted.reason,
+            openTime: deleted.openTime,
+            closeTime: deleted.closeTime,
+            isClosed: deleted.isClosed
+          }
         }
       });
 

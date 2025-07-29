@@ -103,29 +103,27 @@ const healthRoutes: FastifyPluginAsync = async (fastify) => {
       // If connection successful, test basic query
       const userCount = await server.prisma.user.count();
       
-      // Get connection pool metrics if available
-      let poolMetrics = {};
+      // Get connection pool and metrics data if available (optional)
+      let poolMetrics: any = null;
       try {
-        // Attempt to get pool metrics from Prisma
-        const metrics = await server.prisma.$metrics.json();
-        poolMetrics = {
-          connectionPoolSize: metrics?.counters?.find((c: any) => c.key === 'prisma_pool_connections_open')?.value || 'N/A',
-          queriesExecuted: metrics?.counters?.find((c: any) => c.key === 'prisma_client_queries_total')?.value || 'N/A'
-        };
-      } catch (metricsError) {
-        // Metrics might not be enabled, which is OK
-        poolMetrics = { note: 'Metrics not available' };
+        const metrics = await (server.prisma as any).$metrics?.json?.();
+        if (metrics) {
+          poolMetrics = metrics;
+        }
+      } catch (error) {
+        // Metrics not enabled or available
+        poolMetrics = null;
       }
-      
-      diagnostics.databaseInfo = {
-        userCount,
-        querySuccessful: true,
-        poolMetrics
-      };
 
-      return reply.status(200).send({
+      return reply.send({
         status: 'healthy',
-        ...diagnostics
+        timestamp: new Date().toISOString(),
+        database: {
+          connected: true,
+          userCount: userCount,
+          querySuccessful: true
+        },
+        ...(poolMetrics && { poolMetrics })
       });
 
     } catch (error: any) {

@@ -17,11 +17,25 @@ export class TattooRequestWorkflowService {
   private tattooRequestService: TattooRequestService;
   private appointmentService: AppointmentService;
   private customerService: EnhancedCustomerService;
+  private prisma: any;
+  private paymentService: any;
+  private communicationService: any;
+  private auditService: any;
 
-  constructor() {
-    this.tattooRequestService = new TattooRequestService();
+  constructor(
+    prisma?: any,
+    tattooRequestService?: TattooRequestService,
+    paymentService?: any,
+    communicationService?: any,
+    auditService?: any
+  ) {
+    this.prisma = prisma || require('../prisma/prisma').prisma;
+    this.tattooRequestService = tattooRequestService || new TattooRequestService();
     this.appointmentService = new AppointmentService();
-    this.customerService = new EnhancedCustomerService();
+    this.customerService = new EnhancedCustomerService(this.prisma);
+    this.paymentService = paymentService;
+    this.communicationService = communicationService;
+    this.auditService = auditService;
   }
 
   /**
@@ -59,7 +73,7 @@ export class TattooRequestWorkflowService {
       wasAnonymous = true;
 
       // Link the new customer to the original request
-      await prisma.tattooRequest.update({
+      await this.prisma.tattooRequest.update({
         where: { id: requestId },
         data: { customerId: newCustomer.id },
       });
@@ -100,7 +114,7 @@ export class TattooRequestWorkflowService {
     const updatedTattooRequest = await this.tattooRequestService.updateStatus(requestId, 'converted_to_appointment', userId);
 
     // 5. Log the successful conversion for auditing purposes
-    await auditService.log({
+    await this.auditService.log({
       userId,
       action: 'CONVERTED_TO_APPOINTMENT',
       resource: 'TattooRequest',

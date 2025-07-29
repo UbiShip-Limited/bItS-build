@@ -10,6 +10,6 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2022"
   },
-  "include": ["lib/**/*"],
+  "include": ["lib/**/*", "lib/types/**/*"],
   "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/__tests__/**"]
 } 

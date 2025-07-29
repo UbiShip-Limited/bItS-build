@@ -9,6 +9,12 @@ import type { Image } from '@prisma/client';
  * Encapsulates all interactions with Cloudinary and the database Image table for tattoo requests.
  */
 export class TattooRequestImageService {
+  private prisma: any;
+
+  constructor(prisma?: any) {
+    this.prisma = prisma || require('../prisma/prisma').prisma;
+  }
+
   /**
    * Link pre-uploaded Cloudinary images to an existing tattoo request.
    */
@@ -17,7 +23,7 @@ export class TattooRequestImageService {
     publicIds: string[],
     userId?: string
   ): Promise<void> {
-    const tattooRequest = await prisma.tattooRequest.findUnique({ where: { id: requestId } });
+    const tattooRequest = await this.prisma.tattooRequest.findUnique({ where: { id: requestId } });
     if (!tattooRequest) {
       throw new NotFoundError('TattooRequest', requestId);
     }
@@ -32,7 +38,7 @@ export class TattooRequestImageService {
       })
     );
 
-    await prisma.$transaction(async (tx) => {
+    await this.prisma.$transaction(async (tx) => {
       await Promise.all(
         validatedImages.map((image) =>
           tx.image.create({
@@ -69,7 +75,7 @@ export class TattooRequestImageService {
    * Get all images associated with a tattoo request from the database.
    */
   async getImagesForRequest(requestId: string): Promise<Image[]> {
-    const images = await prisma.image.findMany({
+    const images = await this.prisma.image.findMany({
       where: { tattooRequestId: requestId },
       orderBy: { createdAt: 'asc' },
     });

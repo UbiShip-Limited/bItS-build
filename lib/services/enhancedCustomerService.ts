@@ -31,8 +31,8 @@ export interface CustomerTimeline {
 export class EnhancedCustomerService {
   private analyticsService: AnalyticsService;
 
-  constructor() {
-    this.analyticsService = new AnalyticsService();
+  constructor(prisma?: any) {
+    this.analyticsService = new AnalyticsService(prisma || require('../prisma/prisma').prisma);
   }
 
   /**

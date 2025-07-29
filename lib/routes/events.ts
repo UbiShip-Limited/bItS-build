@@ -88,8 +88,7 @@ const eventsRoutes: FastifyPluginAsync = async (fastify) => {
 
       request.raw.on('error', (error) => {
         clearInterval(keepAliveInterval);
-        const errorMessage = error?.message || 'Unknown error';
-        const errorCode = error?.code || 'UNKNOWN';
+        const errorCode = (error as any)?.code || 'UNKNOWN';
         
         // Log specific error types with more context
         if (errorCode === 'ECONNRESET') {
@@ -99,7 +98,7 @@ const eventsRoutes: FastifyPluginAsync = async (fastify) => {
         } else {
           fastify.log.error(`SSE connection error for user ${userId}:`, {
             code: errorCode,
-            message: errorMessage,
+            message: error?.message,
             stack: error?.stack
           });
         }

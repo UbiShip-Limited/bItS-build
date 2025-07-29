@@ -68,22 +68,33 @@ export class EmailService {
     }
 
     try {
-      // Send email via Resend
-      const response = await this.resend.emails.send({
-        from,
+      // Send email using Resend
+      const emailOptions: any = {
+        from: from,
         to: Array.isArray(to) ? to : [to],
         subject,
-        text,
-        html,
-        reply_to: replyTo,
-        tags
-      });
+        replyTo: replyTo,
+      };
+
+      if (html) {
+        emailOptions.html = html;
+      }
+
+      if (text) {
+        emailOptions.text = text;
+      }
+
+      if (tags) {
+        emailOptions.tags = tags;
+      }
+
+      const result = await this.resend.emails.send(emailOptions);
 
       // Log successful email
       await auditService.log({
         action: 'EMAIL_SENT',
         resource: 'Email',
-        resourceId: response.data?.id,
+        resourceId: result.data?.id,
         details: {
           to: Array.isArray(to) ? to : [to],
           subject,
@@ -92,7 +103,7 @@ export class EmailService {
       });
 
       return {
-        id: response.data?.id || '',
+        id: result.data?.id || '',
         success: true
       };
     } catch (error) {

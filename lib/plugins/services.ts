@@ -18,6 +18,9 @@ import { UserService } from '../services/userService';
 import { CommunicationService } from '../services/communicationService';
 import { AppointmentService } from '../services/appointmentService';
 import { AvailabilityService } from '../services/availabilityService';
+import { EmailTemplateService } from '../services/emailTemplateService';
+import { EmailService } from '../services/emailService';
+import { EmailAutomationService } from '../services/emailAutomationService';
 
 // Define the services interface
 export interface Services {
@@ -36,6 +39,9 @@ export interface Services {
   communicationService: CommunicationService;
   appointmentService: AppointmentService;
   availabilityService: AvailabilityService;
+  emailTemplateService: EmailTemplateService;
+  emailService: EmailService;
+  emailAutomationService: EmailAutomationService;
 }
 
 const servicesPlugin: FastifyPluginAsync = async (fastify) => {
@@ -75,6 +81,11 @@ const servicesPlugin: FastifyPluginAsync = async (fastify) => {
     auditService
   );
 
+  // Email services
+  const emailTemplateService = new EmailTemplateService();
+  const emailService = new EmailService();
+  const emailAutomationService = new EmailAutomationService(realtimeService);
+
   // Create services object
   const services: Services = {
     analyticsService,
@@ -91,7 +102,10 @@ const servicesPlugin: FastifyPluginAsync = async (fastify) => {
     userService,
     communicationService,
     appointmentService,
-    availabilityService
+    availabilityService,
+    emailTemplateService,
+    emailService,
+    emailAutomationService
   };
 
   // Decorate fastify with services

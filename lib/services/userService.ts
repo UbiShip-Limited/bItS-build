@@ -52,6 +52,12 @@ export interface UserInvitation {
 }
 
 export class UserService {
+  private prisma: any;
+
+  constructor(prisma?: any) {
+    this.prisma = prisma || new PrismaClient();
+  }
+
   /**
    * Create a new user account (for staff/admin use)
    */
@@ -65,7 +71,7 @@ export class UserService {
     }
 
     // Check if user already exists in our database
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await this.prisma.user.findUnique({
       where: { email }
     });
 
@@ -114,7 +120,7 @@ export class UserService {
       }
 
       // Create user record in our database
-      const user = await prisma.user.create({
+      const user = await this.prisma.user.create({
         data: {
           id: supabaseUser.id,
           email,
@@ -136,7 +142,7 @@ export class UserService {
    * Get user by ID with role information
    */
   async getUserById(id: string): Promise<UserWithRole | null> {
-    const user = await prisma.user.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id },
       select: {
         id: true,
@@ -172,7 +178,7 @@ export class UserService {
     const { email, role, password } = updateData;
 
     // Check if user exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await this.prisma.user.findUnique({
       where: { id }
     });
 
@@ -196,7 +202,7 @@ export class UserService {
       }
 
       // Update in our database
-      const updatedUser = await prisma.user.update({
+      const updatedUser = await this.prisma.user.update({
         where: { id },
         data: {
           ...(email && { email }),
@@ -230,7 +236,7 @@ export class UserService {
    */
   async deleteUser(id: string): Promise<void> {
     // Check if user exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await this.prisma.user.findUnique({
       where: { id }
     });
 
@@ -248,7 +254,7 @@ export class UserService {
       }
 
       // Delete from our database
-      await prisma.user.delete({
+      await this.prisma.user.delete({
         where: { id }
       });
     } catch (error) {
@@ -270,7 +276,7 @@ export class UserService {
     const offset = (page - 1) * limit;
 
     const [users, total] = await Promise.all([
-      prisma.user.findMany({
+      this.prisma.user.findMany({
         skip: offset,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -282,7 +288,7 @@ export class UserService {
           updatedAt: true
         }
       }),
-      prisma.user.count()
+      this.prisma.user.count()
     ]);
 
     // Get Supabase user data for each user
@@ -357,7 +363,7 @@ export class UserService {
       }
 
       // Get role from our database
-      const userRecord = await prisma.user.findUnique({
+      const userRecord = await this.prisma.user.findUnique({
         where: { id: data.user.id },
         select: { role: true }
       });

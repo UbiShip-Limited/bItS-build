@@ -119,7 +119,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
         } : error,
         context: {
           timeframe: timeframe || 'today',
-          userId: request.user?.id,
+          userId: (request as any).user?.id,
           timestamp: new Date().toISOString(),
           endpoint: '/analytics/dashboard'
         }
@@ -212,7 +212,10 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
       else if (timeframe === 'today' || timeframe === 'yesterday') period = 'day';
       else if (timeframe === 'thisMonth' || timeframe === 'lastMonth') period = 'month';
       
-      const revenueData = await analyticsService.getRevenueBreakdown(period);
+      const revenueData = await analyticsService.getRevenueBreakdown({
+        startDate: new Date(period),
+        endDate: new Date()
+      });
       
       return reply.send({
         success: true,
@@ -273,8 +276,8 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     try {
-      const segments = await analyticsService.getCustomerSegments();
-      const insights = await analyticsService.getCustomerInsights();
+      const segments = await fastify.services.analyticsService.getCustomerSegments();
+      const insights = await fastify.services.analyticsService.getCustomerInsights();
       
       return reply.send({
         success: true,
@@ -346,7 +349,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
         dateRange.endDate = new Date(endDate);
       }
 
-      const appointmentMetrics = await analyticsService.getAppointmentMetrics(dateRange);
+      const appointmentMetrics = await fastify.services.analyticsService.getAppointmentMetrics(dateRange);
       
       return reply.send({
         success: true,
@@ -388,7 +391,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     try {
-      const requestMetrics = await analyticsService.getTattooRequestMetrics();
+      const requestMetrics = await fastify.services.analyticsService.getTattooRequestMetrics();
       
       return reply.send({
         success: true,
@@ -483,11 +486,11 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
 
       switch (type) {
         case 'revenue':
-          data = await analyticsService.getRevenueBreakdown(dateRange);
+          data = await fastify.services.analyticsService.getRevenueBreakdown(dateRange);
           filename = `revenue-report-${new Date().toISOString().split('T')[0]}`;
           break;
         case 'appointments':
-          data = await analyticsService.getAppointmentMetrics(dateRange);
+          data = await fastify.services.analyticsService.getAppointmentMetrics(dateRange);
           filename = `appointments-report-${new Date().toISOString().split('T')[0]}`;
           break;
         case 'customers':
@@ -495,7 +498,7 @@ const analyticsRoutes: FastifyPluginAsync = async (fastify) => {
           filename = `customers-report-${new Date().toISOString().split('T')[0]}`;
           break;
         case 'full':
-          data = await analyticsService.getDashboardMetrics(dateRange);
+          data = await analyticsService.getDashboardMetrics('today');
           filename = `analytics-report-${new Date().toISOString().split('T')[0]}`;
           break;
         default:

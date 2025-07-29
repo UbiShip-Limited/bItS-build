@@ -128,15 +128,29 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     
     while (retryCount < maxRetries) {
       try {
-        // Get user role from database with connection check
+        // Enhanced database connection test with timeout
         try {
-          await request.server.prisma.$queryRaw`SELECT 1`; // Quick connection test
+          const connectionTest = request.server.prisma.$queryRaw`SELECT 1 as test`;
+          const timeout = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Database connection timeout')), 10000)
+          );
+          
+          await Promise.race([connectionTest, timeout]);
+          request.log.info('Database connection test passed');
         } catch (connError) {
-          request.log.warn('Database connection test failed, attempting reconnect...');
+          request.log.warn('Database connection test failed:', connError);
+          
+          // Try to reconnect
           try {
             await request.server.prisma.$connect();
+            request.log.info('Database reconnection successful');
           } catch (reconnectError) {
             request.log.error('Database reconnection failed:', reconnectError);
+            
+            // If this is a critical connection error, fail fast
+            if (reconnectError.name === 'PrismaClientInitializationError') {
+              throw new Error(`Database unavailable: ${reconnectError.message}`);
+            }
           }
         }
         
@@ -151,20 +165,31 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
         retryCount++;
         request.log.error(dbError, `Database query failed (attempt ${retryCount}/${maxRetries})`);
         
-        // Check if it's a connection error that might be retryable
+        // Enhanced error classification
         const isConnectionError = dbError.name === 'PrismaClientInitializationError' || 
                                   dbError.name === 'PrismaClientKnownRequestError' ||
                                   dbError.message.includes('database server') ||
-                                  dbError.message.includes('connection');
+                                  dbError.message.includes('connection') ||
+                                  dbError.message.includes('timeout') ||
+                                  dbError.message.includes('pooler.supabase.com');
         
         if (!isConnectionError || retryCount >= maxRetries) {
-          // If not a connection error or max retries reached, throw the error
-          throw dbError;
+          request.log.error('Giving up on database connection', { 
+            error: dbError,
+            retryCount,
+            isConnectionError 
+          });
+          
+          return reply.status(503).send({
+            error: 'Database service temporarily unavailable',
+            details: process.env.NODE_ENV === 'production' ? undefined : dbError.message,
+            retryAfter: 30 // seconds
+          });
         }
         
-        // Wait before retrying (exponential backoff)
-        const delay = Math.pow(2, retryCount) * 500; // 500ms, 1s, 2s
-        request.log.warn(`⏳ Retrying database connection in ${delay}ms...`);
+        // Exponential backoff for retries
+        const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
+        request.log.info(`Retrying database connection in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }

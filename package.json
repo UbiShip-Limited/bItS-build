@@ -36,7 +36,8 @@
     "import:payments:manual": "tsx scripts/importManualPayments.ts",
     "update:cloudinary-artist": "tsx scripts/updateCloudinaryArtist.ts",
     "sync:square-bookings": "tsx scripts/syncSquareBookings.ts",
-    "create:square-test-data": "tsx scripts/createSquareTestData.ts"
+    "create:square-test-data": "tsx scripts/createSquareTestData.ts",
+    "diagnose:db": "tsx scripts/diagnose-db-connection.ts"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",

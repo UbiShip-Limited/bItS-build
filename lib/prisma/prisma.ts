@@ -9,8 +9,52 @@ declare global {
 const isDevelopment = process.env.NODE_ENV === 'development';
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Validate DATABASE_URL early
+const validateDatabaseUrl = () => {
+  const dbUrl = process.env.DATABASE_URL;
+  
+  if (!dbUrl) {
+    const errorMsg = 'DATABASE_URL environment variable is not set';
+    console.error('❌', errorMsg);
+    if (isProduction) {
+      throw new Error(errorMsg);
+    }
+    return false;
+  }
+
+  try {
+    const url = new URL(dbUrl);
+    console.log('✅ DATABASE_URL validation passed');
+    console.log('   Host:', url.hostname);
+    console.log('   Port:', url.port || '5432');
+    console.log('   Database:', url.pathname.slice(1));
+    
+    // Check for Supabase-specific requirements
+    if (url.hostname.includes('supabase.com')) {
+      console.log('🔧 Supabase database detected');
+      
+      // Ensure required parameters for Supabase
+      if (!url.searchParams.get('sslmode')) {
+        console.warn('⚠️  SSL mode not specified for Supabase connection');
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    const errorMsg = `Invalid DATABASE_URL format: ${error.message}`;
+    console.error('❌', errorMsg);
+    if (isProduction) {
+      throw new Error(errorMsg);
+    }
+    return false;
+  }
+};
+
 // Configuration for different environments
 const getPrismaConfig = () => {
+  // Validate DATABASE_URL first
+  validateDatabaseUrl();
+  
   const config: ConstructorParameters<typeof PrismaClient>[0] = {
     // Enable query logging in development, error logging in production
     log: isDevelopment 
@@ -21,37 +65,43 @@ const getPrismaConfig = () => {
     errorFormat: 'pretty',
   };
 
-  // Add datasources configuration for production
-  if (isProduction || process.env.DATABASE_URL?.includes('supabase')) {
+  // Add datasources configuration for production or Supabase
+  const dbUrl = process.env.DATABASE_URL;
+  if (dbUrl && (isProduction || dbUrl.includes('supabase'))) {
     try {
       // Ensure connection pooling and timeout settings for production
-      const databaseUrl = new URL(process.env.DATABASE_URL || '');
+      const databaseUrl = new URL(dbUrl);
       
       // Add connection pool and timeout parameters for Supabase
-      databaseUrl.searchParams.set('connection_limit', '25'); // Increased for Supabase
-      databaseUrl.searchParams.set('pool_timeout', '20'); // Increased timeout
-      databaseUrl.searchParams.set('connect_timeout', '30'); // Increased connection timeout
-      databaseUrl.searchParams.set('statement_timeout', '30000'); // 30 seconds
-      databaseUrl.searchParams.set('idle_in_transaction_session_timeout', '30000');
+      databaseUrl.searchParams.set('connection_limit', '10'); // Reduced for Railway
+      databaseUrl.searchParams.set('pool_timeout', '20');
+      databaseUrl.searchParams.set('connect_timeout', '60'); // Increased for Railway
+      databaseUrl.searchParams.set('statement_timeout', '60000'); // 60 seconds
+      databaseUrl.searchParams.set('idle_in_transaction_session_timeout', '60000');
       
       // For Supabase pooler, ensure proper SSL mode
       if (databaseUrl.hostname.includes('pooler.supabase.com')) {
         databaseUrl.searchParams.set('sslmode', 'require');
         databaseUrl.searchParams.set('pgbouncer', 'true');
+        console.log('🔧 Supabase pooler configuration applied');
       }
+      
+      const finalUrl = databaseUrl.toString();
+      console.log('🔧 Database URL configured with connection parameters');
       
       config.datasources = {
         db: {
-          url: databaseUrl.toString()
+          url: finalUrl
         }
       };
     } catch (error) {
-      console.error('❌ Failed to parse DATABASE_URL:', error);
+      console.error('❌ Failed to configure DATABASE_URL:', error);
+      throw error;
     }
   }
 
   return config;
-}; 
+};
 
 // Create Prisma client with enhanced configuration
 const createPrismaClient = () => {

@@ -1,9 +1,27 @@
 // This must be the very first import to ensure environment variables are loaded before anything else.
 import './config/envLoader';
 
-
 import fastify from 'fastify';
 import cors from '@fastify/cors';
+
+// Add database connection diagnostics for production debugging
+console.log('🔧 Production Database Diagnostics:');
+console.log('   NODE_ENV:', process.env.NODE_ENV);
+console.log('   DATABASE_URL present:', !!process.env.DATABASE_URL);
+if (process.env.DATABASE_URL) {
+  try {
+    const dbUrl = new URL(process.env.DATABASE_URL);
+    console.log('   Database Host:', dbUrl.hostname);
+    console.log('   Database Port:', dbUrl.port);
+    console.log('   Database Name:', dbUrl.pathname.slice(1));
+    console.log('   SSL Mode:', dbUrl.searchParams.get('sslmode') || 'not specified');
+    console.log('   Connection Limit:', dbUrl.searchParams.get('connection_limit') || 'not specified');
+  } catch (e) {
+    console.error('   ❌ Invalid DATABASE_URL format:', e.message);
+  }
+} else {
+  console.error('   ❌ DATABASE_URL is not set!');
+}
 
 import tattooRequestsRoutes from './routes/tattooRequest';
 import prismaPlugin from './plugins/prisma';

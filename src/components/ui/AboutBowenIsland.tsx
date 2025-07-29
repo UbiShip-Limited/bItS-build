@@ -1,13 +1,22 @@
 "use client"
 
 import { useRef, useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, useScroll, useTransform } from "framer-motion"
 import Image from "next/image"
 import Link from "next/link"
+import { typography, colors, effects, layout, components, spacing } from '@/src/lib/styles/globalStyleConstants'
 
 export function AboutBowenIslandSection() {
   const [isVisible, setIsVisible] = useState(false)
   const sectionRef = useRef<HTMLDivElement>(null)
+  
+  // Parallax scroll effect
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"]
+  })
+  
+  const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "10%"])
 
   // Simple intersection observer instead of complex scroll hooks
   useEffect(() => {
@@ -28,10 +37,10 @@ export function AboutBowenIslandSection() {
   }, [])
 
   return (
-    <div ref={sectionRef} className="bg-obsidian text-white relative min-h-screen">
-      {/* Simplified background elements */}
-      <div className="absolute inset-0 z-0 opacity-[0.02]">
-        <div className="absolute top-1/4 left-1/12 w-32 h-32">
+    <div ref={sectionRef} className="bg-gradient-to-b from-obsidian via-obsidian/95 to-obsidian text-white relative min-h-screen">
+      {/* Refined background elements */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute top-1/4 left-1/12 w-32 h-32 opacity-[0.02]">
           <Image 
             src="/images/bowen-logo.svg" 
             alt="" 
@@ -41,60 +50,54 @@ export function AboutBowenIslandSection() {
             loading="lazy"
           />
         </div>
+        <div className="absolute inset-0 bg-gradient-radial-soft from-gold-500/3 via-transparent to-transparent"></div>
       </div>
 
       {/* Section Header */}
-      <div className="relative z-10 text-center py-12 px-4 sm:px-8">
+      <div className={`relative z-10 text-center ${layout.sectionY.medium} ${layout.padding.mobile}`}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
         >
-          {/* Simplified ornamental line */}
+          {/* Ornamental divider */}
           <div className="flex items-center justify-center mb-8">
-            <div className="w-16 h-px bg-gradient-to-r from-transparent to-gold/60"></div>
-            <div className="mx-4">
-              <span className="text-gold text-sm">✦</span>
+            <div className={components.ornament.lineLong} />
+            <div className={`mx-6 ${components.ornament.dot} relative`}>
+              <div className="absolute inset-0 bg-gold-500/10 rounded-full blur-sm scale-[2]"></div>
             </div>
-            <div className="w-16 h-px bg-gradient-to-l from-transparent to-gold/60"></div>
+            <div className={components.ornament.lineLong} />
           </div>
 
-          <h2 className="font-heading text-4xl md:text-5xl lg:text-6xl text-white mb-6 tracking-wide uppercase">
-            About
+          <h2 className={`${typography.h1} mb-4`}>
+            About Bowen Island Tattoo
           </h2>
-          <p className="font-body text-2xl text-gold/80 mb-6 uppercase tracking-[0.2em] font-light">
-            Bowen Island Tattoo
+          <p className={`${typography.h3} ${colors.textAccentSecondary} ${typography.trackingWide}`}>
+            Professional tattooing in a private island setting
           </p>
-
-          {/* Simplified divider */}
-          <div className="flex items-center justify-center">
-            <div className="w-12 h-px bg-gradient-to-r from-gold/80 to-gold/20"></div>
-            <div className="w-2 h-2 border border-gold/50 rotate-45 mx-4"></div>
-            <div className="w-12 h-px bg-gradient-to-l from-gold/80 to-gold/20"></div>
-          </div>
         </motion.div>
       </div>
 
       {/* Section 1 - The Studio */}
-      <div className="relative z-10 min-h-[80vh] flex flex-col md:flex-row items-center py-20 px-6 sm:px-8 md:px-12 lg:px-20 max-w-7xl mx-auto">
-        <div className="w-full md:w-1/2 mb-10 md:mb-0 overflow-hidden">
-          {/* Fixed height container to prevent layout shifts */}
-          <div className="relative h-[400px] md:h-[600px] w-full rounded-2xl border border-gold/10 group hover:border-gold/20 transition-all duration-300 shadow-elegant overflow-hidden">
-            {/* Simplified corner elements */}
-            <div className="absolute top-2 left-2 h-4 w-4 border-t border-l border-gold/30 rounded-tl-sm"></div>
-            <div className="absolute bottom-2 right-2 h-4 w-4 border-b border-r border-gold/30 rounded-br-sm"></div>
+      <div className={`relative z-10 min-h-[80vh] flex flex-col md:flex-row items-center ${layout.sectionY.large} ${layout.padding.mobile} ${layout.padding.tablet} ${layout.padding.desktop} ${layout.containerXl} mx-auto`}>
+        <div className="w-full md:w-1/2 mb-10 md:mb-0">
+          {/* Fixed aspect ratio container to prevent layout shifts */}
+          <div className="relative aspect-[4/3] w-full max-w-lg mx-auto md:mx-0 rounded-3xl border border-gold-500/5 group hover:border-gold-500/10 transition-all duration-800 shadow-refined hover:shadow-refined-lg overflow-hidden">
+            {/* Refined corner elements */}
+            <div className="absolute top-4 left-4 h-8 w-8 border-t border-l border-gold-500/10 rounded-tl-2xl"></div>
+            <div className="absolute bottom-4 right-4 h-8 w-8 border-b border-r border-gold-500/10 rounded-br-2xl"></div>
 
             <Image 
               src="/images/shop-pic2.png" 
               alt="Bowen Island Tattoo Studio Interior" 
               fill 
-              className="object-cover brightness-60 group-hover:brightness-70 transition-all duration-300 rounded-2xl" 
+              className="object-cover brightness-90 group-hover:brightness-95 group-hover:scale-[1.02] transition-all duration-1000 ease-smooth" 
               sizes="(max-width: 768px) 100vw, 50vw"
               priority
             />
             
-            {/* Simplified overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-gold/10 group-hover:from-gold/8 group-hover:to-gold/15 transition-all duration-300"></div>
+            {/* Refined overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-gold-500/2 via-transparent to-gold-500/4 group-hover:from-gold-500/3 group-hover:to-gold-500/5 transition-all duration-800"></div>
           </div>
         </div>
 
@@ -102,52 +105,55 @@ export function AboutBowenIslandSection() {
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={isVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: 30 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
           >
-            <div className="inline-block bg-transparent border border-[#C9A449]/50 px-3 py-1 text-sm font-semibold text-[#C9A449] mb-4 uppercase tracking-widest font-body">
-              Private
+            <div className={`inline-block bg-gold-500/5 border border-gold-500/20 px-5 py-2.5 ${typography.textBase} ${colors.textAccent} mb-6 ${typography.trackingWide} ${components.radius.small} backdrop-blur-sm`}>
+              Private Studio
             </div>
 
-            <h2 className="font-heading text-4xl md:text-5xl mb-4 text-white tracking-wide">
-              THE STUDIO
+            <h2 className={`${typography.h1} mb-6`}>
+              The Studio
             </h2>
             
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-[0.5px] bg-gradient-to-r from-[#C9A449]/80 to-[#C9A449]/20"></div>
-              <div className="w-2 h-2 border border-[#C9A449]/50 rotate-45 mx-3"></div>
+            <div className="flex items-center mb-8">
+              <div className={components.ornament.lineShort}></div>
+              <div className={`${components.ornament.dot} mx-5 relative opacity-70`}>
+                <div className="absolute inset-0 bg-gold-500/10 rounded-full blur-xs scale-150"></div>
+              </div>
             </div>
 
-            <p className="font-body text-white/90 mb-6 text-xl leading-relaxed">
-              Nestled on the serene Bowen Island, our private studio offers an intimate and tranquil environment 
-              unlike any traditional tattoo parlor. Away from the hustle and bustle of the city, we provide 
-              a peaceful sanctuary where artistry and personal expression flourish.
+            <p className={`text-lg lg:text-xl ${colors.textSecondary} mb-6 ${typography.leadingRelaxed}`}>
+              Located on the peaceful Bowen Island, our private studio offers a unique tattooing experience 
+              away from the busy city environment. We operate by appointment only, ensuring each client 
+              receives focused attention and personalized service in a calm, professional setting.
             </p>
-            <p className="font-body text-white/80 text-xl leading-relaxed italic">
-              Every detail of our studio has been carefully curated to ensure your comfort and privacy. 
-              From the moment you step through our doors, you'll experience the difference that a truly 
-              personalized, boutique approach makes to your tattoo journey.
+            <p className={`text-base lg:text-lg ${colors.textMuted} italic ${typography.fontLight} ${typography.leadingRelaxed}`}>
+              Every aspect of our studio has been designed with your comfort and privacy in mind. 
+              Our appointment-only approach allows us to provide the time and attention your tattoo 
+              deserves, creating an experience that's both professional and personal.
             </p>
           </motion.div>
         </div>
       </div>
 
       {/* Section 2 - The Setting */}
-      <div className="relative z-10 min-h-[80vh] flex flex-col md:flex-row-reverse items-center py-20 px-4 sm:px-8 md:px-16 lg:px-24 bg-black/20">
-        <div className="w-full md:w-1/2 mb-10 md:mb-0 overflow-hidden">
-          <div className="relative h-[400px] md:h-[600px] w-full rounded-2xl border border-[#C9A449]/10 group hover:border-[#C9A449]/20 transition-all duration-300 shadow-2xl shadow-black/20">
-            <div className="absolute top-2 right-2 h-4 w-4 border-t border-r border-[#C9A449]/30 rounded-tr-sm"></div>
-            <div className="absolute bottom-2 left-2 h-4 w-4 border-b border-l border-[#C9A449]/30 rounded-bl-sm"></div>
+      <div className="relative bg-gradient-to-b from-transparent via-obsidian/20 to-transparent">
+        <div className={`relative z-10 min-h-[80vh] flex flex-col md:flex-row-reverse items-center ${layout.sectionY.large} ${layout.padding.mobile} ${layout.padding.tablet} ${layout.padding.desktop} ${layout.containerXl} mx-auto`}>
+        <div className="w-full md:w-1/2 mb-10 md:mb-0">
+          <div className="relative aspect-[4/3] w-full max-w-lg mx-auto md:mx-0 rounded-3xl border border-gold-500/5 group hover:border-gold-500/10 transition-all duration-800 shadow-refined hover:shadow-refined-lg overflow-hidden">
+            <div className="absolute top-4 right-4 h-8 w-8 border-t border-r border-gold-500/10 rounded-tr-2xl"></div>
+            <div className="absolute bottom-4 left-4 h-8 w-8 border-b border-l border-gold-500/10 rounded-bl-2xl"></div>
 
             <Image 
               src="/images/setting-pic.jpg" 
               alt="Master Tattoo Artist at Work" 
               fill 
-              className="object-cover brightness-60 group-hover:brightness-70 transition-all duration-300 rounded-2xl" 
+              className="object-cover brightness-90 group-hover:brightness-95 group-hover:scale-[1.02] transition-all duration-1000 ease-smooth" 
               sizes="(max-width: 768px) 100vw, 50vw"
               loading="lazy"
             />
             
-            <div className="absolute inset-0 bg-gradient-to-bl from-[#C9A449]/5 via-transparent to-[#C9A449]/10 group-hover:from-[#C9A449]/8 group-hover:to-[#C9A449]/15 transition-all duration-300 rounded-2xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-bl from-gold-500/2 via-transparent to-gold-500/4 group-hover:from-gold-500/3 group-hover:to-gold-500/5 transition-all duration-800 rounded-3xl"></div>
           </div>
         </div>
 
@@ -157,50 +163,53 @@ export function AboutBowenIslandSection() {
             animate={isVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <div className="inline-block bg-transparent border border-[#C9A449]/50 px-3 py-1 text-xs font-semibold text-[#C9A449] mb-4 uppercase tracking-widest font-body">
+            <div className={`inline-block bg-gold-500/5 border border-gold-500/20 px-5 py-2.5 ${typography.textBase} ${typography.fontMedium} ${colors.textAccentProminent} mb-6 ${typography.trackingWide} ${typography.fontUI} ${components.radius.medium} backdrop-blur-sm`}>
               Island Life
             </div>
 
-            <h2 className="font-heading text-4xl md:text-5xl mb-4 text-white tracking-wide">
-              THE SETTING
+            <h2 className={`${typography.h1} mb-6 ${colors.textPrimary}`}>
+              The Setting
             </h2>
             
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-[0.5px] bg-gradient-to-r from-[#C9A449]/80 to-[#C9A449]/20"></div>
-              <div className="w-2 h-2 border border-[#C9A449]/50 rotate-45 mx-3"></div>
+            <div className="flex items-center mb-8">
+              <div className={components.ornament.lineShort}></div>
+              <div className={`${components.ornament.dot} mx-5 relative opacity-70`}>
+                <div className="absolute inset-0 bg-gold-500/10 rounded-full blur-xs scale-150"></div>
+              </div>
             </div>
 
-            <p className="font-body text-white/90 mb-6 text-lg leading-relaxed">
-              Bowen Island offers more than just a location—it provides an escape. Just a short ferry ride 
-              from Vancouver, our studio is situated in a place where time slows down and nature's beauty 
-              becomes part of your tattoo journey.
+            <p className={`text-lg lg:text-xl ${colors.textSecondary} mb-6 ${typography.leadingRelaxed}`}>
+              Just a short ferry ride from Vancouver, Bowen Island provides a refreshing escape from 
+              urban life. The island's natural beauty and tranquil atmosphere create an ideal environment 
+              for thoughtful, deliberate tattooing where both artist and client can focus completely.
             </p>
-            <p className="font-body text-white/80 text-lg leading-relaxed italic">
-              The island's serene atmosphere creates the perfect environment for thoughtful, intentional 
-              tattooing. Here, surrounded by forest and ocean, you'll find the mental space to truly 
-              connect with your artistic vision.
+            <p className={`text-base lg:text-lg ${colors.textMuted} italic ${typography.fontLight} ${typography.leadingRelaxed}`}>
+              The journey to our studio becomes part of the experience. By the time you arrive, 
+              you'll find yourself in a mindset that's perfect for creating meaningful, lasting art. 
+              It's this unique setting that sets us apart from traditional tattoo studios.
             </p>
           </motion.div>
         </div>
       </div>
+      </div>
 
-      {/* Section 3 - The Product */}
-      <div className="relative z-10 min-h-[80vh] flex flex-col md:flex-row items-center py-20 px-4 sm:px-8 md:px-16 lg:px-24">
-        <div className="w-full md:w-1/2 mb-10 md:mb-0 overflow-hidden">
-          <div className="relative h-[400px] md:h-[600px] w-full rounded-2xl border border-[#C9A449]/10 group hover:border-[#C9A449]/20 transition-all duration-300 shadow-2xl shadow-black/20">
-            <div className="absolute top-2 left-2 h-4 w-4 border-t border-l border-[#C9A449]/30 rounded-tl-sm"></div>
-            <div className="absolute bottom-2 right-2 h-4 w-4 border-b border-r border-[#C9A449]/30 rounded-br-sm"></div>
+      {/* Section 3 - The Craft */}
+      <div className={`relative z-10 min-h-[80vh] flex flex-col md:flex-row items-center ${layout.sectionY.large} ${layout.padding.mobile} ${layout.padding.tablet} ${layout.padding.desktop} ${layout.containerXl} mx-auto`}>
+        <div className="w-full md:w-1/2 mb-10 md:mb-0">
+          <div className="relative aspect-[4/3] w-full max-w-lg mx-auto md:mx-0 rounded-3xl border border-gold-500/5 group hover:border-gold-500/10 transition-all duration-800 shadow-refined hover:shadow-refined-lg overflow-hidden">
+            <div className="absolute top-4 left-4 h-8 w-8 border-t border-l border-gold-500/10 rounded-tl-2xl"></div>
+            <div className="absolute bottom-4 right-4 h-8 w-8 border-b border-r border-gold-500/10 rounded-br-2xl"></div>
 
             <Image 
-              src="/images/prodcut-pic.jpeg" 
+              src="/images/product-pic.jpeg" 
               alt="Personalized Tattoo Experience" 
               fill 
-              className="object-cover brightness-60 group-hover:brightness-70 transition-all duration-300 rounded-2xl" 
+              className="object-cover brightness-90 group-hover:brightness-95 group-hover:scale-[1.02] transition-all duration-1000 ease-smooth" 
               sizes="(max-width: 768px) 100vw, 50vw"
               loading="lazy"
             />
             
-            <div className="absolute inset-0 bg-gradient-to-br from-[#C9A449]/5 via-transparent to-[#C9A449]/10 group-hover:from-[#C9A449]/8 group-hover:to-[#C9A449]/15 transition-all duration-300 rounded-2xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-gold-500/3 via-transparent to-gold-500/6 group-hover:from-gold-500/5 group-hover:to-gold-500/8 transition-all duration-600 rounded-3xl"></div>
           </div>
         </div>
 
@@ -210,37 +219,39 @@ export function AboutBowenIslandSection() {
             animate={isVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: 30 }}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
-            <div className="inline-block bg-transparent border border-[#C9A449]/50 px-3 py-1 text-xs font-semibold text-[#C9A449] mb-4 uppercase tracking-widest font-body">
+            <div className={`inline-block bg-gold-500/5 border border-gold-500/20 px-5 py-2.5 ${typography.textBase} ${typography.fontMedium} ${colors.textAccentProminent} mb-6 ${typography.trackingWide} ${typography.fontUI} ${components.radius.medium} backdrop-blur-sm`}>
               Excellence
             </div>
 
-            <h2 className="font-heading text-4xl md:text-5xl mb-4 text-white tracking-wide">
-              THE PRODUCT
+            <h2 className={`${typography.h1} mb-6 ${colors.textPrimary}`}>
+              The Craft
             </h2>
             
-            <div className="flex items-center mb-6">
-              <div className="w-12 h-[0.5px] bg-gradient-to-r from-[#C9A449]/80 to-[#C9A449]/20"></div>
-              <div className="w-2 h-2 border border-[#C9A449]/50 rotate-45 mx-3"></div>
+            <div className="flex items-center mb-8">
+              <div className={components.ornament.lineShort}></div>
+              <div className={`${components.ornament.dot} mx-5 relative opacity-70`}>
+                <div className="absolute inset-0 bg-gold-500/10 rounded-full blur-xs scale-150"></div>
+              </div>
             </div>
 
-            <p className="font-body text-white/90 mb-6 text-lg leading-relaxed">
-              At Bowen Island Tattoo, we don't just create tattoos—we craft lifelong pieces of art. Our 
-              approach combines technical precision with artistic innovation, using only the highest quality 
-              materials and most advanced techniques.
+            <p className={`text-lg lg:text-xl ${colors.textSecondary} mb-6 ${typography.leadingRelaxed}`}>
+              At Bowen Island Tattoo, we combine years of professional experience with modern techniques 
+              and the highest quality materials. Our commitment to excellence means taking the time to 
+              ensure every piece meets both our standards and your vision.
             </p>
-            <p className="font-body text-white/80 text-lg leading-relaxed italic">
-              We distinguish ourselves through our unwavering commitment to quality, cleanliness, and 
-              attention to detail. From the initial consultation to the final healing process, we ensure 
-              every aspect of your tattoo meets our exacting standards.
+            <p className={`text-base lg:text-lg ${colors.textMuted} italic ${typography.fontLight} ${typography.leadingRelaxed}`}>
+              We believe in quality over quantity. Each tattoo receives the attention it deserves, 
+              from initial consultation through final healing. This approach has built our reputation 
+              and keeps clients coming back for additional work.
             </p>
 
             <div className="mt-8">
               <Link 
                 href="/tattooRequest" 
-                className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 px-8 py-4 font-body tracking-widest uppercase text-sm font-medium"
+                className={`group ${components.button.base} ${components.button.variants.secondary} ${components.button.sizes.large} ${typography.trackingWide} inline-block`}
               >
-                <span className="relative z-10">Begin Your Journey</span>
-                <div className="absolute inset-0 bg-[#C9A449]/5 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
+                <span className="relative z-10">Schedule Consultation</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gold-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-600"></div>
               </Link>
             </div>
           </motion.div>
@@ -250,11 +261,11 @@ export function AboutBowenIslandSection() {
       {/* Bottom ornamental element */}
       <div className="relative z-10 py-16">
         <div className="flex items-center justify-center">
-          <div className="w-24 h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/60 to-transparent"></div>
-          <div className="mx-6 w-3 h-3 border border-[#C9A449]/50 rotate-45 relative">
-            <div className="absolute inset-1 bg-[#C9A449]/30 rotate-45"></div>
+          <div className={components.ornament.lineLong}></div>
+          <div className={`mx-6 ${components.ornament.dot} relative`}>
+            <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-sm scale-150"></div>
           </div>
-          <div className="w-24 h-[0.5px] bg-gradient-to-l from-transparent via-[#C9A449]/60 to-transparent"></div>
+          <div className={components.ornament.lineLong}></div>
         </div>
       </div>
     </div>

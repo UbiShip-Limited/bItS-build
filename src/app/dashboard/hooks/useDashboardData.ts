@@ -20,6 +20,7 @@ export interface ActionableMetrics {
     completed: number;
     remaining: number;
     nextAppointment?: string;
+    nextAppointmentCustomer?: string;
   };
   requests: {
     newCount: number;
@@ -35,6 +36,10 @@ export interface ActionableMetrics {
     overdueRequests: number;
     unconfirmedAppointments: number;
     followUpsNeeded: number;
+  };
+  performance: {
+    utilizationRate: number;
+    conversionRate: number;
   };
 }
 
@@ -55,6 +60,29 @@ export interface RecentCustomer {
   totalSpent: number;
 }
 
+export interface PriorityAction {
+  id: string;
+  type: 'overdue_request' | 'unconfirmed_appointment' | 'urgent_request' | 'upcoming_appointment';
+  title: string;
+  description: string;
+  link: string;
+  urgency: 'high' | 'medium';
+  time?: string;
+}
+
+export interface ActivityItem {
+  id: string;
+  type: 'appointment_booked' | 'payment_received' | 'request_submitted' | 'customer_registered' | 'appointment_completed';
+  title: string;
+  description: string;
+  timestamp: Date;
+  metadata?: {
+    amount?: number;
+    customerName?: string;
+    appointmentTime?: Date;
+  };
+}
+
 export function useDashboardData(isAuthenticated: boolean, user: any) {
   const [loading, setLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(false);
@@ -69,6 +97,8 @@ export function useDashboardData(isAuthenticated: boolean, user: any) {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [customers, setCustomers] = useState<RecentCustomer[]>([]);
   const [requests, setRequests] = useState<TattooRequest[]>([]);
+  const [priorityActions, setPriorityActions] = useState<PriorityAction[]>([]);
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
 
   // Use a ref to track loading state to prevent dependency issues
   const dataLoadingRef = useRef(false);
@@ -188,17 +218,38 @@ export function useDashboardData(isAuthenticated: boolean, user: any) {
       const weekRevenue = completedThisWeek.reduce((sum, apt) => sum + (apt.priceQuote || 0), 0);
       const monthlyRevenue = completedThisMonth.reduce((sum, apt) => sum + (apt.priceQuote || 0), 0);
       
+      // Calculate utilization rate (completed appointments vs available slots)
+      // Assuming 8 hour work day, 1-2 hour appointments average = ~6 slots per day
+      const assumedDailySlots = 6;
+      const utilizationRate = todayAppointments.length > 0 
+        ? Math.round((todayAppointments.length / assumedDailySlots) * 100)
+        : 0;
+      
+      // Calculate conversion rate (requests converted to appointments)
+      // Look at requests from the past 30 days that have been converted
+      const conversionRate = requestsResponse.pagination.total > 0
+        ? Math.round((completedThisMonth.length / requestsResponse.pagination.total) * 100)
+        : 0;
+      
+      // Calculate overdue requests (requests older than 3 days)
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      const overdueRequests = requestsResponse.data.filter(req => 
+        new Date(req.createdAt) < threeDaysAgo && req.status === 'new'
+      );
+
       // Build actionable metrics
       const newActionableMetrics: ActionableMetrics = {
         todayAppointments: {
           total: todayAppointments.length,
           completed: completedToday.length,
           remaining: remainingToday.length,
-          nextAppointment: nextAppointment ? format(new Date(nextAppointment.startTime), 'h:mm a') : undefined
+          nextAppointment: nextAppointment ? format(new Date(nextAppointment.startTime), 'h:mm a') : undefined,
+          nextAppointmentCustomer: nextAppointment?.customer?.name || undefined
         },
         requests: {
           newCount: requestsResponse.data.length,
-          urgentCount: 0, // Could be enhanced with urgency logic
+          urgentCount: overdueRequests.length,
           totalPending: requestsResponse.pagination.total
         },
         revenue: {
@@ -207,9 +258,13 @@ export function useDashboardData(isAuthenticated: boolean, user: any) {
           currency: '$'
         },
         actionItems: {
-          overdueRequests: 0, // Could be enhanced with date analysis
+          overdueRequests: overdueRequests.length,
           unconfirmedAppointments: remainingToday.filter(apt => apt.status === BookingStatus.PENDING).length,
           followUpsNeeded: 0 // Could be enhanced with follow-up logic
+        },
+        performance: {
+          utilizationRate,
+          conversionRate
         }
       };
       
@@ -228,6 +283,8 @@ export function useDashboardData(isAuthenticated: boolean, user: any) {
       const formattedAppointments = recentAppointments.map((appointment) => ({
         id: appointment.id,
         clientName: appointment.customer?.name || 'Anonymous',
+        clientEmail: appointment.customer?.email || appointment.contactEmail || undefined,
+        clientPhone: appointment.customer?.phone || appointment.contactPhone || undefined,
         date: format(new Date(appointment.startTime), 'MMM dd'),
         time: format(new Date(appointment.startTime), 'h:mm a'),
         service: appointment.type.replace('_', ' '),
@@ -259,6 +316,94 @@ export function useDashboardData(isAuthenticated: boolean, user: any) {
       const formattedCustomers = Array.from(customerMap.values())
         .sort((a, b) => new Date(b.lastVisit).getTime() - new Date(a.lastVisit).getTime())
         .slice(0, 2);
+
+      // Build priority actions
+      const actions: PriorityAction[] = [];
+      
+      // Add overdue requests
+      if (overdueRequests.length > 0) {
+        const firstOverdueCustomer = overdueRequests[0].customer?.name || overdueRequests[0].contactEmail || 'customer';
+        const description = overdueRequests.length === 1 
+          ? `From ${firstOverdueCustomer}`
+          : `Including ${firstOverdueCustomer}`;
+        actions.push({
+          id: 'overdue-requests',
+          type: 'overdue_request',
+          title: `${overdueRequests.length} overdue request${overdueRequests.length > 1 ? 's' : ''}`,
+          description: description,
+          link: '/dashboard/tattoo-request?filter=overdue',
+          urgency: 'high'
+        });
+      }
+      
+      // Add unconfirmed appointments
+      const unconfirmedApts = remainingToday.filter(apt => apt.status === BookingStatus.PENDING);
+      if (unconfirmedApts.length > 0) {
+        const firstUnconfirmedCustomer = unconfirmedApts[0].customer?.name || 'customer';
+        const description = unconfirmedApts.length === 1 
+          ? `With ${firstUnconfirmedCustomer}`
+          : `Including ${firstUnconfirmedCustomer}`;
+        actions.push({
+          id: 'unconfirmed-appointments',
+          type: 'unconfirmed_appointment',
+          title: `${unconfirmedApts.length} unconfirmed appointment${unconfirmedApts.length > 1 ? 's' : ''}`,
+          description: description,
+          link: '/dashboard/appointments?filter=unconfirmed',
+          urgency: 'high'
+        });
+      }
+      
+      // Add upcoming appointment if within 2 hours
+      if (nextAppointment) {
+        const nextAptTime = new Date(nextAppointment.startTime);
+        const hoursUntil = (nextAptTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+        if (hoursUntil <= 2) {
+          actions.push({
+            id: 'upcoming-appointment',
+            type: 'upcoming_appointment',
+            title: `Appointment with ${nextAppointment.customer?.name || 'Customer'}`,
+            description: 'Coming up soon',
+            link: `/dashboard/appointments/${nextAppointment.id}`,
+            urgency: 'medium',
+            time: format(nextAptTime, 'h:mm a')
+          });
+        }
+      }
+      
+      setPriorityActions(actions);
+
+      // Build recent activity (last 10 activities)
+      const activities: ActivityItem[] = [];
+      
+      // Add recent appointments
+      completedToday.forEach(apt => {
+        activities.push({
+          id: `apt-completed-${apt.id}`,
+          type: 'appointment_completed',
+          title: 'Appointment completed',
+          description: `${apt.customer?.name || 'Customer'} - ${apt.type.replace('_', ' ')}`,
+          timestamp: new Date(apt.endTime),
+          metadata: {
+            amount: apt.priceQuote || 0,
+            customerName: apt.customer?.name
+          }
+        });
+      });
+      
+      // Add recent requests
+      requestsResponse.data.slice(0, 5).forEach(req => {
+        activities.push({
+          id: `request-${req.id}`,
+          type: 'request_submitted',
+          title: 'New tattoo request',
+          description: `${req.customer?.name || req.contactEmail || 'Anonymous'} - ${req.style || 'Custom design'}`,
+          timestamp: new Date(req.createdAt)
+        });
+      });
+      
+      // Sort activities by timestamp and take the most recent
+      activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      setRecentActivity(activities.slice(0, 10));
 
       // Set all data
       setAppointments(formattedAppointments);
@@ -294,6 +439,8 @@ export function useDashboardData(isAuthenticated: boolean, user: any) {
     appointments,
     customers,
     requests,
+    priorityActions,
+    recentActivity,
     
     // Actions
     loadDashboardData,

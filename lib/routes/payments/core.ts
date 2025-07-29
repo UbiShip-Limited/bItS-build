@@ -101,17 +101,47 @@ function isSquareConfigured(): boolean {
 }
 
 const coreRoutes: FastifyPluginAsync = async (fastify) => {
-  // Check Square configuration on startup and log status
-  const squareConfigured = isSquareConfigured();
-  if (squareConfigured) {
-    fastify.log.info('✅ Core payment routes: Square integration is configured and ready');
-  } else {
-    fastify.log.warn('⚠️  Core payment routes: Square integration is not configured - Square-related payment features will be disabled');
+  try {
+    fastify.log.info('🔄 Starting core payment routes registration...');
+    
+    // Check Square configuration on startup and log status
+    const squareConfigured = isSquareConfigured();
+    if (squareConfigured) {
+      fastify.log.info('✅ Core payment routes: Square integration is configured and ready');
+    } else {
+      fastify.log.warn('⚠️  Core payment routes: Square integration is not configured - Square-related payment features will be disabled');
+    }
+  } catch (error) {
+    fastify.log.error('❌ Error during Square configuration check:', error);
   }
 
-  // Initialize services
-  const paymentService = new PaymentService(fastify.prisma);
-  const paymentLinkService = new PaymentLinkService(fastify.prisma);
+  // Lazy service initialization - create services only when needed
+  let paymentService: PaymentService | null = null;
+  let paymentLinkService: PaymentLinkService | null = null;
+  
+  const getPaymentService = () => {
+    if (!paymentService) {
+      try {
+        paymentService = new PaymentService(fastify.prisma);
+      } catch (error) {
+        fastify.log.error('Failed to initialize PaymentService:', error);
+        throw new Error('Payment service initialization failed');
+      }
+    }
+    return paymentService;
+  };
+  
+  const getPaymentLinkService = () => {
+    if (!paymentLinkService) {
+      try {
+        paymentLinkService = new PaymentLinkService(fastify.prisma);
+      } catch (error) {
+        fastify.log.error('Failed to initialize PaymentLinkService:', error);
+        throw new Error('Payment link service initialization failed');
+      }
+    }
+    return paymentLinkService;
+  };
   
   fastify.log.info('🔄 Registering core payment routes...');
 
@@ -124,7 +154,42 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
       message: 'Payments route is working'
     };
   });
-
+  
+  // GET /payments/test - Test endpoint that doesn't require Square (no auth required)
+  fastify.get('/test', async (request, reply) => {
+    return {
+      status: 'ok',
+      message: 'Payment routes are registered and accessible',
+      timestamp: new Date().toISOString(),
+      squareConfigured: isSquareConfigured(),
+      environment: {
+        hasSquareToken: !!process.env.SQUARE_ACCESS_TOKEN,
+        hasSquareAppId: !!process.env.SQUARE_APPLICATION_ID,
+        hasSquareLocation: !!process.env.SQUARE_LOCATION_ID,
+        nodeEnv: process.env.NODE_ENV
+      }
+    };
+  });
+  
+  // GET /payments/debug - Debug route to test basic GET at root level
+  fastify.get('/debug', async (request, reply) => {
+    return {
+      message: 'Debug route working',
+      query: request.query,
+      url: request.url,
+      routerPath: request.routerPath
+    };
+  });
+  
+  // GET /payments/simple - Test root-level route without authorize middleware
+  fastify.get('/simple', async (request, reply) => {
+    return {
+      message: 'Simple payments route without auth working',
+      query: request.query,
+      timestamp: new Date().toISOString()
+    };
+  });
+  
   // GET /payments - Get customer's payments with optional Square data
   fastify.get('/', {
     preHandler: authorize(['artist', 'admin']),
@@ -198,7 +263,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
       if (customerId && status) {
         message = `No ${status} payments found for this customer`;
       } else if (customerId) {
-        message = 'No payments found for this customer';
+        message = 'No payment history yet for this customer';
       } else if (status) {
         message = `No ${status} payments found`;
       } else {
@@ -302,7 +367,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
     try {
       switch (type) {
         case 'payment_link':
-          const paymentLinkResult = await paymentLinkService.createPaymentLink({
+          const paymentLinkResult = await getPaymentLinkService().createPaymentLink({
             amount: paymentData.amount,
             title: paymentData.title || '',
             description: paymentData.description,
@@ -322,7 +387,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
           };
 
         case 'invoice':
-          const invoiceResult = await paymentLinkService.createInvoice({
+          const invoiceResult = await getPaymentLinkService().createInvoice({
             customerId: paymentData.customerId,
             appointmentId: paymentData.appointmentId,
             tattooRequestId: paymentData.tattooRequestId,
@@ -344,7 +409,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
             });
           }
 
-          const paymentResult = await paymentService.processPayment({
+          const paymentResult = await getPaymentService().processPayment({
             sourceId: paymentData.sourceId,
             amount: paymentData.amount,
             customerId: paymentData.customerId,
@@ -407,7 +472,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
     const paymentData = request.body as ProcessPaymentRequestBody;
     
     try {
-      const result = await paymentService.processPayment(paymentData);
+      const result = await getPaymentService().processPayment(paymentData);
       
       // Log audit
       await fastify.prisma.auditLog.create({
@@ -661,6 +726,10 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
   });
   
   fastify.log.info('✅ Core payment routes registered successfully');
+  
+  // Log the registered routes for debugging
+  const routes = fastify.printRoutes({ commonPrefix: false });
+  fastify.log.debug('Registered payment routes:', routes);
 };
 
 // Helper function to get available endpoints based on user role

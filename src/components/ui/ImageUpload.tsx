@@ -5,20 +5,53 @@ interface ImageUploadProps {
   onImagesSelected: (images: Array<{ url: string; file: File; publicId?: string }>) => void;
   maxImages?: number;
   existingImages?: Array<{ url: string; file?: File; publicId?: string }>;
+  maxFileSize?: number; // in bytes
+  acceptedFormats?: string[];
 }
 
 export const ImageUpload: React.FC<ImageUploadProps> = ({
   onImagesSelected,
   maxImages = 5,
   existingImages = [],
+  maxFileSize = 10 * 1024 * 1024, // 10MB default
+  acceptedFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
 }) => {
   const [images, setImages] = useState<Array<{ url: string; file?: File; publicId?: string }>>(existingImages);
   const [isDragging, setIsDragging] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const newImages = Array.from(event.target.files).map((file) => ({
+  const validateFile = (file: File): string | null => {
+    // Check file size
+    if (file.size > maxFileSize) {
+      return `${file.name} exceeds ${(maxFileSize / 1024 / 1024).toFixed(0)}MB limit`;
+    }
+    
+    // Check file type
+    if (!acceptedFormats.includes(file.type)) {
+      return `${file.name} is not a supported format`;
+    }
+    
+    return null;
+  };
+
+  const processFiles = (files: File[]) => {
+    const validationErrors: string[] = [];
+    const validFiles: File[] = [];
+    
+    files.forEach(file => {
+      const error = validateFile(file);
+      if (error) {
+        validationErrors.push(error);
+      } else {
+        validFiles.push(file);
+      }
+    });
+    
+    setErrors(validationErrors);
+    
+    if (validFiles.length > 0) {
+      const newImages = validFiles.map((file) => ({
         url: URL.createObjectURL(file),
         file,
       }));
@@ -28,6 +61,17 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       
       const imagesWithFiles = updatedImages.filter(img => img.file) as Array<{ url: string; file: File; publicId?: string }>;
       onImagesSelected(imagesWithFiles);
+    }
+    
+    // Clear errors after 5 seconds
+    if (validationErrors.length > 0) {
+      setTimeout(() => setErrors([]), 5000);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      processFiles(Array.from(event.target.files));
     }
   };
 
@@ -45,16 +89,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     setIsDragging(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const newImages = Array.from(e.dataTransfer.files).map((file) => ({
-        url: URL.createObjectURL(file),
-        file,
-      }));
-
-      const updatedImages = [...images, ...newImages].slice(0, maxImages);
-      setImages(updatedImages);
-      
-      const imagesWithFiles = updatedImages.filter(img => img.file) as Array<{ url: string; file: File; publicId?: string }>;
-      onImagesSelected(imagesWithFiles);
+      processFiles(Array.from(e.dataTransfer.files));
     }
   };
 
@@ -88,7 +123,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
             Drag & drop images or <span className="text-gold">browse</span>
           </p>
           <p className="text-slate text-sm">
-            Supported: JPG, PNG, GIF (max {maxImages} images)
+            Supported: JPG, PNG, GIF • Max {(maxFileSize / 1024 / 1024).toFixed(0)}MB per file • Up to {maxImages} images
           </p>
         </div>
         <input
@@ -100,6 +135,14 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           onChange={handleFileSelect}
         />
       </div>
+
+      {errors.length > 0 && (
+        <div className="mt-3 p-3 bg-red-900/20 border border-red-500/30 rounded-md">
+          {errors.map((error, index) => (
+            <p key={index} className="text-red-400 text-sm font-body">{error}</p>
+          ))}
+        </div>
+      )}
 
       {images.length > 0 && (
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-4">

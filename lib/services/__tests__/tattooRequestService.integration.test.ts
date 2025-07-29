@@ -408,6 +408,26 @@ describe('🎨 TattooRequestService Integration Tests', () => {
         tattooRequestService.updateStatus(request.id, 'reviewed', adminUser.id)
       ).rejects.toThrow('Invalid status transition');
 
+      // Test direct approval path (new → approved)
+      const request2 = await tattooRequestService.create({
+        description: 'Test direct approval',
+        contactEmail: 'direct@test.com'
+      });
+      
+      // Valid: new → approved (direct approval)
+      const directApproved = await tattooRequestService.updateStatus(request2.id, 'approved', adminUser.id);
+      expect(directApproved.status).toBe('approved');
+      
+      // Test direct rejection path (new → rejected)
+      const request3 = await tattooRequestService.create({
+        description: 'Test direct rejection',
+        contactEmail: 'reject@test.com'
+      });
+      
+      // Valid: new → rejected (direct rejection)
+      const directRejected = await tattooRequestService.updateStatus(request3.id, 'rejected', adminUser.id);
+      expect(directRejected.status).toBe('rejected');
+
       console.log('✅ Status workflow properly enforced');
     });
   });

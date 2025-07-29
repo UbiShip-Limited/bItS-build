@@ -34,12 +34,12 @@ export interface BusinessHoursCheck {
 class BusinessHoursService {
   async getBusinessHours(): Promise<{ businessHours: BusinessHours[]; source: string }> {
     const response = await apiClient.get('/business-hours');
-    return response;
+    return response as { businessHours: BusinessHours[]; source: string };
   }
 
   async updateBusinessHours(dayOfWeek: number, hours: Partial<BusinessHours>): Promise<BusinessHours> {
     const response = await apiClient.put(`/business-hours/${dayOfWeek}`, hours);
-    return response.businessHours;
+    return (response as any).businessHours;
   }
 
   async getSpecialHours(startDate?: string, endDate?: string): Promise<SpecialHours[]> {
@@ -48,17 +48,17 @@ class BusinessHoursService {
     if (endDate) params.append('endDate', endDate);
     
     const response = await apiClient.get(`/business-hours/special?${params.toString()}`);
-    return response.specialHours;
+    return (response as any).specialHours;
   }
 
   async createSpecialHours(specialHours: Omit<SpecialHours, 'id' | 'createdAt' | 'updatedAt'>): Promise<SpecialHours> {
     const response = await apiClient.post('/business-hours/special', specialHours);
-    return response.specialHours;
+    return (response as any).specialHours;
   }
 
   async updateSpecialHours(date: string, updates: Partial<SpecialHours>): Promise<SpecialHours> {
     const response = await apiClient.put(`/business-hours/special/${date}`, updates);
-    return response.specialHours;
+    return (response as any).specialHours;
   }
 
   async deleteSpecialHours(date: string): Promise<void> {
@@ -68,7 +68,7 @@ class BusinessHoursService {
   async checkBusinessHours(date: string, time?: string): Promise<BusinessHoursCheck> {
     const params = time ? `?time=${time}` : '';
     const response = await apiClient.get(`/business-hours/check/${date}${params}`);
-    return response;
+    return response as BusinessHoursCheck;
   }
 
   getDayName(dayOfWeek: number): string {

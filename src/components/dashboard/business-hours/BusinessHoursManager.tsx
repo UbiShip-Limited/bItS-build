@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { businessHoursService, type BusinessHours, type SpecialHours } from '@/src/lib/api/services/businessHoursService';
 import { Clock, Calendar, Save, X, Plus, Edit2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/src/lib/toast';
 
 export default function BusinessHoursManager() {
   const [businessHours, setBusinessHours] = useState<BusinessHours[]>([]);
@@ -277,7 +277,7 @@ export default function BusinessHoursManager() {
                     </label>
                     <input
                       type="time"
-                      value={newSpecialHours.openTime}
+                      value={newSpecialHours.openTime ?? ''}
                       onChange={(e) => setNewSpecialHours({ ...newSpecialHours, openTime: e.target.value })}
                       className="input input-bordered"
                     />
@@ -288,7 +288,7 @@ export default function BusinessHoursManager() {
                     </label>
                     <input
                       type="time"
-                      value={newSpecialHours.closeTime}
+                      value={newSpecialHours.closeTime ?? ''}
                       onChange={(e) => setNewSpecialHours({ ...newSpecialHours, closeTime: e.target.value })}
                       className="input input-bordered"
                     />

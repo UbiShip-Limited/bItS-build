@@ -2,6 +2,7 @@ import { prisma } from '../prisma/prisma';
 import { BookingStatus, BookingType } from '../types/booking';
 import { AppointmentError, ValidationError, NotFoundError } from './errors';
 import type { Appointment, Prisma } from '@prisma/client';
+import { RealtimeService } from './realtimeService';
 
 export interface CreateAppointmentData {
   startAt: Date;
@@ -40,6 +41,11 @@ export interface AppointmentFilters {
  * Note: Frontend uses AppointmentApiClient for API calls
  */
 export class AppointmentService {
+  private realtimeService?: RealtimeService;
+  
+  constructor(realtimeService?: RealtimeService) {
+    this.realtimeService = realtimeService;
+  }
   async create(data: CreateAppointmentData): Promise<Appointment> {
     // Validate business logic first
     this.validateAppointmentBusinessLogic(data);
@@ -136,6 +142,14 @@ export class AppointmentService {
         return newAppointment;
       });
       
+      // Send realtime notification for new appointment
+      if (this.realtimeService) {
+        await this.realtimeService.notifyAppointmentCreated(
+          appointment.id,
+          appointment.customerId || undefined
+        );
+      }
+      
       return appointment;
     } catch (error) {
       if (error.code === 'P2002') {
@@ -227,6 +241,14 @@ export class AppointmentService {
       
       return updatedAppointment;
     });
+    
+    // Send realtime notification for appointment approval if status changed to CONFIRMED
+    if (this.realtimeService && data.status === BookingStatus.CONFIRMED && existing.status !== BookingStatus.CONFIRMED) {
+      await this.realtimeService.notifyAppointmentApproved(
+        updated.id,
+        updated.customerId || undefined
+      );
+    }
     
     return updated;
   }
@@ -442,6 +464,69 @@ export class AppointmentService {
     if (data.priceQuote !== undefined && data.priceQuote < 0) {
       throw new ValidationError('Price quote must be a positive number');
     }
+  }
+
+  async bulkUpdateStatus(
+    appointmentIds: string[], 
+    newStatus: BookingStatus,
+    userId?: string
+  ): Promise<{ updated: number; failed: number }> {
+    let updated = 0;
+    let failed = 0;
+
+    // Use a transaction to ensure atomicity
+    await prisma.$transaction(async (tx) => {
+      for (const appointmentId of appointmentIds) {
+        try {
+          // Check if appointment exists
+          const appointment = await tx.appointment.findUnique({
+            where: { id: appointmentId }
+          });
+
+          if (!appointment) {
+            failed++;
+            continue;
+          }
+
+          // Don't update if already in the target status
+          if (appointment.status === newStatus) {
+            continue;
+          }
+
+          // Update the appointment
+          await tx.appointment.update({
+            where: { id: appointmentId },
+            data: { 
+              status: newStatus,
+              updatedAt: new Date()
+            }
+          });
+
+          // Log the update
+          await tx.auditLog.create({
+            data: {
+              action: 'appointment_bulk_status_update',
+              resource: 'Appointment',
+              resourceId: appointmentId,
+              resourceType: 'appointment',
+              userId: userId,
+              details: {
+                previousStatus: appointment.status,
+                newStatus: newStatus,
+                bulkOperation: true
+              }
+            }
+          });
+
+          updated++;
+        } catch (error) {
+          console.error(`Failed to update appointment ${appointmentId}:`, error);
+          failed++;
+        }
+      }
+    });
+
+    return { updated, failed };
   }
 
   async checkTimeConflicts(startTime: Date, endTime: Date, artistId?: string, excludeAppointmentId?: string): Promise<void> {

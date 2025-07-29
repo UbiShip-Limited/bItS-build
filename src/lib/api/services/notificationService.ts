@@ -32,12 +32,12 @@ export interface NotificationStats {
 class NotificationService {
   async getSettings(): Promise<NotificationSettings> {
     const response = await apiClient.get('/notifications/settings');
-    return response.settings;
+    return (response as any).settings;
   }
 
   async getHistory(appointmentId: string): Promise<NotificationHistory[]> {
     const response = await apiClient.get(`/notifications/history/${appointmentId}`);
-    return response.notifications;
+    return (response as any).notifications;
   }
 
   async getStats(startDate?: string, endDate?: string): Promise<NotificationStats> {
@@ -46,7 +46,7 @@ class NotificationService {
     if (endDate) params.append('endDate', endDate);
     
     const response = await apiClient.get(`/notifications/stats?${params.toString()}`);
-    return response.stats;
+    return (response as any).stats;
   }
 
   async sendManualReminder(appointmentId: string, type: 'reminder' | 'confirmation' | 'follow_up', message?: string) {
@@ -55,7 +55,7 @@ class NotificationService {
       type,
       message
     });
-    return response;
+    return response as any;
   }
 }
 

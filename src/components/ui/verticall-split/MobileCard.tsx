@@ -3,7 +3,6 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
 import { SectionCardProps } from "./types";
 
 export function MobileCard({ section, index, isLoading, sectionsLength }: SectionCardProps) {
@@ -57,14 +56,14 @@ export function MobileCard({ section, index, isLoading, sectionsLength }: Sectio
 
           {/* Accent label overlay - better mobile sizing */}
           <div className="absolute bottom-2 right-3">
-            <div className="inline-block bg-[#C9A449]/10 border border-[#C9A449]/50 px-2 py-1 text-xs font-semibold text-[#C9A449] uppercase tracking-wider font-body backdrop-blur-sm rounded-sm">
+            <div className="inline-block bg-[#C9A449]/10 border border-[#C9A449]/50 px-2 py-1 text-xs font-semibold text-[#C9A449] uppercase tracking-[0.02em] font-body backdrop-blur-sm rounded-sm">
               {section.accent}
             </div>
           </div>
         </div>
 
         {/* Mobile Content Section - better spacing */}
-        <div className="relative p-5">
+        <div className="relative p-6 flex flex-col justify-center min-h-[280px]">
           {/* Simplified background pattern */}
           <div className="absolute top-0 right-0 w-12 h-12 opacity-[0.02]">
             <Image 
@@ -85,45 +84,37 @@ export function MobileCard({ section, index, isLoading, sectionsLength }: Sectio
           </div>
 
           {/* Content */}
-          <div className="relative z-10">
+          <div className="relative z-10 flex flex-col justify-center h-full">
             {/* Simplified ornamental line */}
-            <div className="flex items-center mb-4">
-              <div className="w-8 h-[0.5px] bg-gradient-to-r from-transparent to-[#C9A449]/60"></div>
-              <div className="mx-2">
-                <span className="text-[#C9A449] text-xs">✦</span>
+            <div className="flex items-center mb-6">
+              <div className="w-10 h-[0.5px] bg-gradient-to-r from-transparent to-[#C9A449]/60"></div>
+              <div className="mx-3">
+                <span className="text-[#C9A449] text-sm">✦</span>
               </div>
-              <div className="w-8 h-[0.5px] bg-gradient-to-l from-transparent to-[#C9A449]/60"></div>
+              <div className="w-10 h-[0.5px] bg-gradient-to-l from-transparent to-[#C9A449]/60"></div>
             </div>
 
-            {/* Main title - mobile optimized */}
-            <h2 className="font-heading text-xl mb-2 text-white leading-tight tracking-wide">
+            {/* Main title - Explicitly set Playfair Display */}
+            <h2 className="text-2xl mb-3 text-white leading-tight font-semibold tracking-tight" style={{ fontFamily: 'Playfair Display, serif' }}>
               {section.title}
             </h2>
 
-            {/* Subtitle - mobile optimized */}
-            <h3 className="font-body text-sm text-[#C9A449]/80 mb-3 uppercase tracking-wide font-light">
+            {/* Subtitle - Explicitly set Playfair Display */}
+            <h3 className="text-sm text-[#C9A449]/80 mb-4 uppercase tracking-[0.02em] font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
               {section.subtitle}
             </h3>
 
             {/* Simplified divider */}
-            <div className="flex items-center mb-4">
-              <div className="w-6 h-[0.5px] bg-gradient-to-r from-[#C9A449]/80 to-[#C9A449]/20"></div>
-              <div className="w-1 h-1 border border-[#C9A449]/50 rotate-45 mx-2"></div>
+            <div className="flex items-center mb-5">
+              <div className="w-8 h-[0.5px] bg-gradient-to-r from-[#C9A449]/80 to-[#C9A449]/20"></div>
+              <div className="w-1.5 h-1.5 border border-[#C9A449]/50 rotate-45 mx-3"></div>
             </div>
 
-            {/* Description - mobile optimized */}
-            <p className="font-body text-sm text-white/80 leading-relaxed mb-5 italic">
+            {/* Description - Explicitly set Playfair Display */}
+            <p className="text-base text-white/80 leading-relaxed italic font-normal tracking-[0]" style={{ fontFamily: 'Playfair Display, serif' }}>
               {section.description}
             </p>
-
-            {/* CTA Button - Mobile optimized with better touch target */}
-            <Link 
-              href="/tattooRequest" 
-              className="group relative overflow-hidden bg-transparent border border-[#C9A449]/70 text-white hover:bg-[#C9A449]/10 hover:border-[#C9A449] transition-all duration-300 px-5 py-4 font-body tracking-widest uppercase text-xs font-medium w-full flex items-center justify-center min-h-[48px] active:scale-95 rounded-sm"
-            >
-              <span className="relative z-10">Learn More</span>
-              <div className="absolute inset-0 bg-[#C9A449]/5 transform translate-x-full group-hover:translate-x-0 transition-transform duration-300"></div>
-            </Link>
+            
           </div>
         </div>
       </div>

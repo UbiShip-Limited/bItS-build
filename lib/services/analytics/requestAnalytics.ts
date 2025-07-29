@@ -1,5 +1,5 @@
-import { prisma } from '../../prisma/prisma';
 import { AnalyticsUtils, DateRange } from './analyticsUtils';
+import type { PrismaClient } from '@prisma/client';
 
 export interface RequestMetrics {
   pending: { count: number; urgent: number; overdue: number };
@@ -15,6 +15,8 @@ export interface RequestMetrics {
  * Service for request analytics and conversion tracking
  */
 export class RequestAnalyticsService {
+  constructor(private prisma: PrismaClient) {}
+
   /**
    * Get comprehensive request metrics
    */
@@ -65,12 +67,12 @@ export class RequestAnalyticsService {
    */
   async getConversionRateForPeriod(start: Date, end: Date): Promise<number> {
     const [requests, converted] = await Promise.all([
-      prisma.tattooRequest.count({
+      this.prisma.tattooRequest.count({
         where: {
           createdAt: { gte: start, lte: end }
         }
       }),
-      prisma.tattooRequest.count({
+      this.prisma.tattooRequest.count({
         where: {
           createdAt: { gte: start, lte: end },
           status: { in: ['approved', 'in_progress', 'completed'] }
@@ -85,7 +87,7 @@ export class RequestAnalyticsService {
    * Get count of pending requests
    */
   private async getPendingRequestCount(): Promise<number> {
-    return prisma.tattooRequest.count({
+    return this.prisma.tattooRequest.count({
       where: { status: 'new' }
     });
   }
@@ -96,7 +98,7 @@ export class RequestAnalyticsService {
   private async getUrgentRequestCount(): Promise<number> {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     
-    return prisma.tattooRequest.count({
+    return this.prisma.tattooRequest.count({
       where: {
         status: 'new',
         createdAt: { lte: sevenDaysAgo }
@@ -108,7 +110,7 @@ export class RequestAnalyticsService {
    * Get processed requests for a period
    */
   private async getProcessedRequestsForPeriod(start: Date, end: Date): Promise<number> {
-    return prisma.tattooRequest.count({
+    return this.prisma.tattooRequest.count({
       where: {
         status: { in: ['approved', 'rejected'] },
         updatedAt: { gte: start, lte: end }
@@ -121,8 +123,8 @@ export class RequestAnalyticsService {
    */
   private async getRequestConversionRate(): Promise<number> {
     const [total, converted] = await Promise.all([
-      prisma.tattooRequest.count(),
-      prisma.tattooRequest.count({
+      this.prisma.tattooRequest.count(),
+      this.prisma.tattooRequest.count({
         where: { status: { in: ['approved', 'in_progress', 'completed'] } }
       })
     ]);
@@ -134,7 +136,7 @@ export class RequestAnalyticsService {
    * Get average time to convert requests (in days)
    */
   private async getAverageConversionTime(): Promise<number> {
-    const convertedRequests = await prisma.tattooRequest.findMany({
+    const convertedRequests = await this.prisma.tattooRequest.findMany({
       where: {
         status: { in: ['approved', 'in_progress', 'completed'] }
       },

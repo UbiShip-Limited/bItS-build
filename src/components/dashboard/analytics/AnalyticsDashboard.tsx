@@ -12,7 +12,7 @@ import {
   Download,
   RefreshCw
 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/src/lib/toast';
 import RevenueChart from './RevenueChart';
 import CustomerSegmentation from './CustomerSegmentation';
 import AppointmentMetrics from './AppointmentMetrics';
@@ -107,17 +107,17 @@ export default function AnalyticsDashboard() {
               <div>
                 <p className="text-sm text-gray-400">Total Revenue</p>
                 <p className="text-2xl font-bold text-white">
-                  ${metrics.revenue.thisMonth.toLocaleString()}
+                  ${metrics.revenue.month?.amount?.toLocaleString() || 0}
                 </p>
                 <p className={`text-sm mt-1 flex items-center gap-1 ${
-                  metrics.revenue.trend === 'up' ? 'text-success' : 'text-error'
+                  (metrics.revenue.month?.trend || 0) > 0 ? 'text-success' : 'text-error'
                 }`}>
-                  {metrics.revenue.trend === 'up' ? (
+                  {(metrics.revenue.month?.trend || 0) > 0 ? (
                     <TrendingUp className="w-3 h-3" />
                   ) : (
                     <TrendingDown className="w-3 h-3" />
                   )}
-                  {Math.abs(metrics.revenue.growthRate)}% vs last period
+                  {Math.abs(metrics.revenue.month?.trend || 0)}% vs last period
                 </p>
               </div>
               <div className="p-3 bg-primary/20 rounded-lg">
@@ -134,10 +134,10 @@ export default function AnalyticsDashboard() {
               <div>
                 <p className="text-sm text-gray-400">Total Customers</p>
                 <p className="text-2xl font-bold text-white">
-                  {metrics.overview.totalCustomers}
+                  {metrics.customers?.total || 0}
                 </p>
                 <p className="text-sm mt-1 text-gray-400">
-                  +{metrics.customers.new} new this month
+                  +{metrics.customers?.new?.month || 0} new this month
                 </p>
               </div>
               <div className="p-3 bg-info/20 rounded-lg">
@@ -154,10 +154,10 @@ export default function AnalyticsDashboard() {
               <div>
                 <p className="text-sm text-gray-400">Appointments</p>
                 <p className="text-2xl font-bold text-white">
-                  {metrics.appointments.thisWeek}
+                  {metrics.appointments?.week?.scheduled || 0}
                 </p>
                 <p className="text-sm mt-1 text-gray-400">
-                  {metrics.appointments.completionRate}% completion rate
+                  {metrics.appointments?.metrics?.conversionRate || 0}% completion rate
                 </p>
               </div>
               <div className="p-3 bg-success/20 rounded-lg">
@@ -174,10 +174,10 @@ export default function AnalyticsDashboard() {
               <div>
                 <p className="text-sm text-gray-400">Active Requests</p>
                 <p className="text-2xl font-bold text-white">
-                  {metrics.requests.pending}
+                  {metrics.requests?.pending?.count || 0}
                 </p>
                 <p className="text-sm mt-1 text-gray-400">
-                  {metrics.requests.conversionRate}% conversion rate
+                  {metrics.requests?.conversion?.rate || 0}% conversion rate
                 </p>
               </div>
               <div className="p-3 bg-warning/20 rounded-lg">
@@ -192,27 +192,38 @@ export default function AnalyticsDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Chart */}
         <RevenueChart 
-          data={metrics.trends.revenue} 
-          breakdown={metrics.revenue.breakdown}
+          data={metrics.business?.growth ? [{ date: 'Today', amount: metrics.revenue?.today?.amount || 0 }] : []} 
+          breakdown={metrics.revenue?.breakdown || { consultations: 0, tattoos: 0, touchups: 0, deposits: 0 }}
         />
 
         {/* Customer Segmentation */}
         <CustomerSegmentation 
-          segments={metrics.customers}
-          retentionRate={metrics.customers.retentionRate}
+          segments={{
+            new: metrics.customers?.segments?.newCustomers || 0,
+            returning: metrics.customers?.segments?.regularCustomers || 0,
+            vip: metrics.customers?.segments?.vipCustomers || 0,
+            retentionRate: metrics.customers?.returning?.rate || 0
+          }}
+          retentionRate={metrics.customers?.returning?.rate || 0}
         />
 
         {/* Appointment Metrics */}
         <AppointmentMetrics 
-          metrics={metrics.appointments}
-          trends={metrics.trends.appointments}
+          metrics={{
+            today: metrics.appointments?.today?.count || 0,
+            thisWeek: metrics.appointments?.week?.scheduled || 0,
+            completionRate: metrics.appointments?.metrics?.conversionRate || 0,
+            noShowRate: metrics.appointments?.metrics?.noShowRate || 0,
+            utilizationRate: metrics.appointments?.metrics?.rebookingRate || 0
+          }}
+          trends={[]}
         />
 
         {/* Business Trends */}
         <BusinessTrends 
-          revenue={metrics.trends.revenue}
-          appointments={metrics.trends.appointments}
-          customers={metrics.trends.customers}
+          revenue={[]}
+          appointments={[]}
+          customers={[]}
         />
       </div>
 

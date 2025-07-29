@@ -1,5 +1,5 @@
-import { prisma } from '../../prisma/prisma';
 import { AnalyticsUtils, DateRange } from './analyticsUtils';
+import type { PrismaClient } from '@prisma/client';
 
 export interface CustomerMetrics {
   total: number;
@@ -39,35 +39,47 @@ export interface CustomerLifetimeMetrics {
  * Service for customer analytics and segmentation
  */
 export class CustomerAnalyticsService {
+  constructor(private prisma: PrismaClient) {}
+
   /**
    * Get new customer count for a specific period
    */
   async getNewCustomerCountForPeriod(start: Date, end: Date): Promise<number> {
-    return prisma.customer.count({
-      where: {
-        createdAt: { gte: start, lte: end }
-      }
-    });
+    try {
+      return await this.prisma.customer.count({
+        where: {
+          createdAt: { gte: start, lte: end }
+        }
+      });
+    } catch (error) {
+      console.error('Error getting new customer count:', error);
+      return 0; // Return 0 as fallback
+    }
   }
 
   /**
    * Get returning customer count for a specific period
    */
   async getReturningCustomerCountForPeriod(start: Date, end: Date): Promise<number> {
-    // Customers who had appointments in this period but were created before
-    const appointments = await prisma.appointment.findMany({
-      where: {
-        startTime: { gte: start, lte: end },
-        customerId: { not: null }
-      },
-      include: { customer: true }
-    });
+    try {
+      // Customers who had appointments in this period but were created before
+      const appointments = await this.prisma.appointment.findMany({
+        where: {
+          startTime: { gte: start, lte: end },
+          customerId: { not: null }
+        },
+        include: { customer: true }
+      });
 
-    const returningCustomers = appointments.filter(apt => 
-      apt.customer && apt.customer.createdAt < start
-    );
+      const returningCustomers = appointments.filter(apt => 
+        apt.customer && apt.customer.createdAt < start
+      );
 
-    return new Set(returningCustomers.map(apt => apt.customerId)).size;
+      return new Set(returningCustomers.map(apt => apt.customerId)).size;
+    } catch (error) {
+      console.error('Error getting returning customer count:', error);
+      return 0; // Return 0 as fallback
+    }
   }
 
   /**
@@ -78,16 +90,9 @@ export class CustomerAnalyticsService {
     thisWeek: DateRange,
     thisMonth: DateRange
   ): Promise<CustomerMetrics> {
-    const [
-      totalCustomers,
-      newToday,
-      newThisWeek,
-      newThisMonth,
-      segments,
-      returningMetrics,
-      lifetimeMetrics
-    ] = await Promise.all([
-      prisma.customer.count(),
+    // Use Promise.allSettled to handle individual failures
+    const results = await Promise.allSettled([
+      this.prisma.customer.count().catch(() => 0),
       this.getNewCustomerCountForPeriod(today.start, today.end),
       this.getNewCustomerCountForPeriod(thisWeek.start, thisWeek.end),
       this.getNewCustomerCountForPeriod(thisMonth.start, thisMonth.end),
@@ -95,6 +100,15 @@ export class CustomerAnalyticsService {
       this.getReturningCustomerMetrics(),
       this.getCustomerLifetimeMetrics()
     ]);
+
+    // Extract values with fallbacks
+    const totalCustomers = results[0].status === 'fulfilled' ? results[0].value : 0;
+    const newToday = results[1].status === 'fulfilled' ? results[1].value : 0;
+    const newThisWeek = results[2].status === 'fulfilled' ? results[2].value : 0;
+    const newThisMonth = results[3].status === 'fulfilled' ? results[3].value : 0;
+    const segments = results[4].status === 'fulfilled' ? results[4].value : [];
+    const returningMetrics = results[5].status === 'fulfilled' ? results[5].value : { rate: 0, avgTimeBetweenVisits: 0 };
+    const lifetimeMetrics = results[6].status === 'fulfilled' ? results[6].value : { averageValue: 0, topSpender: { name: "N/A", value: 0 } };
 
     return {
       total: totalCustomers,
@@ -117,14 +131,20 @@ export class CustomerAnalyticsService {
    * Get customer segments
    */
   async getCustomerSegments(): Promise<CustomerSegment[]> {
-    const customers = await prisma.customer.findMany({
-      include: {
-        payments: {
-          where: { status: 'completed' }
-        },
-        appointments: true
-      }
-    });
+    let customers;
+    try {
+      customers = await this.prisma.customer.findMany({
+        include: {
+          payments: {
+            where: { status: 'completed' }
+          },
+          appointments: true
+        }
+      });
+    } catch (error) {
+      console.error('Error getting customer segments:', error);
+      return []; // Return empty array as fallback
+    }
 
     const segments: CustomerSegment[] = [];
 
@@ -185,34 +205,51 @@ export class CustomerAnalyticsService {
    * Get returning customer metrics
    */
   private async getReturningCustomerMetrics(): Promise<ReturningCustomerMetrics> {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    
-    const totalCustomers = await this.getNewCustomerCountForPeriod(thirtyDaysAgo, now);
-    const returningCustomers = await this.getReturningCustomerCountForPeriod(thirtyDaysAgo, now);
-    
-    const rate = totalCustomers > 0 ? (returningCustomers / totalCustomers) * 100 : 0;
-    
-    // Simplified calculation - would need more complex logic to track actual visit intervals
-    const avgTimeBetweenVisits = 45; // days
-    
-    return {
-      rate,
-      avgTimeBetweenVisits
-    };
+    try {
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      
+      const totalCustomers = await this.getNewCustomerCountForPeriod(thirtyDaysAgo, now);
+      const returningCustomers = await this.getReturningCustomerCountForPeriod(thirtyDaysAgo, now);
+      
+      const rate = totalCustomers > 0 ? (returningCustomers / totalCustomers) * 100 : 0;
+      
+      // Simplified calculation - would need more complex logic to track actual visit intervals
+      const avgTimeBetweenVisits = 45; // days
+      
+      return {
+        rate,
+        avgTimeBetweenVisits
+      };
+    } catch (error) {
+      console.error('Error getting returning customer metrics:', error);
+      return {
+        rate: 0,
+        avgTimeBetweenVisits: 0
+      };
+    }
   }
 
   /**
    * Get customer lifetime value metrics
    */
   private async getCustomerLifetimeMetrics(): Promise<CustomerLifetimeMetrics> {
-    const customersWithPayments = await prisma.customer.findMany({
-      include: {
-        payments: {
-          where: { status: 'completed' }
+    let customersWithPayments;
+    try {
+      customersWithPayments = await this.prisma.customer.findMany({
+        include: {
+          payments: {
+            where: { status: 'completed' }
+          }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Error getting customer lifetime metrics:', error);
+      return {
+        averageValue: 0,
+        topSpender: { name: "N/A", value: 0 }
+      };
+    }
 
     const customerValues = customersWithPayments
       .map(c => c.payments.reduce((sum, p) => sum + p.amount, 0))

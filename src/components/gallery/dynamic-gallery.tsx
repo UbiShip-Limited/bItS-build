@@ -7,26 +7,27 @@
 
 import { useState, useRef, useEffect } from "react"
 import Image from "next/image"
-import { motion, AnimatePresence } from "framer-motion"
-import { X, ZoomIn, Loader2, RefreshCw, Eye } from "lucide-react"
+import { motion } from "framer-motion"
+import { ZoomIn, Loader2, RefreshCw } from "lucide-react"
 import { GalleryService, GalleryImage } from "@/src/lib/api/services/galleryService"
 import { apiClient } from "@/src/lib/api/apiClient"
+import { Button } from "@/src/components/ui/button"
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants'
+import { Lightbox } from '@/src/components/ui/Lightbox'
+import { GAEvents } from '@/src/lib/analytics/ga-events'
 
 const galleryService = new GalleryService(apiClient);
 
-// Enhanced loading strategy - Load more images for better showcase
-const INITIAL_LOAD = 18;  // Load immediately - increased for better first impression
-const LOAD_MORE_COUNT = 12; // Load when user clicks "Load More" - bigger batches
+// Load all images at once
+const INITIAL_LOAD = 1000;  // Load all images immediately
 
 export function DynamicGallery() {
   // Simplified state
   const [galleryItems, setGalleryItems] = useState<GalleryImage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedItem, setSelectedItem] = useState<GalleryImage | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number>(-1);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const [canLoadMore, setCanLoadMore] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
   
   // Mobile state
@@ -78,11 +79,6 @@ export function DynamicGallery() {
       const initialImages = await galleryService.getInitialGalleryImages(INITIAL_LOAD);
       setGalleryItems(initialImages);
       
-      // Check if we can load more
-      if (initialImages.length < INITIAL_LOAD) {
-        setCanLoadMore(false);
-      }
-      
     } catch (err) {
       console.error('Failed to load gallery images:', err);
       setError('Failed to load gallery images. Please try again.');
@@ -91,76 +87,43 @@ export function DynamicGallery() {
     }
   };
 
-  const loadMoreImages = async () => {
-    if (loadingMore || !canLoadMore) return;
-    
-    try {
-      setLoadingMore(true);
-      
-      const moreImages = await galleryService.getMoreGalleryImages(
-        galleryItems.length,
-        LOAD_MORE_COUNT
-      );
-      
-      // Filter out duplicates
-      const newImages = moreImages.filter(newImg => 
-        !galleryItems.some(existingImg => existingImg.id === newImg.id)
-      );
-      
-      if (newImages.length === 0) {
-        setCanLoadMore(false);
-      } else {
-        setGalleryItems(prev => [...prev, ...newImages]);
-        
-        // Check if we got fewer images than requested
-        if (newImages.length < LOAD_MORE_COUNT) {
-          setCanLoadMore(false);
-        }
-      }
-      
-    } catch (err) {
-      console.error('Failed to load more images:', err);
-      setError('Failed to load more images. Please try again.');
-    } finally {
-      setLoadingMore(false);
+
+  // Handle lightbox navigation
+  const handleLightboxNavigate = (index: number) => {
+    setSelectedIndex(index);
+    if (galleryItems[index]) {
+      GAEvents.galleryImageViewed(galleryItems[index].publicId || `image_${index}`);
     }
   };
-
-  // Handle escape key for modal
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setSelectedItem(null);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  
+  const handleLightboxClose = () => {
+    setSelectedIndex(-1);
+  };
 
   // Error state
   if (error && !loading && galleryItems.length === 0) {
     return (
       <div className="bg-obsidian py-20 px-6 sm:px-8 md:px-12 lg:px-20">
         <div className="container mx-auto text-center">
-          <h2 className="font-heading text-4xl md:text-5xl font-bold text-white mb-6 tracking-wide uppercase">
+          <h2 className="font-heading text-4xl md:text-5xl font-bold text-white mb-6 tracking-wide">
             Artist Gallery
           </h2>
           <div className="text-red-400 mb-6">{error}</div>
-          <button
+          <Button
             onClick={loadInitialImages}
-            className="inline-flex items-center gap-2 bg-gold text-obsidian px-6 py-3 hover:bg-gold/90 transition-all duration-300 font-body uppercase tracking-wider text-sm"
+            variant="primary"
+            size="md"
           >
-            <RefreshCw size={20} />
+            <RefreshCw size={20} className="mr-2" />
             Try Again
-          </button>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div ref={galleryRef} className="bg-obsidian py-16 md:py-24 px-6 sm:px-8 md:px-12 lg:px-20">
+    <div ref={galleryRef} className="bg-obsidian py-20 md:py-32 px-6 sm:px-8 md:px-12 lg:px-20">
       <div className="container mx-auto">
         {/* Gallery Header */}
         <motion.div 
@@ -170,36 +133,27 @@ export function DynamicGallery() {
           transition={{ duration: 0.6 }}
         >
           <div className="inline-block relative mb-6">
-            <div className="absolute -top-3 -left-3 h-4 w-4 border-t border-l border-gold/50"></div>
-            <div className="absolute -top-3 -right-3 h-4 w-4 border-t border-r border-gold/50"></div>
-            <div className="absolute -bottom-3 -left-3 h-4 w-4 border-b border-l border-gold/50"></div>
-            <div className="absolute -bottom-3 -right-3 h-4 w-4 border-b border-r border-gold/50"></div>
-            <h2 className={`font-heading ${isMobile ? 'text-3xl' : 'text-4xl md:text-5xl lg:text-6xl'} font-medium text-white px-6 md:px-8 tracking-wide uppercase`}>
-              Artist Gallery
+            <div className="absolute -top-3 -left-3 h-4 w-4 border-t border-l border-gold-500/50"></div>
+            <div className="absolute -top-3 -right-3 h-4 w-4 border-t border-r border-gold-500/50"></div>
+            <div className="absolute -bottom-3 -left-3 h-4 w-4 border-b border-l border-gold-500/50"></div>
+            <div className="absolute -bottom-3 -right-3 h-4 w-4 border-b border-r border-gold-500/50"></div>
+            <h2 className={`font-heading ${isMobile ? 'text-3xl' : 'text-4xl md:text-5xl lg:text-6xl'} font-medium text-white px-6 md:px-8 tracking-wide`}>
+              The Gallery
             </h2>
           </div>
-          <div className="h-px w-32 md:w-40 mx-auto bg-gradient-to-r from-gold to-gold/0 mb-2"></div>
-          <div className="h-px w-32 md:w-40 mx-auto bg-gradient-to-l from-gold to-gold/0 mb-6 md:mb-8"></div>
+          <div className="h-px w-32 md:w-40 mx-auto bg-gradient-to-r from-gold-500 to-gold-500/0 mb-2"></div>
+          <div className="h-px w-32 md:w-40 mx-auto bg-gradient-to-l from-gold-500 to-gold-500/0 mb-6 md:mb-8"></div>
           <p className={`text-white/80 max-w-2xl mx-auto font-body ${isMobile ? 'text-base px-4' : 'text-lg'} mb-6 leading-relaxed`}>
-            Discover our curated collection of tattoo artistry. Each piece represents our commitment 
+            Explore our collection of tattoos we hope it inspires you. We make sure each piece represents our commitment 
             to quality, creativity, and personal expression.
           </p>
           
-          {/* Simple image counter */}
-          {!loading && galleryItems.length > 0 && (
-            <div className="inline-flex items-center gap-2 text-gold/80">
-              <Eye size={16} />
-              <span className={`font-body ${isMobile ? 'text-xs' : 'text-sm'} tracking-wide`}>
-                {galleryItems.length} {galleryItems.length === 1 ? 'image' : 'images'} loaded
-              </span>
-            </div>
-          )}
         </motion.div>
 
         {/* Loading State */}
         {loading && (
           <div className="flex flex-col justify-center items-center py-16 md:py-24">
-            <Loader2 className="animate-spin text-gold mb-6" size={isMobile ? 36 : 48} />
+            <Loader2 className="animate-spin text-gold-500 mb-6" size={isMobile ? 36 : 48} />
             <p className={`text-white/60 font-body ${isMobile ? 'text-sm' : 'text-base'} tracking-wide`}>Loading gallery...</p>
           </div>
         )}
@@ -208,7 +162,7 @@ export function DynamicGallery() {
         {!loading && galleryItems.length > 0 && (
           <motion.div 
             className={isMobile 
-              ? 'grid grid-cols-1 gap-4' 
+              ? 'grid grid-cols-2 gap-3' 
               : 'columns-1 sm:columns-2 lg:columns-3 gap-4 md:gap-6 space-y-4 md:space-y-6'
             }
             initial={{ opacity: 0 }}
@@ -224,14 +178,18 @@ export function DynamicGallery() {
                 transition={{ duration: 0.4, delay: Math.min(index * 0.05, 1) }}
                 onMouseEnter={() => !isMobile && setHoveredItem(item.id)}
                 onMouseLeave={() => !isMobile && setHoveredItem(null)}
-                onClick={() => setSelectedItem(item)}
+                onClick={() => {
+                  setSelectedIndex(index);
+                  GAEvents.galleryLightboxOpened();
+                  GAEvents.galleryImageViewed(item.publicId || `image_${index}`);
+                }}
                 style={{
                   height: isMobile 
-                    ? '280px' 
+                    ? '200px' 
                     : `${Math.max(200, Math.min(400, item.height * 0.3))}px`,
                 }}
               >
-                <div className="relative w-full h-full group cursor-pointer border border-gold/0 hover:border-gold/40 transition-all duration-300 overflow-hidden">
+                <div className="relative w-full h-full group cursor-pointer border border-gold-500/0 hover:border-gold-500/40 transition-all duration-300 overflow-hidden">
                   <Image
                     src={item.thumbnailUrl || item.url}
                     alt={item.alt}
@@ -244,29 +202,35 @@ export function DynamicGallery() {
                   {/* Simplified overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian/80 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
 
-                  {/* Corner accents */}
-                  <div className={`absolute -top-1 -left-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-t border-l border-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
-                  <div className={`absolute -top-1 -right-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-t border-r border-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
-                  <div className={`absolute -bottom-1 -left-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-b border-l border-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
-                  <div className={`absolute -bottom-1 -right-1 ${isMobile ? 'h-4 w-4' : 'h-6 w-6'} border-b border-r border-gold opacity-0 group-hover:opacity-100 transition-opacity duration-300`}></div>
+                  {/* Corner accents - simplified for mobile */}
+                  {!isMobile && (
+                    <>
+                      <div className="absolute -top-1 -left-1 h-6 w-6 border-t border-l border-gold-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="absolute -top-1 -right-1 h-6 w-6 border-t border-r border-gold-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="absolute -bottom-1 -left-1 h-6 w-6 border-b border-l border-gold-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="absolute -bottom-1 -right-1 h-6 w-6 border-b border-r border-gold-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </>
+                  )}
 
-                  {/* Info overlay */}
-                  <div className={`absolute bottom-0 left-0 right-0 p-3 md:p-4 transition-transform duration-300 ${
-                    isMobile || hoveredItem === item.id ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+                  {/* Info overlay - always visible on mobile */}
+                  <div className={`absolute bottom-0 left-0 right-0 ${isMobile ? 'p-2' : 'p-3 md:p-4'} transition-transform duration-300 ${
+                    isMobile ? "translate-y-0 opacity-100" : hoveredItem === item.id ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
                   }`}>
-                    <h3 className={`text-white font-medium mb-1 ${isMobile ? 'text-sm' : 'text-base'}`}>
+                    <h3 className={`text-white font-medium ${isMobile ? 'text-xs line-clamp-1' : 'text-base mb-1'}`}>
                       {item.alt === item.publicId ? 'Tattoo Artwork' : item.alt}
                     </h3>
-                    <p className={`text-white/80 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                      {item.artist}
-                    </p>
+                    {!isMobile && (
+                      <p className="text-white/80 text-sm">
+                        {item.artist}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Zoom icon */}
-                  <div className={`absolute ${isMobile ? 'top-3 right-3' : 'top-4 right-4'} bg-gold ${isMobile ? 'p-1.5' : 'p-2'} rounded-full transition-opacity duration-300 shadow-subtle ${
-                    isMobile || hoveredItem === item.id ? "opacity-100" : "opacity-0"
+                  {/* Zoom icon - always visible on mobile */}
+                  <div className={`absolute ${isMobile ? 'top-2 right-2' : 'top-4 right-4'} bg-gold-500 ${isMobile ? 'p-1' : 'p-2'} rounded-full transition-opacity duration-300 shadow-subtle ${
+                    isMobile ? "opacity-90" : hoveredItem === item.id ? "opacity-100" : "opacity-0"
                   }`}>
-                    <ZoomIn size={isMobile ? 14 : 16} className="text-obsidian" />
+                    <ZoomIn size={isMobile ? 12 : 16} className="text-obsidian" />
                   </div>
                 </div>
               </motion.div>
@@ -274,51 +238,6 @@ export function DynamicGallery() {
           </motion.div>
         )}
 
-        {/* Simplified Load More Button */}
-        {!loading && galleryItems.length > 0 && canLoadMore && (
-          <div className="text-center mt-12 md:mt-16 px-4">
-            <motion.button
-              onClick={loadMoreImages}
-              disabled={loadingMore}
-              className={`group inline-flex items-center gap-3 bg-gold text-obsidian ${
-                isMobile ? 'px-6 py-3 text-sm' : 'px-8 py-4'
-              } hover:bg-gold/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-body font-medium uppercase tracking-wider w-full sm:w-auto justify-center shadow-subtle hover:shadow-elegant`}
-              whileHover={{ scale: isMobile ? 1 : 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
-              {loadingMore ? (
-                <>
-                  <Loader2 className="animate-spin" size={20} />
-                  <span className={isMobile ? 'text-sm' : 'text-base'}>Loading More...</span>
-                </>
-              ) : (
-                <>
-                  <Eye size={20} />
-                  <span className={isMobile ? 'text-sm' : 'text-base'}>Load More Images</span>
-                </>
-              )}
-            </motion.button>
-          </div>
-        )}
-
-        {/* Error for loading more */}
-        {error && galleryItems.length > 0 && (
-          <div className="text-center mt-6 md:mt-8 px-4">
-            <div className={`text-red-400 mb-4 ${isMobile ? 'text-sm' : 'text-base'}`}>{error}</div>
-            <button
-              onClick={loadMoreImages}
-              className={`inline-flex items-center gap-2 bg-[#C9A449] text-[#080808] ${
-                isMobile ? 'px-4 py-2 text-sm' : 'px-6 py-3'
-              } rounded-lg hover:bg-[#C9A449]/80 transition-colors w-full sm:w-auto justify-center`}
-            >
-              <RefreshCw size={20} />
-              Try Again
-            </button>
-          </div>
-        )}
 
         {/* Empty State */}
         {!loading && galleryItems.length === 0 && (
@@ -328,62 +247,14 @@ export function DynamicGallery() {
         )}
       </div>
 
-      {/* Simplified Modal */}
-      <AnimatePresence>
-        {selectedItem && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-2 md:p-4 bg-[#080808]/95 backdrop-blur-sm"
-            onClick={() => setSelectedItem(null)}
-          >
-            <motion.div
-              className={`relative ${
-                isMobile 
-                  ? 'w-full h-full max-h-[90vh]' 
-                  : 'max-w-4xl max-h-[90vh] w-full'
-              } overflow-hidden rounded-lg bg-[#080808] border border-[#C9A449]/20`}
-              onClick={(e) => e.stopPropagation()}
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-            >
-              <div className={`relative aspect-auto w-full h-full ${isMobile ? 'max-h-[85vh]' : 'max-h-[80vh]'}`}>
-                <Image
-                  src={selectedItem.largeUrl || selectedItem.url}
-                  alt={selectedItem.alt}
-                  fill
-                  className="object-contain"
-                  sizes={isMobile ? "100vw" : "(max-width: 768px) 100vw, 80vw"}
-                  priority
-                />
-              </div>
-
-              {/* Close button */}
-              <button
-                onClick={() => setSelectedItem(null)}
-                className={`absolute ${isMobile ? 'top-2 right-2' : 'top-4 right-4'} bg-[#C9A449] ${
-                  isMobile ? 'p-1.5' : 'p-2'
-                } rounded-full hover:bg-[#C9A449]/80 transition-colors z-10`}
-              >
-                <X size={isMobile ? 18 : 20} className="text-[#080808]" />
-              </button>
-
-              {/* Info panel */}
-              <div className={`absolute bottom-0 left-0 right-0 ${isMobile ? 'p-4' : 'p-6'} bg-gradient-to-t from-[#080808] to-transparent`}>
-                <div className="h-[1px] w-full bg-gradient-to-r from-[#C9A449]/0 via-[#C9A449] to-[#C9A449]/0 mb-3 md:mb-4"></div>
-                <h3 className={`text-white ${isMobile ? 'text-lg' : 'text-xl'} font-medium mb-1`}>
-                  {selectedItem.alt === selectedItem.publicId ? 'Tattoo Artwork' : selectedItem.alt}
-                </h3>
-                <p className={`text-white/80 ${isMobile ? 'text-sm' : 'text-base'}`}>
-                  Artist: {selectedItem.artist}
-                </p>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Lightbox for viewing images */}
+      <Lightbox
+        images={galleryItems}
+        currentIndex={selectedIndex}
+        isOpen={selectedIndex >= 0}
+        onClose={handleLightboxClose}
+        onNavigate={handleLightboxNavigate}
+      />
     </div>
   )
 }

@@ -1,5 +1,8 @@
 import { prisma } from '../prisma/prisma';
-import type { Customer, Appointment } from '@prisma/client';
+import type { Customer, Appointment, TattooRequest } from '@prisma/client';
+import { emailTemplateService } from './emailTemplateService';
+import { auditService } from './auditService';
+import { RealtimeService } from './realtimeService';
 
 export interface EmailMessage {
   to: string;
@@ -34,10 +37,12 @@ export interface CommunicationPreferences {
  * custom communications beyond Square's capabilities.
  */
 export class CommunicationService {
-  private emailService: any; // To be implemented with SendGrid/AWS SES
-  private smsService: any; // To be implemented with Twilio/AWS SNS
+  private realtimeService: RealtimeService;
+  private emailService: any; // Optional email service
+  private smsService: any; // Optional SMS service
   
-  constructor(emailService?: any, smsService?: any) {
+  constructor(realtimeService: RealtimeService, emailService?: any, smsService?: any) {
+    this.realtimeService = realtimeService;
     this.emailService = emailService;
     this.smsService = smsService;
   }
@@ -46,17 +51,17 @@ export class CommunicationService {
    * Send appointment confirmation (custom, in addition to Square's automatic ones)
    */
   async sendAppointmentConfirmation(
-    appointment: Appointment & { customer?: Customer | null },
-    includeSquareNote = true
-  ): Promise<{ email?: NotificationResult; sms?: NotificationResult }> {
-    const results: { email?: NotificationResult; sms?: NotificationResult } = {};
-    
+    appointment: Appointment & { customer?: Customer | null, artist?: { email: string } | null }
+  ): Promise<NotificationResult> {
     if (!appointment.customer && !appointment.contactEmail) {
-      return { email: { success: false, error: 'No contact information available' } };
+      return { success: false, error: 'No contact information available' };
     }
     
     const email = appointment.customer?.email || appointment.contactEmail;
-    const phone = appointment.customer?.phone || appointment.contactPhone;
+    if (!email) {
+      return { success: false, error: 'No email address available' };
+    }
+    
     const customerName = appointment.customer?.name || 'Valued Customer';
     
     // Format appointment details
@@ -74,80 +79,53 @@ export class CommunicationService {
         minute: '2-digit' 
       }) : 'TBD';
     
-    // Send email if available
-    if (email && this.emailService) {
-      const subject = 'Appointment Confirmation - Bowen Island Tattoo Shop';
-      const squareNote = includeSquareNote ? 
-        '\n\nYou will also receive automated reminders from Square before your appointment.' : '';
+    try {
+      const result = await emailTemplateService.sendEmail(
+        'appointment_confirmation',
+        email,
+        {
+          customerName,
+          appointmentDate,
+          appointmentTime,
+          duration: `${appointment.duration || 60} minutes`,
+          artistName: appointment.artist?.email || 'Our team',
+          appointmentType: appointment.type || 'Tattoo Session'
+        }
+      );
       
-      const body = `
-Dear ${customerName},
-
-Your appointment at Bowen Island Tattoo Shop has been confirmed!
-
-Appointment Details:
-- Date: ${appointmentDate}
-- Time: ${appointmentTime}
-- Duration: ${appointment.duration || 60} minutes
-- Type: ${appointment.type || 'Tattoo Session'}
-${appointment.notes ? `- Notes: ${appointment.notes}` : ''}
-
-Location:
-Bowen Island Tattoo Shop
-[Your Address Here]
-
-Please arrive 10 minutes early to complete any necessary paperwork.
-
-If you need to reschedule or cancel, please contact us at least 24 hours in advance.${squareNote}
-
-We look forward to seeing you!
-
-Best regards,
-Bowen Island Tattoo Shop Team
-`;
-
-      try {
-        const emailResult = await this.emailService.sendEmail({
+      // Send real-time notification
+      if (result.success) {
+        await this.realtimeService.sendNotification({
+          type: 'email_sent',
+          title: 'Appointment Confirmation Sent',
+          message: `Confirmation email sent to ${customerName}`,
+          severity: 'info',
+          metadata: {
+            appointmentId: appointment.id,
+            customerId: appointment.customerId
+          }
+        });
+      }
+      
+      // Log communication
+      await auditService.log({
+        action: 'APPOINTMENT_CONFIRMATION_SENT',
+        resource: 'Appointment',
+        resourceId: appointment.id,
+        details: { 
           to: email,
-          subject,
-          body,
-          html: this.formatEmailHTML(subject, body)
-        });
-        results.email = emailResult;
-      } catch (error) {
-        results.email = { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'Email send failed' 
-        };
-      }
-    }
-    
-    // Send SMS if available
-    if (phone && this.smsService) {
-      const smsBody = `Hi ${customerName}! Your tattoo appointment is confirmed for ${appointmentDate} at ${appointmentTime}. Reply STOP to opt out.`;
+          success: result.success,
+          error: result.error
+        }
+      });
       
-      try {
-        const smsResult = await this.smsService.sendSMS({
-          to: phone,
-          body: smsBody
-        });
-        results.sms = smsResult;
-      } catch (error) {
-        results.sms = { 
-          success: false, 
-          error: error instanceof Error ? error.message : 'SMS send failed' 
-        };
-      }
+      return result;
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to send confirmation' 
+      };
     }
-    
-    // Log communication in audit log
-    await this.logCommunication(
-      appointment.id,
-      'appointment_confirmation',
-      results
-    );
-    
-    return results;
   }
   
   /**
@@ -240,12 +218,12 @@ Bowen Island Tattoo Shop Team
     }
     
     // Log communication
-    await this.logCommunication(
-      appointment.id,
-      'appointment_reminder',
-      results,
-      { hoursBeforeAppointment }
-    );
+    await auditService.log({
+      action: 'APPOINTMENT_REMINDER_SENT',
+      resource: 'Appointment',
+      resourceId: appointment.id,
+      details: { ...results, hoursBeforeAppointment }
+    });
     
     return results;
   }
@@ -321,11 +299,12 @@ Bowen Island Tattoo Shop Team
     }
     
     // Log communication
-    await this.logCommunication(
-      appointment.id,
-      'aftercare_instructions',
-      results
-    );
+    await auditService.log({
+      action: 'AFTERCARE_INSTRUCTIONS_SENT',
+      resource: 'Appointment',
+      resourceId: appointment.id,
+      details: results
+    });
     
     return results;
   }
@@ -370,6 +349,74 @@ Bowen Island Tattoo Shop Team
     }));
   }
   
+  /**
+   * Send tattoo request confirmation email
+   */
+  async sendTattooRequestConfirmation(
+    tattooRequest: TattooRequest & { customer?: Customer | null }
+  ): Promise<NotificationResult> {
+    const email = tattooRequest.customer?.email || tattooRequest.contactEmail;
+    if (!email) {
+      return { success: false, error: 'No email address available' };
+    }
+    
+    const customerName = tattooRequest.customer?.name || 'Valued Customer';
+    const trackingUrl = tattooRequest.trackingToken 
+      ? `${process.env.FRONTEND_URL || 'http://localhost:3000'}/track-request/${tattooRequest.trackingToken}`
+      : null;
+    
+    try {
+      const result = await emailTemplateService.sendEmail(
+        'tattoo_request_confirmation',
+        email,
+        {
+          customerName,
+          description: tattooRequest.description,
+          placement: tattooRequest.placement || 'Not specified',
+          size: tattooRequest.size || 'Not specified',
+          style: tattooRequest.style || 'Not specified',
+          preferredArtist: tattooRequest.preferredArtist || 'Any available artist',
+          trackingToken: tattooRequest.trackingToken,
+          trackingUrl
+        }
+      );
+      
+      // Send real-time notification
+      if (result.success) {
+        await this.realtimeService.sendNotification({
+          type: 'email_sent',
+          title: 'Tattoo Request Confirmation Sent',
+          message: `Confirmation email sent to ${customerName}`,
+          severity: 'info',
+          metadata: {
+            tattooRequestId: tattooRequest.id,
+            customerId: tattooRequest.customerId
+          }
+        });
+      }
+      
+      // Log communication
+      await auditService.log({
+        action: 'TATTOO_REQUEST_CONFIRMATION_SENT',
+        resource: 'TattooRequest',
+        resourceId: tattooRequest.id,
+        details: { 
+          to: email,
+          success: result.success,
+          error: result.error,
+          hasTrackingToken: !!tattooRequest.trackingToken
+        }
+      });
+      
+      return result;
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to send confirmation' 
+      };
+    }
+  }
+
   /**
    * Format plain text email to HTML
    */
@@ -417,27 +464,4 @@ Bowen Island Tattoo Shop Team
 </html>`;
   }
   
-  /**
-   * Log communication attempts in audit log
-   */
-  private async logCommunication(
-    appointmentId: string,
-    action: string,
-    results: { email?: NotificationResult; sms?: NotificationResult },
-    additionalDetails?: Record<string, any>
-  ) {
-    await prisma.auditLog.create({
-      data: {
-        action,
-        resource: 'appointment',
-        resourceId: appointmentId,
-        resourceType: 'appointment',
-        details: {
-          ...results,
-          ...additionalDetails,
-          timestamp: new Date().toISOString()
-        }
-      }
-    });
-  }
 }

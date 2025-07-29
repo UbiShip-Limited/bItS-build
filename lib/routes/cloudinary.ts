@@ -45,22 +45,39 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
         type: 'object',
         properties: {
           folder: { type: 'string', default: 'tattoo-requests' },
-          tags: { type: 'array', items: { type: 'string' } }
+          tags: { type: 'array', items: { type: 'string' } },
+          context: { type: 'object' }
         }
       }
     }
   }, async (request, reply) => {
-    const { folder = 'tattoo-requests', tags = ['tattoo-request', 'public-upload'] } = request.body as CloudinarySignatureBody;
+    const { folder = 'tattoo-requests', tags = ['tattoo-request', 'public-upload'], context } = request.body as CloudinarySignatureBody;
+    
+    // Log the signature generation request
+    console.log('📝 Generating upload signature:', { folder, tags, hasContext: !!context });
     
     // Generate a signature with folder and tags pre-defined
     // This locks the upload to only go to the specified folder
-    const params = {
+    const params: any = {
       folder,
-      tags: Array.isArray(tags) ? tags : [tags], // Ensure tags is an array
-      upload_preset: 'tattoo-requests' // Optional: if you have a preset configured
+      tags: Array.isArray(tags) ? tags : [tags] // Ensure tags is an array
     };
     
+    // Only include context if it's provided and not empty
+    if (context && Object.keys(context).length > 0) {
+      params.context = context;
+    }
+    
     const signatureData = cloudinaryService.generateUploadSignature(params);
+    
+    // Log what we're returning
+    console.log('✅ Signature generated:', {
+      hasSignature: !!signatureData.signature,
+      timestamp: signatureData.timestamp,
+      folder: signatureData.folder,
+      tags: signatureData.tags,
+      allParams: Object.keys(signatureData)
+    });
     
     reply.type('application/json');
     return signatureData;

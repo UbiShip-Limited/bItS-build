@@ -3,16 +3,20 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Filter, FileText, User, Calendar, DollarSign } from 'lucide-react';
+import { Filter, FileText, User, Calendar, DollarSign, UserPlus } from 'lucide-react';
 import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import QuickPaymentActions from '@/src/components/payments/QuickPaymentActions';
 import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHistory';
+import Modal from '@/src/components/ui/Modal';
+import CustomerForm from '@/src/components/forms/CustomerForm';
 
 export default function TattooRequestsPage() {
   const [requests, setRequests] = useState<TattooRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
+  const [selectedRequestForCustomer, setSelectedRequestForCustomer] = useState<TattooRequest | null>(null);
   
   // Filters
   const [filters, setFilters] = useState({
@@ -75,6 +79,18 @@ export default function TattooRequestsPage() {
       day: 'numeric',
       year: 'numeric'
     });
+  };
+
+  const handleCreateCustomerClick = (request: TattooRequest) => {
+    setSelectedRequestForCustomer(request);
+    setShowCreateCustomerModal(true);
+  };
+
+  const handleCustomerCreated = () => {
+    setShowCreateCustomerModal(false);
+    setSelectedRequestForCustomer(null);
+    // Refresh the requests to show the updated customer info
+    loadTattooRequests();
   };
 
   return (
@@ -217,6 +233,15 @@ export default function TattooRequestsPage() {
                         <div className="text-sm text-gray-500">
                           {request.customer?.email || request.contactEmail || 'No email'}
                         </div>
+                        {!request.customer && (request.contactEmail || request.contactPhone) && (
+                          <button
+                            onClick={() => handleCreateCustomerClick(request)}
+                            className="mt-2 inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#C9A449] hover:text-[#E5B563] bg-[#C9A449]/10 hover:bg-[#C9A449]/20 border border-[#C9A449]/30 hover:border-[#C9A449]/50 rounded-lg transition-all duration-300"
+                          >
+                            <UserPlus className="w-3 h-3" />
+                            Create Customer
+                          </button>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm font-medium text-gray-300 max-w-xs truncate">
@@ -318,6 +343,26 @@ export default function TattooRequestsPage() {
           </>
         )}
       </div>
+
+      {/* Create Customer Modal */}
+      <Modal
+        isOpen={showCreateCustomerModal}
+        onClose={() => {
+          setShowCreateCustomerModal(false);
+          setSelectedRequestForCustomer(null);
+        }}
+        title="Create Customer Profile"
+      >
+        <CustomerForm
+          tattooRequestId={selectedRequestForCustomer?.id}
+          fromTattooRequest={true}
+          onSuccess={handleCustomerCreated}
+          onCancel={() => {
+            setShowCreateCustomerModal(false);
+            setSelectedRequestForCustomer(null);
+          }}
+        />
+      </Modal>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Customer, CustomerService, CreateCustomerRequest, UpdateCustomerRequest
 import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import { Search, Link as LinkIcon } from 'lucide-react';
+import { toast } from '@/src/lib/toast';
 
 interface CustomerFormProps {
   customer?: Customer;
@@ -160,13 +161,17 @@ export default function CustomerForm({
         }
       }
 
+      toast.success(customer ? 'Customer updated successfully!' : 'Customer created successfully!');
       onSuccess();
     } catch (err: any) {
+      let errorMessage: string;
       if (err.response?.status === 409) {
-        setError('A customer with this email already exists');
+        errorMessage = 'A customer with this email already exists';
       } else {
-        setError(err.message || 'Failed to save customer');
+        errorMessage = err.message || 'Failed to save customer';
       }
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -175,38 +180,38 @@ export default function CustomerForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
 
       {/* Link with anonymous request section */}
       {!customer && !fromTattooRequest && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
           <button
             type="button"
             onClick={() => setShowLinkSection(!showLinkSection)}
-            className="flex items-center gap-2 text-blue-700 hover:text-blue-800 font-medium"
+            className="inline-flex items-center text-sm text-blue-400 hover:text-blue-300 transition-colors"
           >
-            <LinkIcon className="w-4 h-4" />
+            <LinkIcon className="w-4 h-4 mr-2" />
             Link with Anonymous Tattoo Request
           </button>
           
           {showLinkSection && (
             <div className="mt-4">
               {searchingRequests ? (
-                <p className="text-sm text-gray-600">Loading anonymous requests...</p>
+                <p className="text-sm text-gray-400">Loading anonymous requests...</p>
               ) : anonymousRequests.length === 0 ? (
-                <p className="text-sm text-gray-600">No anonymous tattoo requests found</p>
+                <p className="text-sm text-gray-400">No anonymous tattoo requests found</p>
               ) : (
                 <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-300">
                     Select a tattoo request to link:
                   </label>
                   <select
                     value={selectedRequestId}
                     onChange={(e) => handleLinkRequest(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg focus:border-[#C9A449]/50 focus:outline-none focus:ring-1 focus:ring-[#C9A449]/20 text-white"
                   >
                     <option value="">-- Select a request --</option>
                     {anonymousRequests.map((request) => (
@@ -223,29 +228,29 @@ export default function CustomerForm({
       )}
 
       {fromTattooRequest && tattooRequestId && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-sm text-green-700">
+        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+          <p className="text-sm text-green-400">
             Creating customer from tattoo request. The request will be automatically linked.
           </p>
         </div>
       )}
 
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-          Name <span className="text-red-500">*</span>
+        <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-1">
+          Name <span className="text-red-400">*</span>
         </label>
         <input
           type="text"
           id="name"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg focus:border-[#C9A449]/50 focus:outline-none focus:ring-1 focus:ring-[#C9A449]/20 text-white"
           required
         />
       </div>
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
           Email
         </label>
         <input
@@ -253,12 +258,12 @@ export default function CustomerForm({
           id="email"
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg focus:border-[#C9A449]/50 focus:outline-none focus:ring-1 focus:ring-[#C9A449]/20 text-white"
         />
       </div>
 
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="phone" className="block text-sm font-medium text-gray-300 mb-1">
           Phone
         </label>
         <input
@@ -266,12 +271,12 @@ export default function CustomerForm({
           id="phone"
           value={formData.phone}
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg focus:border-[#C9A449]/50 focus:outline-none focus:ring-1 focus:ring-[#C9A449]/20 text-white"
         />
       </div>
 
       <div>
-        <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="notes" className="block text-sm font-medium text-gray-300 mb-1">
           Notes
         </label>
         <textarea
@@ -279,7 +284,7 @@ export default function CustomerForm({
           value={formData.notes}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           rows={4}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg focus:border-[#C9A449]/50 focus:outline-none focus:ring-1 focus:ring-[#C9A449]/20 text-white"
         />
       </div>
 
@@ -287,15 +292,15 @@ export default function CustomerForm({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
           disabled={loading}
+          className="px-4 py-2 border border-[#1a1a1a] bg-[#111111] text-gray-400 rounded-lg hover:bg-[#1a1a1a] hover:text-white font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
           disabled={loading}
+          className="px-4 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? 'Saving...' : customer ? 'Update Customer' : 'Create Customer'}
         </button>

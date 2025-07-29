@@ -1,57 +1,96 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import ClientLayout from "./ClientLayout";
+import { StructuredData } from "../components/StructuredData";
+import GoogleAnalytics from "@/src/components/analytics/GoogleAnalytics";
 
 export const metadata: Metadata = {
-  title: "Bowen Island Tattoo",
-  description: "Victorian Gothic meets Modern Minimalism - A private tattoo studio on Bowen Island",
-  keywords: ["tattoo", "Bowen Island", "custom tattoo", "tattoo artist", "Vancouver", "gothic tattoo", "minimalist tattoo"],
-  authors: [{ name: "Bowen Island Tattoo" }],
-  creator: "Bowen Island Tattoo",
-  publisher: "Bowen Island Tattoo",
+  title: {
+    default: "Bowen Island Tattoo - Premium Custom Tattoos Near Vancouver | Kelly Miller",
+    template: "%s | Bowen Island Tattoo"
+  },
+  description: "Premium custom tattoo studio on Bowen Island near Vancouver, BC. Master artist Kelly Miller specializes in Victorian Gothic, wildlife realism & custom designs. Private studio by appointment only.",
+  keywords: [
+    // Primary keywords
+    "tattoo", "Bowen Island", "custom tattoo", "tattoo artist", "Vancouver", 
+    // Local SEO keywords
+    "Vancouver tattoo", "BC tattoo artist", "Bowen Island tattoo studio", "West Vancouver tattoo",
+    "North Shore tattoo", "private tattoo studio", "appointment only tattoo",
+    // Style keywords
+    "gothic tattoo", "minimalist tattoo", "wildlife tattoo", "realism tattoo", "custom design tattoo",
+    "Victorian gothic tattoo", "geometric tattoo", "watercolor tattoo",
+    // Artist keywords  
+    "Kelly Miller tattoo", "master tattoo artist", "premium tattoo studio", "boutique tattoo",
+    // Experience keywords
+    "private tattoo session", "luxury tattoo experience", "island tattoo studio"
+  ],
+  authors: [{ name: "Kelly Miller", url: "https://bowenislandtattoo.com" }],
+  creator: "Bowen Island Tattoo Studio",
+  publisher: "Bowen Island Tattoo Studio",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
   metadataBase: new URL('https://bowenislandtattoo.com'),
-  // App-like experience on mobile
+  category: "Art & Design",
+  classification: "Tattoo Studio",
+  // Enhanced app experience
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "Bowen Island Tattoo",
+    startupImage: "/images/startup-image.png"
   },
-  // Open Graph for social sharing (mobile users share a lot)
+  // Enhanced Open Graph for social sharing
   openGraph: {
     type: "website",
-    locale: "en_US",
+    locale: "en_CA", // Canadian locale
     url: "https://bowenislandtattoo.com",
-    siteName: "Bowen Island Tattoo",
-    title: "Bowen Island Tattoo - Victorian Gothic meets Modern Minimalism",
-    description: "A private tattoo studio on Bowen Island specializing in custom designs where Victorian Gothic meets Modern Minimalism.",
+    siteName: "Bowen Island Tattoo Studio",
+    title: "Bowen Island Tattoo - Premium Custom Tattoos Near Vancouver BC",
+    description: "Master artist Kelly Miller creates stunning custom tattoos in a private island studio. Victorian Gothic meets Modern Minimalism. Serving Vancouver, West Vancouver & North Shore by appointment.",
     images: [
       {
-        url: "/images/og-image.jpg", // You'll want to create this
+        url: "/images/og-bowen-tattoo-main.jpg",
         width: 1200,
         height: 630,
-        alt: "Bowen Island Tattoo Studio",
+        alt: "Bowen Island Tattoo Studio - Premium Custom Tattoos Near Vancouver",
+        type: "image/jpeg"
       },
+      {
+        url: "/images/og-bowen-tattoo-square.jpg", 
+        width: 1200,
+        height: 1200,
+        alt: "Bowen Island Tattoo Studio Logo",
+        type: "image/jpeg"
+      }
     ],
   },
-  // Twitter/X Card for mobile sharing
+  // Enhanced Twitter/X Card
   twitter: {
     card: "summary_large_image",
-    title: "Bowen Island Tattoo",
-    description: "Victorian Gothic meets Modern Minimalism - A private tattoo studio on Bowen Island",
-    images: ["/images/og-image.jpg"],
+    site: "@bowenislandtattoo", // If you have a Twitter account
+    creator: "@kellymillertattoo", // If Kelly has a Twitter
+    title: "Bowen Island Tattoo - Premium Custom Tattoos Near Vancouver",
+    description: "Master artist Kelly Miller creates stunning custom tattoos in a private island studio. Victorian Gothic meets Modern Minimalism.",
+    images: ["/images/og-bowen-tattoo-main.jpg"],
   },
   // Mobile browser configuration
   other: {
     "mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes", 
     "apple-mobile-web-app-status-bar-style": "black-translucent",
     "msapplication-TileColor": "#C9A449",
     "msapplication-config": "/browserconfig.xml",
+    "theme-color": "#C9A449",
+    // Geo tags for local SEO
+    "geo.region": "CA-BC",
+    "geo.placename": "Bowen Island",
+    "geo.position": "49.3827;-123.3639", // Approximate coordinates for Bowen Island
+    "ICBM": "49.3827, -123.3639",
+    // Additional SEO tags
+    "robots": "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
   },
 };
 
@@ -96,6 +135,12 @@ export default function RootLayout({
         
         {/* Prevent phone number detection */}
         <meta name="format-detection" content="telephone=no" />
+        
+        {/* Structured Data for SEO */}
+        <StructuredData type="homepage" />
+        
+        {/* Google Analytics */}
+        <GoogleAnalytics />
       </head>
       <body 
         className="antialiased bg-[#080808] text-white selection:bg-[#C9A449]/20 selection:text-[#C9A449]"

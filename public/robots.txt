@@ -1,0 +1,32 @@
+User-agent: *
+Allow: /
+Allow: /tattooRequest
+Allow: /images/
+Allow: /artists/
+
+# Disallow private/admin areas
+Disallow: /dashboard/
+Disallow: /auth/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /lib/
+
+# Disallow test and development files
+Disallow: /test-services.js
+Disallow: *.test.*
+
+# Allow social media crawlers
+User-agent: facebookexternalhit/*
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+# Sitemap location
+Sitemap: https://bowenislandtattoo.com/sitemap.xml
+
+# Crawl delay to be respectful
+Crawl-delay: 1 

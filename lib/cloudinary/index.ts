@@ -184,14 +184,34 @@ export const validateUploadResult = async (
 export const generateUploadSignature = (
   params: CloudinaryUploadParams = {},
   timestamp: number = Math.round(new Date().getTime() / 1000)
-): { signature: string; timestamp: number; apiKey: string; cloudName: string; folder?: string } => {
-  // Add timestamp to params if not provided
-  const paramsToSign = { ...params, timestamp };
+): { signature: string; timestamp: number; apiKey: string; cloudName: string; folder?: string; tags?: string[]; context?: Record<string, string>; [key: string]: any } => {
+  // Prepare parameters for signing
+  const paramsToSign: any = { timestamp };
+  
+  // Only include non-empty parameters in signature
+  if (params.folder) paramsToSign.folder = params.folder;
+  if (params.tags && Array.isArray(params.tags) && params.tags.length > 0) {
+    paramsToSign.tags = params.tags;
+  }
+  if (params.context && Object.keys(params.context).length > 0) {
+    paramsToSign.context = params.context;
+  }
+  
+  // Include any other params
+  Object.keys(params).forEach(key => {
+    if (!['folder', 'tags', 'context'].includes(key) && params[key] !== undefined) {
+      paramsToSign[key] = params[key];
+    }
+  });
   
   // For development/testing without real credentials
   const apiSecret = process.env.CLOUDINARY_API_SECRET || 'abcdefghijklmnopqrstuvwxyz';
   const apiKey = process.env.CLOUDINARY_API_KEY || '123456789012345';
   const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'demo';
+  
+  // Log what we're signing
+  console.log('🔏 Signing params:', JSON.stringify(paramsToSign));
+  console.log('🔑 Using API Secret:', apiSecret ? `${apiSecret.substring(0, 4)}...` : 'NOT SET');
   
   // Generate signature
   const signature = cloudinary.utils.api_sign_request(
@@ -199,13 +219,22 @@ export const generateUploadSignature = (
     apiSecret
   );
   
-  return { 
+  console.log('✅ Generated signature:', signature);
+  
+  // Return signature data with exact same parameters used for signing
+  const result: any = { 
     signature, 
     timestamp,
     apiKey,
-    cloudName,
-    folder: params.folder
+    cloudName
   };
+  
+  // Include only the parameters that were actually signed
+  if (paramsToSign.folder) result.folder = paramsToSign.folder;
+  if (paramsToSign.tags) result.tags = paramsToSign.tags;
+  if (paramsToSign.context) result.context = paramsToSign.context;
+  
+  return result;
 };
 
 /**

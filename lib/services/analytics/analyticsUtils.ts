@@ -25,11 +25,23 @@ export class AnalyticsUtils {
         start.setHours(0, 0, 0, 0);
         end.setHours(23, 59, 59, 999);
         break;
+      case 'yesterday':
+        start.setDate(date.getDate() - 1);
+        start.setHours(0, 0, 0, 0);
+        end.setDate(date.getDate() - 1);
+        end.setHours(23, 59, 59, 999);
+        break;
       case 'week':
+      case 'thisWeek':
         const dayOfWeek = date.getDay();
         start.setDate(date.getDate() - dayOfWeek);
         start.setHours(0, 0, 0, 0);
         end.setDate(start.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'last7days':
+        start.setDate(date.getDate() - 7);
+        start.setHours(0, 0, 0, 0);
         end.setHours(23, 59, 59, 999);
         break;
       case 'lastWeek':
@@ -40,7 +52,13 @@ export class AnalyticsUtils {
         lastWeekEnd.setDate(lastWeekStart.getDate() + 6);
         lastWeekEnd.setHours(23, 59, 59, 999);
         return { start: lastWeekStart, end: lastWeekEnd };
+      case 'last30days':
+        start.setDate(date.getDate() - 30);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
       case 'month':
+      case 'thisMonth':
         start.setDate(1);
         start.setHours(0, 0, 0, 0);
         end.setMonth(start.getMonth() + 1);
@@ -57,12 +75,25 @@ export class AnalyticsUtils {
         lastMonthEnd.setDate(0);
         lastMonthEnd.setHours(23, 59, 59, 999);
         return { start: lastMonthStart, end: lastMonthEnd };
+      case 'thisYear':
+        start.setMonth(0);
+        start.setDate(1);
+        start.setHours(0, 0, 0, 0);
+        end.setMonth(11);
+        end.setDate(31);
+        end.setHours(23, 59, 59, 999);
+        break;
       case 'quarter':
         const quarterStart = new Date(date);
         quarterStart.setMonth(date.getMonth() - 3);
         quarterStart.setDate(1);
         quarterStart.setHours(0, 0, 0, 0);
         return { start: quarterStart, end: date };
+      default:
+        // Default to today if unknown period
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        break;
     }
 
     return { start, end };

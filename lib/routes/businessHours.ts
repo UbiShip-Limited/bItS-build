@@ -22,7 +22,8 @@ const specialHoursSchema = z.object({
 });
 
 const businessHoursRoutes: FastifyPluginAsync = async (fastify) => {
-  const { prisma, auditService, availabilityService } = fastify.services;
+  const { auditService, availabilityService } = fastify.services;
+  const { prisma } = fastify;
 
   // GET /business-hours - Get all business hours
   fastify.get('/', {
@@ -41,6 +42,15 @@ const businessHoursRoutes: FastifyPluginAsync = async (fastify) => {
     }
   }, async (request, reply) => {
     try {
+      // Check if prisma is available
+      if (!prisma) {
+        fastify.log.error('Prisma client not available');
+        return reply.status(500).send({
+          success: false,
+          error: 'Database connection not available'
+        });
+      }
+
       // Try to get from database first
       let businessHours = await prisma.businessHours.findMany({
         orderBy: { dayOfWeek: 'asc' }
@@ -67,14 +77,16 @@ const businessHoursRoutes: FastifyPluginAsync = async (fastify) => {
         businessHours = await Promise.all(createPromises);
         
         // Log the initialization
-        await auditService.log({
-          action: 'business_hours_initialized',
-          resource: 'business_hours',
-          userId: 'system',
-          details: {
-            message: 'Default business hours created in database'
-          }
-        });
+        if (auditService) {
+          await auditService.log({
+            action: 'business_hours_initialized',
+            resource: 'business_hours',
+            userId: 'system',
+            details: {
+              message: 'Default business hours created in database'
+            }
+          });
+        }
       }
 
       return reply.send({
@@ -84,9 +96,18 @@ const businessHoursRoutes: FastifyPluginAsync = async (fastify) => {
       });
     } catch (error) {
       fastify.log.error('Error fetching business hours:', error);
+      
+      // More detailed error for debugging
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorDetails = process.env.NODE_ENV === 'development' ? {
+        message: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined
+      } : undefined;
+      
       return reply.status(500).send({
         success: false,
-        error: 'Failed to fetch business hours'
+        error: 'Failed to fetch business hours',
+        details: errorDetails
       });
     }
   });

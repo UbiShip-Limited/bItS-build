@@ -11,6 +11,9 @@ export interface CloudinarySignatureResponse {
   apiKey: string;
   cloudName: string;
   folder?: string;
+  tags?: string[];
+  context?: Record<string, string>;
+  [key: string]: any; // Allow additional parameters from backend
 }
 
 export class ImageUploadService {
@@ -49,6 +52,8 @@ export class ImageUploadService {
    * Get general upload signature for other purposes
    */
   private async getUploadSignature(folder: string = 'customer_uploads', tags: string[] = []): Promise<CloudinarySignatureResponse> {
+    console.log('🔐 Requesting upload signature:', { folder, tags: ['user-upload', ...tags] });
+    
     const response = await this.client.post<CloudinarySignatureResponse>(
       this.cloudinarySignatureUrl,
       { 
@@ -56,6 +61,15 @@ export class ImageUploadService {
         tags: ['user-upload', ...tags]
       }
     );
+    
+    console.log('📋 Received signature response:', {
+      hasSignature: !!response.signature,
+      timestamp: response.timestamp,
+      folder: response.folder,
+      tags: response.tags,
+      allKeys: Object.keys(response)
+    });
+    
     return response;
   }
 
@@ -69,11 +83,48 @@ export class ImageUploadService {
     formData.append('timestamp', signature.timestamp.toString());
     formData.append('api_key', signature.apiKey);
     
+    // Include folder parameter if present (required for signature validation)
     if (signature.folder) {
       formData.append('folder', signature.folder);
     }
+    
+    // Include tags if present (must match what was used in signature generation)
+    if ((signature as any).tags) {
+      const tags = (signature as any).tags;
+      if (Array.isArray(tags)) {
+        // Cloudinary expects tags as a comma-separated string
+        formData.append('tags', tags.join(','));
+      }
+    }
+    
+    // Include context if present (must be formatted as key=value|key2=value2)
+    if (signature.context && typeof signature.context === 'object') {
+      const contextString = Object.entries(signature.context)
+        .map(([k, v]) => `${k}=${v}`)
+        .join('|');
+      formData.append('context', contextString);
+    }
+    
+    // Include any other parameters that might have been used in signature generation
+    const signatureParams = signature as any;
+    const excludedParams = ['signature', 'timestamp', 'apiKey', 'cloudName', 'folder', 'tags', 'context'];
+    
+    // Add any additional parameters from the signature response
+    Object.keys(signatureParams).forEach(key => {
+      if (!excludedParams.includes(key) && signatureParams[key] !== undefined) {
+        formData.append(key, signatureParams[key].toString());
+      }
+    });
 
     const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${signature.cloudName}/image/upload`;
+    
+    console.log('🔍 Cloudinary upload request:', {
+      url: cloudinaryUrl,
+      folder: signature.folder,
+      timestamp: signature.timestamp,
+      hasSignature: !!signature.signature,
+      additionalParams: Object.keys(signatureParams).filter(k => !excludedParams.includes(k))
+    });
     
     const response = await fetch(cloudinaryUrl, {
       method: 'POST',
@@ -82,6 +133,7 @@ export class ImageUploadService {
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('❌ Cloudinary upload error:', errorData);
       throw new Error(`Cloudinary upload failed: ${errorData.error?.message || 'Unknown error'}`);
     }
 
@@ -118,21 +170,14 @@ export class ImageUploadService {
         formData.append('files', file);
       });
       
-      // Upload via backend endpoint
-      const response = await fetch(this.tattooRequestUploadUrl, {
-        method: 'POST',
-        body: formData
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Upload failed');
-      }
-      
-      const result = await response.json();
+      // Upload via backend endpoint using ApiClient for proper auth and base URL
+      const response = await this.client.uploadFile<{ images: Array<{ url: string; publicId: string; originalName: string }> }>(
+        this.tattooRequestUploadUrl,
+        formData
+      );
       
       // Transform backend response to match our interface
-      return result.images.map((img: any) => ({
+      return response.images.map((img) => ({
         url: img.url,
         publicId: img.publicId
       }));

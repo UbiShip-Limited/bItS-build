@@ -6,10 +6,10 @@ import { useDashboardData } from './hooks/useDashboardData';
 import { DashboardHeader, DashboardContent, DashboardLoading, DashboardError } from './components';
 
 // Component imports
-import StatsGrid from '@/src/components/dashboard/StatsGrid';
-import EnhancedStatsGrid from '@/src/components/dashboard/EnhancedStatsGrid';
-import WorkflowGuide from '@/src/components/dashboard/WorkflowGuide';
-import QuickAnalytics from '@/src/components/dashboard/QuickAnalytics';
+import OperationsStatsGrid from '@/src/components/dashboard/OperationsStatsGrid';
+import PriorityActionsBar from '@/src/components/dashboard/PriorityActionsBar';
+import SimplifiedActivityTimeline from '@/src/components/dashboard/SimplifiedActivityTimeline';
+import QuickActionsPanel from '@/src/components/dashboard/QuickActionsPanel';
 
 export default function DashboardPage() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
@@ -22,6 +22,8 @@ export default function DashboardPage() {
     appointments,
     customers,
     requests,
+    priorityActions,
+    recentActivity,
     loadDashboardData,
     handleRefreshMetrics
   } = useDashboardData(isAuthenticated, user);
@@ -45,38 +47,46 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Professional Container with Gold Border */}
-      <div className="max-w-7xl mx-auto relative">
-        {/* Main container with gold border */}
-        <div className="relative border border-[#C9A449]/30 rounded-2xl bg-[#0a0a0a]/90 backdrop-blur-sm p-8">
-          {/* Page Header */}
-          <DashboardHeader />
-
-          {/* Stats Grid with Professional Spacing */}
-          <div className="mb-10">
-            {actionableMetrics ? (
-              <EnhancedStatsGrid 
-                metrics={actionableMetrics} 
-                loading={dataLoading}
-                onRefresh={handleRefreshMetrics}
-              />
-            ) : (
-              <StatsGrid stats={stats} />
-            )}
+    <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        {/* Priority Actions Bar - Only show if there are actions */}
+        {priorityActions && priorityActions.length > 0 && (
+          <div className="mb-6">
+            <PriorityActionsBar actions={priorityActions} />
           </div>
+        )}
 
-          {/* Analytics and Workflow Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2">
-              <WorkflowGuide />
-            </div>
+        {/* Page Header */}
+        <DashboardHeader />
+
+        {/* Main Layout - Three sections */}
+        <div className="space-y-8">
+          {/* Section 1: Daily Operations Stats */}
+          {actionableMetrics && (
+            <OperationsStatsGrid 
+              metrics={actionableMetrics} 
+              loading={dataLoading}
+              onRefresh={handleRefreshMetrics}
+            />
+          )}
+
+          {/* Section 2: Quick Actions and Activity */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            {/* Quick Actions - Left side on desktop */}
             <div className="lg:col-span-1">
-              <QuickAnalytics />
+              <QuickActionsPanel />
+            </div>
+
+            {/* Activity Timeline - Right side on desktop, takes 2 columns */}
+            <div className="lg:col-span-2">
+              <SimplifiedActivityTimeline 
+                activities={recentActivity || []}
+                className=""
+              />
             </div>
           </div>
 
-          {/* Main Content */}
+          {/* Section 3: Data Tables */}
           <DashboardContent 
             appointments={appointments}
             requests={requests}

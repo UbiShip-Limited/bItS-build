@@ -3,6 +3,8 @@ import { NotFoundError, ValidationError } from './errors';
 import { v4 as uuidv4 } from 'uuid';
 import type { TattooRequest, Prisma } from '@prisma/client';
 import { auditService } from './auditService';
+import { CommunicationService } from './communicationService';
+import { RealtimeService } from './realtimeService';
 
 // Business status flow: new → reviewed → approved/rejected → converted_to_appointment
 export type TattooRequestStatus = 'new' | 'reviewed' | 'approved' | 'rejected' | 'converted_to_appointment';
@@ -57,8 +59,12 @@ export interface TattooRequestFilters {
  * Auditing is delegated to AuditService.
  */
 export class TattooRequestService {
-  constructor() {
-    // No-op: Dependencies are now managed in workflow services or used as singletons.
+  private communicationService?: CommunicationService;
+  private realtimeService?: RealtimeService;
+  
+  constructor(communicationService?: CommunicationService, realtimeService?: RealtimeService) {
+    this.communicationService = communicationService;
+    this.realtimeService = realtimeService;
   }
   
   /**
@@ -150,6 +156,34 @@ export class TattooRequestService {
       },
     });
     
+    // Send confirmation email
+    if (this.communicationService) {
+      try {
+        await this.communicationService.sendTattooRequestConfirmation(tattooRequest);
+      } catch (error) {
+        // Log error but don't fail the request creation
+        console.error('Failed to send tattoo request confirmation email:', error);
+        await auditService.log({
+          userId,
+          action: 'EMAIL_SEND_FAILED',
+          resource: 'TattooRequest',
+          resourceId: tattooRequest.id,
+          details: {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            type: 'tattoo_request_confirmation'
+          }
+        });
+      }
+    }
+    
+    // Send realtime notification for new request
+    if (this.realtimeService) {
+      await this.realtimeService.notifyRequestSubmitted(
+        tattooRequest.id, 
+        tattooRequest.customerId || undefined
+      );
+    }
+    
     return tattooRequest;
   }
   
@@ -207,6 +241,67 @@ export class TattooRequestService {
         newStatus: status
       },
     });
+    
+    // Send realtime notifications based on status change
+    if (this.realtimeService) {
+      const customerId = updatedRequest.customerId || undefined;
+      
+      switch (status) {
+        case 'reviewed':
+          await this.realtimeService.notifyRequestReviewed(id, customerId);
+          break;
+        case 'approved':
+          await this.realtimeService.notifyRequestApproved(id, customerId);
+          break;
+        case 'rejected':
+          await this.realtimeService.notifyRequestRejected(id, customerId);
+          break;
+      }
+    }
+    
+    return updatedRequest;
+  }
+  
+  /**
+   * Update tattoo request (general update method)
+   */
+  async update(id: string, data: { customerId?: string; notes?: string }, userId?: string): Promise<TattooRequest> {
+    const existing = await this.findById(id);
+    
+    // Validate that we're not overwriting an existing customer
+    if (data.customerId && existing.customerId && existing.customerId !== data.customerId) {
+      throw new ValidationError('Cannot reassign customer for a tattoo request that already has a customer');
+    }
+    
+    // Only allow updating specific fields
+    const updateData: any = {};
+    if (data.customerId !== undefined) updateData.customerId = data.customerId;
+    if (data.notes !== undefined) updateData.additionalNotes = data.notes;
+    
+    const updatedRequest = await prisma.tattooRequest.update({
+      where: { id },
+      data: updateData,
+      include: {
+        customer: true,
+        images: true
+      }
+    });
+    
+    // Log the update
+    await auditService.log({
+      userId,
+      action: 'UPDATE',
+      resource: 'TattooRequest',
+      resourceId: id,
+      details: {
+        updates: data
+      }
+    });
+    
+    // Notify if customer was linked
+    if (data.customerId && this.realtimeService) {
+      await this.realtimeService.notifyRequestUpdated(id, data.customerId);
+    }
     
     return updatedRequest;
   }
@@ -273,7 +368,7 @@ export class TattooRequestService {
    */
   private validateStatusTransition(currentStatus: string, newStatus: TattooRequestStatus): void {
     const validTransitions: Record<string, TattooRequestStatus[]> = {
-      'new': ['reviewed'],
+      'new': ['reviewed', 'approved', 'rejected'],
       'reviewed': ['approved', 'rejected'],
       'approved': ['converted_to_appointment'],
       'rejected': [], // Terminal state

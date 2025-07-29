@@ -7,6 +7,8 @@ import { apiClient } from '@/src/lib/api/apiClient';
 import CustomerSelector from '@/src/components/dashboard/CustomerSelector';
 import Modal from '@/src/components/ui/Modal';
 import CustomerForm from '@/src/components/forms/CustomerForm';
+import { toast } from '@/src/lib/toast';
+import { Button } from '@/src/components/ui/button';
 
 interface AppointmentFormProps {
   appointment?: any;
@@ -109,13 +111,18 @@ export default function AppointmentForm({
         }
       }
 
+      // Show success toast
+      toast.success(appointment ? 'Appointment updated successfully!' : 'Appointment created successfully!');
+      
       if (onSuccess) {
         onSuccess();
       } else {
         router.push('/dashboard/appointments');
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to save appointment');
+      const errorMessage = err.message || 'Failed to save appointment';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -306,21 +313,23 @@ export default function AppointmentForm({
 
         <div className="flex justify-end space-x-4">
           {onCancel && (
-            <button
+            <Button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              variant="secondary"
+              size="md"
             >
               Cancel
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+            isDisabled={loading}
+            variant="primary"
+            size="md"
           >
             {loading ? 'Saving...' : appointment ? 'Update Appointment' : 'Create Appointment'}
-          </button>
+          </Button>
         </div>
       </form>
 

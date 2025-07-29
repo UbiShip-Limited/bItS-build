@@ -22,6 +22,13 @@ const validateDatabaseUrl = () => {
     return false;
   }
 
+  // Debug: Show the DATABASE_URL format (safely masked)
+  console.log('🔍 DATABASE_URL format check:');
+  console.log('   Length:', dbUrl.length);
+  console.log('   Starts with:', dbUrl.substring(0, 15) + '...');
+  console.log('   Contains ://:', dbUrl.includes('://'));
+  console.log('   Contains @:', dbUrl.includes('@'));
+  
   try {
     const url = new URL(dbUrl);
     console.log('✅ DATABASE_URL validation passed');
@@ -41,6 +48,11 @@ const validateDatabaseUrl = () => {
     
     return true;
   } catch (error) {
+    console.error('❌ DATABASE_URL parsing failed!');
+    console.error('   Error:', error.message);
+    console.error('   DATABASE_URL preview:', dbUrl.substring(0, 30) + '...[MASKED]');
+    console.error('   Expected format: postgresql://user:password@host:port/database');
+    
     const errorMsg = `Invalid DATABASE_URL format: ${error.message}`;
     console.error('❌', errorMsg);
     if (isProduction) {

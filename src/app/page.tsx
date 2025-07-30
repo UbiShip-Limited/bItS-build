@@ -10,7 +10,7 @@ import { CtaSection } from "@/src/components/ui/Cta";
 
 export default function Home() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#080808]">
+    <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: 'var(--obsidian, #0A0A0A)' }}>
       <TattooHero />
       
       <SectionSpacer size="medium" dividerStyle="ornament" />

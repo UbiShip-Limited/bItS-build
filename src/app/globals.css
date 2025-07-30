@@ -45,11 +45,11 @@
   --font-body: 'Lora', serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0A0A0A;
-    --foreground: #FAFAF9;
-  }
+/* Ensure consistent dark theme - remove auto dark mode switching */
+:root {
+  /* Force dark theme variables to match our design */
+  --background: var(--obsidian);
+  --foreground: #FAFAF9;
 }
 
 /* Prevent horizontal scrolling at the root level */
@@ -62,7 +62,7 @@ html {
 }
 
 body {
-  background: var(--background);
+  background: var(--obsidian);
   color: var(--foreground);
   font-family: var(--font-body);
   overflow-x: hidden;
@@ -378,17 +378,31 @@ body {
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* Mobile Footer Optimizations - Force cache bust */
+/* Mobile Footer Optimizations - Ensure consistency */
 @media (max-width: 768px) {
   footer {
-    background: #080808 !important;
-    background-color: #080808 !important;
+    background: var(--obsidian) !important;
+    background-color: var(--obsidian) !important;
   }
   
   .footer-container {
     padding: 1.5rem 1rem;
-    background: #080808 !important;
-    background-color: #080808 !important;
+    background: var(--obsidian) !important;
+    background-color: var(--obsidian) !important;
+  }
+  
+  /* Ensure FAQ text visibility on mobile */
+  #faq {
+    color: var(--foreground) !important;
+  }
+  
+  /* Enhance gold element visibility on mobile */
+  [class*="border-gold-500"] {
+    border-opacity: 0.3 !important;
+  }
+  
+  [class*="bg-gold-500"] {
+    background-opacity: 0.2 !important;
   }
   
   .footer-contact-info {

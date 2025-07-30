@@ -144,7 +144,8 @@ export default function RootLayout({
         <GoogleAnalytics />
       </head>
       <body 
-        className="antialiased bg-[#080808] text-white selection:bg-[#C9A449]/20 selection:text-[#C9A449]"
+        className="antialiased text-white selection:bg-[#C9A449]/20 selection:text-[#C9A449]"
+        style={{ backgroundColor: 'var(--obsidian, #0A0A0A)' }}
         suppressHydrationWarning={true}
       >
         {/* Improved mobile interaction and accessibility */}

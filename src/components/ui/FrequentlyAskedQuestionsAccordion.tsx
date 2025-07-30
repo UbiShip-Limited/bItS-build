@@ -51,8 +51,7 @@ export function FrequentlyAskedQuestionsAccordion() {
       id="faq" 
       className={`mx-auto grid ${layout.containerLg} grid-cols-1 gap-8 md:gap-12 ${layout.padding.mobile} ${layout.sectionY.large} md:grid-cols-2 ${layout.padding.desktop}`}
       style={{ 
-        color: 'white',
-        backgroundColor: 'transparent'
+        color: 'var(--foreground, #FAFAF9)',
       }}
     >
       <div className="text-center md:text-left">

@@ -23,7 +23,10 @@ export default function ClientLayout({
         <MobileOptimizer />
         
         {!isDashboard && <Header />}
-        <main className={!isDashboard && !isHomepage ? "pt-20 md:pt-24 lg:pt-28" : ""}>
+        <main 
+          className={!isDashboard && !isHomepage ? "pt-20 md:pt-24 lg:pt-28" : ""}
+          style={{ backgroundColor: 'inherit' }}
+        >
           {children}
         </main>
         {!isDashboard && <Footer />}

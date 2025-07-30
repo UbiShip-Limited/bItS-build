@@ -11,30 +11,26 @@ export default function MobileOptimizer() {
     
     // Force mobile styling overrides for production cache issues
     const forceMobileStyles = () => {
-      // Force footer background on mobile
+      // Force footer background consistency on mobile using CSS variables
       const footers = document.querySelectorAll('footer');
       footers.forEach(footer => {
         if (window.innerWidth <= 768) {
-          (footer as HTMLElement).style.backgroundColor = '#080808';
-          (footer as HTMLElement).style.background = '#080808';
+          (footer as HTMLElement).style.setProperty('background-color', 'var(--obsidian, #0A0A0A)', 'important');
         }
       });
       
-      // Force dark mode text colors
+      // Ensure FAQ text visibility using CSS variables
       const faqElements = document.querySelectorAll('#faq');
       faqElements.forEach(faq => {
-        (faq as HTMLElement).style.color = 'white';
+        (faq as HTMLElement).style.setProperty('color', 'var(--foreground, #FAFAF9)', 'important');
       });
       
-      // Enhance gold lines visibility
-      const goldLines = document.querySelectorAll('[class*="gold-500"]');
-      goldLines.forEach(line => {
+      // Enhance decorative elements visibility on mobile
+      const decorativeLines = document.querySelectorAll('[class*="border-gold-500"]');
+      decorativeLines.forEach(line => {
         const lineElement = line as HTMLElement;
-        if (window.innerWidth <= 768 && lineElement.style.opacity) {
-          const currentOpacity = parseFloat(lineElement.style.opacity) || 0.1;
-          if (currentOpacity < 0.2) {
-            lineElement.style.opacity = '0.3';
-          }
+        if (window.innerWidth <= 768) {
+          lineElement.style.setProperty('border-opacity', '0.3', 'important');
         }
       });
     };

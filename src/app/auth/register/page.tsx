@@ -225,7 +225,7 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Title with sophisticated typography */}
-                <h1 className="font-heading text-2xl md:text-3xl tracking-wide text-white mb-2 uppercase">
+                <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl tracking-wide text-white mb-2 uppercase">
                   {step === 'access' ? 'Staff Access Required' : 'Invite Staff Member'}
                 </h1>
                 <p className="font-body text-[#FFFFFF]/70 italic">

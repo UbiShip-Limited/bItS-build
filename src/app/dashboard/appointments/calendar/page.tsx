@@ -130,7 +130,7 @@ export default function AppointmentCalendarPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-heading font-bold text-white">Appointment Calendar</h1>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-heading font-bold text-white">Appointment Calendar</h1>
           <p className="text-gray-400">View and manage appointments in calendar view</p>
         </div>
         <div className="flex gap-2">

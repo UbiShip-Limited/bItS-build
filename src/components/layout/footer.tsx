@@ -13,6 +13,7 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { GAEvents } from '@/src/lib/analytics/ga-events';
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
 
 export function Footer() {
   const pages = [
@@ -49,7 +50,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-gold/20 bg-obsidian text-white px-8 py-20 w-full relative overflow-hidden">
+    <footer className="border-t border-gold-500/20 bg-obsidian text-white px-8 py-20 w-full relative overflow-hidden">
       <div className="max-w-7xl mx-auto text-sm justify-between items-start md:px-8">
         <div className="flex flex-col items-center justify-center w-full relative">
           <div className="mr-0 md:mr-4 md:flex mb-8">
@@ -60,7 +61,7 @@ export function Footer() {
             {pages.map((page, idx) => (
               <li key={"pages" + idx} className="list-none text-center sm:text-left">
                 <Link
-                  className="transition-colors hover:text-gold font-body text-base tracking-tight"
+                  className="transition-colors hover:text-gold-500-500 font-body text-base tracking-tight"
                   href={page.href}
                 >
                   {page.title}
@@ -74,7 +75,7 @@ export function Footer() {
           {/* Contact Information */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center mb-12 w-full max-w-3xl">
             <div className="flex flex-col items-center">
-              <IconMapPin className="h-6 w-6 text-gold mb-3" />
+              <IconMapPin className="h-6 w-6 text-gold-500 mb-3" />
               <p className="text-gray-300 font-body tracking-tight">
                 565 Artisan Lane<br />
                 Bowen Island, BC V0N1G2<br />
@@ -82,12 +83,12 @@ export function Footer() {
               </p>
             </div>
             <div className="flex flex-col items-center">
-              <IconPhone className="h-6 w-6 text-gold mb-3" />
+              <IconPhone className="h-6 w-6 text-gold-500 mb-3" />
               <p className="text-gray-300 font-body tracking-tight">
                 (604) 323-4350<br />
                 <a 
                   href="mailto:bowenislandtattooshop@gmail.com" 
-                  className="text-sm text-gold hover:text-gold/80 transition-colors"
+                  className="text-sm text-gold-500 hover:text-gold-500-500/80 transition-colors"
                   onClick={() => GAEvents.emailClicked()}
                 >
                   bowenislandtattooshop@gmail.com
@@ -95,7 +96,7 @@ export function Footer() {
               </p>
             </div>
             <div className="flex flex-col items-center">
-              <p className="text-gold font-heading text-lg mb-2">Studio Hours</p>
+              <p className="text-gold-500 font-heading text-lg mb-2">Studio Hours</p>
               <p className="text-gray-300 font-body tracking-tight">
                 Tuesday - Saturday<br />
                 11:00 AM - 7:00 PM<br />
@@ -113,10 +114,10 @@ export function Footer() {
               &copy; {currentYear} Bowen Island Tattoo. All rights reserved.
             </p>
             <div className="flex space-x-6 text-sm">
-              <Link href="/privacy-policy" className="text-gray-400 hover:text-gold transition-colors font-body tracking-tight">
+              <Link href="/privacy-policy" className="text-gray-400 hover:text-gold-500-500 transition-colors font-body tracking-tight">
                 Privacy Policy
               </Link>
-              <Link href="/terms-of-service" className="text-gray-400 hover:text-gold transition-colors">
+              <Link href="/terms-of-service" className="text-gray-400 hover:text-gold-500-500 transition-colors">
                 Terms of Service
               </Link>
             </div>
@@ -126,7 +127,7 @@ export function Footer() {
                 href="https://ubiship.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-300 hover:text-gold transition-colors"
+                className="text-gray-300 hover:text-gold-500-500 transition-colors"
               >
                 UbiShip Limited
               </Link>
@@ -137,7 +138,7 @@ export function Footer() {
               href="https://www.bowenislandtattooshop.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-gray-400 hover:text-gold transition-colors"
+              className="text-gray-400 hover:text-gold-500-500 transition-colors"
               title="Website"
             >
               <IconWorld className="h-6 w-6" />
@@ -146,7 +147,7 @@ export function Footer() {
               href="https://www.facebook.com/bowenislandtattooshop" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-gray-400 hover:text-gold transition-colors"
+              className="text-gray-400 hover:text-gold-500-500 transition-colors"
               title="Facebook"
               onClick={() => GAEvents.socialMediaClicked('Facebook')}
             >
@@ -156,7 +157,7 @@ export function Footer() {
               href="https://instagram.com/bowenislandtattooshop" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-gray-400 hover:text-gold transition-colors"
+              className="text-gray-400 hover:text-gold-500-500 transition-colors"
               title="Instagram"
               onClick={() => GAEvents.socialMediaClicked('Instagram')}
             >
@@ -164,7 +165,7 @@ export function Footer() {
             </Link>
             <Link 
               href="mailto:bowenislandtattooshop@gmail.com"
-              className="text-gray-400 hover:text-gold transition-colors"
+              className="text-gray-400 hover:text-gold-500-500 transition-colors"
               title="Email"
               onClick={() => GAEvents.emailClicked()}
             >
@@ -226,7 +227,7 @@ const Logo = () => {
       />
       <div className="font-heading text-center sm:text-left">
         <span className="block text-2xl">Bowen Island</span>
-        <span className="block text-xl text-gold -mt-1">Tattoo Studio</span>
+        <span className="block text-xl text-gold-500 -mt-1">Tattoo Studio</span>
       </div>
     </Link>
   );

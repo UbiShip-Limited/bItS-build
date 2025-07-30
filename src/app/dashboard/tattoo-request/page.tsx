@@ -97,7 +97,7 @@ export default function TattooRequestsPage() {
     <div>
       <div className="flex justify-between items-center mb-8 pb-6 border-b border-[#1a1a1a]">
         <div>
-          <h1 className="text-3xl font-heading font-bold text-white mb-2 tracking-wide">Tattoo Requests</h1>
+          <h1 className="text-4xl sm:text-5xl font-heading font-bold text-white mb-2 tracking-wide">Tattoo Requests</h1>
           <p className="text-gray-400 text-lg">Manage all tattoo requests</p>
         </div>
       </div>

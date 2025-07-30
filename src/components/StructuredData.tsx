@@ -65,8 +65,8 @@ export function StructuredData({ type = 'homepage', pageTitle, pageDescription }
     "currenciesAccepted": "CAD",
     "paymentAccepted": "Cash, Credit Card, Debit Card",
     "openingHours": "Mo-Su by appointment only",
-    "telephone": "+1-604-XXX-XXXX", // Replace with actual number
-    "email": "info@bowenislandtattoo.com", // Replace with actual email
+    "telephone": "+1-604-323-4350", // TODO: Replace with actual phone number
+    "email": "bowenislandtattooshop@gmail.com", // TODO: Replace with actual email address
     "founder": {
       "@type": "Person",
       "name": "Kelly Miller",

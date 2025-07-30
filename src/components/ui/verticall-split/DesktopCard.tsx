@@ -27,12 +27,12 @@ export function DesktopCard({ section, index, isLoading, sectionsLength }: Secti
       transition={{ duration: 0.6, delay: index * 0.15 }}
       style={{ opacity }}
     >
-      <div className={`flex ${isReversed ? 'flex-row-reverse' : 'flex-row'} bg-gradient-to-br from-obsidian/80 to-[#0f0f0f]/80 backdrop-blur-sm border border-gold-500/5 rounded-3xl overflow-hidden group hover:border-gold-500/10 transition-all duration-800 ease-smooth shadow-refined hover:shadow-refined-lg`}>
+      <div className={`flex ${isReversed ? 'flex-row-reverse' : 'flex-row'} bg-gradient-to-br from-obsidian/90 to-obsidian/80 backdrop-blur-sm border border-gold-500/10 rounded-3xl overflow-hidden group hover:border-gold-500/20 transition-all duration-800 ease-smooth shadow-refined hover:shadow-refined-lg`}>
         {/* Image Section - Fixed aspect ratio */}
         <div className="w-1/2 relative aspect-[4/3] overflow-hidden">
           {isLoading ? (
-            <div className="absolute inset-0 bg-[#080808] flex items-center justify-center">
-              <div className="w-8 h-8 border-2 border-[#C9A449]/30 border-t-[#C9A449] rounded-full animate-spin"></div>
+            <div className="absolute inset-0 bg-obsidian flex items-center justify-center">
+              <div className="w-8 h-8 border-2 border-gold-500/30 border-t-gold-500 rounded-full animate-spin"></div>
             </div>
           ) : (
             <motion.div
@@ -107,7 +107,7 @@ export function DesktopCard({ section, index, isLoading, sectionsLength }: Secti
             </div>
 
             {/* Accent label */}
-            <div className="inline-block bg-gold-500/5 border border-gold-500/20 px-5 py-2.5 text-xs font-medium text-gold-500/80 mb-6 uppercase tracking-[0.02em] rounded-xl backdrop-blur-sm" style={{ fontFamily: 'Playfair Display, serif' }}>
+            <div className="inline-block bg-gold-500/5 border border-gold-500/20 px-5 py-2.5 text-xs font-medium text-gold-500/80 mb-6 tracking-[0.02em] rounded-xl backdrop-blur-sm" style={{ fontFamily: 'Playfair Display, serif' }}>
               {section.accent}
             </div>
 
@@ -117,7 +117,7 @@ export function DesktopCard({ section, index, isLoading, sectionsLength }: Secti
             </h2>
 
             {/* Subtitle */}
-            <h3 className="font-body text-base lg:text-lg text-gold-500/70 mb-6 uppercase tracking-[0.02em] font-light">
+            <h3 className="font-body text-base lg:text-lg text-gold-500/70 mb-6 tracking-[0.02em] font-light">
               {section.subtitle}
             </h3>
 

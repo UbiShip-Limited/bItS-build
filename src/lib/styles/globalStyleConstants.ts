@@ -48,15 +48,15 @@ export const typography = {
   fontSemibold: 'font-semibold', // 600
   
   // Heading hierarchy - using sentence case
-  h1: 'font-body text-5xl md:text-6xl font-semibold leading-tight tracking-[-0.02em]',
-  h2: 'font-body text-3xl md:text-4xl font-semibold leading-tight tracking-[-0.02em]',
-  h3: 'font-body text-2xl md:text-3xl font-medium leading-tight tracking-normal',
-  h4: 'font-body text-xl md:text-2xl font-medium leading-tight tracking-normal',
+  h1: 'font-body text-5xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold leading-tight tracking-[-0.02em]',
+  h2: 'font-body text-4xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-[-0.02em]',
+  h3: 'font-body text-3xl sm:text-3xl md:text-4xl font-medium leading-tight tracking-normal',
+  h4: 'font-body text-2xl sm:text-2xl md:text-3xl font-medium leading-tight tracking-normal',
   
   // Paragraph styles
-  paragraph: 'font-body text-base leading-normal tracking-normal',
-  paragraphLarge: 'font-body text-lg leading-relaxed tracking-normal',
-  paragraphSmall: 'font-body text-sm leading-normal tracking-normal'
+  paragraph: 'font-body text-lg leading-relaxed tracking-normal',
+  paragraphLarge: 'font-body text-xl sm:text-2xl leading-relaxed tracking-normal',
+  paragraphSmall: 'font-body text-base leading-normal tracking-normal'
 } as const;
 
 export const colors = {

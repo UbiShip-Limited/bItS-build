@@ -14,7 +14,6 @@ import { PaymentCacheService } from '../lib/services/paymentCacheService';
 import SquareClient from '../lib/square/index';
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
-import { vi } from 'vitest';
 
 // Load environment variables
 config();
@@ -189,7 +188,7 @@ class SquarePaymentVerifier {
     
     // Mock the customer lookup to avoid database calls during verification
     const originalFindUnique = this.prisma.customer.findUnique;
-    (this.prisma.customer.findUnique as any) = vi.fn().mockResolvedValue(mockCustomer);
+    (this.prisma.customer.findUnique as any) = async () => mockCustomer;
 
     try {
       // We can't actually process payments in verification, but we can test

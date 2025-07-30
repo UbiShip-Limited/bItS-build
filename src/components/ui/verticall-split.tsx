@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef, useState, useEffect } from "react"
-import { useScroll, useTransform, motion } from "framer-motion"
+import { useScroll, motion } from "framer-motion"
 import { GalleryService, GalleryImage } from "../../lib/api/services/galleryService"
 import { ApiClient } from "../../lib/api/apiClient"
 import Link from "next/link"
@@ -67,7 +67,7 @@ export function VerticalSplitParallax() {
   }, [])
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-[#080808] relative overflow-hidden w-full max-w-full">
+    <div id="services" ref={containerRef} className="min-h-screen bg-[#080808] relative overflow-hidden w-full max-w-full">
       {/* Ornamental background elements */}
       <BackgroundOrnaments />
       

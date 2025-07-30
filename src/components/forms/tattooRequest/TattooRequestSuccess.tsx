@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/src/components/ui/button';
+import { formatReferenceNumber, formatTrackingToken, copyToClipboard } from '@/src/lib/utils/referenceFormatter';
 
 interface ResponseData {
   id: string;
@@ -13,6 +14,29 @@ interface TattooRequestSuccessProps {
 }
 
 const TattooRequestSuccess: React.FC<TattooRequestSuccessProps> = ({ response, resetForm }) => {
+  const [copiedRef, setCopiedRef] = useState(false);
+  const [copiedTracking, setCopiedTracking] = useState(false);
+  
+  const formattedReference = formatReferenceNumber(response.id);
+  const formattedTracking = response.trackingToken ? formatTrackingToken(response.trackingToken) : null;
+  
+  const handleCopyReference = async () => {
+    const success = await copyToClipboard(formattedReference);
+    if (success) {
+      setCopiedRef(true);
+      setTimeout(() => setCopiedRef(false), 2000);
+    }
+  };
+  
+  const handleCopyTracking = async () => {
+    if (formattedTracking) {
+      const success = await copyToClipboard(formattedTracking);
+      if (success) {
+        setCopiedTracking(true);
+        setTimeout(() => setCopiedTracking(false), 2000);
+      }
+    }
+  };
   return (
     <div className="max-w-3xl mx-auto relative">
       {/* Ornamental background */}
@@ -60,13 +84,16 @@ const TattooRequestSuccess: React.FC<TattooRequestSuccessProps> = ({ response, r
           <p className="text-white/70 font-body">We&apos;ve received your submission</p>
         </div>
         
-        {/* Request Details Card */}
-        <div className="border border-[#C9A449]/30 p-6 rounded-md mb-6 bg-[#080808]/30 backdrop-blur-sm relative overflow-hidden">
-          {/* Ornamental corner elements */}
-          <div className="absolute top-0 left-0 w-6 h-6 border-l-2 border-t-2 border-[#C9A449]/30"></div>
-          <div className="absolute top-0 right-0 w-6 h-6 border-r-2 border-t-2 border-[#C9A449]/30"></div>
-          <div className="absolute bottom-0 left-0 w-6 h-6 border-l-2 border-b-2 border-[#C9A449]/30"></div>
-          <div className="absolute bottom-0 right-0 w-6 h-6 border-r-2 border-b-2 border-[#C9A449]/30"></div>
+        {/* Request Details Card with enhanced styling */}
+        <div className="border border-[#C9A449]/30 p-6 rounded-xl mb-6 bg-[#080808]/40 backdrop-blur-sm relative overflow-hidden shadow-[0_8px_32px_rgba(201,164,73,0.1)] animate-fadeIn">
+          {/* Enhanced ornamental corner elements */}
+          <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-[#C9A449]/40 rounded-tl-lg"></div>
+          <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-[#C9A449]/40 rounded-tr-lg"></div>
+          <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-[#C9A449]/40 rounded-bl-lg"></div>
+          <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-[#C9A449]/40 rounded-br-lg"></div>
+          
+          {/* Subtle gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-br from-[#C9A449]/5 via-transparent to-[#C9A449]/5 rounded-xl pointer-events-none"></div>
           
           <div className="relative z-10">
             <div className="flex items-center mb-4">
@@ -77,17 +104,75 @@ const TattooRequestSuccess: React.FC<TattooRequestSuccessProps> = ({ response, r
             
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <p className="text-white/50 text-sm font-body mb-1">Reference Number</p>
-                <p className="font-body font-medium text-white text-lg tracking-wide">{response.id}</p>
+                <p className="text-white/50 text-sm font-body mb-2">Reference Number</p>
+                <div className="flex items-center gap-3">
+                  <div className="relative bg-[#C9A449]/10 border border-[#C9A449]/30 px-5 py-3 rounded-lg shadow-[0_4px_12px_rgba(201,164,73,0.15)] animate-slideIn">
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#C9A449]/0 via-[#C9A449]/10 to-[#C9A449]/0 rounded-lg animate-shimmer"></div>
+                    <p className="font-mono font-bold text-[#C9A449] text-xl tracking-wider relative z-10">{formattedReference}</p>
+                  </div>
+                  <button
+                    onClick={handleCopyReference}
+                    className="group relative p-2 bg-[#080808]/50 border border-white/10 rounded-lg hover:border-[#C9A449]/30 transition-all duration-300"
+                    title="Copy reference number"
+                  >
+                    {copiedRef ? (
+                      <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5 text-white/60 group-hover:text-[#C9A449]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                    {copiedRef && (
+                      <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                        Copied!
+                      </span>
+                    )}
+                  </button>
+                </div>
+                <p className="text-white/40 text-xs mt-2 font-body flex items-center gap-1">
+                  <svg className="w-3 h-3 text-[#C9A449]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Keep this number for your records
+                </p>
               </div>
               <div>
                 <p className="text-white/50 text-sm font-body mb-1">Message</p>
                 <p className="text-white/90 font-body leading-relaxed">{response.message}</p>
               </div>
-              <div>
-                <p className="text-white/50 text-sm font-body mb-1">Tracking Code</p>
-                <p className="font-body font-medium text-white text-lg tracking-wide">{response.trackingToken || 'N/A'}</p>
-              </div>
+              {formattedTracking && (
+                <div>
+                  <p className="text-white/50 text-sm font-body mb-2">Tracking Code</p>
+                  <div className="flex items-center gap-3">
+                    <div className="relative bg-white/5 border border-white/20 px-4 py-2.5 rounded-lg animate-slideIn" style={{animationDelay: '200ms'}}>
+                      <p className="font-mono font-medium text-white/90 text-lg tracking-wider">{formattedTracking}</p>
+                    </div>
+                    <button
+                      onClick={handleCopyTracking}
+                      className="group relative p-2 bg-[#080808]/50 border border-white/10 rounded-lg hover:border-[#C9A449]/30 transition-all duration-300"
+                      title="Copy tracking code"
+                    >
+                      {copiedTracking ? (
+                        <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5 text-white/60 group-hover:text-[#C9A449]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                      {copiedTracking && (
+                        <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500/90 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                          Copied!
+                        </span>
+                      )}
+                    </button>
+                  </div>
+                  <p className="text-white/40 text-xs mt-2 font-body">Use this code for anonymous tracking</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

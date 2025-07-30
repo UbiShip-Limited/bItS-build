@@ -9,28 +9,32 @@ const ProgressSteps: React.FC<ProgressStepsProps> = ({ currentStep, totalSteps }
   const stepLabels = ['Initial Info', 'Design Details', 'References'];
   
   return (
-    <div className="flex justify-between mb-8 px-2 sm:px-4">
+    <div className="flex justify-between mb-10 px-4 sm:px-6">
       {Array.from({ length: totalSteps }).map((_, index) => (
         <div key={index} className="flex flex-col items-center relative w-full">
           {/* Connection line */}
           {index < totalSteps - 1 && (
-            <div className={`absolute top-4 left-[50%] w-full h-[1px] transition-all duration-500 ${
+            <div className={`absolute top-5 left-[50%] w-full h-[2px] transition-all duration-700 ease-out ${
               index < currentStep - 1 
-                ? 'bg-gradient-to-r from-[#C9A449] to-[#C9A449]/80' 
-                : 'bg-gradient-to-r from-white/20 to-white/10'
-            }`}></div>
+                ? 'bg-gradient-to-r from-[#C9A449] via-[#C9A449]/90 to-[#C9A449]/80' 
+                : 'bg-gradient-to-r from-white/10 via-white/20 to-white/10'
+            }`}>
+              {index < currentStep - 1 && (
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+              )}
+            </div>
           )}
           
           {/* Step circle */}
-          <div className={`h-8 w-8 rounded-full flex items-center justify-center z-10 transition-all duration-500 border-2 font-body text-sm font-medium ${
+          <div className={`h-10 w-10 rounded-full flex items-center justify-center z-10 transition-all duration-700 ease-out border-2 font-body text-sm font-medium transform ${
             index + 1 === currentStep 
-              ? 'bg-[#C9A449] text-white border-[#C9A449] shadow-lg shadow-[#C9A449]/30' 
+              ? 'bg-[#C9A449] text-white border-[#C9A449] shadow-[0_0_20px_rgba(201,164,73,0.4)] scale-110' 
               : index + 1 < currentStep 
-                ? 'bg-[#C9A449] text-white border-[#C9A449] shadow-md' 
-                : 'bg-[#080808] text-white/60 border-white/30 hover:border-white/50'
+                ? 'bg-[#C9A449]/90 text-white border-[#C9A449] shadow-[0_4px_12px_rgba(201,164,73,0.2)]' 
+                : 'bg-[#080808]/50 text-white/50 border-white/20 hover:border-white/40 hover:bg-[#080808]/70'
           }`}>
             {index + 1 < currentStep ? (
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
             ) : (
@@ -39,12 +43,12 @@ const ProgressSteps: React.FC<ProgressStepsProps> = ({ currentStep, totalSteps }
           </div>
           
           {/* Step label */}
-          <div className={`text-xs mt-3 font-body text-center transition-all duration-300 ${
+          <div className={`text-xs mt-3 font-body text-center transition-all duration-500 transform ${
             index + 1 === currentStep 
-              ? 'text-[#C9A449] font-medium' 
+              ? 'text-[#C9A449] font-semibold scale-105' 
               : index + 1 < currentStep 
-                ? 'text-white/80 font-medium' 
-                : 'text-white/50'
+                ? 'text-white/70 font-medium' 
+                : 'text-white/40'
           }`}>
             <span className="hidden sm:inline">{stepLabels[index]}</span>
             <span className="sm:hidden">Step {index + 1}</span>

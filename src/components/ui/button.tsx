@@ -32,11 +32,11 @@ export function Button({
     "font-body tracking-[0.02em] uppercase transition-all duration-800 ease-smooth relative overflow-hidden group inline-flex items-center justify-center rounded-2xl",
     {
       // Primary - Refined gold background
-      "bg-gold-500/90 text-obsidian hover:bg-gold-500 border border-gold-500/80 shadow-refined hover:shadow-refined-lg backdrop-blur-sm": variant === "primary",
+      "bg-gold-500/90 text-obsidian hover:bg-gold-500 border border-gold-500/70 shadow-[0_4px_14px_rgba(184,149,106,0.25)] hover:shadow-[0_6px_20px_rgba(184,149,106,0.35)] backdrop-blur-sm": variant === "primary",
       // Secondary - Refined obsidian background
       "bg-obsidian/90 text-white hover:bg-obsidian border border-obsidian/80 shadow-refined hover:shadow-refined-lg backdrop-blur-sm": variant === "secondary",
       // Outline - Refined transparent with border
-      "bg-transparent text-gold-500/90 hover:bg-gold-500/10 border border-gold-500/30 hover:border-gold-500/50 hover:text-gold-500 backdrop-blur-sm": variant === "outline",
+      "bg-transparent text-gold-500/80 hover:bg-gold-500/10 border border-gold-500/30 hover:border-gold-500/50 hover:text-gold-500 backdrop-blur-sm shadow-sm hover:shadow-md": variant === "outline",
       // Ghost - No border with subtle hover
       "bg-transparent text-obsidian/90 hover:text-gold-500/80 border-0 p-0 hover:bg-gold-500/5 rounded-xl": variant === "ghost",
       // Link - Refined underlined text
@@ -57,11 +57,13 @@ export function Button({
   if (href && !isDisabled) {
     return (
       <Link href={href} className={baseClasses} onClick={onClick}>
-        {icon && <span className="mr-2 inline-flex relative z-10">{icon}</span>}
-        <span className="relative z-10">{children}</span>
+        <span className="inline-flex items-center relative z-10">
+          {icon && <span className="inline-flex">{icon}</span>}
+          {children}
+        </span>
         {/* Refined hover effect overlay */}
         {(variant === "primary" || variant === "secondary" || variant === "outline") && (
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-800" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-800 rounded-2xl" />
         )}
       </Link>
     );
@@ -75,11 +77,13 @@ export function Button({
       onClick={onClick} 
       {...props}
     >
-      {icon && <span className="mr-2 inline-flex relative z-10">{icon}</span>}
-      <span className="relative z-10">{children}</span>
+      <span className="inline-flex items-center relative z-10">
+        {icon && <span className="inline-flex">{icon}</span>}
+        {children}
+      </span>
       {/* Refined hover effect overlay */}
       {(variant === "primary" || variant === "secondary" || variant === "outline") && (
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-600" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-600 rounded-2xl" />
       )}
     </button>
   );

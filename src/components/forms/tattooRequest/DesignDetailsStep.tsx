@@ -70,12 +70,12 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
           value={formData.description || ''}
           onChange={handleDescriptionChange}
           required
-          className={`w-full bg-[#080808]/50 border rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 h-40 p-4 resize-none ${
+          className={`w-full bg-[#080808]/30 border rounded-xl font-body text-white placeholder-white/30 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 h-40 p-4 resize-none ${
             validationErrors?.description 
-              ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/30' 
+              ? 'border-red-500/40 focus:border-red-500 focus:ring-red-500/20' 
               : charCount >= 10
-                ? 'border-green-500/30 focus:border-[#C9A449] focus:ring-[#C9A449]/40'
-                : 'border-white/20 hover:border-white/30 focus:border-[#C9A449] focus:ring-[#C9A449]/40'
+                ? 'border-green-500/30 focus:border-[#C9A449]/60 focus:ring-[#C9A449]/30'
+                : 'border-white/10 hover:border-white/20 focus:border-[#C9A449]/60 focus:ring-[#C9A449]/30'
           }`}
           placeholder="Describe your tattoo vision in detail... What elements do you want? What style appeals to you? Any meaningful symbolism?"
         />
@@ -88,10 +88,13 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
       </div>
 
       {/* Visual Separator */}
-      <div className="flex items-center justify-center my-8">
-        <div className="w-16 h-px bg-gradient-to-r from-transparent via-[#C9A449]/40 to-transparent"></div>
-        <div className="mx-4 w-1.5 h-1.5 bg-[#C9A449]/60 rounded-full"></div>
-        <div className="w-16 h-px bg-gradient-to-l from-transparent via-[#C9A449]/40 to-transparent"></div>
+      <div className="flex items-center justify-center my-6 sm:my-8">
+        <div className="w-12 sm:w-16 h-[1px] bg-gradient-to-r from-transparent via-[#C9A449]/30 to-transparent"></div>
+        <div className="mx-3 sm:mx-4 relative">
+          <div className="w-1.5 h-1.5 bg-[#C9A449]/50 rounded-full"></div>
+          <div className="absolute inset-0 bg-[#C9A449]/20 rounded-full blur-sm scale-[2] animate-pulse"></div>
+        </div>
+        <div className="w-12 sm:w-16 h-[1px] bg-gradient-to-l from-transparent via-[#C9A449]/30 to-transparent"></div>
       </div>
       
       {/* Placement & Size Section */}
@@ -130,10 +133,10 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
             value={formData.placement || ''}
             onChange={handleInputChange}
             required
-            className={`w-full h-12 bg-[#080808]/50 border rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 px-4 ${
+            className={`w-full h-12 bg-[#080808]/30 border rounded-xl font-body text-white placeholder-white/30 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 px-4 ${
               validationErrors?.placement 
-                ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/30' 
-                : 'border-white/20 hover:border-white/30 focus:border-[#C9A449] focus:ring-[#C9A449]/40'
+                ? 'border-red-500/40 focus:border-red-500 focus:ring-red-500/20' 
+                : 'border-white/10 hover:border-white/20 focus:border-[#C9A449]/60 focus:ring-[#C9A449]/30'
             }`}
             placeholder="e.g., Inner left forearm, behind right ear..."
           />
@@ -153,10 +156,10 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
             value={formData.size || ''}
             onChange={handleInputChange}
             required
-            className={`w-full h-12 bg-[#080808]/50 border rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#C9A449]/40 focus:border-[#C9A449] ${
+            className={`w-full h-12 bg-[#080808]/30 border rounded-xl font-body text-white placeholder-white/30 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#C9A449]/30 focus:border-[#C9A449]/60 px-4 ${
               validationErrors?.size 
-                ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/30' 
-                : 'border-white/20 hover:border-white/30'
+                ? 'border-red-500/40 focus:border-red-500 focus:ring-red-500/20' 
+                : 'border-white/10 hover:border-white/20'
             }`}
           >
             <option value="" className="bg-[#080808] text-white/80">Select size range...</option>
@@ -173,10 +176,13 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
       </div>
 
       {/* Visual Separator */}
-      <div className="flex items-center justify-center my-8">
-        <div className="w-16 h-px bg-gradient-to-r from-transparent via-[#C9A449]/40 to-transparent"></div>
-        <div className="mx-4 w-1.5 h-1.5 bg-[#C9A449]/60 rounded-full"></div>
-        <div className="w-16 h-px bg-gradient-to-l from-transparent via-[#C9A449]/40 to-transparent"></div>
+      <div className="flex items-center justify-center my-6 sm:my-8">
+        <div className="w-12 sm:w-16 h-[1px] bg-gradient-to-r from-transparent via-[#C9A449]/30 to-transparent"></div>
+        <div className="mx-3 sm:mx-4 relative">
+          <div className="w-1.5 h-1.5 bg-[#C9A449]/50 rounded-full"></div>
+          <div className="absolute inset-0 bg-[#C9A449]/20 rounded-full blur-sm scale-[2] animate-pulse"></div>
+        </div>
+        <div className="w-12 sm:w-16 h-[1px] bg-gradient-to-l from-transparent via-[#C9A449]/30 to-transparent"></div>
       </div>
       
       {/* Style & Color Section */}
@@ -189,7 +195,7 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
             name="colorPreference"
             value={formData.colorPreference || ''}
             onChange={handleInputChange}
-            className="w-full h-12 bg-[#080808]/50 border border-white/20 hover:border-white/30 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/40 rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none"
+            className="w-full h-12 bg-[#080808]/30 border border-white/10 hover:border-white/20 focus:border-[#C9A449]/60 focus:ring-2 focus:ring-[#C9A449]/30 rounded-xl font-body text-white placeholder-white/30 backdrop-blur-sm transition-all duration-300 focus:outline-none px-4"
           >
             <option value="" className="bg-[#080808] text-white/80">Select color preference...</option>
             {COLOR_PREFERENCES.map((color) => (
@@ -208,7 +214,7 @@ const DesignDetailsStep: React.FC<DesignDetailsStepProps> = ({
             name="style"
             value={formData.style || ''}
             onChange={handleInputChange}
-            className="w-full h-12 bg-[#080808]/50 border border-white/20 hover:border-white/30 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/40 rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none"
+            className="w-full h-12 bg-[#080808]/30 border border-white/10 hover:border-white/20 focus:border-[#C9A449]/60 focus:ring-2 focus:ring-[#C9A449]/30 rounded-xl font-body text-white placeholder-white/30 backdrop-blur-sm transition-all duration-300 focus:outline-none px-4"
           >
             <option value="" className="bg-[#080808] text-white/80">Select style preference...</option>
             {TATTOO_STYLES.map((style) => (

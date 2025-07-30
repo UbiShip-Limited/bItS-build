@@ -12,7 +12,6 @@ import { ZoomIn, Loader2, RefreshCw } from "lucide-react"
 import { GalleryService, GalleryImage } from "@/src/lib/api/services/galleryService"
 import { apiClient } from "@/src/lib/api/apiClient"
 import { Button } from "@/src/components/ui/button"
-import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants'
 import { Lightbox } from '@/src/components/ui/Lightbox'
 import { GAEvents } from '@/src/lib/analytics/ga-events'
 
@@ -189,7 +188,7 @@ export function DynamicGallery() {
                     : `${Math.max(200, Math.min(400, item.height * 0.3))}px`,
                 }}
               >
-                <div className="relative w-full h-full group cursor-pointer border border-gold-500/0 hover:border-gold-500/40 transition-all duration-300 overflow-hidden">
+                <div className="relative w-full h-full group cursor-pointer overflow-hidden rounded-lg transition-all duration-300 hover:shadow-2xl hover:shadow-gold-500/20">
                   <Image
                     src={item.thumbnailUrl || item.url}
                     alt={item.alt}
@@ -199,16 +198,17 @@ export function DynamicGallery() {
                     loading={index < 6 ? "eager" : "lazy"}
                   />
 
-                  {/* Simplified overlay */}
+                  {/* Refined overlay with subtle inner glow on hover */}
                   <div className="absolute inset-0 bg-gradient-to-t from-obsidian/80 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 ring-1 ring-inset ring-white/10 group-hover:ring-gold-500/30 transition-all duration-300 rounded-lg"></div>
 
-                  {/* Corner accents - simplified for mobile */}
+                  {/* Enhanced corner accents - more prominent and refined */}
                   {!isMobile && (
                     <>
-                      <div className="absolute -top-1 -left-1 h-6 w-6 border-t border-l border-gold-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <div className="absolute -top-1 -right-1 h-6 w-6 border-t border-r border-gold-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <div className="absolute -bottom-1 -left-1 h-6 w-6 border-b border-l border-gold-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      <div className="absolute -bottom-1 -right-1 h-6 w-6 border-b border-r border-gold-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="absolute -top-1 -left-1 h-8 w-8 border-t-2 border-l-2 border-gold-500 opacity-0 group-hover:opacity-90 transition-all duration-300 transform group-hover:scale-110"></div>
+                      <div className="absolute -top-1 -right-1 h-8 w-8 border-t-2 border-r-2 border-gold-500 opacity-0 group-hover:opacity-90 transition-all duration-300 transform group-hover:scale-110"></div>
+                      <div className="absolute -bottom-1 -left-1 h-8 w-8 border-b-2 border-l-2 border-gold-500 opacity-0 group-hover:opacity-90 transition-all duration-300 transform group-hover:scale-110"></div>
+                      <div className="absolute -bottom-1 -right-1 h-8 w-8 border-b-2 border-r-2 border-gold-500 opacity-0 group-hover:opacity-90 transition-all duration-300 transform group-hover:scale-110"></div>
                     </>
                   )}
 

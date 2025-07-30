@@ -27,7 +27,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Link href="/faq" className="text-white hover:text-gold transition-colors">
               FAQ
             </Link>
-            <Link href="/tattoo-request" className="text-white hover:text-gold transition-colors">
+            <Link href="/tattooRequest" className="text-white hover:text-gold transition-colors">
               Request Tattoo
             </Link>
           </nav>

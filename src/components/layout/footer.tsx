@@ -39,7 +39,7 @@ export function Footer() {
     },
     {
       title: "Contact",
-      href: "/contact",
+      href: "/tattooRequest",
     },
     {
       title: "Aftercare",
@@ -50,18 +50,18 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-gold-500/20 bg-obsidian text-white px-8 py-20 w-full relative overflow-hidden">
-      <div className="max-w-7xl mx-auto text-sm justify-between items-start md:px-8">
+    <footer className="border-t border-gold-500/20 bg-obsidian text-white px-4 sm:px-8 py-12 sm:py-20 w-full relative overflow-hidden">
+      <div className="max-w-7xl mx-auto text-sm justify-between items-start">
         <div className="flex flex-col items-center justify-center w-full relative">
-          <div className="mr-0 md:mr-4 md:flex mb-8">
+          <div className="mb-8">
             <Logo />
           </div>
 
-          <ul className="transition-colors flex sm:flex-row flex-col text-gray-300 list-none gap-6 mb-12">
+          <ul className="transition-colors flex flex-wrap justify-center text-gray-300 list-none gap-4 sm:gap-6 mb-8 sm:mb-12">
             {pages.map((page, idx) => (
-              <li key={"pages" + idx} className="list-none text-center sm:text-left">
+              <li key={"pages" + idx} className="list-none">
                 <Link
-                  className="transition-colors hover:text-gold-500-500 font-body text-base tracking-tight"
+                  className="transition-colors hover:text-gold-500 font-body text-sm sm:text-base tracking-tight"
                   href={page.href}
                 >
                   {page.title}
@@ -70,25 +70,25 @@ export function Footer() {
             ))}
           </ul>
 
-          <GridLineHorizontal className="max-w-7xl mx-auto mt-8 mb-12" />
+          <GridLineHorizontal className="w-full max-w-3xl mx-auto mb-8 sm:mb-12" />
 
           {/* Contact Information */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center mb-12 w-full max-w-3xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 text-center mb-8 sm:mb-12 w-full max-w-3xl">
             <div className="flex flex-col items-center">
-              <IconMapPin className="h-6 w-6 text-gold-500 mb-3" />
-              <p className="text-gray-300 font-body tracking-tight">
+              <IconMapPin className="h-5 sm:h-6 w-5 sm:w-6 text-gold-500 mb-2 sm:mb-3" />
+              <p className="text-gray-300 font-body tracking-tight text-sm sm:text-base">
                 565 Artisan Lane<br />
                 Bowen Island, BC V0N1G2<br />
-                <span className="text-sm italic text-gray-400">Artisan Square</span>
+                <span className="text-xs sm:text-sm italic text-gray-400">Artisan Square</span>
               </p>
             </div>
             <div className="flex flex-col items-center">
-              <IconPhone className="h-6 w-6 text-gold-500 mb-3" />
-              <p className="text-gray-300 font-body tracking-tight">
+              <IconPhone className="h-5 sm:h-6 w-5 sm:w-6 text-gold-500 mb-2 sm:mb-3" />
+              <p className="text-gray-300 font-body tracking-tight text-sm sm:text-base">
                 (604) 323-4350<br />
                 <a 
                   href="mailto:bowenislandtattooshop@gmail.com" 
-                  className="text-sm text-gold-500 hover:text-gold-500-500/80 transition-colors"
+                  className="text-xs sm:text-sm text-gold-500 hover:text-gold-500/80 transition-colors break-all"
                   onClick={() => GAEvents.emailClicked()}
                 >
                   bowenislandtattooshop@gmail.com
@@ -96,80 +96,80 @@ export function Footer() {
               </p>
             </div>
             <div className="flex flex-col items-center">
-              <p className="text-gold-500 font-heading text-lg mb-2">Studio Hours</p>
-              <p className="text-gray-300 font-body tracking-tight">
+              <p className="text-gold-500 font-heading text-base sm:text-lg mb-1 sm:mb-2">Studio Hours</p>
+              <p className="text-gray-300 font-body tracking-tight text-sm sm:text-base">
                 Tuesday - Saturday<br />
                 11:00 AM - 7:00 PM<br />
-                <span className="text-sm italic text-gray-400">By appointment only</span>
+                <span className="text-xs sm:text-sm italic text-gray-400">By appointment only</span>
               </p>
             </div>
           </div>
 
-          <GridLineHorizontal className="max-w-7xl mx-auto mb-8" />
+          <GridLineHorizontal className="w-full max-w-3xl mx-auto mb-6 sm:mb-8" />
         </div>
         
-        <div className="flex sm:flex-row flex-col justify-between mt-8 items-center w-full">
-          <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 sm:mb-0">
-            <p className="text-gray-400 font-body tracking-tight">
+        <div className="flex flex-col sm:flex-row justify-between sm:mt-8 items-center w-full gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 text-center sm:text-left">
+            <p className="text-gray-400 font-body tracking-tight text-xs sm:text-sm">
               &copy; {currentYear} Bowen Island Tattoo. All rights reserved.
             </p>
-            <div className="flex space-x-6 text-sm">
-              <Link href="/privacy-policy" className="text-gray-400 hover:text-gold-500-500 transition-colors font-body tracking-tight">
+            <div className="flex gap-4 sm:gap-6 text-xs sm:text-sm">
+              <Link href="/privacy-policy" className="text-gray-400 hover:text-gold-500 transition-colors font-body tracking-tight">
                 Privacy Policy
               </Link>
-              <Link href="/terms-of-service" className="text-gray-400 hover:text-gold-500-500 transition-colors">
+              <Link href="/terms-of-service" className="text-gray-400 hover:text-gold-500 transition-colors font-body tracking-tight">
                 Terms of Service
               </Link>
             </div>
-            <div className="text-sm text-gray-400 font-body tracking-tight">
+            <div className="text-xs sm:text-sm text-gray-400 font-body tracking-tight">
               Developed by{" "}
               <Link 
                 href="https://ubiship.com" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-gray-300 hover:text-gold-500-500 transition-colors"
+                className="text-gray-300 hover:text-gold-500 transition-colors"
               >
                 UbiShip Limited
               </Link>
             </div>
           </div>
-          <div className="flex gap-4">
+          <div className="flex gap-3 sm:gap-4">
             <Link 
               href="https://www.bowenislandtattooshop.com" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-gray-400 hover:text-gold-500-500 transition-colors"
+              className="text-gray-400 hover:text-gold-500 transition-colors"
               title="Website"
             >
-              <IconWorld className="h-6 w-6" />
+              <IconWorld className="h-5 w-5 sm:h-6 sm:w-6" />
             </Link>
             <Link 
               href="https://www.facebook.com/bowenislandtattooshop" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-gray-400 hover:text-gold-500-500 transition-colors"
+              className="text-gray-400 hover:text-gold-500 transition-colors"
               title="Facebook"
               onClick={() => GAEvents.socialMediaClicked('Facebook')}
             >
-              <IconBrandFacebook className="h-6 w-6" />
+              <IconBrandFacebook className="h-5 w-5 sm:h-6 sm:w-6" />
             </Link>
             <Link 
               href="https://instagram.com/bowenislandtattooshop" 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-gray-400 hover:text-gold-500-500 transition-colors"
+              className="text-gray-400 hover:text-gold-500 transition-colors"
               title="Instagram"
               onClick={() => GAEvents.socialMediaClicked('Instagram')}
             >
-              <IconBrandInstagram className="h-6 w-6" />
+              <IconBrandInstagram className="h-5 w-5 sm:h-6 sm:w-6" />
             </Link>
             <Link 
               href="mailto:bowenislandtattooshop@gmail.com"
-              className="text-gray-400 hover:text-gold-500-500 transition-colors"
+              className="text-gray-400 hover:text-gold-500 transition-colors"
               title="Email"
               onClick={() => GAEvents.emailClicked()}
             >
-              <IconAt className="h-6 w-6" />
+              <IconAt className="h-5 w-5 sm:h-6 sm:w-6" />
             </Link>
           </div>
         </div>
@@ -216,18 +216,18 @@ const Logo = () => {
   return (
     <Link
       href="/"
-      className="font-normal flex flex-col sm:flex-row items-center gap-3 text-white px-2 py-1 relative z-20 group"
+      className="font-normal flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-white px-2 py-1 relative z-20 group"
     >
       <Image
         src="/images/bowen-logo.svg"
         alt="Bowen Island Tattoo"
-        width={80}
-        height={80}
-        className="group-hover:scale-105 transition-transform brightness-0 invert"
+        width={60}
+        height={60}
+        className="group-hover:scale-105 transition-transform brightness-0 invert sm:w-[80px] sm:h-[80px]"
       />
       <div className="font-heading text-center sm:text-left">
-        <span className="block text-2xl">Bowen Island</span>
-        <span className="block text-xl text-gold-500 -mt-1">Tattoo Studio</span>
+        <span className="block text-xl sm:text-2xl">Bowen Island</span>
+        <span className="block text-lg sm:text-xl text-gold-500 -mt-1">Tattoo Studio</span>
       </div>
     </Link>
   );

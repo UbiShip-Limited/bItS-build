@@ -151,10 +151,10 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
           value={formData.purpose || ''}
           onChange={handleInputChange}
           required
-          className={`w-full h-12 bg-[#080808]/50 border rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#C9A449]/40 focus:border-[#C9A449] ${
+          className={`w-full h-12 bg-[#080808]/30 border rounded-xl font-body text-white placeholder-white/30 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-[#C9A449]/30 focus:border-[#C9A449]/60 px-4 ${
             validationErrors?.purpose 
-              ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/30' 
-              : 'border-white/20 hover:border-white/30'
+              ? 'border-red-500/40 focus:border-red-500 focus:ring-red-500/20' 
+              : 'border-white/10 hover:border-white/20'
           }`}
         >
           <option value="" className="bg-[#080808] text-white/80">What type of request is this?</option>
@@ -165,15 +165,23 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
           ))}
         </select>
         {validationErrors?.purpose && (
-          <p className="text-red-400 text-xs mt-2 font-body">{validationErrors.purpose}</p>
+          <p className="text-red-400 text-xs mt-2 font-body flex items-center gap-1">
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {validationErrors.purpose}
+          </p>
         )}
       </div>
 
       {/* Visual Separator */}
-      <div className="flex items-center justify-center my-8">
-        <div className="w-16 h-px bg-gradient-to-r from-transparent via-[#C9A449]/40 to-transparent"></div>
-        <div className="mx-4 w-1.5 h-1.5 bg-[#C9A449]/60 rounded-full"></div>
-        <div className="w-16 h-px bg-gradient-to-l from-transparent via-[#C9A449]/40 to-transparent"></div>
+      <div className="flex items-center justify-center my-6 sm:my-8">
+        <div className="w-12 sm:w-16 h-[1px] bg-gradient-to-r from-transparent via-[#C9A449]/30 to-transparent"></div>
+        <div className="mx-3 sm:mx-4 relative">
+          <div className="w-1.5 h-1.5 bg-[#C9A449]/50 rounded-full"></div>
+          <div className="absolute inset-0 bg-[#C9A449]/20 rounded-full blur-sm scale-[2] animate-pulse"></div>
+        </div>
+        <div className="w-12 sm:w-16 h-[1px] bg-gradient-to-l from-transparent via-[#C9A449]/30 to-transparent"></div>
       </div>
       
       {/* Artist & Timeline Section */}
@@ -188,7 +196,7 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
             name="preferredArtist"
             value={formData.preferredArtist || ''}
             onChange={handleInputChange}
-            className="w-full h-12 bg-[#080808]/50 border border-white/20 hover:border-white/30 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/40 rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none px-4"
+            className="w-full h-12 bg-[#080808]/30 border border-white/10 hover:border-white/20 focus:border-[#C9A449]/60 focus:ring-2 focus:ring-[#C9A449]/30 rounded-xl font-body text-white placeholder-white/30 backdrop-blur-sm transition-all duration-300 focus:outline-none px-4"
             placeholder="Kelly Miller, Lacey, or no preference"
           />
         </div>
@@ -201,7 +209,7 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
             name="timeframe"
             value={formData.timeframe || ''}
             onChange={handleInputChange}
-            className="w-full h-12 bg-[#080808]/50 border border-white/20 hover:border-white/30 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/40 rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none"
+            className="w-full h-12 bg-[#080808]/30 border border-white/10 hover:border-white/20 focus:border-[#C9A449]/60 focus:ring-2 focus:ring-[#C9A449]/30 rounded-xl font-body text-white placeholder-white/30 backdrop-blur-sm transition-all duration-300 focus:outline-none px-4"
           >
             <option value="" className="bg-[#080808] text-white/80">When would you like this done?</option>
             {TIMEFRAMES.map((timeframe) => (
@@ -214,10 +222,13 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
       </div>
 
       {/* Visual Separator */}
-      <div className="flex items-center justify-center my-8">
-        <div className="w-16 h-px bg-gradient-to-r from-transparent via-[#C9A449]/40 to-transparent"></div>
-        <div className="mx-4 w-1.5 h-1.5 bg-[#C9A449]/60 rounded-full"></div>
-        <div className="w-16 h-px bg-gradient-to-l from-transparent via-[#C9A449]/40 to-transparent"></div>
+      <div className="flex items-center justify-center my-6 sm:my-8">
+        <div className="w-12 sm:w-16 h-[1px] bg-gradient-to-r from-transparent via-[#C9A449]/30 to-transparent"></div>
+        <div className="mx-3 sm:mx-4 relative">
+          <div className="w-1.5 h-1.5 bg-[#C9A449]/50 rounded-full"></div>
+          <div className="absolute inset-0 bg-[#C9A449]/20 rounded-full blur-sm scale-[2] animate-pulse"></div>
+        </div>
+        <div className="w-12 sm:w-16 h-[1px] bg-gradient-to-l from-transparent via-[#C9A449]/30 to-transparent"></div>
       </div>
       
       {/* Contact Information Section */}
@@ -236,12 +247,12 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
               onChange={handleEmailChange}
               onBlur={handleEmailBlur}
               required
-              className={`w-full h-12 bg-[#080808]/50 border rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 px-4 pr-12 ${
+              className={`w-full h-12 bg-[#080808]/30 border rounded-xl font-body text-white placeholder-white/30 backdrop-blur-sm transition-all duration-300 focus:outline-none focus:ring-2 px-4 pr-12 ${
                 validationErrors?.contactEmail || emailValidationState === 'invalid'
-                  ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/30' 
+                  ? 'border-red-500/40 focus:border-red-500 focus:ring-red-500/20' 
                   : emailValidationState === 'valid'
-                    ? 'border-green-500/50 focus:border-[#C9A449] focus:ring-[#C9A449]/40'
-                    : 'border-white/20 hover:border-white/30 focus:border-[#C9A449] focus:ring-[#C9A449]/40'
+                    ? 'border-green-500/40 focus:border-[#C9A449]/60 focus:ring-[#C9A449]/30'
+                    : 'border-white/10 hover:border-white/20 focus:border-[#C9A449]/60 focus:ring-[#C9A449]/30'
               }`}
               placeholder="your.email@example.com"
             />
@@ -264,16 +275,24 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
           
           {/* Email validation feedback */}
           {validationErrors?.contactEmail && (
-            <p className="text-red-400 text-xs mt-2 font-body">{validationErrors.contactEmail}</p>
+            <p className="text-red-400 text-xs mt-2 font-body flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {validationErrors.contactEmail}
+            </p>
           )}
           {emailSuggestion && (
-            <div className="mt-2 p-2 bg-blue-900/20 border border-blue-500/30 rounded-md">
-              <p className="text-blue-300 text-xs font-body">
+            <div className="mt-2 p-2 bg-blue-900/10 backdrop-blur-sm border border-blue-500/20 rounded-lg shadow-sm">
+              <p className="text-blue-300 text-xs font-body flex items-center gap-2">
+                <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
                 Did you mean{" "}
                 <button
                   type="button"
                   onClick={applySuggestion}
-                  className="text-blue-400 hover:text-blue-300 underline font-medium"
+                  className="text-blue-400 hover:text-blue-300 underline font-medium transition-colors"
                 >
                   {emailSuggestion}
                 </button>
@@ -282,7 +301,12 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
             </div>
           )}
           {emailValidationState === 'valid' && !validationErrors?.contactEmail && (
-            <p className="text-green-400 text-xs mt-2 font-body">✓ Valid email address</p>
+            <p className="text-green-400 text-xs mt-2 font-body flex items-center gap-1">
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Valid email address
+            </p>
           )}
         </div>
         
@@ -298,7 +322,7 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
             onChange={handlePhoneChange}
             onPaste={handlePhonePaste}
             onBlur={() => setPhoneTouched(true)}
-            className="w-full h-12 bg-[#080808]/50 border border-white/20 hover:border-white/30 focus:border-[#C9A449] focus:ring-2 focus:ring-[#C9A449]/40 rounded-md font-body text-white placeholder-white/40 backdrop-blur-sm transition-all duration-300 focus:outline-none px-4"
+            className="w-full h-12 bg-[#080808]/30 border border-white/10 hover:border-white/20 focus:border-[#C9A449]/60 focus:ring-2 focus:ring-[#C9A449]/30 rounded-xl font-body text-white placeholder-white/30 backdrop-blur-sm transition-all duration-300 focus:outline-none px-4"
             placeholder="(123) 456-7890 or +1 (123) 456-7890"
             maxLength={18} // Increased for country code
           />
@@ -314,10 +338,10 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
           <span className="font-body text-white/90 font-medium text-sm tracking-wide">How should we contact you?</span>
         </label>
         <div className="flex flex-wrap gap-3 sm:gap-4 mt-1">
-          <label className={`flex items-center gap-3 px-4 sm:px-5 py-3 rounded-md border cursor-pointer transition-all duration-300 hover:border-[#C9A449]/50 ${
+          <label className={`flex items-center gap-3 px-4 sm:px-5 py-3 rounded-xl border cursor-pointer transition-all duration-300 hover:border-[#C9A449]/40 ${
             formData.contactPreference === 'email' 
-              ? 'bg-[#C9A449]/10 border-[#C9A449] shadow-md shadow-[#C9A449]/20' 
-              : 'bg-[#080808]/30 border-white/20 hover:bg-[#080808]/50'
+              ? 'bg-[#C9A449]/15 border-[#C9A449]/60 shadow-md shadow-[#C9A449]/10' 
+              : 'bg-[#080808]/20 border-white/10 hover:bg-[#080808]/30'
           }`}>
             <input 
               type="radio" 
@@ -339,10 +363,10 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
             <span className="font-body text-white/90 text-sm">Email</span>
           </label>
           
-          <label className={`flex items-center gap-3 px-4 sm:px-5 py-3 rounded-md border cursor-pointer transition-all duration-300 hover:border-[#C9A449]/50 ${
+          <label className={`flex items-center gap-3 px-4 sm:px-5 py-3 rounded-xl border cursor-pointer transition-all duration-300 hover:border-[#C9A449]/40 ${
             formData.contactPreference === 'phone' 
-              ? 'bg-[#C9A449]/10 border-[#C9A449] shadow-md shadow-[#C9A449]/20' 
-              : 'bg-[#080808]/30 border-white/20 hover:bg-[#080808]/50'
+              ? 'bg-[#C9A449]/15 border-[#C9A449]/60 shadow-md shadow-[#C9A449]/10' 
+              : 'bg-[#080808]/20 border-white/10 hover:bg-[#080808]/30'
           }`}>
             <input 
               type="radio" 
@@ -364,10 +388,10 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
             <span className="font-body text-white/90 text-sm">Phone</span>
           </label>
           
-          <label className={`flex items-center gap-3 px-4 sm:px-5 py-3 rounded-md border cursor-pointer transition-all duration-300 hover:border-[#C9A449]/50 ${
+          <label className={`flex items-center gap-3 px-4 sm:px-5 py-3 rounded-xl border cursor-pointer transition-all duration-300 hover:border-[#C9A449]/40 ${
             formData.contactPreference === 'either' 
-              ? 'bg-[#C9A449]/10 border-[#C9A449] shadow-md shadow-[#C9A449]/20' 
-              : 'bg-[#080808]/30 border-white/20 hover:bg-[#080808]/50'
+              ? 'bg-[#C9A449]/15 border-[#C9A449]/60 shadow-md shadow-[#C9A449]/10' 
+              : 'bg-[#080808]/20 border-white/10 hover:bg-[#080808]/30'
           }`}>
             <input 
               type="radio" 

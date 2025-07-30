@@ -490,10 +490,17 @@ export default class PaymentLinkService {
           paymentLinks: paymentLinks.map(link => ({
             id: link.id,
             url: link.url,
+            amount: link.amount,
+            status: link.status,
             createdAt: link.createdAt,
             updatedAt: link.updatedAt,
             version: 1,
             orderId: link.squareOrderId,
+            customer: link.customer ? {
+              id: link.customer.id,
+              name: link.customer.name,
+              email: link.customer.email
+            } : null,
             checkoutOptions: {
               redirectUrl: link.metadata?.redirectUrl
             }

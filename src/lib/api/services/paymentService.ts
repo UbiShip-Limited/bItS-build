@@ -12,6 +12,11 @@ export interface PaymentLink {
   status?: string;
   amount?: number;
   title?: string;
+  customer?: {
+    id: string;
+    name: string;
+    email?: string;
+  };
 }
 
 export interface CreatePaymentLinkParams {

@@ -7,6 +7,7 @@ import { ChevronRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Spotlight } from "./spotlight-new"
 import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants'
+import { smoothScrollTo } from '@/src/lib/utils/smoothScroll'
 
 
 export function TattooHero() {
@@ -97,18 +98,18 @@ export function TattooHero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: isLoaded ? 1 : 0 }}
         transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
-        className="relative z-20 flex flex-col items-center justify-center w-full h-screen max-h-screen overflow-hidden px-4 sm:px-6 md:px-8 py-16 sm:py-20"
+        className="relative z-20 flex flex-col items-center justify-center w-full h-screen max-h-screen overflow-hidden px-4 sm:px-6 md:px-8 py-8 sm:py-12"
       >
         {/* Main content */}
         <motion.div
-          className="relative w-full max-w-4xl mx-auto text-center flex flex-col items-center justify-center mt-8 sm:mt-12 md:mt-16"
+          className="relative w-full max-w-4xl mx-auto text-center flex flex-col items-center justify-center"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* Logo area - enhanced with glow effect */}
           <motion.div 
-            className="relative aspect-square w-[160px] h-[160px] sm:w-[200px] sm:h-[200px] md:w-[240px] md:h-[240px] lg:w-[280px] lg:h-[280px]" 
+            className="relative aspect-square w-[120px] h-[120px] sm:w-[160px] sm:h-[160px] md:w-[200px] md:h-[200px] lg:w-[240px] lg:h-[240px]" 
             variants={itemVariants}
           >
             {/* Ambient glow behind logo */}
@@ -162,7 +163,7 @@ export function TattooHero() {
 
           {/* Title - enhanced typography with gradient */}
           <motion.h1
-            className={`${typography.fontBrand} text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold ${typography.leadingTight} mt-6 sm:mt-8 mb-3 sm:mb-4 px-4`}
+            className={`${typography.fontBrand} text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold ${typography.leadingTight} mt-4 sm:mt-6 mb-2 sm:mb-3 px-4`}
             variants={itemVariants}
           >
             <span className="bg-gradient-to-r from-white via-white to-gold-500/80 bg-clip-text text-transparent">
@@ -175,19 +176,19 @@ export function TattooHero() {
             className={`${typography.textLg} sm:${typography.textXl} md:${typography.text2xl} ${colors.textProminent} max-w-3xl mx-auto mb-2 sm:mb-3 ${typography.trackingWide} px-6`}
             variants={itemVariants}
           >
-            Where artistry meets experience
+            Island ink, crafted with care
           </motion.p>
 
           <motion.p
-            className={`${typography.textSm} sm:${typography.paragraph} md:${typography.paragraphLarge} ${colors.textSecondary} max-w-2xl mx-auto mb-6 sm:mb-8 px-6`}
+            className={`${typography.textSm} sm:${typography.paragraph} md:${typography.paragraphLarge} ${colors.textSecondary} max-w-2xl mx-auto mb-4 sm:mb-6 px-6`}
             variants={itemVariants}
           >
-           Professional tattoo services in a private island setting.<br className="hidden sm:block" />
-           <span className={`${colors.textMuted} italic block mt-1 sm:mt-2`}>Quality work. Experienced artists. By appointment only.</span>
+           Custom tattoos in our peaceful island studio.<br className="hidden sm:block" />
+           <span className={`${colors.textMuted} italic block mt-1 sm:mt-2`}>Book your spot. Let's create something beautiful.</span>
           </motion.p>
 
           {/* Enhanced ornamental divider */}
-          <motion.div className="mb-6 sm:mb-8 flex items-center justify-center" variants={itemVariants}>
+          <motion.div className="mb-4 sm:mb-6 flex items-center justify-center" variants={itemVariants}>
             <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-gold-500/20" />
             <div className="mx-4 sm:mx-6 relative">
               <div className="w-3 h-3 bg-gold-500/40 rounded-full" />
@@ -206,19 +207,18 @@ export function TattooHero() {
                 className={`${components.button.base} ${components.button.sizes.medium} md:${components.button.sizes.large} bg-gold-500 text-obsidian hover:bg-gold-400 ${effects.transitionNormal} w-full sm:w-auto group shadow-lg hover:shadow-xl hover:shadow-gold-500/20`}
               >
                 <span className="relative z-10 flex items-center justify-center">
-                  Book Your Session
+                  Let's Get Started
                   <ChevronRight className="ml-2 h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
                 </span>
               </button>
             </Link>
 
-            <Link href="#gallery" className="w-full sm:w-auto">
-              <button
-                className={`${components.button.base} ${components.button.sizes.medium} md:${components.button.sizes.large} ${components.button.variants.secondary} w-full sm:w-auto`}
-              >
-                Explore Gallery
-              </button>
-            </Link>
+            <button
+              onClick={() => smoothScrollTo('gallery')}
+              className={`${components.button.base} ${components.button.sizes.medium} md:${components.button.sizes.large} ${components.button.variants.secondary} w-full sm:w-auto`}
+            >
+              See Our Work
+            </button>
           </motion.div>
         </motion.div>
 

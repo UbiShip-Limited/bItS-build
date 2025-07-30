@@ -41,49 +41,42 @@ const TattooRequestPage: React.FC = () => {
       {/* Enhanced structured data for this page */}
       <StructuredData type="tattooRequest" />
       
-      <div className="min-h-screen bg-obsidian py-16 px-6 relative overflow-hidden">
-        {/* Ornamental background elements */}
+      <div className="min-h-screen bg-gradient-to-b from-[#080808] via-[#0a0a0a] to-[#080808] py-16 px-6 relative overflow-hidden">
+        {/* Subtle ambient glow effects */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute top-20 left-10 w-32 h-32 border border-gold/20 rotate-45 hidden md:block"></div>
-          <div className="absolute bottom-20 right-10 w-24 h-24 border border-gold/30 rotate-12 hidden md:block"></div>
-          <div className="absolute top-1/2 left-20 w-16 h-16 border border-gold/15 -rotate-12 hidden lg:block"></div>
-          <div className="absolute top-32 right-32 w-20 h-20 border border-gold/25 rotate-45 hidden lg:block"></div>
+          <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-gold-500/5 rounded-full blur-[100px]"></div>
+          <div className="absolute bottom-1/3 right-1/4 w-[300px] h-[300px] bg-gold-500/3 rounded-full blur-[80px]"></div>
         </div>
         
-        {/* Central ornamental divider */}
-        <div className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 z-0 hidden sm:block">
-          <div className="h-full w-full bg-gradient-to-b from-transparent via-gold/30 to-transparent"></div>
+        {/* Subtle central divider */}
+        <div className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 z-0 hidden lg:block">
+          <div className="h-full w-full bg-gradient-to-b from-transparent via-gold-500/10 to-transparent"></div>
         </div>
         
         <div className="max-w-4xl mx-auto mb-8 text-center relative z-10">
-          {/* Ornamental line above title */}
-          <div className="mb-8">
-            <div className="flex items-center justify-center">
-              <div className="w-16 sm:w-32 h-px bg-gradient-to-r from-transparent via-gold/80 to-gold/50"></div>
-              <div className="mx-4 flex items-center justify-center w-6 h-6">
-                <div className="w-4 h-4 border border-gold/80 rotate-45"></div>
-                <div className="absolute w-2 h-2 bg-gold/30 rotate-45"></div>
-              </div>
-              <div className="w-16 sm:w-32 h-px bg-gradient-to-l from-transparent via-gold/80 to-gold/50"></div>
+          {/* Simplified ornamental divider above title */}
+          <div className="mb-6 flex items-center justify-center">
+            <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-gold-500/20" />
+            <div className="mx-4 sm:mx-6 relative">
+              <div className="w-3 h-3 bg-gold-500/40 rounded-full" />
+              <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-md scale-[3] animate-pulse" />
             </div>
+            <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-l from-transparent via-gold-500/40 to-gold-500/20" />
           </div>
           
-          <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl mb-6 text-white tracking-wide uppercase">Request a Tattoo</h1>
+          <h1 className="font-body text-5xl sm:text-6xl md:text-7xl lg:text-7xl font-semibold leading-tight mb-4 text-white">Start Your Journey</h1>
           
-          {/* Ornamental line below title */}
-          <div className="mb-8">
-            <div className="flex items-center justify-center">
-              <div className="w-20 sm:w-36 h-px bg-gradient-to-r from-transparent via-gold/80 to-gold/50"></div>
-              <div className="mx-4 relative flex items-center justify-center">
-                <span className="text-gold text-sm z-10">✦</span>
-                <span className="absolute transform scale-150 text-gold/20 text-sm">✦</span>
-              </div>
-              <div className="w-20 sm:w-36 h-px bg-gradient-to-l from-transparent via-gold/80 to-gold/50"></div>
+          {/* Subtle dots divider below title */}
+          <div className="mb-6 flex items-center justify-center gap-4">
+            <div className="w-1.5 h-1.5 bg-gold-500/20 rounded-full"></div>
+            <div className="w-2 h-2 bg-gold-500/30 rounded-full relative">
+              <div className="absolute inset-0 bg-gold-500/10 rounded-full blur-xs scale-150" />
             </div>
+            <div className="w-1.5 h-1.5 bg-gold-500/20 rounded-full"></div>
           </div>
           
-          <p className="text-white/80 max-w-2xl mx-auto font-body text-lg leading-relaxed px-4">
-            Our artists will review your request and contact you to discuss details, pricing, and scheduling. We look forward to bringing your vision to life.
+          <p className="text-white/70 max-w-2xl mx-auto font-body text-lg sm:text-xl leading-relaxed px-4">
+            Share your vision with us. We'll craft something meaningful together.
           </p>
         </div>
         

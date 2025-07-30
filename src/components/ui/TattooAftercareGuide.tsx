@@ -27,8 +27,8 @@ export function TattooAftercareGuide() {
           Tattoo Aftercare Guide
         </h2>
         <p className={`${typography.paragraphLarge} text-obsidian/70 dark:${colors.textSecondary} max-w-3xl mx-auto ${typography.fontLight} ${typography.leadingRelaxed}`}>
-          Proper aftercare is essential for the healing and longevity of your new tattoo. 
-          Follow these essential steps to ensure your tattoo heals beautifully and maintains its vibrant appearance.
+          Taking care of your new tattoo is pretty simple. Here's what you need to know 
+          to keep it looking fresh while it heals up.
         </p>
       </motion.div>
 

@@ -2,7 +2,7 @@ export default function SettingsPage() {
   return (
     <div>
       <div className="mb-8 pb-6 border-b border-[#1a1a1a]">
-        <h1 className="text-3xl font-heading font-bold text-white mb-2 tracking-wide">Settings</h1>
+        <h1 className="text-4xl sm:text-5xl font-heading font-bold text-white mb-2 tracking-wide">Settings</h1>
         <p className="text-gray-400 text-lg">Manage your tattoo shop settings</p>
       </div>
       

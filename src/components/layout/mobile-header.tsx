@@ -3,6 +3,8 @@ import Link from "next/link";
 import { X, Instagram, AtSign } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/src/components/ui/button";
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
+import { handleNavClick } from '@/src/lib/utils/smoothScroll';
 
 interface MobileHeaderProps {
   isMenuOpen: boolean;
@@ -55,29 +57,31 @@ export function MobileHeader({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) {
           data-testid="mobile-header"
         >
           {/* Top accent with gold line */}
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gold/20 via-gold to-gold/20"></div>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gold-500/20 via-gold-500 to-gold-500/20"></div>
       
           <div ref={menuRef} className="container mx-auto px-8 pt-24 pb-8 flex flex-col h-full">
             <nav className="flex flex-col space-y-8 items-center text-center">
           {[
             { name: "Home", path: "/" },
-            { name: "Artists", path: "/artists" },
-            { name: "Gallery", path: "/gallery" },
-            { name: "Services", path: "/services" },
+            { name: "Artists", path: "#artists" },
+            { name: "Gallery", path: "#gallery" },
+            { name: "Services", path: "#services" },
             { name: "FAQ", path: "#faq" },
             { name: "Aftercare", path: "#aftercare" },
-            { name: "About", path: "/about" },
+            { name: "About", path: "#about" },
             { name: "Contact", path: "/contact" },
           ].map((item) => (
             <Link 
               key={item.name} 
               href={item.path}
-              className="font-heading text-2xl text-white hover:text-gold transition-all duration-300 relative group tracking-[0.02em]"
-              onClick={() => setIsMenuOpen(false)}
+              className="font-heading text-2xl text-white hover:text-gold-500 transition-all duration-300 relative group tracking-[0.02em]"
+              onClick={(e) => {
+                handleNavClick(e, item.path, () => setIsMenuOpen(false));
+              }}
             >
               {item.name}
               {/* Enhanced decorative element */}
-              <div className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-gradient-to-r from-transparent via-gold to-transparent group-hover:w-full transition-all duration-300 -translate-x-1/2"></div>
+              <div className="absolute -bottom-1 left-1/2 w-0 h-0.5 bg-gradient-to-r from-transparent via-gold-500 to-transparent group-hover:w-full transition-all duration-300 -translate-x-1/2"></div>
             </Link>
           ))}
           
@@ -95,15 +99,15 @@ export function MobileHeader({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) {
 
             {/* Elegant divider */}
             <div className="my-12 flex items-center justify-center">
-              <div className="w-20 h-px bg-gradient-to-r from-transparent to-gold"></div>
-              <div className="mx-4 w-3 h-3 border-2 border-gold rotate-45"></div>
-              <div className="w-20 h-px bg-gradient-to-l from-transparent to-gold"></div>
+              <div className="w-20 h-px bg-gradient-to-r from-transparent to-gold-500"></div>
+              <div className="mx-4 w-3 h-3 border-2 border-gold-500 rotate-45"></div>
+              <div className="w-20 h-px bg-gradient-to-l from-transparent to-gold-500"></div>
             </div>
 
             {/* Close Button - Now floating */}
             <button
               onClick={() => setIsMenuOpen(false)}
-              className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full border-2 border-white/20 text-white hover:border-gold hover:text-gold transition-all duration-300 hover:rotate-90"
+              className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full border-2 border-white/20 text-white hover:border-gold-500-500 hover:text-gold-500 transition-all duration-300 hover:rotate-90"
               aria-label="Close menu"
             >
               <X size={24} />
@@ -115,20 +119,20 @@ export function MobileHeader({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) {
                   href="https://instagram.com/bowenislandtattoo" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="w-12 h-12 p-0 rounded-full border border-white/20 hover:border-gold text-white hover:text-gold transition-all duration-300 flex items-center justify-center"
+                  className="w-12 h-12 p-0 rounded-full border border-white/20 hover:border-gold-500-500 text-white hover:text-gold-500 transition-all duration-300 flex items-center justify-center"
                 >
                   <Instagram size={20} />
                 </a>
                 <a 
                   href="mailto:info@bowenislandtattoo.com"
-                  className="w-12 h-12 p-0 rounded-full border border-white/20 hover:border-gold text-white hover:text-gold transition-all duration-300 flex items-center justify-center"
+                  className="w-12 h-12 p-0 rounded-full border border-white/20 hover:border-gold-500-500 text-white hover:text-gold-500 transition-all duration-300 flex items-center justify-center"
                 >
                   <AtSign size={20} />
                 </a>
               </div>
               <div className="text-center text-white/70 text-sm font-body">
                 <p>Bowen Island, BC, Canada</p>
-                <p className="mt-2 text-gold">By Appointment Only</p>
+                <p className="mt-2 text-gold-500">By Appointment Only</p>
               </div>
             </div>
           </div>

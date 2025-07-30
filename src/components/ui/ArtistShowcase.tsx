@@ -30,7 +30,7 @@ export function ArtistShowcase() {
   }, [])
 
   return (
-    <section ref={sectionRef} className="min-h-screen bg-gradient-to-b from-obsidian via-[#0f0f0f] to-obsidian text-white relative overflow-hidden">
+    <section id="artists" ref={sectionRef} className="min-h-screen bg-gradient-to-b from-obsidian via-[#0f0f0f] to-obsidian text-white relative overflow-hidden">
       {/* Refined background elements */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-radial-soft from-gold-500/3 via-transparent to-transparent"></div>

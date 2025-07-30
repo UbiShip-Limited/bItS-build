@@ -37,7 +37,7 @@ export function AboutBowenIslandSection() {
   }, [])
 
   return (
-    <div ref={sectionRef} className="bg-gradient-to-b from-obsidian via-obsidian/95 to-obsidian text-white relative min-h-screen">
+    <div id="about" ref={sectionRef} className="bg-gradient-to-b from-obsidian via-obsidian/95 to-obsidian text-white relative min-h-screen">
       {/* Refined background elements */}
       <div className="absolute inset-0 z-0">
         <div className="absolute top-1/4 left-1/12 w-32 h-32 opacity-[0.02]">
@@ -73,7 +73,7 @@ export function AboutBowenIslandSection() {
             About Bowen Island Tattoo
           </h2>
           <p className={`${typography.h3} ${colors.textAccentSecondary} ${typography.trackingWide}`}>
-            Professional tattooing in a private island setting
+            Island ink studio
           </p>
         </motion.div>
       </div>
@@ -123,14 +123,14 @@ export function AboutBowenIslandSection() {
             </div>
 
             <p className={`text-lg lg:text-xl ${colors.textSecondary} mb-6 ${typography.leadingRelaxed}`}>
-              Located on the peaceful Bowen Island, our private studio offers a unique tattooing experience 
-              away from the busy city environment. We operate by appointment only, ensuring each client 
-              receives focused attention and personalized service in a calm, professional setting.
+              Tucked away on Bowen Island, our studio is the perfect escape from city life. 
+              We're appointment-only, which means when you're here, it's all about you. 
+              No rush, no crowds – just a chill space to get your ink done right.
             </p>
-            <p className={`text-base lg:text-lg ${colors.textMuted} italic ${typography.fontLight} ${typography.leadingRelaxed}`}>
-              Every aspect of our studio has been designed with your comfort and privacy in mind. 
-              Our appointment-only approach allows us to provide the time and attention your tattoo 
-              deserves, creating an experience that's both professional and personal.
+            <p className={`text-lg lg:text-xl ${colors.textMuted} italic ${typography.fontLight} ${typography.leadingRelaxed}`}>
+              We've set things up so you feel comfortable from the moment you walk in. 
+              Your appointment is your time – we're here to focus on you and your tattoo, 
+              making sure everything's just how you want it.
             </p>
           </motion.div>
         </div>
@@ -179,14 +179,14 @@ export function AboutBowenIslandSection() {
             </div>
 
             <p className={`text-lg lg:text-xl ${colors.textSecondary} mb-6 ${typography.leadingRelaxed}`}>
-              Just a short ferry ride from Vancouver, Bowen Island provides a refreshing escape from 
-              urban life. The island's natural beauty and tranquil atmosphere create an ideal environment 
-              for thoughtful, deliberate tattooing where both artist and client can focus completely.
+              Hop on the ferry from Horseshoe Bay and in 20 minutes you're here. 
+              The island's chill vibe and natural beauty make it the perfect place to get tattooed. 
+              No distractions, no rush – just you, your artist, and your new ink.
             </p>
-            <p className={`text-base lg:text-lg ${colors.textMuted} italic ${typography.fontLight} ${typography.leadingRelaxed}`}>
-              The journey to our studio becomes part of the experience. By the time you arrive, 
-              you'll find yourself in a mindset that's perfect for creating meaningful, lasting art. 
-              It's this unique setting that sets us apart from traditional tattoo studios.
+            <p className={`text-lg lg:text-xl ${colors.textMuted} italic ${typography.fontLight} ${typography.leadingRelaxed}`}>
+              The ferry ride is actually part of the whole thing. By the time you get here, 
+              you're already feeling more relaxed. It's a different vibe from city shops – 
+              and that's exactly why people love coming here.
             </p>
           </motion.div>
         </div>
@@ -235,14 +235,14 @@ export function AboutBowenIslandSection() {
             </div>
 
             <p className={`text-lg lg:text-xl ${colors.textSecondary} mb-6 ${typography.leadingRelaxed}`}>
-              At Bowen Island Tattoo, we combine years of professional experience with modern techniques 
-              and the highest quality materials. Our commitment to excellence means taking the time to 
-              ensure every piece meets both our standards and your vision.
+              We've been doing this for over 15 years. Good ink, clean tools, and taking our time 
+              – that's our thing. We'll work with you to make sure your tattoo is exactly 
+              what you want, no compromises.
             </p>
-            <p className={`text-base lg:text-lg ${colors.textMuted} italic ${typography.fontLight} ${typography.leadingRelaxed}`}>
-              We believe in quality over quantity. Each tattoo receives the attention it deserves, 
-              from initial consultation through final healing. This approach has built our reputation 
-              and keeps clients coming back for additional work.
+            <p className={`text-lg lg:text-xl ${colors.textMuted} italic ${typography.fontLight} ${typography.leadingRelaxed}`}>
+              We'd rather do one great tattoo than rush through five. From your first chat 
+              to your healed tattoo, we're here for you. That's why people keep coming back 
+              – and bringing their friends.
             </p>
 
             <div className="mt-8">
@@ -250,7 +250,7 @@ export function AboutBowenIslandSection() {
                 href="/tattooRequest" 
                 className={`group ${components.button.base} ${components.button.variants.secondary} ${components.button.sizes.large} ${typography.trackingWide} inline-block`}
               >
-                <span className="relative z-10">Schedule Consultation</span>
+                <span className="relative z-10">Let's Chat</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gold-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-600"></div>
               </Link>
             </div>

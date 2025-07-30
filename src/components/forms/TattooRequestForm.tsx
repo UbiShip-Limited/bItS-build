@@ -130,9 +130,9 @@ const TattooRequestForm: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto mb-24 relative">
-      {/* Ornamental background for form */}
-      <div className="absolute inset-0 bg-obsidian/95 backdrop-blur-sm rounded-lg border border-gold/30 shadow-elegant"></div>
-      <div className="absolute inset-0 bg-gradient-to-br from-gold/5 via-transparent to-gold/10 rounded-lg"></div>
+      {/* Subtle card background with refined styling */}
+      <div className="absolute inset-0 bg-obsidian/95 backdrop-blur-sm rounded-2xl border border-gold-500/10 shadow-[0_1px_3px_rgba(0,0,0,0.1)]"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-gold-500/5 via-transparent to-transparent rounded-2xl"></div>
       
       {/* Saved Data Restoration Prompt */}
       {showSavedDataPrompt && (
@@ -175,30 +175,19 @@ const TattooRequestForm: React.FC = () => {
       
       <form onSubmit={handleSubmit} className="relative z-10 overflow-hidden rounded-lg">
         <div className="p-8 sm:p-10 md:p-12">
-          {/* Form Header with ornamental styling */}
+          {/* Form Header with refined styling */}
           <div className="text-center mb-12">
-            <div className="flex items-center justify-center mb-6">
-              <div className="w-12 sm:w-16 h-px bg-gradient-to-r from-transparent via-gold/60 to-gold/40"></div>
-              <div className="mx-3 sm:mx-4 flex items-center justify-center w-5 h-5">
-                <div className="w-3 h-3 border border-gold/60 rotate-45"></div>
-                <div className="absolute w-1.5 h-1.5 bg-gold/20 rotate-45"></div>
-              </div>
-              <div className="w-12 sm:w-16 h-px bg-gradient-to-l from-transparent via-gold/60 to-gold/40"></div>
+            <h2 className="font-body text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight mb-4 text-white">Tell Us Your Story</h2>
+            
+            {/* Simple dots divider */}
+            <div className="mb-6 flex items-center justify-center gap-3">
+              <div className="w-1 h-1 bg-gold-500/20 rounded-full"></div>
+              <div className="w-1.5 h-1.5 bg-gold-500/30 rounded-full"></div>
+              <div className="w-1 h-1 bg-gold-500/20 rounded-full"></div>
             </div>
             
-            <h2 className="font-heading text-2xl sm:text-3xl mb-4 text-white tracking-wide uppercase">Tattoo Request Form</h2>
-            
-            <div className="flex items-center justify-center mb-8">
-              <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-gold/60 to-gold/40"></div>
-              <div className="mx-3 sm:mx-4 relative flex items-center justify-center">
-                <span className="text-gold/80 text-xs z-10">✦</span>
-                <span className="absolute transform scale-125 text-gold/20 text-xs">✦</span>
-              </div>
-              <div className="w-16 sm:w-20 h-px bg-gradient-to-l from-transparent via-gold/60 to-gold/40"></div>
-            </div>
-            
-            <p className="text-white/70 mb-8 max-w-2xl mx-auto font-body leading-relaxed px-4">
-              Fill out the form below to request a custom tattoo design. Our artists will review your request and get back to you within 2-3 business days.
+            <p className="text-white/70 mb-8 max-w-2xl mx-auto font-body text-base sm:text-lg leading-relaxed px-4">
+              Every tattoo has a story. Share yours below, and we'll connect within 2-3 days to begin bringing it to life.
             </p>
 
             {/* Auto-save indicator */}
@@ -286,25 +275,6 @@ const TattooRequestForm: React.FC = () => {
           
           {/* Navigation Buttons */}
           <div className="mt-12 flex justify-between items-center">
-            {/* Debug Panel */}
-            <div className="fixed top-4 left-4 bg-red-900/80 text-white p-3 rounded text-xs font-mono z-50 max-w-sm">
-              <div className="font-bold text-yellow-300 mb-2">Navigation Debug</div>
-              <div>Current Step: {step}</div>
-              <div>Total Steps: {totalSteps}</div>
-              <div>step &lt; totalSteps: {(step < totalSteps).toString()}</div>
-              <div>Should show Next: {step < totalSteps ? 'YES' : 'NO'}</div>
-              <div>Should show Submit: {step >= totalSteps ? 'YES' : 'NO'}</div>
-              <div className="mt-2 text-green-300">
-                Validation: {validateCurrentStep() ? 'PASS' : 'FAIL'}
-              </div>
-              <div className="mt-2 border-t pt-2">
-                <div className="text-orange-300">Submit Button State:</div>
-                <div>isLoading: {isLoading.toString()}</div>
-                <div>isUploading: {isUploading.toString()}</div>
-                <div>Button Disabled: {(isLoading || isUploading).toString()}</div>
-                <div>Images Count: {formData.referenceImages?.length || 0}</div>
-              </div>
-            </div>
 
             {step > 1 ? (
               <Button

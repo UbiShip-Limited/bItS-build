@@ -9,18 +9,18 @@ export function MobileCard({ section, index, isLoading, sectionsLength }: Sectio
   return (
     <motion.div 
       key={section.id} 
-      className="relative mb-8"
+      className="relative mb-8 sm:mb-12"
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.5, delay: index * 0.08 }}
     >
-      <div className="bg-[#080808] border border-[#C9A449]/20 rounded-lg overflow-hidden group hover:border-[#C9A449]/40 transition-all duration-300 shadow-xl">
+      <div className="bg-gradient-to-br from-obsidian/90 to-obsidian/80 backdrop-blur-sm border border-gold-500/15 rounded-3xl overflow-hidden group hover:border-gold-500/25 transition-all duration-800 ease-smooth shadow-refined hover:shadow-refined-lg">
         {/* Mobile Image Section - Proper aspect ratio container */}
         <div className="relative aspect-[4/3] overflow-hidden">
           {isLoading ? (
-            <div className="absolute inset-0 bg-[#080808] flex items-center justify-center">
-              <div className="w-6 h-6 border-2 border-[#C9A449]/30 border-t-[#C9A449] rounded-full animate-spin"></div>
+            <div className="absolute inset-0 bg-obsidian flex items-center justify-center">
+              <div className="w-6 h-6 border-2 border-gold-500/30 border-t-gold-500 rounded-full animate-spin"></div>
             </div>
           ) : (
             <Image
@@ -28,44 +28,37 @@ export function MobileCard({ section, index, isLoading, sectionsLength }: Sectio
               alt={section.alt}
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover brightness-50 group-hover:brightness-60 transition-all duration-300"
+              className="object-cover brightness-90 group-hover:brightness-95 transition-all duration-800 ease-smooth"
               priority={index === 0}
             />
           )}
-          {/* Simplified overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#080808]/80 via-[#C9A449]/5 to-transparent group-hover:via-[#C9A449]/8 transition-all duration-300"></div>
+          {/* Refined overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-t from-obsidian/80 via-gold-500/3 to-transparent group-hover:via-gold-500/5 transition-all duration-800"></div>
           
-          {/* Simplified mobile ornamental elements */}
-          <div className="absolute top-3 left-3">
-            <div className="w-6 h-6 border border-[#C9A449]/50 rotate-45 relative">
-              <div className="absolute inset-1 border border-[#C9A449]/30 rotate-45"></div>
+          {/* Enhanced mobile ornamental elements */}
+          <div className="absolute top-6 left-6">
+            <div className="w-12 h-12 border border-gold-500/15 rounded-2xl rounded-tl-3xl relative">
+              <div className="absolute inset-3 bg-gold-500/8 rounded-full blur-md"></div>
             </div>
           </div>
-          <div className="absolute top-3 right-3">
-            <div className="w-4 h-4 border border-[#C9A449]/40 rotate-12">
-              <div className="absolute top-1/2 left-1/2 w-1 h-1 bg-[#C9A449]/60 rotate-45 -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute bottom-6 right-6">
+            <div className="w-2.5 h-2.5 bg-gold-500/25 rounded-full relative">
+              <div className="absolute inset-0 bg-gold-500/15 rounded-full blur-md scale-[2]"></div>
             </div>
           </div>
 
-          {/* Artist credit overlay - better positioned */}
+          {/* Artist credit overlay - mobile-optimized positioning */}
           {section.artist && section.artist !== "Bowen Island Tattoo" && (
-            <div className="absolute bottom-2 left-3 text-xs text-[#C9A449]/70 font-body tracking-wide">
+            <div className="absolute bottom-4 left-4 text-xs text-gold-500/60 font-body bg-obsidian/75 px-3 py-1.5 rounded-lg backdrop-blur-xl border border-gold-500/12">
               Artist: {section.artist}
             </div>
           )}
-
-          {/* Accent label overlay - better mobile sizing */}
-          <div className="absolute bottom-2 right-3">
-            <div className="inline-block bg-[#C9A449]/10 border border-[#C9A449]/50 px-2 py-1 text-xs font-semibold text-[#C9A449] uppercase tracking-[0.02em] font-body backdrop-blur-sm rounded-sm">
-              {section.accent}
-            </div>
-          </div>
         </div>
 
-        {/* Mobile Content Section - better spacing */}
-        <div className="relative p-6 flex flex-col justify-center min-h-[280px]">
-          {/* Simplified background pattern */}
-          <div className="absolute top-0 right-0 w-12 h-12 opacity-[0.02]">
+        {/* Mobile Content Section - optimized mobile spacing */}
+        <div className="relative px-6 py-8 sm:px-8 sm:py-10 flex flex-col justify-center">
+          {/* Subtle background pattern */}
+          <div className="absolute top-0 right-0 w-12 h-12 opacity-[0.005]">
             <Image 
               src="/images/bowen-logo.svg" 
               alt="" 
@@ -75,43 +68,42 @@ export function MobileCard({ section, index, isLoading, sectionsLength }: Sectio
             />
           </div>
 
-          {/* Simplified corner elements */}
+          {/* Minimal corner elements for mobile */}
           <div className="absolute top-3 right-3">
-            <div className="w-3 h-3 border-t border-r border-[#C9A449]/30"></div>
+            <div className="w-6 h-6 border-t border-r border-gold-500/10 rounded-tr-xl"></div>
           </div>
           <div className="absolute bottom-3 left-3">
-            <div className="w-3 h-3 border-b border-l border-[#C9A449]/30"></div>
+            <div className="w-6 h-6 border-b border-l border-gold-500/10 rounded-bl-xl"></div>
           </div>
 
-          {/* Content */}
-          <div className="relative z-10 flex flex-col justify-center h-full">
-            {/* Simplified ornamental line */}
-            <div className="flex items-center mb-6">
-              <div className="w-10 h-[0.5px] bg-gradient-to-r from-transparent to-[#C9A449]/60"></div>
-              <div className="mx-3">
-                <span className="text-[#C9A449] text-sm">✦</span>
+          {/* Content - mobile-optimized alignment */}
+          <div className="relative z-10 text-center sm:text-left">
+            {/* Simplified mobile ornamental line */}
+            <div className="flex items-center justify-center sm:justify-start mb-6">
+              <div className="w-12 h-px bg-gradient-to-r from-gold-500/30 to-transparent"></div>
+              <div className="w-1.5 h-1.5 bg-gold-500/20 rounded-full mx-3 relative">
+                <div className="absolute inset-0 bg-gold-500/10 rounded-full blur-xs scale-125"></div>
               </div>
-              <div className="w-10 h-[0.5px] bg-gradient-to-l from-transparent to-[#C9A449]/60"></div>
+              <div className="w-12 h-px bg-gradient-to-l from-gold-500/30 to-transparent"></div>
             </div>
 
-            {/* Main title - Explicitly set Playfair Display */}
-            <h2 className="text-2xl mb-3 text-white leading-tight font-semibold tracking-tight" style={{ fontFamily: 'Playfair Display, serif' }}>
+            {/* Mobile-optimized accent label */}
+            <div className="inline-block bg-gold-500/8 border border-gold-500/20 px-4 py-2 text-sm font-medium text-gold-500/85 mb-5 tracking-[0.02em] rounded-lg backdrop-blur-sm font-body">
+              {section.accent}
+            </div>
+
+            {/* Mobile-optimized main title */}
+            <h2 className="font-body text-2xl sm:text-3xl mb-4 text-white leading-tight font-semibold">
               {section.title}
             </h2>
 
-            {/* Subtitle - Explicitly set Playfair Display */}
-            <h3 className="text-sm text-[#C9A449]/80 mb-4 uppercase tracking-[0.02em] font-medium" style={{ fontFamily: 'Playfair Display, serif' }}>
+            {/* Mobile-optimized subtitle */}
+            <h3 className="font-body text-base sm:text-lg text-gold-500/75 mb-4 tracking-[0.02em] font-light">
               {section.subtitle}
             </h3>
 
-            {/* Simplified divider */}
-            <div className="flex items-center mb-5">
-              <div className="w-8 h-[0.5px] bg-gradient-to-r from-[#C9A449]/80 to-[#C9A449]/20"></div>
-              <div className="w-1.5 h-1.5 border border-[#C9A449]/50 rotate-45 mx-3"></div>
-            </div>
-
-            {/* Description - Explicitly set Playfair Display */}
-            <p className="text-base text-white/80 leading-relaxed italic font-normal tracking-[0]" style={{ fontFamily: 'Playfair Display, serif' }}>
+            {/* Mobile-optimized description */}
+            <p className="font-body text-lg text-white/70 leading-relaxed italic font-light mx-auto sm:mx-0 max-w-xs sm:max-w-sm">
               {section.description}
             </p>
             
@@ -119,12 +111,14 @@ export function MobileCard({ section, index, isLoading, sectionsLength }: Sectio
         </div>
       </div>
       
-      {/* Mobile card separator line - simplified */}
+      {/* Mobile-optimized card separator line */}
       {index < sectionsLength - 1 && (
-        <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 flex items-center">
-          <div className="w-8 h-[0.5px] bg-gradient-to-r from-transparent via-[#C9A449]/30 to-transparent"></div>
-          <div className="mx-2 w-1 h-1 border border-[#C9A449]/40 rotate-45"></div>
-          <div className="w-8 h-[0.5px] bg-gradient-to-l from-transparent via-[#C9A449]/30 to-transparent"></div>
+        <div className="absolute -bottom-4 sm:-bottom-6 left-1/2 transform -translate-x-1/2 flex items-center">
+          <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-gold-500/12 to-transparent"></div>
+          <div className="mx-3 sm:mx-4 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gold-500/20 rounded-full relative">
+            <div className="absolute inset-0 bg-gold-500/10 rounded-full blur-sm scale-[1.5]"></div>
+          </div>
+          <div className="w-16 sm:w-20 h-px bg-gradient-to-l from-transparent via-gold-500/12 to-transparent"></div>
         </div>
       )}
     </motion.div>

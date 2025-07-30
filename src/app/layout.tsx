@@ -119,8 +119,9 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         
-        {/* DNS prefetch for faster resource loading */}
+        {/* DNS prefetch and preconnect for faster resource loading */}
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://res.cloudinary.com" crossOrigin="" />
         
         {/* Touch Icons for mobile home screen */}
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />

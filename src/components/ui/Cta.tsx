@@ -19,13 +19,13 @@ interface CtaSectionProps {
 }
 
 export function CtaSection({ 
-  title = "Ready for your next tattoo?",
-  description = "Experience the difference of professional tattooing in a private island setting. We work with clients who value quality craftsmanship and are ready to invest in artwork that will last a lifetime.",
-  primaryButtonText = "Book Consultation",
+  title = "Ready to get inked?",
+  description = "Come visit us on Bowen Island. We're all about creating tattoos you'll love forever – no rush, no stress, just good vibes and great ink.",
+  primaryButtonText = "Let's Talk",
   primaryButtonHref = "/tattooRequest",
-  secondaryButtonText = "Contact Studio", 
+  secondaryButtonText = "Get in Touch", 
   secondaryButtonHref = "/contact",
-  tagline = "Professional artists • Private studio • Quality focused",
+  tagline = "Island artists • Chill studio • Quality ink",
   className = ""
 }: CtaSectionProps) {
   
@@ -87,7 +87,7 @@ export function CtaSection({
             transition={{ duration: 0.6, delay: 0.1 }}
             className={`${
               isMobile 
-                ? `${typography.text2xl} ${typography.leadingTight}` 
+                ? `${typography.text3xl} ${typography.leadingTight}` 
                 : typography.h1
             } ${colors.textPrimary} mb-6 md:mb-8 px-2`}
           >
@@ -100,7 +100,7 @@ export function CtaSection({
             transition={{ duration: 0.6, delay: 0.2 }}
             className={`${colors.textSecondary} max-w-2xl mx-auto mb-8 md:mb-10 ${
               isMobile 
-                ? `${typography.paragraph} px-4` 
+                ? `${typography.textLg} px-4 ${typography.leadingRelaxed}` 
                 : typography.paragraphLarge
             }`}
           >
@@ -144,7 +144,7 @@ export function CtaSection({
             transition={{ duration: 0.6, delay: 0.4 }}
             className={`${colors.textAccentMuted} italic ${typography.fontLight} ${
               isMobile 
-                ? `${typography.textXs} px-2` 
+                ? `${typography.textSm} px-2` 
                 : typography.textSm
             }`}
           >

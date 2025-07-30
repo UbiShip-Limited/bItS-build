@@ -149,7 +149,7 @@ export default function LoginPage() {
                 </div>
 
                 {/* Title with sophisticated typography */}
-                <h1 className="font-heading text-2xl md:text-3xl tracking-wide text-white mb-2 uppercase">
+                <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl tracking-wide text-white mb-2 uppercase">
                   Bowen Island Tattoo
                 </h1>
                 <p className="font-body text-[#FFFFFF]/70 italic">

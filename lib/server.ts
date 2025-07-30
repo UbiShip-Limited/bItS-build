@@ -248,12 +248,15 @@ const start = async (fastifyInstance) => {
 
 // Function to set up automatic Square sync
 const setupSquareSync = (fastifyInstance) => {
-  // Check if Square sync is enabled
+  // Check if Square sync is disabled (for soft launch or testing)
+  const DISABLE_SQUARE_SYNC = process.env.DISABLE_SQUARE_SYNC === 'true';
+  // Also support the older ENABLE_AUTO_SQUARE_SYNC flag
   const ENABLE_AUTO_SQUARE_SYNC = process.env.ENABLE_AUTO_SQUARE_SYNC === 'true';
   const SQUARE_SYNC_INTERVAL = parseInt(process.env.SQUARE_SYNC_INTERVAL || '900000'); // Default 15 minutes
   
-  if (!ENABLE_AUTO_SQUARE_SYNC) {
-    fastifyInstance.log.info('Automatic Square sync is disabled');
+  // Sync is disabled if DISABLE_SQUARE_SYNC is true OR if ENABLE_AUTO_SQUARE_SYNC is explicitly false
+  if (DISABLE_SQUARE_SYNC || (!ENABLE_AUTO_SQUARE_SYNC && process.env.ENABLE_AUTO_SQUARE_SYNC !== undefined)) {
+    fastifyInstance.log.info('Automatic Square sync is disabled (set DISABLE_SQUARE_SYNC=false or ENABLE_AUTO_SQUARE_SYNC=true to enable)');
     return;
   }
   

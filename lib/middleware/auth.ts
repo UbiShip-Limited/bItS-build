@@ -148,7 +148,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
             request.log.error('Database reconnection failed:', reconnectError);
             
             // If this is a critical connection error, fail fast
-            if (reconnectError.name === 'PrismaClientInitializationError') {
+            if ((reconnectError as any).name === 'PrismaClientInitializationError') {
               throw new Error(`Database unavailable: ${reconnectError.message}`);
             }
           }
@@ -166,12 +166,12 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
         request.log.error(dbError, `Database query failed (attempt ${retryCount}/${maxRetries})`);
         
         // Enhanced error classification
-        const isConnectionError = dbError.name === 'PrismaClientInitializationError' || 
-                                  dbError.name === 'PrismaClientKnownRequestError' ||
-                                  dbError.message.includes('database server') ||
-                                  dbError.message.includes('connection') ||
-                                  dbError.message.includes('timeout') ||
-                                  dbError.message.includes('pooler.supabase.com');
+        const isConnectionError = (dbError as any).name === 'PrismaClientInitializationError' || 
+                                  (dbError as any).name === 'PrismaClientKnownRequestError' ||
+                                  (dbError as Error).message.includes('database server') ||
+                                  (dbError as Error).message.includes('connection') ||
+                                  (dbError as Error).message.includes('timeout') ||
+                                  (dbError as Error).message.includes('pooler.supabase.com');
         
         if (!isConnectionError || retryCount >= maxRetries) {
           request.log.error('Giving up on database connection', { 
@@ -182,7 +182,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
           
           return reply.status(503).send({
             error: 'Database service temporarily unavailable',
-            details: process.env.NODE_ENV === 'production' ? undefined : dbError.message,
+            details: process.env.NODE_ENV === 'production' ? undefined : (dbError as Error).message,
             retryAfter: 30 // seconds
           });
         }
@@ -213,7 +213,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
         request.log.error(createError, `Failed to auto-create user record for ${data.user.id}`);
         
         // Check if it's a database connection error
-        if (createError.name === 'PrismaClientInitializationError') {
+        if ((createError as any).name === 'PrismaClientInitializationError') {
           return reply.status(503).send({ 
             error: 'Database service unavailable',
             message: 'Unable to connect to the database. Please try again later.',
@@ -242,7 +242,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     request.log.error(err, 'Authentication error');
     
     // Enhanced error handling for different types of database errors
-    if (err.name === 'PrismaClientInitializationError') {
+    if ((err as any).name === 'PrismaClientInitializationError') {
       return reply.status(503).send({ 
         error: 'Database service unavailable',
         message: 'Unable to connect to the database. Please try again later.',
@@ -251,7 +251,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
       });
     }
     
-    if (err.name === 'PrismaClientKnownRequestError' || err.name === 'PrismaClientUnknownRequestError') {
+    if ((err as any).name === 'PrismaClientKnownRequestError' || (err as any).name === 'PrismaClientUnknownRequestError') {
       return reply.status(503).send({ 
         error: 'Database query failed',
         message: 'There was an issue with the database query. Please try again.',

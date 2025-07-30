@@ -5,7 +5,9 @@ import { Link, FileText, CreditCard, ExternalLink, Copy, Trash2, RefreshCw, User
 import CreatePaymentLinkModal from '@/src/components/payments/CreatePaymentLinkModal';
 import CreateInvoiceModal from '@/src/components/payments/CreateInvoiceModal';
 import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHistory';
+import CustomerSelector from '@/src/components/dashboard/CustomerSelector';
 import { paymentService, PaymentLink } from '@/src/lib/api/services/paymentService';
+import type { Customer } from '@/src/lib/api/services/customerService';
 
 export default function PaymentsPage() {
   const [paymentLinks, setPaymentLinks] = useState<PaymentLink[]>([]);
@@ -17,6 +19,7 @@ export default function PaymentsPage() {
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>('');
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'links' | 'history'>('links');
   
@@ -156,7 +159,7 @@ export default function PaymentsPage() {
   return (
     <div>
       <div className="mb-8 pb-6 border-b border-[#1a1a1a]">
-        <h1 className="text-3xl font-heading font-bold text-white mb-2 tracking-wide">Payment Management</h1>
+        <h1 className="text-4xl sm:text-5xl font-heading font-bold text-white mb-2 tracking-wide">Payment Management</h1>
         <p className="text-gray-400 text-lg">Create and manage payment links, invoices, and view payment history</p>
       </div>
 
@@ -209,11 +212,38 @@ export default function PaymentsPage() {
         </div>
       )}
 
+      {/* Customer Selection */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Select Customer for Payment
+        </label>
+        <CustomerSelector
+          value={selectedCustomerId}
+          onChange={(customerId, customer) => {
+            setSelectedCustomerId(customerId || '');
+            setSelectedCustomerName(customer?.name || '');
+            setSelectedCustomer(customer || null);
+          }}
+          placeholder="Search customers by name, email, or phone..."
+        />
+      </div>
+
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <button
-          onClick={() => setShowPaymentLinkModal(true)}
-          className="flex items-center justify-center gap-4 p-6 bg-[#111111] border border-[#1a1a1a] rounded-2xl hover:border-[#C9A449]/20 hover:bg-[#111111] transition-all duration-300 transform hover:-translate-y-1 shadow-2xl hover:shadow-[#C9A449]/10"
+          onClick={() => {
+            if (!selectedCustomer) {
+              alert('Please select a customer first');
+              return;
+            }
+            setShowPaymentLinkModal(true);
+          }}
+          className={`flex items-center justify-center gap-4 p-6 bg-[#111111] border border-[#1a1a1a] rounded-2xl transition-all duration-300 transform shadow-2xl ${
+            selectedCustomer 
+              ? 'hover:border-[#C9A449]/20 hover:bg-[#111111] hover:-translate-y-1 hover:shadow-[#C9A449]/10' 
+              : 'opacity-50 cursor-not-allowed'
+          }`}
+          disabled={!selectedCustomer}
         >
           <Link className="w-8 h-8 text-[#C9A449]" />
           <div className="text-left">
@@ -223,8 +253,19 @@ export default function PaymentsPage() {
         </button>
 
         <button
-          onClick={() => setShowInvoiceModal(true)}
-          className="flex items-center justify-center gap-4 p-6 bg-[#111111] border border-[#1a1a1a] rounded-2xl hover:border-[#C9A449]/20 hover:bg-[#111111] transition-all duration-300 transform hover:-translate-y-1 shadow-2xl hover:shadow-[#C9A449]/10"
+          onClick={() => {
+            if (!selectedCustomer) {
+              alert('Please select a customer first');
+              return;
+            }
+            setShowInvoiceModal(true);
+          }}
+          className={`flex items-center justify-center gap-4 p-6 bg-[#111111] border border-[#1a1a1a] rounded-2xl transition-all duration-300 transform shadow-2xl ${
+            selectedCustomer 
+              ? 'hover:border-[#C9A449]/20 hover:bg-[#111111] hover:-translate-y-1 hover:shadow-[#C9A449]/10' 
+              : 'opacity-50 cursor-not-allowed'
+          }`}
+          disabled={!selectedCustomer}
         >
           <FileText className="w-8 h-8 text-[#C9A449]" />
           <div className="text-left">
@@ -347,13 +388,15 @@ export default function PaymentsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-400 flex items-center gap-1">
-                          <User className="w-3 h-3" />
-                          <span>Customer ID in link</span>
+                        <div className="text-sm text-white flex items-center gap-1">
+                          <User className="w-3 h-3 text-gray-400" />
+                          <span>{link.customer?.name || 'Unknown Customer'}</span>
                         </div>
-                        <div className="text-xs text-gray-500">
-                          Click &ldquo;View&rdquo; to see details
-                        </div>
+                        {link.customer?.email && (
+                          <div className="text-xs text-gray-500">
+                            {link.customer.email}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-[#C9A449]">{formatCurrency(link.amount || 0)}</div>
@@ -537,7 +580,8 @@ export default function PaymentsPage() {
       <CreatePaymentLinkModal
         isOpen={showPaymentLinkModal}
         onClose={() => setShowPaymentLinkModal(false)}
-        customerId={selectedCustomerId || 'temp-customer-id'} // You'll need to implement customer selection
+        customerId={selectedCustomerId}
+        customerName={selectedCustomerName}
         onSuccess={(link) => {
           setPaymentLinks([link, ...paymentLinks]);
           setShowPaymentLinkModal(false);
@@ -548,7 +592,7 @@ export default function PaymentsPage() {
       <CreateInvoiceModal
         isOpen={showInvoiceModal}
         onClose={() => setShowInvoiceModal(false)}
-        customerId={selectedCustomerId || 'temp-customer-id'} // You'll need to implement customer selection
+        customerId={selectedCustomerId}
         onSuccess={() => {
           setShowInvoiceModal(false);
           handleRefresh();

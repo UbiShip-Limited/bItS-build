@@ -106,7 +106,7 @@ export function DynamicGallery() {
       <div className="bg-obsidian py-20 px-6 sm:px-8 md:px-12 lg:px-20">
         <div className="container mx-auto text-center">
           <h2 className="font-heading text-4xl md:text-5xl font-bold text-white mb-6 tracking-wide">
-            Artist Gallery
+            Our Work
           </h2>
           <div className="text-red-400 mb-6">{error}</div>
           <Button
@@ -123,7 +123,7 @@ export function DynamicGallery() {
   }
 
   return (
-    <div ref={galleryRef} className="bg-obsidian py-20 md:py-32 px-6 sm:px-8 md:px-12 lg:px-20">
+    <div id="gallery" ref={galleryRef} className="bg-obsidian py-20 md:py-32 px-6 sm:px-8 md:px-12 lg:px-20">
       <div className="container mx-auto">
         {/* Gallery Header */}
         <motion.div 
@@ -137,15 +137,15 @@ export function DynamicGallery() {
             <div className="absolute -top-3 -right-3 h-4 w-4 border-t border-r border-gold-500/50"></div>
             <div className="absolute -bottom-3 -left-3 h-4 w-4 border-b border-l border-gold-500/50"></div>
             <div className="absolute -bottom-3 -right-3 h-4 w-4 border-b border-r border-gold-500/50"></div>
-            <h2 className={`font-heading ${isMobile ? 'text-3xl' : 'text-4xl md:text-5xl lg:text-6xl'} font-medium text-white px-6 md:px-8 tracking-wide`}>
-              The Gallery
+            <h2 className={`font-heading ${isMobile ? 'text-5xl' : 'text-5xl md:text-6xl lg:text-7xl'} font-medium text-white px-6 md:px-8 tracking-wide`}>
+              Our Work
             </h2>
           </div>
           <div className="h-px w-32 md:w-40 mx-auto bg-gradient-to-r from-gold-500 to-gold-500/0 mb-2"></div>
           <div className="h-px w-32 md:w-40 mx-auto bg-gradient-to-l from-gold-500 to-gold-500/0 mb-6 md:mb-8"></div>
-          <p className={`text-white/80 max-w-2xl mx-auto font-body ${isMobile ? 'text-base px-4' : 'text-lg'} mb-6 leading-relaxed`}>
-            Explore our collection of tattoos we hope it inspires you. We make sure each piece represents our commitment 
-            to quality, creativity, and personal expression.
+          <p className={`text-white/80 max-w-2xl mx-auto font-body ${isMobile ? 'text-lg px-4' : 'text-lg'} mb-6 leading-relaxed`}>
+            Check out some of our recent work. Every tattoo tells a story – 
+            maybe your next one is waiting here.
           </p>
           
         </motion.div>
@@ -154,7 +154,7 @@ export function DynamicGallery() {
         {loading && (
           <div className="flex flex-col justify-center items-center py-16 md:py-24">
             <Loader2 className="animate-spin text-gold-500 mb-6" size={isMobile ? 36 : 48} />
-            <p className={`text-white/60 font-body ${isMobile ? 'text-sm' : 'text-base'} tracking-wide`}>Loading gallery...</p>
+            <p className={`text-white/60 font-body ${isMobile ? 'text-base' : 'text-base'} tracking-wide`}>Loading gallery...</p>
           </div>
         )}
 
@@ -216,7 +216,7 @@ export function DynamicGallery() {
                   <div className={`absolute bottom-0 left-0 right-0 ${isMobile ? 'p-2' : 'p-3 md:p-4'} transition-transform duration-300 ${
                     isMobile ? "translate-y-0 opacity-100" : hoveredItem === item.id ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
                   }`}>
-                    <h3 className={`text-white font-medium ${isMobile ? 'text-xs line-clamp-1' : 'text-base mb-1'}`}>
+                    <h3 className={`text-white font-medium ${isMobile ? 'text-sm line-clamp-1' : 'text-base mb-1'}`}>
                       {item.alt === item.publicId ? 'Tattoo Artwork' : item.alt}
                     </h3>
                     {!isMobile && (

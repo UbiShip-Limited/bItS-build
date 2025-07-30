@@ -6,6 +6,8 @@ import { Menu, X } from "lucide-react";
 import { MobileHeader } from "./mobile-header";
 import { Button } from "@/src/components/ui/button";
 import { GAEvents } from '@/src/lib/analytics/ga-events';
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
+import { handleNavClick } from '@/src/lib/utils/smoothScroll';
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -33,12 +35,12 @@ export function Header() {
 
   const navigationItems = [
     { name: "Home", path: "/" },
-    { name: "Artists", path: "/artists" },
-    { name: "Gallery", path: "/gallery" },
-    { name: "Services", path: "/services" },
+    { name: "Artists", path: "#artists" },
+    { name: "Gallery", path: "#gallery" },
+    { name: "Services", path: "#services" },
     { name: "FAQ", path: "#faq" },
     { name: "Aftercare", path: "#aftercare" },
-    { name: "About", path: "/about" },
+    { name: "About", path: "#about" },
     { name: "Contact", path: "/contact" },
   ];
 
@@ -55,12 +57,15 @@ export function Header() {
                 <Link 
                   key={item.name} 
                   href={item.path}
-                  className="relative font-body text-lg tracking-tight text-white hover:text-gold transition-all duration-300 group drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] py-2"
-                  onClick={() => GAEvents.navigationItemClicked(item.name)}
+                  className="relative font-body text-lg tracking-tight text-white hover:text-gold-500 transition-all duration-300 group drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] py-2"
+                  onClick={(e) => {
+                    handleNavClick(e, item.path);
+                    GAEvents.navigationItemClicked(item.name);
+                  }}
                 >
                   {item.name}
                   {/* Refined underline effect */}
-                  <div className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-gradient-to-r from-gold via-gold/80 to-transparent group-hover:w-full transition-all duration-300"></div>
+                  <div className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-gradient-to-r from-gold-500 via-gold-500/80 to-transparent group-hover:w-full transition-all duration-300"></div>
                 </Link>
               ))}
             </div>

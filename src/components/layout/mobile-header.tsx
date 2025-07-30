@@ -69,7 +69,7 @@ export function MobileHeader({ isMenuOpen, setIsMenuOpen }: MobileHeaderProps) {
             { name: "FAQ", path: "#faq" },
             { name: "Aftercare", path: "#aftercare" },
             { name: "About", path: "#about" },
-            { name: "Contact", path: "/contact" },
+            { name: "Contact", path: "/tattooRequest" },
           ].map((item) => (
             <Link 
               key={item.name} 

@@ -41,11 +41,12 @@ const TattooRequestPage: React.FC = () => {
       {/* Enhanced structured data for this page */}
       <StructuredData type="tattooRequest" />
       
-      <div className="min-h-screen bg-gradient-to-b from-[#080808] via-[#0a0a0a] to-[#080808] py-16 px-6 relative overflow-hidden">
-        {/* Subtle ambient glow effects */}
+      <div className="min-h-screen bg-gradient-to-b from-[#080808] via-[#0a0a0a] to-[#080808] py-12 sm:py-16 px-4 sm:px-6 relative overflow-hidden">
+        {/* Enhanced ambient glow effects */}
         <div className="absolute inset-0 z-0">
-          <div className="absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-gold-500/5 rounded-full blur-[100px]"></div>
-          <div className="absolute bottom-1/3 right-1/4 w-[300px] h-[300px] bg-gold-500/3 rounded-full blur-[80px]"></div>
+          <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gold-500/[0.03] rounded-full blur-[120px] animate-pulse" style={{animationDuration: '4s'}}></div>
+          <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-gold-500/[0.02] rounded-full blur-[100px] animate-pulse" style={{animationDuration: '6s', animationDelay: '2s'}}></div>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold-500/[0.01] rounded-full blur-[150px]"></div>
         </div>
         
         {/* Subtle central divider */}
@@ -53,29 +54,39 @@ const TattooRequestPage: React.FC = () => {
           <div className="h-full w-full bg-gradient-to-b from-transparent via-gold-500/10 to-transparent"></div>
         </div>
         
-        <div className="max-w-4xl mx-auto mb-8 text-center relative z-10">
-          {/* Simplified ornamental divider above title */}
-          <div className="mb-6 flex items-center justify-center">
-            <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-gold-500/20" />
-            <div className="mx-4 sm:mx-6 relative">
-              <div className="w-3 h-3 bg-gold-500/40 rounded-full" />
-              <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-md scale-[3] animate-pulse" />
+        <div className="max-w-4xl mx-auto mb-8 sm:mb-10 text-center relative z-10">
+          {/* Enhanced ornamental divider above title */}
+          <div className="mb-8 flex items-center justify-center">
+            <div className="w-20 sm:w-28 md:w-36 h-[1px] bg-gradient-to-r from-transparent via-gold-500/30 to-gold-500/10" />
+            <div className="mx-3 sm:mx-4 md:mx-5 relative">
+              <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-gold-500/40 rounded-full" />
+              <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-sm scale-[2.5] animate-pulse" />
             </div>
-            <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-l from-transparent via-gold-500/40 to-gold-500/20" />
+            <div className="mx-2 relative">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gold-500/50 rounded-full" />
+              <div className="absolute inset-0 bg-gold-500/30 rounded-full blur-md scale-[3] animate-pulse" style={{animationDelay: '0.5s'}} />
+            </div>
+            <div className="mx-3 sm:mx-4 md:mx-5 relative">
+              <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-gold-500/40 rounded-full" />
+              <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-sm scale-[2.5] animate-pulse" style={{animationDelay: '1s'}} />
+            </div>
+            <div className="w-20 sm:w-28 md:w-36 h-[1px] bg-gradient-to-l from-transparent via-gold-500/30 to-gold-500/10" />
           </div>
           
-          <h1 className="font-body text-5xl sm:text-6xl md:text-7xl lg:text-7xl font-semibold leading-tight mb-4 text-white">Start Your Journey</h1>
+          <h1 className="font-body text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold leading-[1.1] mb-6 text-white tracking-tight">Start Your Journey</h1>
           
-          {/* Subtle dots divider below title */}
-          <div className="mb-6 flex items-center justify-center gap-4">
-            <div className="w-1.5 h-1.5 bg-gold-500/20 rounded-full"></div>
-            <div className="w-2 h-2 bg-gold-500/30 rounded-full relative">
-              <div className="absolute inset-0 bg-gold-500/10 rounded-full blur-xs scale-150" />
+          {/* Enhanced dots divider below title */}
+          <div className="mb-6 sm:mb-8 flex items-center justify-center gap-3 sm:gap-4">
+            <div className="w-1 h-1 bg-gold-500/30 rounded-full animate-pulse" style={{animationDelay: '0ms'}}></div>
+            <div className="w-1.5 h-1.5 bg-gold-500/40 rounded-full animate-pulse" style={{animationDelay: '200ms'}}></div>
+            <div className="w-2 h-2 bg-gold-500/50 rounded-full relative">
+              <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-sm scale-[2] animate-pulse" />
             </div>
-            <div className="w-1.5 h-1.5 bg-gold-500/20 rounded-full"></div>
+            <div className="w-1.5 h-1.5 bg-gold-500/40 rounded-full animate-pulse" style={{animationDelay: '400ms'}}></div>
+            <div className="w-1 h-1 bg-gold-500/30 rounded-full animate-pulse" style={{animationDelay: '600ms'}}></div>
           </div>
           
-          <p className="text-white/70 max-w-2xl mx-auto font-body text-lg sm:text-xl leading-relaxed px-4">
+          <p className="text-white/60 max-w-2xl mx-auto font-body text-base sm:text-lg md:text-xl leading-[1.7] px-2 sm:px-4">
             Share your vision with us. We'll craft something meaningful together.
           </p>
         </div>

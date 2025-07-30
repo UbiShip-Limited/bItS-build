@@ -49,7 +49,7 @@ export function FrequentlyAskedQuestionsAccordion() {
   return (
     <div id="faq" className={`mx-auto grid ${layout.containerLg} grid-cols-1 gap-8 md:gap-12 ${layout.padding.mobile} ${layout.sectionY.large} md:grid-cols-2 ${layout.padding.desktop}`}>
       <div className="text-center md:text-left">
-        <h2 className={`${typography.h1} text-obsidian dark:${colors.textPrimary} mb-8`}>
+        <h2 className={`${typography.h1} text-obsidian dark:text-white mb-8`}>
           Frequently asked questions
         </h2>
         <div className="flex items-center justify-center md:justify-start mb-6">
@@ -58,7 +58,7 @@ export function FrequentlyAskedQuestionsAccordion() {
             <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-sm scale-[2]"></div>
           </div>
         </div>
-        <p className={`${typography.paragraphLarge} text-obsidian/60 dark:${colors.textSecondary} max-w-md`}>
+        <p className={`${typography.paragraphLarge} text-obsidian/60 dark:text-white/70 max-w-md mx-auto md:mx-0`}>
           Everything you need to know about getting your tattoo at Bowen Island Tattoo Shop.
         </p>
       </div>
@@ -99,7 +99,7 @@ const FAQItem = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: index * 0.1 }}
       className={cn(
-        "relative cursor-pointer py-6 md:py-8 px-6 md:px-8 rounded-2xl border transition-all duration-600 ease-smooth backdrop-blur-sm group",
+        "relative cursor-pointer py-4 md:py-8 px-4 md:px-8 rounded-2xl border transition-all duration-300 backdrop-blur-sm group",
         isOpen 
           ? "border-gold-500/20 bg-gold-500/5 shadow-soft" 
           : "border-gold-500/5 hover:border-gold-500/10 hover:bg-gold-500/3 shadow-subtle hover:shadow-soft"
@@ -129,16 +129,16 @@ const FAQItem = ({
       )} />
       
       <div className="relative flex items-start">
-        <div className="relative mr-4 mt-1 h-6 w-6 flex-shrink-0">
+        <div className="relative mr-3 md:mr-4 mt-1 h-5 w-5 md:h-6 md:w-6 flex-shrink-0">
           <Plus
             className={cn(
-              "absolute inset-0 h-6 w-6 transform text-gold-500 transition-all duration-600 ease-smooth",
+              "absolute inset-0 h-5 w-5 md:h-6 md:w-6 transform text-gold-500 transition-all duration-300",
               isOpen && "rotate-90 scale-0 opacity-0",
             )}
           />
           <Minus
             className={cn(
-              "absolute inset-0 h-6 w-6 rotate-90 scale-0 transform text-gold-500 transition-all duration-600 ease-smooth opacity-0",
+              "absolute inset-0 h-5 w-5 md:h-6 md:w-6 rotate-90 scale-0 transform text-gold-500 transition-all duration-300 opacity-0",
               isOpen && "rotate-0 scale-100 opacity-100",
             )}
           />
@@ -153,10 +153,10 @@ const FAQItem = ({
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+                transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
                 className="overflow-hidden"
               >
-                <p className={`mt-4 ${typography.fontUI} text-base md:text-lg ${typography.leadingRelaxed} text-obsidian/70 dark:text-white/70 ${typography.fontLight}`}>
+                <p className={`mt-4 ${typography.fontUI} text-base md:text-lg ${typography.leadingRelaxed} text-obsidian/70 dark:text-white/70 ${typography.fontLight} pr-2`}>
                   {answer}
                 </p>
               </motion.div>

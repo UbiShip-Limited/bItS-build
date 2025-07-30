@@ -41,7 +41,7 @@ export function Header() {
     { name: "FAQ", path: "#faq" },
     { name: "Aftercare", path: "#aftercare" },
     { name: "About", path: "#about" },
-    { name: "Contact", path: "/contact" },
+    { name: "Contact", path: "/tattooRequest" },
   ];
 
   return (

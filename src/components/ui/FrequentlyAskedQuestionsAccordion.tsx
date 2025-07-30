@@ -47,7 +47,14 @@ export function FrequentlyAskedQuestionsAccordion() {
   const [open, setOpen] = useState<string | null>(null);
   
   return (
-    <div id="faq" className={`mx-auto grid ${layout.containerLg} grid-cols-1 gap-8 md:gap-12 ${layout.padding.mobile} ${layout.sectionY.large} md:grid-cols-2 ${layout.padding.desktop}`}>
+    <div 
+      id="faq" 
+      className={`mx-auto grid ${layout.containerLg} grid-cols-1 gap-8 md:gap-12 ${layout.padding.mobile} ${layout.sectionY.large} md:grid-cols-2 ${layout.padding.desktop}`}
+      style={{ 
+        color: 'white',
+        backgroundColor: 'transparent'
+      }}
+    >
       <div className="text-center md:text-left">
         <h2 className={`${typography.h1} text-obsidian dark:text-white mb-8`}>
           Frequently asked questions

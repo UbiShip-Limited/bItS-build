@@ -378,11 +378,17 @@ body {
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* Mobile Footer Optimizations */
+/* Mobile Footer Optimizations - Force cache bust */
 @media (max-width: 768px) {
+  footer {
+    background: #080808 !important;
+    background-color: #080808 !important;
+  }
+  
   .footer-container {
     padding: 1.5rem 1rem;
     background: #080808 !important;
+    background-color: #080808 !important;
   }
   
   .footer-contact-info {

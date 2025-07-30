@@ -50,7 +50,13 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-gold-500/20 bg-obsidian text-white px-4 sm:px-8 py-12 sm:py-20 w-full relative overflow-hidden">
+    <footer 
+      className="border-t border-gold-500/20 bg-obsidian text-white px-4 sm:px-8 py-12 sm:py-20 w-full relative overflow-hidden"
+      style={{ 
+        backgroundColor: '#080808',
+        background: '#080808'
+      }}
+    >
       <div className="max-w-7xl mx-auto text-sm justify-between items-start">
         <div className="flex flex-col items-center justify-center w-full relative">
           <div className="mb-8">

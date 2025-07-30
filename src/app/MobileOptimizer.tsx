@@ -9,6 +9,44 @@ export default function MobileOptimizer() {
       document.documentElement.classList.add('touch-device');
     }
     
+    // Force mobile styling overrides for production cache issues
+    const forceMobileStyles = () => {
+      // Force footer background on mobile
+      const footers = document.querySelectorAll('footer');
+      footers.forEach(footer => {
+        if (window.innerWidth <= 768) {
+          (footer as HTMLElement).style.backgroundColor = '#080808';
+          (footer as HTMLElement).style.background = '#080808';
+        }
+      });
+      
+      // Force dark mode text colors
+      const faqElements = document.querySelectorAll('#faq');
+      faqElements.forEach(faq => {
+        (faq as HTMLElement).style.color = 'white';
+      });
+      
+      // Enhance gold lines visibility
+      const goldLines = document.querySelectorAll('[class*="gold-500"]');
+      goldLines.forEach(line => {
+        const lineElement = line as HTMLElement;
+        if (window.innerWidth <= 768 && lineElement.style.opacity) {
+          const currentOpacity = parseFloat(lineElement.style.opacity) || 0.1;
+          if (currentOpacity < 0.2) {
+            lineElement.style.opacity = '0.3';
+          }
+        }
+      });
+    };
+    
+    // Apply immediately and on resize
+    forceMobileStyles();
+    window.addEventListener('resize', forceMobileStyles);
+    
+    // Also apply after a short delay to catch dynamically loaded content
+    setTimeout(forceMobileStyles, 1000);
+    
+    
     // Improve mobile scroll performance with passive listeners
     const addPassiveListeners = () => {
       window.addEventListener('touchstart', () => {}, { passive: true });
@@ -38,7 +76,7 @@ export default function MobileOptimizer() {
     
     // Cleanup function
     return () => {
-      // Remove listeners if needed (though passive listeners are generally fine to leave)
+      window.removeEventListener('resize', forceMobileStyles);
     };
   }, []);
 

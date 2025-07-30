@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
     // TODO: Fix all ESLint warnings and re-enable strict checking
     ignoreDuringBuilds: true,
   },
+  // Force cache busting for CSS changes
+  generateBuildId: async () => {
+    return `${Date.now()}`;
+  },
   typescript: {
     // !! WARN !!
     // Dangerously allow production builds to successfully complete even if

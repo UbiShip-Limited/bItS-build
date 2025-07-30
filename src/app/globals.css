@@ -382,6 +382,7 @@ body {
 @media (max-width: 768px) {
   .footer-container {
     padding: 1.5rem 1rem;
+    background: #080808 !important;
   }
   
   .footer-contact-info {

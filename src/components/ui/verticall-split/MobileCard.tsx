@@ -15,7 +15,7 @@ export function MobileCard({ section, index, isLoading, sectionsLength }: Sectio
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.5, delay: index * 0.08 }}
     >
-      <div className="bg-gradient-to-br from-obsidian/90 to-obsidian/80 backdrop-blur-sm border border-gold-500/15 rounded-3xl overflow-hidden group hover:border-gold-500/25 transition-all duration-800 ease-smooth shadow-refined hover:shadow-refined-lg">
+              <div className="bg-gradient-to-br from-obsidian/90 to-obsidian/80 backdrop-blur-sm border border-gold-500/20 rounded-3xl overflow-hidden group hover:border-gold-500/30 transition-all duration-800 ease-smooth shadow-refined hover:shadow-refined-lg">
         {/* Mobile Image Section - Proper aspect ratio container */}
         <div className="relative aspect-[4/3] overflow-hidden">
           {isLoading ? (
@@ -37,13 +37,13 @@ export function MobileCard({ section, index, isLoading, sectionsLength }: Sectio
           
           {/* Enhanced mobile ornamental elements */}
           <div className="absolute top-6 left-6">
-            <div className="w-12 h-12 border border-gold-500/15 rounded-2xl rounded-tl-3xl relative">
-              <div className="absolute inset-3 bg-gold-500/8 rounded-full blur-md"></div>
+            <div className="w-12 h-12 border border-gold-500/20 rounded-2xl rounded-tl-3xl relative">
+              <div className="absolute inset-3 bg-gold-500/10 rounded-full blur-md"></div>
             </div>
           </div>
           <div className="absolute bottom-6 right-6">
-            <div className="w-2.5 h-2.5 bg-gold-500/25 rounded-full relative">
-              <div className="absolute inset-0 bg-gold-500/15 rounded-full blur-md scale-[2]"></div>
+            <div className="w-2.5 h-2.5 bg-gold-500/30 rounded-full relative">
+              <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-md scale-[2]"></div>
             </div>
           </div>
 
@@ -70,25 +70,25 @@ export function MobileCard({ section, index, isLoading, sectionsLength }: Sectio
 
           {/* Minimal corner elements for mobile */}
           <div className="absolute top-3 right-3">
-            <div className="w-6 h-6 border-t border-r border-gold-500/10 rounded-tr-xl"></div>
+            <div className="w-6 h-6 border-t border-r border-gold-500/15 rounded-tr-xl"></div>
           </div>
           <div className="absolute bottom-3 left-3">
-            <div className="w-6 h-6 border-b border-l border-gold-500/10 rounded-bl-xl"></div>
+            <div className="w-6 h-6 border-b border-l border-gold-500/15 rounded-bl-xl"></div>
           </div>
 
           {/* Content - mobile-optimized alignment */}
           <div className="relative z-10 text-center sm:text-left">
             {/* Simplified mobile ornamental line */}
             <div className="flex items-center justify-center sm:justify-start mb-6">
-              <div className="w-12 h-px bg-gradient-to-r from-gold-500/30 to-transparent"></div>
-              <div className="w-1.5 h-1.5 bg-gold-500/20 rounded-full mx-3 relative">
-                <div className="absolute inset-0 bg-gold-500/10 rounded-full blur-xs scale-125"></div>
+              <div className="w-12 h-px bg-gradient-to-r from-gold-500/40 to-transparent"></div>
+              <div className="w-1.5 h-1.5 bg-gold-500/30 rounded-full mx-3 relative">
+                <div className="absolute inset-0 bg-gold-500/15 rounded-full blur-xs scale-125"></div>
               </div>
-              <div className="w-12 h-px bg-gradient-to-l from-gold-500/30 to-transparent"></div>
+              <div className="w-12 h-px bg-gradient-to-l from-gold-500/40 to-transparent"></div>
             </div>
 
             {/* Mobile-optimized accent label */}
-            <div className="inline-block bg-gold-500/8 border border-gold-500/20 px-4 py-2 text-sm font-medium text-gold-500/85 mb-5 tracking-[0.02em] rounded-lg backdrop-blur-sm font-body">
+            <div className="inline-block bg-gold-500/10 border border-gold-500/25 px-4 py-2 text-sm font-medium text-gold-500/90 mb-5 tracking-[0.02em] rounded-lg backdrop-blur-sm font-body">
               {section.accent}
             </div>
 
@@ -114,11 +114,11 @@ export function MobileCard({ section, index, isLoading, sectionsLength }: Sectio
       {/* Mobile-optimized card separator line */}
       {index < sectionsLength - 1 && (
         <div className="absolute -bottom-4 sm:-bottom-6 left-1/2 transform -translate-x-1/2 flex items-center">
-          <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-gold-500/12 to-transparent"></div>
-          <div className="mx-3 sm:mx-4 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gold-500/20 rounded-full relative">
-            <div className="absolute inset-0 bg-gold-500/10 rounded-full blur-sm scale-[1.5]"></div>
+          <div className="w-16 sm:w-20 h-px bg-gradient-to-r from-transparent via-gold-500/20 to-transparent"></div>
+          <div className="mx-3 sm:mx-4 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-gold-500/30 rounded-full relative">
+            <div className="absolute inset-0 bg-gold-500/15 rounded-full blur-sm scale-[1.5]"></div>
           </div>
-          <div className="w-16 sm:w-20 h-px bg-gradient-to-l from-transparent via-gold-500/12 to-transparent"></div>
+          <div className="w-16 sm:w-20 h-px bg-gradient-to-l from-transparent via-gold-500/20 to-transparent"></div>
         </div>
       )}
     </motion.div>

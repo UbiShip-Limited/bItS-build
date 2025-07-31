@@ -171,11 +171,34 @@ const build = (opts = {}) => {
   const fastifyInstance = fastify(opts);
 
   fastifyInstance.register(cors, {
-    origin: [
-      'http://localhost:3000', // Development
-      'https://b-it-s-build.vercel.app', // Production Vercel URL
-      process.env.FRONTEND_URL || 'http://localhost:3000', // Fallback/alternative production URL
-    ],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., mobile apps, Postman)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Allowed origins
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'https://b-it-s-build.vercel.app',
+        'https://bowenislandtattoo.com',
+        'https://www.bowenislandtattoo.com',
+        process.env.FRONTEND_URL,
+      ].filter(Boolean);
+
+      // Check if origin is in allowed list
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Allow all Vercel preview deployments
+      if (origin.includes('.vercel.app')) {
+        return callback(null, true);
+      }
+
+      // Reject other origins
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   });
 

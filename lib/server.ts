@@ -197,7 +197,7 @@ const build = (opts = {}) => {
       }
 
       // Reject other origins
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error('Not allowed by CORS'), false);
     },
     credentials: true,
   });

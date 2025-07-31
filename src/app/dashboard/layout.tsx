@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import NotificationCenter from '@/src/components/dashboard/NotificationCenter';
 import { analyticsService } from '@/src/lib/api/services/analyticsService';
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -132,10 +133,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   // Show loading while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className={`min-h-screen ${colors.bgPrimary} flex items-center justify-center`}>
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#C9A449] mx-auto mb-4" />
-          <p className="text-gray-400">Loading...</p>
+          <Loader2 className={`w-8 h-8 animate-spin ${colors.textAccent} mx-auto mb-4`} />
+          <p className={colors.textSecondary}>Loading...</p>
         </div>
       </div>
     );
@@ -242,11 +243,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="flex min-h-screen bg-base-300">
+    <div className="flex min-h-screen bg-gradient-to-b from-obsidian via-obsidian/95 to-obsidian">
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -254,20 +255,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Sidebar */}
       <aside className={`
         ${isCollapsed ? 'w-20' : 'w-72'} 
-        bg-[#080808] shadow-2xl
-        transition-all duration-300 ease-in-out
-        relative flex flex-col border-r border-[#1a1a1a]
+        bg-gradient-to-b from-obsidian via-obsidian/98 to-obsidian backdrop-blur-xl
+        ${effects.transitionSlow}
+        relative flex flex-col border-r ${colors.borderSubtle}
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 fixed lg:relative z-50 h-full
+        lg:translate-x-0 fixed lg:relative z-50 h-full shadow-xl
       `}>
         {/* Collapse Button */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-4 top-9 z-10 w-8 h-8 bg-[#080808] border border-[#C9A449]/20
-                     rounded-full flex items-center justify-center shadow-xl hover:border-[#C9A449]/40
-                     transition-all duration-200 group hidden lg:flex"
+          className={`absolute -right-4 top-9 z-10 w-8 h-8 ${colors.bgPrimary} border ${colors.borderSubtle}
+                     rounded-full flex items-center justify-center shadow-elegant hover:${colors.borderDefault}
+                     ${effects.transitionNormal} group hidden lg:flex hover:shadow-gold-glow`}
         >
-          <ChevronLeft className={`w-4 h-4 text-[#C9A449] transition-transform duration-200 
+          <ChevronLeft className={`w-4 h-4 ${colors.textAccent} ${effects.transitionNormal} 
                                   ${isCollapsed ? 'rotate-180' : ''}`} />
         </button>
         
@@ -276,22 +277,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           onClick={() => setIsMobileMenuOpen(false)}
           className="absolute right-4 top-6 z-10 w-8 h-8 lg:hidden"
         >
-          <X className="w-6 h-6 text-gray-400" />
+          <X className={`w-6 h-6 ${colors.textSecondary}`} />
         </button>
 
         <div className="flex flex-col h-full">
           {/* Brand Header */}
-          <div className="p-6 border-b border-[#1a1a1a] bg-gradient-to-b from-[#080808] to-[#0a0a0a]">
-            <div className={`transition-all duration-300 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
-              <h1 className="text-2xl font-heading font-bold text-white tracking-wider">
+          <div className={`p-6 border-b ${colors.borderSubtle} bg-gradient-to-b from-obsidian via-obsidian/95 to-transparent`}>
+            <div className={`${effects.transitionNormal} ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
+              <h1 className={`text-2xl ${typography.fontBrand} font-bold ${colors.textPrimary} ${typography.trackingWide}`}>
                 BOWEN ISLAND
               </h1>
-              <p className="text-sm text-[#C9A449] mt-1 tracking-widest uppercase">
+              <p className={`${typography.textSm} ${colors.textAccentSecondary} mt-1 tracking-widest uppercase`}>
                 Tattoo Studio
               </p>
             </div>
             {isCollapsed && (
-              <div className="text-2xl font-bold text-[#C9A449] text-center font-heading">B</div>
+              <div className={`text-2xl font-bold ${colors.textAccent} text-center ${typography.fontBrand}`}>B</div>
             )}
           </div>
 
@@ -302,12 +303,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <div key={section.section}>
                   {/* Section Header */}
                   {!isCollapsed && (
-                    <h3 className="px-4 mb-3 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                    <h3 className={`px-4 mb-3 ${typography.textXs} ${typography.fontSemibold} ${colors.textMuted} uppercase ${typography.trackingWide}`}>
                       {section.section}
                     </h3>
                   )}
                   {isCollapsed && sectionIndex > 0 && (
-                    <div className="mx-4 mb-3 border-t border-[#1a1a1a]"></div>
+                    <div className={`mx-4 mb-3 border-t ${colors.borderSubtle}`}></div>
                   )}
                   
                   {/* Section Items */}
@@ -321,39 +322,42 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                           <Link 
                             href={item.href}
                             className={`
-                              flex items-center gap-4 px-4 py-3.5 rounded-lg text-gray-400
-                              transition-all duration-200 group relative overflow-hidden
+                              flex items-center gap-4 px-4 py-3.5 ${components.radius.medium} ${colors.textSecondary}
+                              ${effects.transitionNormal} group relative overflow-hidden
                               ${active 
-                                ? 'bg-[#C9A449]/10 text-[#C9A449] border border-[#C9A449]/20' 
-                                : 'hover:bg-white/5 hover:text-white'
+                                ? `bg-gold-500/10 ${colors.textAccent} border ${colors.borderDefault} shadow-soft` 
+                                : `hover:bg-white/5 hover:${colors.textPrimary}`
                               }
                             `}
                           >
                             {/* Active indicator */}
                             {active && (
-                              <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[#C9A449]"></div>
+                              <div className={`absolute left-0 top-0 bottom-0 w-0.5 ${colors.bgAccent}`}></div>
                             )}
                             
                             {/* Icon */}
-                            <div className={`relative ${active ? 'text-[#C9A449]' : ''}`}>
-                              <Icon className={`w-5 h-5 transition-all duration-200 
+                            <div className={`relative ${active ? colors.textAccent : ''}`}>
+                              <Icon className={`w-5 h-5 ${effects.transitionNormal} 
                                              ${active ? '' : 'group-hover:scale-110'}`} />
+                              {active && (
+                                <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-sm scale-150"></div>
+                              )}
                             </div>
                             
                             {/* Label */}
                             {!isCollapsed && (
-                              <span className={`font-medium text-sm tracking-wide transition-all duration-200 
-                                             ${active ? 'text-[#C9A449]' : ''}`}>
+                              <span className={`${typography.fontMedium} ${typography.textSm} ${typography.trackingWide} ${effects.transitionNormal} 
+                                             ${active ? colors.textAccent : ''}`}>
                                 {item.label}
                               </span>
                             )}
                             
                             {/* Badge */}
                             {item.badge && !isCollapsed && (
-                              <span className={`ml-auto px-2 py-0.5 text-xs rounded-full
+                              <span className={`ml-auto px-2 py-0.5 ${typography.textXs} rounded-full ${effects.transitionNormal}
                                               ${active 
-                                                ? 'bg-[#C9A449] text-[#080808]' 
-                                                : 'bg-[#C9A449]/20 text-[#C9A449]'
+                                                ? `${colors.bgAccent} text-obsidian` 
+                                                : `bg-gold-500/20 ${colors.textAccent}`
                                               }`}>
                                 {item.badge}
                               </span>
@@ -361,7 +365,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                             
                             {/* Collapsed badge */}
                             {item.badge && isCollapsed && (
-                              <span className="absolute top-2 right-2 w-2 h-2 bg-[#C9A449] rounded-full"></span>
+                              <span className={`absolute top-2 right-2 w-2 h-2 ${colors.bgAccent} rounded-full shadow-gold-glow`}></span>
                             )}
                           </Link>
                         </li>
@@ -376,16 +380,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Bottom Section */}
           <div className="mt-auto">
             {/* User Section */}
-            <div className="p-4 border-t border-[#1a1a1a] bg-gradient-to-t from-[#050505] to-transparent">
+            <div className={`p-4 border-t ${colors.borderSubtle} bg-gradient-to-t from-obsidian/80 to-transparent backdrop-blur-sm`}>
               <div className={`
-                flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 
-                transition-all duration-200 cursor-pointer group
+                flex items-center gap-3 p-3 ${components.radius.medium} hover:bg-white/5 
+                ${effects.transitionNormal} cursor-pointer group
                 ${isCollapsed ? 'justify-center' : ''}
               `}>
                 <div className="avatar">
-                  <div className="w-10 rounded-full ring ring-[#C9A449]/20 ring-offset-2 ring-offset-[#080808]">
-                    <div className="bg-gradient-to-br from-[#C9A449] to-[#8B7635] w-full h-full rounded-full flex items-center justify-center">
-                      <span className="text-sm font-bold text-[#080808]">AD</span>
+                  <div className={`w-10 rounded-full ring ring-gold-500/20 ring-offset-2 ring-offset-obsidian`}>
+                    <div className={`bg-gradient-to-br from-gold-500 to-gold-700 w-full h-full rounded-full flex items-center justify-center shadow-soft`}>
+                      <span className={`${typography.textSm} ${typography.fontSemibold} text-obsidian`}>AD</span>
                     </div>
                   </div>
                 </div>
@@ -393,19 +397,19 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 {!isCollapsed && (
                   <>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-white">{user?.role || session?.user?.user_metadata?.role || 'Artist'}</p>
-                      <p className="text-xs text-gray-500">{user?.email || session?.user?.email || 'User'}</p>
+                      <p className={`${typography.textSm} ${typography.fontMedium} ${colors.textPrimary}`}>{user?.role || session?.user?.user_metadata?.role || 'Artist'}</p>
+                      <p className={`${typography.textXs} ${colors.textMuted}`}>{user?.email || session?.user?.email || 'User'}</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <ThemeSwitcher />
-                      <div className="divider divider-horizontal m-0 before:bg-[#1a1a1a] after:bg-[#1a1a1a]"></div>
+                      <div className={`divider divider-horizontal m-0 before:bg-gold-500/10 after:bg-gold-500/10`}></div>
                       <button 
                         onClick={handleSignOut}
-                        className="btn btn-ghost btn-xs btn-circle text-gray-400 
-                                         hover:text-white hover:bg-white/10 group"
+                        className={`btn btn-ghost btn-xs btn-circle ${colors.textSecondary} 
+                                         hover:${colors.textPrimary} hover:bg-white/10 group`}
                         title="Sign Out"
                       >
-                        <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                        <LogOut className={`w-4 h-4 group-hover:scale-110 ${effects.transitionNormal}`} />
                       </button>
                     </div>
                   </>
@@ -417,8 +421,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <ThemeSwitcher />
                   <button 
                     onClick={handleSignOut}
-                    className="btn btn-ghost btn-xs btn-circle text-gray-400 
-                                     hover:text-white hover:bg-white/10"
+                    className={`btn btn-ghost btn-xs btn-circle ${colors.textSecondary} 
+                                     hover:${colors.textPrimary} hover:bg-white/10`}
                     title="Sign Out"
                   >
                     <LogOut className="w-4 h-4" />
@@ -431,10 +435,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 bg-[#0a0a0a] overflow-x-hidden">
+      <main className="flex-1 bg-gradient-to-b from-obsidian via-obsidian/95 to-obsidian overflow-x-hidden">
         <div className="min-h-screen">
           {/* Top Bar */}
-          <div className="bg-[#080808]/50 backdrop-blur-xl border-b border-[#1a1a1a] px-4 lg:px-8 py-5">
+          <div className={`bg-obsidian/50 backdrop-blur-xl border-b ${colors.borderSubtle} px-4 lg:px-8 py-5`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 {/* Mobile Menu Button */}
@@ -472,12 +476,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               {/* Quick Actions */}
               <div className="flex items-center gap-2 lg:gap-3">
                 <NotificationCenter userId="admin-user" />
-                <button className="hidden sm:flex btn btn-ghost btn-sm text-gray-400 hover:text-white 
-                                 border border-transparent hover:border-gold/20 tracking-wider uppercase text-xs lg:text-sm">
+                <button className={`hidden sm:flex ${components.button.base} ${components.button.sizes.small} ${components.button.variants.ghost} 
+                                 border ${colors.borderSubtle} hover:${colors.borderDefault} ${typography.trackingWide} uppercase ${typography.textXs} lg:${typography.textSm}`}>
                   Quick Add
                 </button>
-                <button className="btn btn-sm bg-gold hover:bg-gold/90 text-obsidian 
-                                 border-0 font-medium shadow-elegant tracking-wider uppercase text-xs lg:text-sm">
+                <button className={`${components.button.base} ${components.button.sizes.small} ${components.button.variants.primary} 
+                                 shadow-elegant ${typography.trackingWide} uppercase ${typography.textXs} lg:${typography.textSm}`}>
                   <span className="hidden sm:inline">New</span> Appointment
                 </button>
               </div>

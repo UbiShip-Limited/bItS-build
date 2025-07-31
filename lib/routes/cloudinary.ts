@@ -56,11 +56,22 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
     // Log the signature generation request
     console.log('📝 Generating upload signature:', { folder, tags, hasContext: !!context });
     
+    // Security: Ensure folder is restricted to allowed paths
+    const allowedFolders = ['tattoo-requests', 'customer_uploads/tattoo_requests'];
+    if (!allowedFolders.includes(folder)) {
+      return reply.status(400).send({ error: 'Invalid upload folder' });
+    }
+    
     // Generate a signature with folder and tags pre-defined
     // This locks the upload to only go to the specified folder
     const params: any = {
       folder,
-      tags: Array.isArray(tags) ? tags : [tags] // Ensure tags is an array
+      tags: Array.isArray(tags) ? tags : [tags], // Ensure tags is an array
+      // Security: Add upload restrictions
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'],
+      max_file_size: 10485760, // 10MB limit
+      resource_type: 'image',
+      type: 'upload'
     };
     
     // Only include context if it's provided and not empty
@@ -98,11 +109,26 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     const { folder = 'tattoo-requests', tags = [] } = request.body as CloudinarySignatureBody;
     
+    // Security: Validate folder based on user role
+    const user = request.user;
+    const allowedFolders = user?.role === 'admin' || user?.role === 'artist' 
+      ? ['shop_content', 'site_content', 'tattoo-requests', 'customer_uploads', 'customer_uploads/tattoo_requests']
+      : ['tattoo-requests', 'customer_uploads/tattoo_requests'];
+    
+    if (!allowedFolders.includes(folder)) {
+      return reply.status(400).send({ error: 'Invalid upload folder for your role' });
+    }
+    
     // Generate a signature with folder and tags pre-defined
     // This locks the upload to only go to the specified folder
-    const params = {
+    const params: any = {
       folder,
-      tags: Array.isArray(tags) ? tags : [tags] // Ensure tags is an array
+      tags: Array.isArray(tags) ? tags : [tags], // Ensure tags is an array
+      // Security: Add upload restrictions
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'],
+      max_file_size: user?.role === 'admin' || user?.role === 'artist' ? 52428800 : 10485760, // 50MB for staff, 10MB for customers
+      resource_type: 'image',
+      type: 'upload'
     };
     
     const signatureData = cloudinaryService.generateUploadSignature(params);
@@ -153,10 +179,26 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
         return;
       }
       
-      const signatureData = CloudinaryService.generateTattooRequestUploadSignature(
-        tattooRequestId,
-        customerId
-      );
+      // Generate signature with security restrictions
+      const tags = ['tattoo_request', 'customer_upload'];
+      if (customerId) tags.push(`customer_${customerId}`);
+      
+      const params = {
+        folder: 'customer_uploads/tattoo_requests',
+        tags: tags,
+        context: {
+          tattoo_request_id: tattooRequestId,
+          ...(customerId && { customer_id: customerId }),
+          upload_type: 'tattoo_request_reference'
+        },
+        // Security: Add upload restrictions
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'],
+        max_file_size: 10485760, // 10MB limit
+        resource_type: 'image',
+        type: 'upload'
+      };
+      
+      const signatureData = cloudinaryService.generateUploadSignature(params);
       
       reply.code(200).send(signatureData);
     } catch (error) {

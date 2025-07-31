@@ -19,15 +19,15 @@ export function Footer() {
   const pages = [
     {
       title: "Gallery",
-      href: "/gallery",
+      href: "#gallery",
     },
     {
       title: "Artists",
-      href: "/artists",
+      href: "#artists",
     },
     {
       title: "Services",
-      href: "/services",
+      href: "#services",
     },
     {
       title: "Booking",
@@ -35,7 +35,7 @@ export function Footer() {
     },
     {
       title: "About",
-      href: "/about",
+      href: "#about",
     },
     {
       title: "Contact",
@@ -43,7 +43,7 @@ export function Footer() {
     },
     {
       title: "Aftercare",
-      href: "/aftercare",
+      href: "#aftercare",
     },
   ];
 

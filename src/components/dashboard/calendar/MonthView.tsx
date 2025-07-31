@@ -1,6 +1,7 @@
 import { type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
 import DayCell from './DayCell';
 import { DayStats } from './hooks/useCalendarStats';
+import { typography, colors } from '@/src/lib/styles/globalStyleConstants';
 
 interface MonthViewProps {
   calendarDays: Date[];
@@ -28,7 +29,7 @@ export default function MonthView({
       {/* Day Headers */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="text-center text-sm font-medium text-smoke-500 py-2">
+          <div key={day} className={`text-center ${typography.textSm} ${typography.fontMedium} ${colors.textMuted} py-2`}>
             {day}
           </div>
         ))}

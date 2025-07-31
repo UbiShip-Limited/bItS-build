@@ -1,3 +1,5 @@
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
+
 interface Appointment {
   id: string;
   clientName: string;
@@ -17,45 +19,45 @@ export default function AppointmentsTable({ appointments }: AppointmentsTablePro
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       confirmed: 'bg-green-500/20 text-green-400 border-green-500/30',
-      pending: 'bg-[#C9A449]/20 text-[#C9A449] border-[#C9A449]/30',
+      pending: `bg-gold-500/20 ${colors.textAccent} ${colors.borderDefault}`,
       completed: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
     };
-    return statusConfig[status as keyof typeof statusConfig] || 'bg-gray-500/20 text-gray-400';
+    return statusConfig[status as keyof typeof statusConfig] || `bg-white/10 ${colors.textSecondary}`;
   };
 
   return (
-    <div className="overflow-hidden rounded-xl">
+    <div className={`overflow-hidden ${components.radius.large}`}>
       <table className="w-full">
         <thead>
           <tr>
-            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-[0.02em]">Time</th>
-            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-[0.02em]">Client</th>
-            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-[0.02em]">Service</th>
-            <th className="bg-[#080808] text-gray-400 px-5 py-3.5 text-left font-medium text-sm uppercase tracking-[0.02em]">Status</th>
+            <th className={`bg-obsidian/50 ${colors.textSecondary} px-5 py-3.5 text-left ${typography.fontMedium} ${typography.textSm} uppercase ${typography.trackingWide}`}>Time</th>
+            <th className={`bg-obsidian/50 ${colors.textSecondary} px-5 py-3.5 text-left ${typography.fontMedium} ${typography.textSm} uppercase ${typography.trackingWide}`}>Client</th>
+            <th className={`bg-obsidian/50 ${colors.textSecondary} px-5 py-3.5 text-left ${typography.fontMedium} ${typography.textSm} uppercase ${typography.trackingWide}`}>Service</th>
+            <th className={`bg-obsidian/50 ${colors.textSecondary} px-5 py-3.5 text-left ${typography.fontMedium} ${typography.textSm} uppercase ${typography.trackingWide}`}>Status</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-[#1a1a1a]">
+        <tbody className={`divide-y divide-gold-500/10`}>
           {appointments.length === 0 ? (
             <tr>
-              <td colSpan={4} className="text-center py-8 text-gray-500 bg-[#0a0a0a]">
+              <td colSpan={4} className={`text-center py-8 ${colors.textMuted} bg-obsidian/30`}>
                 No appointments scheduled for today
               </td>
             </tr>
           ) : (
             appointments.map((appointment, index) => (
-              <tr key={appointment.id} className="transition-colors hover:bg-[#1a1a1a]/50">
-                <td className="px-5 py-4 text-white font-medium">{appointment.time}</td>
+              <tr key={appointment.id} className={`${effects.transitionNormal} hover:bg-white/5 group`}>
+                <td className={`px-5 py-4 ${colors.textPrimary} ${typography.fontMedium}`}>{appointment.time}</td>
                 <td className="px-5 py-4">
                   <div>
-                    <div className="text-gray-300 font-medium">{appointment.clientName}</div>
+                    <div className={`${colors.textPrimary} ${typography.fontMedium}`}>{appointment.clientName}</div>
                     {appointment.clientPhone && (
-                      <div className="text-gray-500 text-sm">{appointment.clientPhone}</div>
+                      <div className={`${colors.textMuted} ${typography.textSm}`}>{appointment.clientPhone}</div>
                     )}
                   </div>
                 </td>
-                <td className="px-5 py-4 text-gray-300">{appointment.service}</td>
+                <td className={`px-5 py-4 ${colors.textSecondary}`}>{appointment.service}</td>
                 <td className="px-5 py-4">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(appointment.status)}`}>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full ${typography.textXs} ${typography.fontMedium} border ${getStatusBadge(appointment.status)} ${effects.transitionNormal}`}>
                     {appointment.status}
                   </span>
                 </td>

@@ -10,6 +10,9 @@ import QuickPaymentActions from '@/src/components/payments/QuickPaymentActions';
 import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHistory';
 import Modal from '@/src/components/ui/Modal';
 import CustomerForm from '@/src/components/forms/CustomerForm';
+import { DashboardPageLayout } from '../components/DashboardPageLayout';
+import { DashboardCard } from '../components/DashboardCard';
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
 
 export default function TattooRequestsPage() {
   const [requests, setRequests] = useState<TattooRequest[]>([]);
@@ -61,16 +64,16 @@ export default function TattooRequestsPage() {
   }, [loadTattooRequests]);
 
   const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      'new': 'bg-[#C9A449]/20 text-[#C9A449] border-[#C9A449]/30',
+    const statusColors: Record<string, string> = {
+      'new': `bg-gold-500/20 ${colors.textAccent} ${colors.borderDefault}`,
       'reviewed': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       'approved': 'bg-green-500/20 text-green-400 border-green-500/30',
       'rejected': 'bg-red-500/20 text-red-400 border-red-500/30',
       'deposit_paid': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
       'in_progress': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-      'completed': 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+      'completed': `bg-white/10 ${colors.textSecondary} ${colors.borderSubtle}`
     };
-    return colors[status] || 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+    return statusColors[status] || `bg-white/10 ${colors.textSecondary} ${colors.borderSubtle}`;
   };
 
   const formatDate = (dateString: string) => {
@@ -94,27 +97,27 @@ export default function TattooRequestsPage() {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8 pb-6 border-b border-[#1a1a1a]">
-        <div>
-          <h1 className="text-4xl sm:text-5xl font-heading font-bold text-white mb-2 tracking-wide">Tattoo Requests</h1>
-          <p className="text-gray-400 text-lg">Manage all tattoo requests</p>
-        </div>
-      </div>
+    <DashboardPageLayout
+      title="Tattoo Requests"
+      description="Manage all tattoo requests"
+      breadcrumbs={[{ label: 'Tattoo Requests' }]}
+    >
 
       {/* Filters */}
-      <div className="bg-[#111111] border border-[#1a1a1a] rounded-2xl shadow-2xl p-6 mb-6 hover:border-[#C9A449]/20 transition-all duration-300">
-        <div className="flex items-center gap-2 mb-4 pb-2 border-b border-[#1a1a1a]">
-          <Filter className="w-5 h-5 text-[#C9A449]" />
-          <span className="font-semibold text-white text-lg">Filters</span>
+      <DashboardCard
+        title="Filters"
+        className="mb-6"
+      >
+        <div className="flex items-center gap-2">
+          <Filter className={`w-5 h-5 ${colors.textAccent}`} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-2">Status</label>
+            <label className={`block ${typography.textSm} ${typography.fontMedium} ${colors.textSecondary} mb-2`}>Status</label>
             <select 
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-              className="block w-full px-3 py-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg focus:border-[#C9A449]/50 focus:outline-none focus:ring-1 focus:ring-[#C9A449]/20 text-white transition-all duration-300"
+              className={`${components.input}`}
             >
               <option value="">All Statuses</option>
               <option value="new">New</option>
@@ -127,73 +130,77 @@ export default function TattooRequestsPage() {
           <div className="flex items-end">
             <button
               onClick={() => setFilters({ status: '', page: 1, limit: 20 })}
-              className="w-full px-3 py-2 border border-[#1a1a1a] text-gray-400 rounded-lg hover:border-[#C9A449]/30 hover:bg-[#1a1a1a]/50 hover:text-white font-medium transition-all duration-300"
+              className={`w-full ${components.button.base} ${components.button.sizes.medium} ${components.button.variants.secondary}`}
             >
               Clear Filters
             </button>
           </div>
         </div>
-      </div>
+      </DashboardCard>
 
       {/* Tattoo Requests Table */}
-      <div className="bg-[#111111] border border-[#1a1a1a] rounded-2xl shadow-2xl overflow-hidden hover:border-[#C9A449]/20 transition-all duration-300">
+      <DashboardCard
+        title="All Requests"
+        subtitle={`Total: ${pagination.total} requests`}
+        noPadding
+      >
         {loading ? (
           <div className="p-8 text-center">
-            <span className="loading loading-spinner loading-lg text-[#C9A449]"></span>
-            <p className="mt-2 text-gray-400">Loading tattoo requests...</p>
+            <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${colors.borderDefault} mx-auto mb-4`}></div>
+            <p className={`${colors.textSecondary}`}>Loading tattoo requests...</p>
           </div>
         ) : error ? (
           <div className="p-8 text-center">
-            <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-6 py-4 rounded-lg">
-              <p className="font-medium">{error}</p>
+            <div className={`bg-red-500/10 border border-red-500/30 text-red-400 px-6 py-4 ${components.radius.medium}`}>
+              <p className={`${typography.fontMedium}`}>{error}</p>
               <button 
                 onClick={loadTattooRequests}
-                className="mt-4 px-6 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
+                className={`mt-4 ${components.button.base} ${components.button.sizes.medium} ${components.button.variants.primary}`}
               >
                 Retry
               </button>
             </div>
           </div>
         ) : requests.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">
-            <FileText className="w-12 h-12 mx-auto mb-4 text-gray-600" />
-            <p className="text-lg font-medium">No tattoo requests found</p>
+          <div className="p-8 text-center">
+            <FileText className={`w-12 h-12 mx-auto mb-4 ${colors.textMuted}`} />
+            <p className={`${typography.textLg} ${typography.fontMedium} ${colors.textSecondary}`}>No tattoo requests found</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="min-w-full">
-                <thead className="bg-[#080808]">
+                <thead className="bg-obsidian/50">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
                       Request
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
                       Contact
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
                       Details
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
                       Status
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
                       Style
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
                       Payment
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-right ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#1a1a1a]">
+                <tbody className={`divide-y divide-gold-500/10`}>
                   {requests.map((request) => (
-                    <tr key={request.id} className="hover:bg-[#1a1a1a]/50 transition-colors duration-150">
+                    <tr key={request.id} className={`hover:bg-white/5 ${effects.transitionNormal}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-[#1a1a1a] rounded overflow-hidden border border-[#2a2a2a]">
+                          <div className={`flex-shrink-0 h-10 w-10 bg-obsidian/50 rounded overflow-hidden border ${colors.borderSubtle}`}>
                             {request.referenceImages && request.referenceImages.length > 0 ? (
                               <Image 
                                 src={request.referenceImages[0].url} 
@@ -203,16 +210,16 @@ export default function TattooRequestsPage() {
                                 className="h-full w-full object-cover"
                               />
                             ) : (
-                              <div className="h-full w-full flex items-center justify-center text-[#C9A449]">
+                              <div className={`h-full w-full flex items-center justify-center ${colors.textAccent}`}>
                                 <FileText className="w-5 h-5" />
                               </div>
                             )}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-semibold text-white">
+                            <div className={`${typography.textSm} ${typography.fontSemibold} ${colors.textPrimary}`}>
                               Request #{request.id.slice(-6)}
                             </div>
-                            <div className="text-sm text-gray-500 flex items-center">
+                            <div className={`${typography.textSm} ${colors.textMuted} flex items-center`}>
                               <Calendar className="w-3 h-3 mr-1" />
                               {formatDate(request.createdAt)}
                             </div>
@@ -220,7 +227,7 @@ export default function TattooRequestsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-300">
+                        <div className={`${typography.textSm} ${typography.fontMedium} ${colors.textSecondary}`}>
                           {request.customer ? (
                             <>
                               <User className="w-3 h-3 inline mr-1" />
@@ -230,13 +237,13 @@ export default function TattooRequestsPage() {
                             'Anonymous'
                           )}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className={`${typography.textSm} ${colors.textMuted}`}>
                           {request.customer?.email || request.contactEmail || 'No email'}
                         </div>
                         {!request.customer && (request.contactEmail || request.contactPhone) && (
                           <button
                             onClick={() => handleCreateCustomerClick(request)}
-                            className="mt-2 inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#C9A449] hover:text-[#E5B563] bg-[#C9A449]/10 hover:bg-[#C9A449]/20 border border-[#C9A449]/30 hover:border-[#C9A449]/50 rounded-lg transition-all duration-300"
+                            className="mt-2 inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gold-500 hover:text-gold-400 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 hover:border-gold-500/50 rounded-lg transition-all duration-300"
                           >
                             <UserPlus className="w-3 h-3" />
                             Create Customer
@@ -244,10 +251,10 @@ export default function TattooRequestsPage() {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-300 max-w-xs truncate">
+                        <div className={`${typography.textSm} ${typography.fontMedium} ${colors.textSecondary} max-w-xs truncate`}>
                           {request.description}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className={`${typography.textSm} ${colors.textMuted}`}>
                           {request.placement} • {request.size}
                         </div>
                       </td>
@@ -259,7 +266,7 @@ export default function TattooRequestsPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-medium">
                         {request.style || 'Not specified'}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-medium">
+                      <td className={`px-6 py-4 whitespace-nowrap ${typography.textSm} ${colors.textSecondary} ${typography.fontMedium}`}>
                         <div className="space-y-2">
                           {/* Quick payment actions */}
                           {request.customer && (
@@ -295,10 +302,10 @@ export default function TattooRequestsPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <td className={`px-6 py-4 whitespace-nowrap text-right ${typography.textSm} ${typography.fontMedium}`}>
                         <Link 
                           href={`/dashboard/tattoo-request/${request.id}`} 
-                          className="text-[#C9A449] hover:text-[#E5B563] font-medium px-2 py-1 transition-colors"
+                          className={`${colors.textAccent} hover:${colors.textAccentProminent} ${typography.fontMedium} px-2 py-1 ${effects.transitionNormal}`}
                         >
                           View
                         </Link>
@@ -310,30 +317,30 @@ export default function TattooRequestsPage() {
             </div>
             
             {/* Pagination */}
-            <div className="bg-[#080808] border-t border-[#1a1a1a] px-6 py-4">
+            <div className={`bg-obsidian/50 border-t ${colors.borderSubtle} px-6 py-4`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400 font-medium">
-                    Showing <span className="font-bold text-white">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
-                    <span className="font-bold text-white">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
-                    <span className="font-bold text-white">{pagination.total}</span> results
+                  <p className={`${typography.textSm} ${colors.textSecondary} ${typography.fontMedium}`}>
+                    Showing <span className={`${typography.fontSemibold} ${colors.textPrimary}`}>{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
+                    <span className={`${typography.fontSemibold} ${colors.textPrimary}`}>{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of{' '}
+                    <span className={`${typography.fontSemibold} ${colors.textPrimary}`}>{pagination.total}</span> results
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
                     disabled={filters.page === 1}
-                    className="px-4 py-2 border border-[#1a1a1a] bg-[#111111] text-gray-400 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#1a1a1a] hover:text-white font-medium transition-all duration-300"
+                    className={`${components.button.base} ${components.button.sizes.small} ${components.button.variants.secondary} disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     Previous
                   </button>
-                  <span className="px-4 py-2 text-sm font-medium text-white">
+                  <span className={`px-4 py-2 ${typography.textSm} ${typography.fontMedium} ${colors.textPrimary}`}>
                     Page {pagination.page} of {pagination.pages}
                   </span>
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
                     disabled={filters.page === pagination.pages}
-                    className="px-4 py-2 border border-[#1a1a1a] bg-[#111111] text-gray-400 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#1a1a1a] hover:text-white font-medium transition-all duration-300"
+                    className={`${components.button.base} ${components.button.sizes.small} ${components.button.variants.secondary} disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     Next
                   </button>
@@ -342,7 +349,7 @@ export default function TattooRequestsPage() {
             </div>
           </>
         )}
-      </div>
+      </DashboardCard>
 
       {/* Create Customer Modal */}
       <Modal
@@ -363,6 +370,6 @@ export default function TattooRequestsPage() {
           }}
         />
       </Modal>
-    </div>
+    </DashboardPageLayout>
   );
 }

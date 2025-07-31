@@ -1,5 +1,6 @@
 import { Search, Filter } from 'lucide-react';
 import { BookingStatus } from '@/src/lib/api/services/appointmentApiClient';
+import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants';
 
 interface CalendarFiltersProps {
   searchTerm: string;
@@ -19,22 +20,22 @@ export default function CalendarFilters({
   return (
     <div className="flex items-center gap-4 mb-6">
       <div className="relative flex-1 max-w-xs">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-smoke-400" />
+        <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${colors.textMuted}`} />
         <input
           type="text"
           placeholder="Search appointments..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10 pr-4 py-2 border border-smoke-300 rounded-lg focus:ring-2 focus:ring-[#C9A449] focus:border-[#C9A449] text-sm w-full"
+          className={`pl-10 pr-4 py-2 ${components.input} ${typography.textSm}`}
         />
       </div>
       
       <div className="relative">
-        <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-smoke-400" />
+        <Filter className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${colors.textMuted}`} />
         <select
           value={statusFilter}
           onChange={(e) => onStatusFilterChange(e.target.value as BookingStatus | '')}
-          className="pl-10 pr-8 py-2 border border-smoke-300 rounded-lg focus:ring-2 focus:ring-[#C9A449] focus:border-[#C9A449] text-sm appearance-none bg-white"
+          className={`pl-10 pr-8 py-2 ${components.input} ${typography.textSm} appearance-none`}
         >
           <option value="">All Status</option>
           <option value={BookingStatus.PENDING}>Pending</option>
@@ -46,7 +47,7 @@ export default function CalendarFilters({
         </select>
       </div>
 
-      <div className="text-sm text-smoke-600">
+      <div className={`${typography.textSm} ${colors.textSecondary}`}>
         {appointmentCount} appointment{appointmentCount !== 1 ? 's' : ''}
       </div>
     </div>

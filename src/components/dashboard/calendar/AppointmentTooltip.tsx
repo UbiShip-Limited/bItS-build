@@ -1,6 +1,7 @@
 import { Clock, User, DollarSign, Mail, Phone } from 'lucide-react';
 import { type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
 import { formatTime } from '../utils/calendarUtils';
+import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants';
 
 interface AppointmentTooltipProps {
   appointment: AppointmentData;
@@ -8,13 +9,13 @@ interface AppointmentTooltipProps {
 
 export default function AppointmentTooltip({ appointment }: AppointmentTooltipProps) {
   return (
-    <div className="absolute z-50 p-3 bg-white rounded-lg shadow-lg border border-smoke-200 min-w-[250px] top-0 left-full ml-2 pointer-events-none">
+    <div className={`absolute z-50 p-3 bg-obsidian/95 backdrop-blur-sm ${components.radius.medium} ${effects.shadowLight} border ${colors.borderSubtle} min-w-[250px] top-0 left-full ml-2 pointer-events-none`}>
       <div className="space-y-2">
-        <div className="font-medium text-smoke-900">
+        <div className={`${typography.fontMedium} ${colors.textPrimary}`}>
           {appointment.customer?.name || 'Anonymous Appointment'}
         </div>
         
-        <div className="text-sm text-smoke-600 space-y-1">
+        <div className={`${typography.textSm} ${colors.textSecondary} space-y-1`}>
           <div className="flex items-center gap-2">
             <Clock className="w-3 h-3" />
             <span>
@@ -51,13 +52,13 @@ export default function AppointmentTooltip({ appointment }: AppointmentTooltipPr
         </div>
 
         {appointment.notes && (
-          <div className="text-sm text-smoke-500 border-t pt-2">
-            <div className="font-medium mb-1">Notes:</div>
-            <div className="text-xs">{appointment.notes}</div>
+          <div className={`${typography.textSm} ${colors.textMuted} border-t ${colors.borderSubtle} pt-2`}>
+            <div className={`${typography.fontMedium} mb-1`}>Notes:</div>
+            <div className={typography.textXs}>{appointment.notes}</div>
           </div>
         )}
 
-        <div className="text-xs text-smoke-400 border-t pt-2">
+        <div className={`${typography.textXs} ${colors.textMuted} border-t ${colors.borderSubtle} pt-2`}>
           Status: <span className="capitalize">{appointment.status.replace('_', ' ').toLowerCase()}</span>
         </div>
       </div>

@@ -8,18 +8,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Spotlight } from "./spotlight-new"
 import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants'
 import { smoothScrollTo } from '@/src/lib/utils/smoothScroll'
-
-// Utility function to generate Cloudinary URL with fallback
-const getCloudinaryUrl = (publicId: string, transformations: string = 'q_auto,f_auto,w_400,h_400,c_fit') => {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo';
-  
-  // Log for debugging
-  if (typeof window !== 'undefined') {
-    console.log('🌤️ Cloudinary URL:', `https://res.cloudinary.com/${cloudName}/image/upload/${transformations}/${publicId}`);
-  }
-  
-  return `https://res.cloudinary.com/${cloudName}/image/upload/${transformations}/${publicId}`;
-}
+import { CloudinaryImage, getCloudinaryUrl, CLOUDINARY_PRESETS } from './CloudinaryImage'
 
 
 export function TattooHero() {
@@ -138,12 +127,14 @@ export function TattooHero() {
                     transition={{ duration: 0.7 }}
                     className="absolute inset-0"
                   >
-                    <Image
-                      src="/images/bowen-logo.svg"
+                    {/* Use optimized Cloudinary image for logo */}
+                    <CloudinaryImage
+                      publicId="site_content/bowen-logo_medium"
                       alt="Bowen Island Outline"
                       fill
                       className="object-contain brightness-0 invert"
                       priority
+                      transformations={CLOUDINARY_PRESETS.logo.medium}
                     />
                   </motion.div>
                 )}
@@ -156,18 +147,36 @@ export function TattooHero() {
                     transition={{ duration: 0.7 }}
                     className="absolute inset-0" 
                   >
-                    <Image
-                      src="/images/cougar.svg"
-                      alt="Bowen Island Tattoo Logo"
-                      fill
-                      className="object-contain brightness-0 invert"
-                      style={{ 
-                        transform: 'scale(1.0)' 
-                      }}
-                      priority
-                      sizes="(max-width: 640px) 180px, (max-width: 768px) 200px, (max-width: 1024px) 240px, 280px"
-                      unoptimized={true}
-                    />
+                    {/* Use responsive Cloudinary image with proper size based on viewport */}
+                    <picture>
+                      <source
+                        media="(max-width: 640px)"
+                        srcSet={getCloudinaryUrl('site_content/cougar_mobile_webp', 'f_webp,q_auto')}
+                        type="image/webp"
+                      />
+                      <source
+                        media="(max-width: 768px)"
+                        srcSet={getCloudinaryUrl('site_content/cougar_tablet_webp', 'f_webp,q_auto')}
+                        type="image/webp"
+                      />
+                      <source
+                        media="(max-width: 1024px)"
+                        srcSet={getCloudinaryUrl('site_content/cougar_desktop_webp', 'f_webp,q_auto')}
+                        type="image/webp"
+                      />
+                      <CloudinaryImage
+                        publicId="site_content/cougar_desktop"
+                        alt="Bowen Island Tattoo Logo"
+                        fill
+                        className="object-contain brightness-0 invert"
+                        style={{ 
+                          transform: 'scale(1.0)' 
+                        }}
+                        priority
+                        transformations="f_auto,q_auto"
+                        responsive={false}
+                      />
+                    </picture>
                     {/* Enhanced glow effect */}
                     <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-64 h-8 bg-white/20 blur-2xl rounded-full" />
                     <div className="absolute inset-0 bg-gradient-radial from-white/10 via-transparent to-transparent scale-150" />

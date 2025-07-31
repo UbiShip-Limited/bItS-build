@@ -2,21 +2,26 @@
 
 import { Suspense } from 'react';
 import NotificationCenter from '@/src/components/dashboard/notifications/NotificationCenter';
+import { DashboardPageLayout } from '../components/DashboardPageLayout';
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
 
 export default function NotificationsPage() {
   return (
-    <div className="min-h-screen">
-      <div className="max-w-7xl mx-auto relative">
-        <div className="relative border border-[#C9A449]/30 rounded-2xl bg-[#0a0a0a]/90 backdrop-blur-sm p-8">
-          <Suspense fallback={
-            <div className="flex items-center justify-center h-96">
-              <div className="loading loading-spinner loading-lg text-primary"></div>
-            </div>
-          }>
-            <NotificationCenter />
-          </Suspense>
+    <DashboardPageLayout
+      title="Notifications"
+      description="Manage your notification preferences and view recent alerts"
+      breadcrumbs={[{ label: 'Notifications' }]}
+    >
+      <Suspense fallback={
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${colors.borderDefault} mx-auto mb-4`}></div>
+            <p className={`${colors.textSecondary}`}>Loading notifications...</p>
+          </div>
         </div>
-      </div>
-    </div>
+      }>
+        <NotificationCenter />
+      </Suspense>
+    </DashboardPageLayout>
   );
 }

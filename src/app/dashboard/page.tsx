@@ -1,29 +1,160 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/src/hooks/useAuth';
-// Temporarily comment out complex imports to fix build
-// import { useDashboardData } from './hooks/useDashboardData';
-// import { DashboardHeader, DashboardContent, DashboardLoading, DashboardError } from './components';
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
 
 // Component imports
 import OperationsStatsGrid from '@/src/components/dashboard/OperationsStatsGrid';
 import PriorityActionsBar from '@/src/components/dashboard/PriorityActionsBar';
 import SimplifiedActivityTimeline from '@/src/components/dashboard/SimplifiedActivityTimeline';
 import QuickActionsPanel from '@/src/components/dashboard/QuickActionsPanel';
+import { DashboardCard } from './components/DashboardCard';
 
 export default function DashboardPage() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const [dashboardData, setDashboardData] = useState({
+    metrics: {
+      todayAppointments: {
+        total: 0,
+        completed: 0,
+        remaining: 0
+      },
+      actionItems: {
+        overdueRequests: 0,
+        unconfirmedAppointments: 0,
+        followUpsNeeded: 0
+      },
+      requests: {
+        newCount: 0,
+        urgentCount: 0
+      },
+      revenue: {
+        today: 0,
+        thisWeek: 0,
+        thisMonth: 0
+      }
+    },
+    priorityActions: [],
+    recentActivity: []
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // TODO: Implement actual data fetching from API
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        // This is where we'll fetch real data from the API
+        // For now, we'll just set empty data to avoid placeholder confusion
+        
+        // Example of what the API call would look like:
+        // const response = await analyticsService.getDashboardMetrics('today');
+        // setDashboardData(response);
+        
+        setIsLoading(false);
+      } catch (err) {
+        setError('Failed to load dashboard data');
+        setIsLoading(false);
+      }
+    };
+
+    if (isAuthenticated) {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated]);
+
+  if (authLoading || isLoading) {
+    return (
+      <div className={`min-h-screen ${colors.bgPrimary} flex items-center justify-center`}>
+        <div className="text-center">
+          <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${colors.borderDefault} mx-auto mb-4`}></div>
+          <div className={`${colors.textSecondary}`}>Loading dashboard...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`min-h-screen ${colors.bgPrimary} flex items-center justify-center`}>
+        <div className="text-center">
+          <div className={`${colors.textAccent} mb-4`}>⚠️</div>
+          <div className={`${colors.textPrimary}`}>{error}</div>
+          <button 
+            onClick={() => window.location.reload()} 
+            className={`mt-4 ${components.button.base} ${components.button.sizes.small} ${components.button.variants.secondary}`}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if we have any data
+  const hasData = dashboardData.metrics.todayAppointments.total > 0 || 
+                  dashboardData.metrics.requests.newCount > 0 || 
+                  dashboardData.recentActivity.length > 0;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--obsidian, #0A0A0A)' }}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-        <div className="bg-[#111111] rounded-lg p-6 border border-[#C9A449]/20">
-          <h1 className="text-2xl font-semibold text-white mb-4">Dashboard</h1>
-          <p className="text-gray-300">
-            Welcome to your dashboard. 
-            {isAuthenticated ? `Hello, ${(user as any)?.name || 'User'}!` : 'Please log in to access dashboard features.'}
+    <div className="space-y-6">
+      {/* Welcome message for empty state */}
+      {!hasData && (
+        <div className={`text-center py-12 px-6 bg-gradient-to-b from-obsidian/95 to-obsidian/90 ${components.radius.large} border ${colors.borderSubtle}`}>
+          <h2 className={`${typography.h3} ${colors.textPrimary} mb-2`}>Welcome to your Dashboard</h2>
+          <p className={`${typography.paragraph} ${colors.textSecondary} mb-6`}>
+            Start by creating your first appointment or reviewing tattoo requests
           </p>
+          <div className="flex gap-4 justify-center">
+            <Link 
+              href="/dashboard/appointments?action=new" 
+              className={`${components.button.base} ${components.button.sizes.medium} ${components.button.variants.primary}`}
+            >
+              New Appointment
+            </Link>
+            <Link 
+              href="/dashboard/tattoo-request" 
+              className={`${components.button.base} ${components.button.sizes.medium} ${components.button.variants.secondary}`}
+            >
+              View Requests
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Priority Actions Bar - Only show if there are actions */}
+      {dashboardData.priorityActions.length > 0 && (
+        <PriorityActionsBar actions={dashboardData.priorityActions} />
+      )}
+
+      {/* Stats Grid - Always show, will display zeros */}
+      <OperationsStatsGrid metrics={dashboardData.metrics} loading={isLoading} />
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Activity Timeline - Takes up 2 columns */}
+        <div className="lg:col-span-2">
+          <DashboardCard
+            title="Recent Activity"
+            subtitle="Your latest updates and notifications"
+            viewDetailsHref="/dashboard/notifications"
+            noPadding
+          >
+            <SimplifiedActivityTimeline activities={dashboardData.recentActivity} />
+          </DashboardCard>
+        </div>
+
+        {/* Quick Actions Panel - Takes up 1 column */}
+        <div className="lg:col-span-1">
+          <DashboardCard
+            title="Quick Actions"
+            subtitle="Common tasks and shortcuts"
+          >
+            <QuickActionsPanel />
+          </DashboardCard>
         </div>
       </div>
     </div>

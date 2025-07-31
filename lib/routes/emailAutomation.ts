@@ -44,14 +44,19 @@ const emailAutomationRoutes: FastifyPluginAsync = async (fastify) => {
     schema: {
       response: {
         200: {
-          type: 'object',
-          properties: {
-            appointment_reminder_24h: { type: 'object' },
-            appointment_reminder_2h: { type: 'object' },
-            aftercare_instructions: { type: 'object' },
-            review_request: { type: 'object' },
-            re_engagement: { type: 'object' },
-            abandoned_request_recovery: { type: 'object' }
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              emailType: { type: 'string' },
+              enabled: { type: 'boolean' },
+              timingHours: { type: ['number', 'null'] },
+              timingMinutes: { type: ['number', 'null'] },
+              businessHoursOnly: { type: 'boolean' },
+              createdAt: { type: 'string' },
+              updatedAt: { type: 'string' }
+            }
           }
         }
       }
@@ -67,7 +72,9 @@ const emailAutomationRoutes: FastifyPluginAsync = async (fastify) => {
 
     try {
       const settings = await service.getSettings();
-      return settings;
+      request.log.info({ settingsCount: settings.length }, 'Retrieved email automation settings');
+      // Ensure we always return an array
+      return Array.isArray(settings) ? settings : [];
     } catch (error) {
       request.log.error(error);
       return reply.status(500).send({ error: 'Failed to get automation settings' });
@@ -235,7 +242,16 @@ const emailAutomationRoutes: FastifyPluginAsync = async (fastify) => {
             properties: {
               totalSent: { type: 'number' },
               totalFailed: { type: 'number' },
-              recentActivity: { type: 'array' }
+              totalBounced: { type: 'number' },
+              byType: { type: 'object' },
+              last30Days: {
+                type: 'object',
+                properties: {
+                  sent: { type: 'number' },
+                  failed: { type: 'number' },
+                  bounced: { type: 'number' }
+                }
+              }
             }
           }
         }

@@ -3,6 +3,7 @@ import { Clock, User, DollarSign } from 'lucide-react';
 import { type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
 import { formatTime, getStatusColor } from '../utils/calendarUtils';
 import AppointmentTooltip from './AppointmentTooltip';
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
 
 interface AppointmentCardProps {
   appointment: AppointmentData;
@@ -23,9 +24,9 @@ export default function AppointmentCard({
     return (
       <div
         className={`
-          text-xs p-1 rounded border cursor-pointer transition-all relative
+          ${typography.textXs} p-1 ${components.radius.small} border cursor-pointer ${effects.transitionNormal} relative
           ${getStatusColor(appointment.status)}
-          hover:shadow-sm
+          hover:shadow-md hover:shadow-gold-500/10
         `}
         title={`${formatTime(appointment.startTime)} - ${appointment.customer?.name || 'Anonymous'}`}
         onClick={onClick}
@@ -33,7 +34,7 @@ export default function AppointmentCard({
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
-        <div className="font-medium truncate">{formatTime(appointment.startTime)}</div>
+        <div className={`${typography.fontMedium} truncate`}>{formatTime(appointment.startTime)}</div>
         <div className="opacity-90 truncate">
           {appointment.customer?.name || 'Anonymous'}
         </div>
@@ -48,9 +49,9 @@ export default function AppointmentCard({
   return (
     <div
       className={`
-        p-2 rounded border cursor-pointer transition-all relative
+        p-2 ${components.radius.small} border cursor-pointer ${effects.transitionNormal} relative
         ${getStatusColor(appointment.status)}
-        hover:shadow-sm
+        hover:shadow-md hover:shadow-gold-500/10
       `}
       onClick={onClick}
       onContextMenu={onRightClick}
@@ -58,13 +59,13 @@ export default function AppointmentCard({
       onMouseLeave={() => setShowTooltip(false)}
     >
       <div className="space-y-1">
-        <div className="font-medium truncate">
+        <div className={`${typography.fontMedium} truncate`}>
           {appointment.customer?.name || 'Anonymous'}
         </div>
-        <div className="text-sm text-current opacity-75 truncate">
+        <div className={`${typography.textSm} text-current opacity-75 truncate`}>
           {appointment.type}
         </div>
-        <div className="flex items-center gap-2 text-xs">
+        <div className={`flex items-center gap-2 ${typography.textXs}`}>
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             {formatTime(appointment.startTime)}
@@ -74,7 +75,7 @@ export default function AppointmentCard({
           )}
         </div>
         {appointment.priceQuote && (
-          <div className="flex items-center gap-1 text-xs">
+          <div className={`flex items-center gap-1 ${typography.textXs}`}>
             <DollarSign className="w-3 h-3" />
             ${appointment.priceQuote}
           </div>

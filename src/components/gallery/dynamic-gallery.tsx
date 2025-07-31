@@ -212,19 +212,21 @@ export function DynamicGallery() {
                     </>
                   )}
 
-                  {/* Info overlay - always visible on mobile */}
-                  <div className={`absolute bottom-0 left-0 right-0 ${isMobile ? 'p-2' : 'p-3 md:p-4'} transition-transform duration-300 ${
-                    isMobile ? "translate-y-0 opacity-100" : hoveredItem === item.id ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
-                  }`}>
-                    <h3 className={`text-white font-medium ${isMobile ? 'text-sm line-clamp-1' : 'text-base mb-1'}`}>
-                      {item.alt === item.publicId ? 'Tattoo Artwork' : item.alt}
-                    </h3>
-                    {!isMobile && (
-                      <p className="text-white/80 text-sm">
-                        {item.artist}
-                      </p>
-                    )}
-                  </div>
+                  {/* Info overlay - only show on desktop or if there's meaningful alt text */}
+                  {(!isMobile || (item.alt && item.alt !== item.publicId)) && (
+                    <div className={`absolute bottom-0 left-0 right-0 ${isMobile ? 'p-2' : 'p-3 md:p-4'} transition-transform duration-300 ${
+                      isMobile ? "translate-y-0 opacity-100" : hoveredItem === item.id ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+                    }`}>
+                      <h3 className={`text-white font-medium ${isMobile ? 'text-sm line-clamp-1' : 'text-base mb-1'}`}>
+                        {item.alt === item.publicId ? 'Tattoo Artwork' : item.alt}
+                      </h3>
+                      {!isMobile && (
+                        <p className="text-white/80 text-sm">
+                          {item.artist}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Zoom icon - always visible on mobile */}
                   <div className={`absolute ${isMobile ? 'top-2 right-2' : 'top-4 right-4'} bg-gold-500 ${isMobile ? 'p-1' : 'p-2'} rounded-full transition-opacity duration-300 shadow-subtle ${

@@ -16,8 +16,11 @@ export const useCloudinaryUpload = () => {
     setError(null);
     
     try {
+      // Get the backend URL from environment variable or use default
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
+      
       // First, get upload signature from backend
-      const signatureResponse = await fetch('/api/cloudinary/signature/public', {
+      const signatureResponse = await fetch(`${backendUrl}/api/v1/cloudinary/signature/public`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

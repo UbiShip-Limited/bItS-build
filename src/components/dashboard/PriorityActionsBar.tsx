@@ -2,6 +2,7 @@
 
 import { AlertCircle, Clock, FileText, Calendar } from 'lucide-react';
 import Link from 'next/link';
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
 
 interface PriorityAction {
   id: string;
@@ -37,14 +38,14 @@ export default function PriorityActionsBar({ actions }: PriorityActionsBarProps)
 
   const getActionColor = (urgency: PriorityAction['urgency']) => {
     return urgency === 'high' 
-      ? 'bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20' 
-      : 'bg-orange-500/10 border-orange-500/30 text-orange-400 hover:bg-orange-500/20';
+      ? `bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20 ${effects.transitionNormal}` 
+      : `bg-gold-500/10 ${colors.borderDefault} ${colors.textAccent} hover:bg-gold-500/20 ${effects.transitionNormal}`;
   };
 
   return (
-    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+    <div className={`bg-gradient-to-r from-red-500/10 via-red-500/5 to-red-500/10 border border-red-500/20 ${components.radius.medium} p-4 backdrop-blur-sm`}>
       <div className="flex items-center gap-3">
-        <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+        <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 animate-pulse" />
         
         <div className="flex-1 flex items-center gap-2 overflow-x-auto">
           {actions.map((action) => (
@@ -52,14 +53,14 @@ export default function PriorityActionsBar({ actions }: PriorityActionsBarProps)
               key={action.id}
               href={action.link}
               className={`
-                flex items-center gap-2 px-3 py-1.5 rounded-md border whitespace-nowrap
-                transition-all duration-200 text-sm
+                flex items-center gap-2 px-3 py-1.5 ${components.radius.small} border whitespace-nowrap
+                ${typography.textSm}
                 ${getActionColor(action.urgency)}
-                hover:scale-105
+                hover:scale-[1.02] hover:shadow-soft
               `}
             >
               {getIcon(action.type)}
-              <span className="font-medium">{action.title}</span>
+              <span className={typography.fontMedium}>{action.title}</span>
               <span className="opacity-70">{action.description}</span>
               {action.time && (
                 <span className="opacity-70">• {action.time}</span>
@@ -70,7 +71,7 @@ export default function PriorityActionsBar({ actions }: PriorityActionsBarProps)
 
         <Link
           href="/dashboard/notifications"
-          className="text-xs text-gray-400 hover:text-white transition-colors whitespace-nowrap"
+          className={`${typography.textXs} ${colors.textSecondary} hover:${colors.textPrimary} ${effects.transitionNormal} whitespace-nowrap`}
         >
           View all →
         </Link>

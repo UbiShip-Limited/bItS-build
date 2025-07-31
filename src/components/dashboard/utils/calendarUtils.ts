@@ -1,15 +1,16 @@
 import { BookingStatus } from '@/src/lib/api/services/appointmentApiClient';
+import { colors } from '@/src/lib/styles/globalStyleConstants';
 
 export const getStatusColor = (status: string) => {
-  const colors = {
-    [BookingStatus.PENDING]: 'bg-yellow-100 border-yellow-300 text-yellow-800',
-    [BookingStatus.SCHEDULED]: 'bg-blue-100 border-blue-300 text-blue-800',
-    [BookingStatus.CONFIRMED]: 'bg-green-100 border-green-300 text-green-800',
-    [BookingStatus.COMPLETED]: 'bg-gray-100 border-gray-300 text-gray-800',
-    [BookingStatus.CANCELLED]: 'bg-red-100 border-red-300 text-red-800',
-    [BookingStatus.NO_SHOW]: 'bg-orange-100 border-orange-300 text-orange-800'
+  const statusColors = {
+    [BookingStatus.PENDING]: 'bg-yellow-500/20 border-yellow-500/30 text-yellow-400',
+    [BookingStatus.SCHEDULED]: 'bg-blue-500/20 border-blue-500/30 text-blue-400',
+    [BookingStatus.CONFIRMED]: 'bg-green-500/20 border-green-500/30 text-green-400',
+    [BookingStatus.COMPLETED]: `bg-white/10 ${colors.borderSubtle} ${colors.textSecondary}`,
+    [BookingStatus.CANCELLED]: 'bg-red-500/20 border-red-500/30 text-red-400',
+    [BookingStatus.NO_SHOW]: 'bg-orange-500/20 border-orange-500/30 text-orange-400'
   };
-  return colors[status] || 'bg-gray-100 border-gray-300 text-gray-800';
+  return statusColors[status] || `bg-white/10 ${colors.borderSubtle} ${colors.textSecondary}`;
 };
 
 export const formatTime = (dateString: string) => {

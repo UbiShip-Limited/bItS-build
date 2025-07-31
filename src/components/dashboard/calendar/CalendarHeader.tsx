@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { format, startOfWeek } from 'date-fns';
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
 
 interface CalendarHeaderProps {
   currentDate: Date;
@@ -30,27 +31,27 @@ export default function CalendarHeader({
   return (
     <div className="flex items-center justify-between mb-6">
       <div className="flex items-center gap-4">
-        <h2 className="text-xl font-semibold text-smoke-900">
+        <h2 className={`${typography.textXl} ${typography.fontSemibold} ${colors.textPrimary}`}>
           {getTitle()}
         </h2>
         <div className="flex gap-1">
           <button
             onClick={() => onNavigate(-1)}
-            className="btn btn-circle btn-sm btn-ghost text-smoke-600 hover:text-smoke-900 hover:bg-smoke-200"
+            className={`${components.button.base} ${components.button.sizes.small} ${components.button.variants.ghost} p-2`}
             title={`Previous ${viewMode}`}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={onToday}
-            className="btn btn-sm btn-ghost text-smoke-600 hover:text-smoke-900 hover:bg-smoke-200"
+            className={`${components.button.base} ${components.button.sizes.small} ${components.button.variants.ghost}`}
             title="Go to today (T)"
           >
             Today
           </button>
           <button
             onClick={() => onNavigate(1)}
-            className="btn btn-circle btn-sm btn-ghost text-smoke-600 hover:text-smoke-900 hover:bg-smoke-200"
+            className={`${components.button.base} ${components.button.sizes.small} ${components.button.variants.ghost} p-2`}
             title={`Next ${viewMode}`}
           >
             <ChevronRight className="w-4 h-4" />
@@ -59,7 +60,7 @@ export default function CalendarHeader({
             <button
               onClick={onRefresh}
               disabled={loading}
-              className="btn btn-circle btn-sm btn-ghost text-smoke-600 hover:text-smoke-900 hover:bg-smoke-200 disabled:opacity-50"
+              className={`${components.button.base} ${components.button.sizes.small} ${components.button.variants.ghost} p-2 disabled:opacity-50 disabled:cursor-not-allowed`}
               title="Refresh (Ctrl+R)"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -71,10 +72,10 @@ export default function CalendarHeader({
       <div className="flex gap-2">
         <button
           onClick={() => onViewModeChange('month')}
-          className={`px-3 py-1 text-sm rounded-lg transition-all ${
+          className={`px-3 py-1 ${typography.textSm} ${components.radius.medium} ${effects.transitionNormal} ${
             viewMode === 'month' 
-              ? 'bg-smoke-700 text-smoke-50' 
-              : 'text-smoke-600 hover:bg-smoke-200 hover:text-smoke-900'
+              ? `bg-gold-500/20 ${colors.textAccent} border ${colors.borderDefault}` 
+              : `${colors.textSecondary} hover:bg-white/5 hover:${colors.textPrimary}`
           }`}
           title="Month view (M)"
         >
@@ -82,10 +83,10 @@ export default function CalendarHeader({
         </button>
         <button
           onClick={() => onViewModeChange('week')}
-          className={`px-3 py-1 text-sm rounded-lg transition-all ${
+          className={`px-3 py-1 ${typography.textSm} ${components.radius.medium} ${effects.transitionNormal} ${
             viewMode === 'week' 
-              ? 'bg-smoke-700 text-smoke-50' 
-              : 'text-smoke-600 hover:bg-smoke-200 hover:text-smoke-900'
+              ? `bg-gold-500/20 ${colors.textAccent} border ${colors.borderDefault}` 
+              : `${colors.textSecondary} hover:bg-white/5 hover:${colors.textPrimary}`
           }`}
           title="Week view (W)"
         >

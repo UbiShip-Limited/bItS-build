@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 import { BookingStatus } from '@/src/lib/api/services/appointmentApiClient';
 import { getStatusColor } from '../utils/calendarUtils';
+import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants';
 
 interface QuickActionsMenuProps {
   appointmentId: string | null;
@@ -53,23 +54,23 @@ export default function QuickActionsMenu({
   return (
     <div 
       ref={menuRef}
-      className="fixed z-50 bg-white rounded-lg shadow-lg border border-smoke-200 py-2 min-w-[180px]"
+      className={`fixed z-50 bg-obsidian/95 backdrop-blur-sm ${components.radius.medium} ${effects.shadowLight} border ${colors.borderSubtle} py-2 min-w-[180px]`}
       style={{
         left: '50%',
         top: '50%',
         transform: 'translate(-50%, -50%)'
       }}
     >
-      <div className="px-3 py-1 text-xs font-medium text-smoke-500 border-b border-smoke-100 mb-1">
+      <div className={`px-3 py-1 ${typography.textXs} ${typography.fontMedium} ${colors.textMuted} border-b ${colors.borderSubtle} mb-1`}>
         Quick Actions
       </div>
       {statusOptions.map(({ value, label }) => (
         <button
           key={value}
           onClick={() => onStatusChange(appointmentId, value)}
-          className="w-full px-3 py-2 text-left text-sm hover:bg-smoke-50 flex items-center gap-2 transition-colors"
+          className={`w-full px-3 py-2 text-left ${typography.textSm} hover:bg-white/5 flex items-center gap-2 ${effects.transitionNormal} ${colors.textSecondary} hover:${colors.textPrimary}`}
         >
-          <div className={`w-3 h-3 rounded border ${getStatusColor(value)}`} />
+          <div className={`w-3 h-3 ${components.radius.small} border ${getStatusColor(value)}`} />
           {label}
         </button>
       ))}

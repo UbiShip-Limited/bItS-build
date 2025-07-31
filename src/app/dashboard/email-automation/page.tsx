@@ -112,7 +112,7 @@ export default function EmailAutomationPage() {
   const fetchSettings = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/email-automation/settings`,
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/email-automation`,
         {
           headers: {
             'Authorization': `Bearer ${session?.access_token}`,
@@ -123,7 +123,13 @@ export default function EmailAutomationPage() {
       if (!response.ok) throw new Error('Failed to fetch settings');
       
       const data = await response.json();
-      setSettings(data);
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setSettings(data);
+      } else {
+        console.error('Expected array of settings, got:', data);
+        setSettings([]);
+      }
     } catch (error) {
       toast.error('Failed to load automation settings');
       console.error('Error fetching settings:', error);
@@ -154,7 +160,7 @@ export default function EmailAutomationPage() {
   const fetchStatistics = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/email-automation/statistics`,
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URL}/email-automation/stats`,
         {
           headers: {
             'Authorization': `Bearer ${session?.access_token}`,
@@ -228,7 +234,7 @@ export default function EmailAutomationPage() {
 
   const renderSettings = () => (
     <div className="space-y-4">
-      {settings.map((setting) => (
+      {Array.isArray(settings) && settings.length > 0 ? settings.map((setting) => (
         <div key={setting.id} className="card bg-base-100 shadow-md">
           <div className="card-body">
             <div className="flex justify-between items-start">
@@ -277,10 +283,14 @@ export default function EmailAutomationPage() {
             </div>
           </div>
         </div>
-      ))}
+      )) : (
+        <div className="text-center py-8 text-base-content/60">
+          No email automation settings found. Please check your backend configuration.
+        </div>
+      )}
       
       {/* Settings Modals */}
-      {settings.map((setting) => (
+      {Array.isArray(settings) && settings.map((setting) => (
         <dialog key={`modal_${setting.id}`} id={`settings_modal_${setting.emailType}`} className="modal">
           <div className="modal-box">
             <h3 className="font-bold text-lg">

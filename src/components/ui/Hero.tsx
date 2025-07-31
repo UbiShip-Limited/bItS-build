@@ -9,6 +9,18 @@ import { Spotlight } from "./spotlight-new"
 import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants'
 import { smoothScrollTo } from '@/src/lib/utils/smoothScroll'
 
+// Utility function to generate Cloudinary URL with fallback
+const getCloudinaryUrl = (publicId: string, transformations: string = 'q_auto,f_auto,w_400,h_400,c_fit') => {
+  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo';
+  
+  // Log for debugging
+  if (typeof window !== 'undefined') {
+    console.log('🌤️ Cloudinary URL:', `https://res.cloudinary.com/${cloudName}/image/upload/${transformations}/${publicId}`);
+  }
+  
+  return `https://res.cloudinary.com/${cloudName}/image/upload/${transformations}/${publicId}`;
+}
+
 
 export function TattooHero() {
   const [currentImage, setCurrentImage] = useState<"none" | "outline" | "cougar">("none")
@@ -62,7 +74,7 @@ export function TattooHero() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-obsidian via-[#0a0a0a] to-obsidian text-white flex items-center justify-center w-full">
-      {/* Subtle spotlight effect with gold tints */}
+      {/* Subtle spotlight effect with white/gray tints */}
       <Spotlight 
         gradientFirst="radial-gradient(68.54% 68.72% at 55.02% 31.46%, hsla(210, 100%, 85%, .08) 0, hsla(210, 100%, 55%, .02) 50%, hsla(210, 100%, 45%, 0) 80%)"
         gradientSecond="radial-gradient(68.54% 68.72% at 55.02% 31.46%, hsla(210, 100%, 85%, .06) 0, hsla(210, 100%, 55%, .02) 50%, hsla(210, 100%, 45%, 0) 80%)"
@@ -77,20 +89,20 @@ export function TattooHero() {
       
       {/* Additional ambient glow effects */}
       <div className="absolute inset-0 z-0">
-        <div className="hero-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gold-500/5 rounded-full blur-[100px] animate-pulse" />
-        <div className="hero-shadow absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-gold-500/8 rounded-full blur-[60px]" />
-        <div className="hero-shadow absolute bottom-1/3 right-1/4 w-[300px] h-[300px] bg-gold-500/8 rounded-full blur-[60px]" />
+        <div className="hero-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-[100px] animate-pulse" />
+        <div className="hero-shadow absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-white/8 rounded-full blur-[60px]" />
+        <div className="hero-shadow absolute bottom-1/3 right-1/4 w-[300px] h-[300px] bg-white/8 rounded-full blur-[60px]" />
       </div>
       
       {/* Gradient mesh background */}
       <div className="absolute inset-0 z-0 opacity-30">
-        <div className="absolute inset-0 bg-gradient-to-br from-gold-500/10 via-transparent to-gold-500/5" />
-        <div className="absolute inset-0 bg-gradient-to-tl from-gold-500/5 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5" />
+        <div className="absolute inset-0 bg-gradient-to-tl from-white/5 via-transparent to-transparent" />
       </div>
 
       {/* Subtle central divider */}
       <div className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 z-10 hidden lg:block">
-        <div className="h-full w-full bg-gradient-to-b from-transparent via-gold-500/10 to-transparent"></div>
+        <div className="h-full w-full bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
       </div>
 
       {/* Main content container - highest z-index */}
@@ -109,11 +121,11 @@ export function TattooHero() {
         >
           {/* Logo area - enhanced with glow effect */}
           <motion.div 
-            className="relative aspect-square w-[120px] h-[120px] sm:w-[160px] sm:h-[160px] md:w-[200px] md:h-[200px] lg:w-[240px] lg:h-[240px]" 
+            className="relative aspect-square w-[180px] h-[180px] sm:w-[200px] sm:h-[200px] md:w-[240px] md:h-[240px] lg:w-[280px] lg:h-[280px]" 
             variants={itemVariants}
           >
             {/* Ambient glow behind logo */}
-            <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-[40px] sm:blur-[60px] scale-125 sm:scale-150 animate-pulse" />
+            <div className="absolute inset-0 bg-white/20 rounded-full blur-[40px] sm:blur-[60px] scale-125 sm:scale-150 animate-pulse" />
             <div className="relative w-full h-full mx-auto">
               {/* Simplified image transition using AnimatePresence */}
               <AnimatePresence mode="sync">
@@ -149,12 +161,16 @@ export function TattooHero() {
                       alt="Bowen Island Tattoo Logo"
                       fill
                       className="object-contain brightness-0 invert"
-                      style={{ transform: 'scale(1.05)' }}
+                      style={{ 
+                        transform: 'scale(1.0)' 
+                      }}
                       priority
+                      sizes="(max-width: 640px) 180px, (max-width: 768px) 200px, (max-width: 1024px) 240px, 280px"
+                      unoptimized={true}
                     />
                     {/* Enhanced glow effect */}
-                    <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-64 h-8 bg-gold-500/20 blur-2xl rounded-full" />
-                    <div className="absolute inset-0 bg-gradient-radial from-gold-500/10 via-transparent to-transparent scale-150" />
+                    <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 w-64 h-8 bg-white/20 blur-2xl rounded-full" />
+                    <div className="absolute inset-0 bg-gradient-radial from-white/10 via-transparent to-transparent scale-150" />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -166,35 +182,28 @@ export function TattooHero() {
             className={`${typography.fontBrand} text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold ${typography.leadingTight} mt-4 sm:mt-6 mb-2 sm:mb-3 px-4`}
             variants={itemVariants}
           >
-            <span className="bg-gradient-to-r from-white via-white to-gold-500/80 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-white via-white to-white bg-clip-text text-transparent">
               Bowen Island Tattoo
             </span>
           </motion.h1>
 
-          {/* Tagline - enhanced with better hierarchy */}
-          <motion.p
-            className={`${typography.textLg} sm:${typography.textXl} md:${typography.text2xl} ${colors.textProminent} max-w-3xl mx-auto mb-2 sm:mb-3 ${typography.trackingWide} px-6`}
-            variants={itemVariants}
-          >
-            Island ink, crafted with care
-          </motion.p>
 
           <motion.p
             className={`${typography.textSm} sm:${typography.paragraph} md:${typography.paragraphLarge} ${colors.textSecondary} max-w-2xl mx-auto mb-4 sm:mb-6 px-6`}
             variants={itemVariants}
           >
-           Custom tattoos in our peaceful island studio.<br className="hidden sm:block" />
+           Custom tattoos, peaceful island studio.<br className="hidden sm:block" />
            <span className={`${colors.textMuted} italic block mt-1 sm:mt-2`}>Book your spot. Let's create something beautiful.</span>
           </motion.p>
 
           {/* Enhanced ornamental divider */}
           <motion.div className="mb-4 sm:mb-6 flex items-center justify-center" variants={itemVariants}>
-            <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-r from-transparent via-gold-500/40 to-gold-500/20" />
+            <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-r from-transparent via-white/40 to-white/20" />
             <div className="mx-4 sm:mx-6 relative">
-              <div className="w-3 h-3 bg-gold-500/40 rounded-full" />
-              <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-md scale-[3] animate-pulse" />
+              <div className="w-3 h-3 bg-white/40 rounded-full" />
+              <div className="absolute inset-0 bg-white/20 rounded-full blur-md scale-[3] animate-pulse" />
             </div>
-            <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-l from-transparent via-gold-500/40 to-gold-500/20" />
+            <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-l from-transparent via-white/40 to-white/20" />
           </motion.div>
 
           {/* CTA Buttons - refined with new button system */}
@@ -236,7 +245,7 @@ export function TattooHero() {
             {[...Array(5)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-1.5 h-1.5 bg-gold-500/20 rounded-full"
+                className="absolute w-1.5 h-1.5 bg-white/20 rounded-full"
                 initial={{ 
                   x: `${20 + i * 15}%`,
                   y: "110%",
@@ -277,15 +286,15 @@ const CornerOrnament: React.FC<CornerOrnamentProps> = ({ position }) => {
   switch (position) {
     case "top-left":
       positionClasses = "top-0 left-0";
-      cornerStyle = "border-t-2 border-l-2 border-gold-500/20 rounded-tl-3xl";
+      cornerStyle = "border-t-2 border-l-2 border-white/20 rounded-tl-3xl";
       break;
     case "top-right":
       positionClasses = "top-0 right-0";
-      cornerStyle = "border-t-2 border-r-2 border-gold-500/20 rounded-tr-3xl";
+      cornerStyle = "border-t-2 border-r-2 border-white/20 rounded-tr-3xl";
       break;
     case "bottom-left":
       positionClasses = "bottom-0 left-0";
-      cornerStyle = "border-b-2 border-l-2 border-gold-500/20 rounded-bl-3xl";
+      cornerStyle = "border-b-2 border-l-2 border-white/20 rounded-bl-3xl";
       break;
     case "bottom-right":
       positionClasses = "bottom-0 right-0";

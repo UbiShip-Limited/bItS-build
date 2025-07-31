@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Filter, FileText, User, Calendar, DollarSign, UserPlus } from 'lucide-react';
+import { Filter, FileText, User, Calendar, DollarSign, UserPlus, Palette } from 'lucide-react';
 import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import QuickPaymentActions from '@/src/components/payments/QuickPaymentActions';
@@ -111,7 +111,7 @@ export default function TattooRequestsPage() {
         <div className="flex items-center gap-2">
           <Filter className={`w-5 h-5 ${colors.textAccent}`} />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           <div>
             <label className={`block ${typography.textSm} ${typography.fontMedium} ${colors.textSecondary} mb-2`}>Status</label>
             <select 
@@ -127,7 +127,7 @@ export default function TattooRequestsPage() {
             </select>
           </div>
           
-          <div className="flex items-end">
+          <div className="flex items-end sm:col-span-2 md:col-span-1">
             <button
               onClick={() => setFilters({ status: '', page: 1, limit: 20 })}
               className={`w-full ${components.button.base} ${components.button.sizes.medium} ${components.button.variants.secondary}`}
@@ -168,7 +168,8 @@ export default function TattooRequestsPage() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
               <table className="min-w-full">
                 <thead className="bg-obsidian/50">
                   <tr>
@@ -314,6 +315,125 @@ export default function TattooRequestsPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="grid lg:hidden gap-4 p-4">
+              {requests.map((request) => (
+                <div key={request.id} className={`${components.card} p-4 hover:shadow-lg ${effects.transitionNormal}`}>
+                  {/* Card Header with Image and Basic Info */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex-shrink-0 h-12 w-12 bg-obsidian/50 rounded-lg overflow-hidden border ${colors.borderSubtle}`}>
+                        {request.referenceImages && request.referenceImages.length > 0 ? (
+                          <Image 
+                            src={request.referenceImages[0].url} 
+                            alt="Reference" 
+                            width={48}
+                            height={48}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className={`h-full w-full flex items-center justify-center ${colors.textAccent}`}>
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <div className={`${typography.fontSemibold} ${colors.textPrimary}`}>
+                          Request #{request.id.slice(-6)}
+                        </div>
+                        <div className={`${typography.textSm} ${colors.textMuted} flex items-center`}>
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {formatDate(request.createdAt)}
+                        </div>
+                      </div>
+                    </div>
+                    <span className={`px-3 py-1 inline-flex text-xs leading-5 font-medium rounded-full border ${getStatusColor(request.status)}`}>
+                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                    </span>
+                  </div>
+
+                  {/* Contact Info */}
+                  <div className={`mb-4 pb-4 border-b ${colors.borderSubtle}`}>
+                    <div className={`${typography.fontMedium} ${colors.textSecondary} mb-1`}>
+                      {request.customer ? (
+                        <>
+                          <User className="w-4 h-4 inline mr-1" />
+                          {request.customer.name}
+                        </>
+                      ) : (
+                        'Anonymous'
+                      )}
+                    </div>
+                    <div className={`${typography.textSm} ${colors.textMuted}`}>
+                      {request.customer?.email || request.contactEmail || 'No email'}
+                    </div>
+                    {!request.customer && (request.contactEmail || request.contactPhone) && (
+                      <button
+                        onClick={() => handleCreateCustomerClick(request)}
+                        className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-gold-500 hover:text-gold-400 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 hover:border-gold-500/50 rounded-lg transition-all duration-300"
+                      >
+                        <UserPlus className="w-3 h-3" />
+                        Create Customer
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Tattoo Details */}
+                  <div className={`mb-4 pb-4 border-b ${colors.borderSubtle}`}>
+                    <div className={`${typography.textSm} ${colors.textSecondary} mb-2`}>
+                      {request.description}
+                    </div>
+                    <div className={`${typography.textSm} ${colors.textMuted} flex items-center gap-3`}>
+                      <span className="flex items-center">
+                        <Palette className="w-3 h-3 mr-1" />
+                        {request.style || 'Not specified'}
+                      </span>
+                      <span>•</span>
+                      <span>{request.placement}</span>
+                      <span>•</span>
+                      <span>{request.size}</span>
+                    </div>
+                  </div>
+
+                  {/* Payment Section */}
+                  {request.customer && (
+                    <div className={`mb-4`}>
+                      <QuickPaymentActions
+                        customerId={request.customer.id}
+                        customerName={request.customer.name}
+                        tattooRequestId={request.id}
+                        requestStatus={request.status}
+                        depositPaid={request.depositPaid}
+                        variant="compact"
+                        onPaymentCreated={() => {
+                          loadTattooRequests();
+                        }}
+                      />
+                      {request.depositPaid && request.depositAmount && (
+                        <div className="text-xs text-green-400 flex items-center mt-2">
+                          <DollarSign className="w-3 h-3 mr-1" />
+                          ${request.depositAmount.toFixed(0)} deposit paid
+                        </div>
+                      )}
+                      <CustomerPaymentHistory
+                        customerId={request.customer.id}
+                        variant="inline"
+                        className="mt-2"
+                      />
+                    </div>
+                  )}
+
+                  {/* Action Button */}
+                  <Link 
+                    href={`/dashboard/tattoo-request/${request.id}`} 
+                    className={`block w-full text-center px-4 py-2.5 ${components.button.base} ${components.button.variants.primary} ${components.button.sizes.small}`}
+                  >
+                    View Details
+                  </Link>
+                </div>
+              ))}
             </div>
             
             {/* Pagination */}

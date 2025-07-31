@@ -243,7 +243,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-b from-obsidian via-obsidian/95 to-obsidian">
+    <div className={`min-h-screen bg-gradient-to-b from-obsidian via-obsidian/95 to-obsidian ${isMobileMenuOpen ? '' : 'lg:flex'}`}>
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div 
@@ -254,12 +254,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       
       {/* Sidebar */}
       <aside className={`
-        ${isCollapsed ? 'w-20' : 'w-72'} 
-        bg-gradient-to-b from-obsidian via-obsidian/98 to-obsidian backdrop-blur-xl
+        ${isCollapsed ? 'lg:w-20' : 'lg:w-72'} 
+        w-72 bg-gradient-to-b from-obsidian via-obsidian/98 to-obsidian backdrop-blur-xl
         ${effects.transitionSlow}
-        relative flex flex-col border-r ${colors.borderSubtle}
+        flex flex-col border-r ${colors.borderSubtle}
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 fixed lg:relative z-50 h-full shadow-xl
+        lg:translate-x-0 fixed lg:relative z-50 h-screen lg:h-full shadow-xl
       `}>
         {/* Collapse Button */}
         <button
@@ -435,7 +435,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 bg-gradient-to-b from-obsidian via-obsidian/95 to-obsidian overflow-x-hidden">
+      <main className="w-full lg:flex-1 bg-gradient-to-b from-obsidian via-obsidian/95 to-obsidian overflow-x-hidden">
         <div className="min-h-screen">
           {/* Top Bar */}
           <div className={`bg-obsidian/50 backdrop-blur-xl border-b ${colors.borderSubtle} px-4 lg:px-8 py-5`}>
@@ -444,7 +444,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 {/* Mobile Menu Button */}
                 <button
                   onClick={() => setIsMobileMenuOpen(true)}
-                  className="lg:hidden p-2 text-gray-400 hover:text-white"
+                  className={`lg:hidden p-2 ${colors.textSecondary} hover:${colors.textPrimary} ${effects.transitionNormal}`}
                 >
                   <Menu className="w-6 h-6" />
                 </button>

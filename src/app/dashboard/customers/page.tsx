@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, Plus, ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { Search, Plus, ChevronLeft, ChevronRight, Users, Mail, Phone } from 'lucide-react';
 import { CustomerService, type Customer, type CustomerListResponse } from '@/src/lib/api/services/customerService';
 import { apiClient } from '@/src/lib/api/apiClient';
 import Modal from '../../../components/ui/Modal';
@@ -177,7 +177,8 @@ export default function CustomersPage() {
           />
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
               <table className="min-w-full">
                 <thead className="bg-[#080808]">
                   <tr>
@@ -248,6 +249,80 @@ export default function CustomersPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="grid lg:hidden gap-4 p-4">
+              {customers.map((customer) => (
+                <div key={customer.id} className="bg-gradient-to-b from-obsidian/95 to-obsidian/90 border border-gold-500/10 rounded-2xl p-5 hover:border-gold-500/30 hover:shadow-lg transition-all duration-300">
+                  {/* Customer Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-[#C9A449] to-[#8B7635] text-[#080808] rounded-full flex items-center justify-center shadow-lg">
+                        <span className="font-bold text-lg">
+                          {customer.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="text-white font-semibold">
+                          {customer.name}
+                        </div>
+                        {customer.squareId && (
+                          <div className="text-xs text-gray-500">
+                            Square ID: {customer.squareId}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Contact Information */}
+                  <div className="space-y-2 mb-4 pb-4 border-b border-gold-500/10">
+                    {customer.email && (
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-gold-500/50" />
+                        <span className="text-sm text-gray-300">{customer.email}</span>
+                      </div>
+                    )}
+                    {customer.phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-gold-500/50" />
+                        <span className="text-sm text-gray-300">{customer.phone}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Notes */}
+                  {customer.notes && (
+                    <div className="mb-4 pb-4 border-b border-gold-500/10">
+                      <p className="text-sm text-gray-400 line-clamp-2">
+                        {customer.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Footer with Date and Actions */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-gray-500">
+                      Added {formatDate(customer.createdAt)}
+                    </div>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleEditClick(customer)}
+                        className="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all duration-300"
+                      >
+                        Edit
+                      </button>
+                      <Link 
+                        href={`/dashboard/customers/${customer.id}`} 
+                        className="px-3 py-1.5 text-xs font-medium text-[#C9A449] hover:text-[#E5B563] bg-[#C9A449]/10 hover:bg-[#C9A449]/20 border border-[#C9A449]/30 hover:border-[#C9A449]/50 rounded-lg transition-all duration-300"
+                      >
+                        View Details
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
             
             {/* Pagination */}

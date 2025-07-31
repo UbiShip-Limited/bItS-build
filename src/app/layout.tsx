@@ -3,6 +3,7 @@ import "./globals.css";
 import ClientLayout from "./ClientLayout";
 import { StructuredData } from "../components/StructuredData";
 import GoogleAnalytics from "@/src/components/analytics/GoogleAnalytics";
+import VercelAnalytics from "@/src/components/analytics/VercelAnalytics";
 
 export const metadata: Metadata = {
   title: {
@@ -142,6 +143,9 @@ export default function RootLayout({
         
         {/* Google Analytics */}
         <GoogleAnalytics />
+        
+        {/* Vercel Analytics */}
+        <VercelAnalytics />
       </head>
       <body 
         className="antialiased text-white selection:bg-black/20 selection:text-white"

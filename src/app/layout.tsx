@@ -81,9 +81,9 @@ export const metadata: Metadata = {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes", 
     "apple-mobile-web-app-status-bar-style": "black-translucent",
-    "msapplication-TileColor": "#C9A449",
+    "msapplication-TileColor": "#080808",
     "msapplication-config": "/browserconfig.xml",
-    "theme-color": "#C9A449",
+    "theme-color": "#080808",
     // Geo tags for local SEO
     "geo.region": "CA-BC",
     "geo.placename": "Bowen Island",
@@ -102,7 +102,7 @@ export const viewport: Viewport = {
   userScalable: true, // Important for accessibility
   viewportFit: "cover", // For devices with notches/safe areas
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#C9A449" },
+    { media: "(prefers-color-scheme: light)", color: "#080808" },
     { media: "(prefers-color-scheme: dark)", color: "#080808" },
   ],
 };
@@ -128,10 +128,10 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="manifest" href="/site.webmanifest" />
-        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#C9A449" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#080808" />
         
         {/* Microsoft Tiles */}
-        <meta name="msapplication-TileColor" content="#C9A449" />
+        <meta name="msapplication-TileColor" content="#080808" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
         
         {/* Prevent phone number detection */}
@@ -144,7 +144,7 @@ export default function RootLayout({
         <GoogleAnalytics />
       </head>
       <body 
-        className="antialiased text-white selection:bg-[#C9A449]/20 selection:text-[#C9A449]"
+        className="antialiased text-white selection:bg-black/20 selection:text-white"
         style={{ backgroundColor: 'var(--obsidian, #0A0A0A)' }}
         suppressHydrationWarning={true}
       >

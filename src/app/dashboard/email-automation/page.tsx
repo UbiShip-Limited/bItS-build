@@ -20,6 +20,8 @@ import { useAuth } from '@/src/hooks/useAuth';
 import { toast } from '@/src/lib/toast';
 import { SkeletonLoader } from '@/src/components/ui/SkeletonLoader';
 import { DashboardPageLayout } from '../components/DashboardPageLayout';
+import Modal from '@/src/components/ui/Modal';
+import { colors, typography, components, effects, cn } from '@/src/lib/styles/globalStyleConstants';
 
 interface EmailAutomationSetting {
   id: string;
@@ -232,49 +234,67 @@ export default function EmailAutomationPage() {
     }
   };
 
+  const [openModal, setOpenModal] = useState<string | null>(null);
+  const [modalSettings, setModalSettings] = useState<EmailAutomationSetting | null>(null);
+
   const renderSettings = () => (
     <div className="space-y-4">
       {Array.isArray(settings) && settings.length > 0 ? settings.map((setting) => (
-        <div key={setting.id} className="card bg-base-100 shadow-md">
-          <div className="card-body">
+        <div key={setting.id} className={cn(components.card, 'p-6')}>
+          <div>
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold flex items-center gap-2">
-                  <Mail className="w-5 h-5 text-primary" />
+                <h3 className={cn(typography.textLg, typography.fontSemibold, colors.textPrimary, 'flex items-center gap-2')}>
+                  <Mail className={cn('w-5 h-5', colors.textAccent)} />
                   {emailTypeDisplayNames[setting.emailType] || setting.emailType}
                 </h3>
-                <p className="text-sm text-base-content/70 mt-1">
+                <p className={cn(typography.textSm, colors.textSecondary, 'mt-1')}>
                   {emailTypeDescriptions[setting.emailType]}
                 </p>
-                <div className="flex gap-4 mt-3 text-sm">
-                  <span className="flex items-center gap-1">
+                <div className="flex gap-4 mt-3">
+                  <span className={cn(typography.textSm, colors.textProminent, 'flex items-center gap-1')}>
                     <Clock className="w-4 h-4" />
                     Timing: {setting.timingHours || 0}h {setting.timingMinutes || 0}m
                   </span>
                   {setting.businessHoursOnly && (
-                    <span className="badge badge-sm">Business hours only</span>
+                    <span className="px-2 py-1 text-xs bg-gold-500/10 text-gold-500/70 rounded-full border border-gold-500/20">
+                      Business hours only
+                    </span>
                   )}
                 </div>
               </div>
               
               <div className="flex items-center gap-4">
-                <div className="form-control">
-                  <label className="label cursor-pointer">
-                    <span className="label-text mr-2">Enabled</span>
+                <div className="flex items-center gap-2">
+                  <span className={cn(typography.textSm, colors.textProminent)}>Enabled</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
-                      className="toggle toggle-primary"
+                      className="sr-only"
                       checked={setting.enabled}
                       onChange={(e) => updateSetting(setting.emailType, { enabled: e.target.checked })}
                       disabled={updatingSettings === setting.emailType}
                     />
+                    <div className={cn(
+                      'w-11 h-6 rounded-full transition-colors',
+                      setting.enabled ? 'bg-green-500/30' : 'bg-white/10'
+                    )}>
+                      <div className={cn(
+                        'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform',
+                        setting.enabled ? 'translate-x-5' : 'translate-x-0'
+                      )} />
+                    </div>
                   </label>
                 </div>
                 <button
-                  className="btn btn-ghost btn-sm"
+                  className={cn(
+                    'p-2 rounded-lg',
+                    components.button.variants.ghost,
+                    'hover:bg-white/10'
+                  )}
                   onClick={() => {
-                    const modal = document.getElementById(`settings_modal_${setting.emailType}`) as HTMLDialogElement;
-                    modal?.showModal();
+                    setModalSettings(setting);
+                    setOpenModal(setting.emailType);
                   }}
                 >
                   <Settings className="w-4 h-4" />
@@ -284,133 +304,153 @@ export default function EmailAutomationPage() {
           </div>
         </div>
       )) : (
-        <div className="text-center py-8 text-base-content/60">
+        <div className={cn('text-center py-8', colors.textMuted)}>
           No email automation settings found. Please check your backend configuration.
         </div>
       )}
       
-      {/* Settings Modals */}
-      {Array.isArray(settings) && settings.map((setting) => (
-        <dialog key={`modal_${setting.id}`} id={`settings_modal_${setting.emailType}`} className="modal">
-          <div className="modal-box">
-            <h3 className="font-bold text-lg">
-              {emailTypeDisplayNames[setting.emailType]} Settings
-            </h3>
-            
-            <div className="space-y-4 mt-4">
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Timing (Hours)</span>
-                </label>
-                <input
-                  type="number"
-                  className="input input-bordered"
-                  value={setting.timingHours || 0}
-                  onChange={(e) => updateSetting(setting.emailType, { 
+      {/* Settings Modal */}
+      <Modal
+        isOpen={!!openModal && !!modalSettings}
+        onClose={() => {
+          setOpenModal(null);
+          setModalSettings(null);
+        }}
+        title={modalSettings ? `${emailTypeDisplayNames[modalSettings.emailType]} Settings` : ''}
+        size="md"
+      >
+        {modalSettings && (
+          <div className="space-y-4">
+            <div>
+              <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'block mb-2')}>
+                Timing (Hours)
+              </label>
+              <input
+                type="number"
+                className={components.input}
+                value={modalSettings.timingHours || 0}
+                onChange={(e) => {
+                  updateSetting(modalSettings.emailType, { 
                     timingHours: parseInt(e.target.value) || 0 
-                  })}
-                  min="0"
-                />
-              </div>
-              
-              <div className="form-control">
-                <label className="label">
-                  <span className="label-text">Timing (Minutes)</span>
-                </label>
-                <input
-                  type="number"
-                  className="input input-bordered"
-                  value={setting.timingMinutes || 0}
-                  onChange={(e) => updateSetting(setting.emailType, { 
-                    timingMinutes: parseInt(e.target.value) || 0 
-                  })}
-                  min="0"
-                  max="59"
-                />
-              </div>
-              
-              <div className="form-control">
-                <label className="label cursor-pointer">
-                  <span className="label-text">Business hours only</span>
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={setting.businessHoursOnly}
-                    onChange={(e) => updateSetting(setting.emailType, { 
-                      businessHoursOnly: e.target.checked 
-                    })}
-                  />
-                </label>
-              </div>
+                  });
+                  setModalSettings({...modalSettings, timingHours: parseInt(e.target.value) || 0});
+                }}
+                min="0"
+              />
             </div>
             
-            <div className="modal-action">
-              <form method="dialog">
-                <button className="btn">Close</button>
-              </form>
+            <div>
+              <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'block mb-2')}>
+                Timing (Minutes)
+              </label>
+              <input
+                type="number"
+                className={components.input}
+                value={modalSettings.timingMinutes || 0}
+                onChange={(e) => {
+                  updateSetting(modalSettings.emailType, { 
+                    timingMinutes: parseInt(e.target.value) || 0 
+                  });
+                  setModalSettings({...modalSettings, timingMinutes: parseInt(e.target.value) || 0});
+                }}
+                min="0"
+                max="59"
+              />
+            </div>
+            
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+              <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent)}>
+                Business hours only
+              </label>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={modalSettings.businessHoursOnly}
+                  onChange={(e) => {
+                    updateSetting(modalSettings.emailType, { 
+                      businessHoursOnly: e.target.checked 
+                    });
+                    setModalSettings({...modalSettings, businessHoursOnly: e.target.checked});
+                  }}
+                />
+                <div className={cn(
+                  'w-11 h-6 rounded-full transition-colors',
+                  modalSettings.businessHoursOnly ? 'bg-green-500/30' : 'bg-white/10'
+                )}>
+                  <div className={cn(
+                    'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform',
+                    modalSettings.businessHoursOnly ? 'translate-x-5' : 'translate-x-0'
+                  )} />
+                </div>
+              </label>
             </div>
           </div>
-          <form method="dialog" className="modal-backdrop">
-            <button>close</button>
-          </form>
-        </dialog>
-      ))}
+        )}
+      </Modal>
     </div>
   );
 
   const renderLogs = () => (
     <div className="space-y-4">
-      <div className="overflow-x-auto">
-        <table className="table table-sm">
-          <thead>
+      <div className={cn(components.card, 'p-0 overflow-hidden')}>
+        <table className="w-full">
+          <thead className="bg-white/5 border-b border-white/10">
             <tr>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Recipient</th>
-              <th>Status</th>
-              <th>Error</th>
+              <th className={cn('px-4 py-3 text-left', typography.textSm, typography.fontMedium, colors.textProminent)}>Date</th>
+              <th className={cn('px-4 py-3 text-left', typography.textSm, typography.fontMedium, colors.textProminent)}>Type</th>
+              <th className={cn('px-4 py-3 text-left', typography.textSm, typography.fontMedium, colors.textProminent)}>Recipient</th>
+              <th className={cn('px-4 py-3 text-left', typography.textSm, typography.fontMedium, colors.textProminent)}>Status</th>
+              <th className={cn('px-4 py-3 text-left', typography.textSm, typography.fontMedium, colors.textProminent)}>Error</th>
             </tr>
           </thead>
           <tbody>
-            {logs.map((log) => (
-              <tr key={log.id}>
-                <td className="whitespace-nowrap">
+            {logs.map((log, index) => (
+              <tr key={log.id} className={cn(
+                'border-b border-white/5',
+                index % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.02]'
+              )}>
+                <td className={cn('px-4 py-3 whitespace-nowrap', typography.textSm, colors.textSecondary)}>
                   {formatDistanceToNow(new Date(log.sentAt), { addSuffix: true })}
                 </td>
-                <td>
-                  <div className="badge badge-sm">
+                <td className="px-4 py-3">
+                  <span className="px-2 py-1 text-xs bg-gold-500/10 text-gold-500/70 rounded border border-gold-500/20">
                     {emailTypeDisplayNames[log.emailType]?.split(' ').slice(0, 2).join(' ') || log.emailType}
-                  </div>
+                  </span>
                 </td>
-                <td>
+                <td className="px-4 py-3">
                   <div>
-                    <div className="font-medium">{log.customer?.name || 'Unknown'}</div>
-                    <div className="text-xs text-base-content/60">{log.emailAddress}</div>
+                    <div className={cn(typography.textSm, typography.fontMedium, colors.textProminent)}>
+                      {log.customer?.name || 'Unknown'}
+                    </div>
+                    <div className={cn(typography.textXs, colors.textMuted)}>
+                      {log.emailAddress}
+                    </div>
                   </div>
                 </td>
-                <td>
+                <td className="px-4 py-3">
                   {log.status === 'sent' && (
-                    <div className="badge badge-success badge-sm gap-1">
+                    <div className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded border border-green-500/30">
                       <CheckCircle className="w-3 h-3" />
                       Sent
                     </div>
                   )}
                   {log.status === 'failed' && (
-                    <div className="badge badge-error badge-sm gap-1">
+                    <div className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-red-500/20 text-red-400 rounded border border-red-500/30">
                       <XCircle className="w-3 h-3" />
                       Failed
                     </div>
                   )}
                   {log.status === 'bounced' && (
-                    <div className="badge badge-warning badge-sm gap-1">
+                    <div className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-yellow-500/20 text-yellow-400 rounded border border-yellow-500/30">
                       <AlertCircle className="w-3 h-3" />
                       Bounced
                     </div>
                   )}
                 </td>
-                <td>
+                <td className="px-4 py-3">
                   {log.error && (
-                    <span className="text-xs text-error">{log.error}</span>
+                    <span className={cn(typography.textXs, 'text-red-400')}>{log.error}</span>
                   )}
                 </td>
               </tr>
@@ -420,7 +460,7 @@ export default function EmailAutomationPage() {
       </div>
       
       {logs.length === 0 && (
-        <div className="text-center py-8 text-base-content/60">
+        <div className={cn('text-center py-8', colors.textMuted)}>
           No automation logs found
         </div>
       )}
@@ -438,81 +478,110 @@ export default function EmailAutomationPage() {
       <div className="space-y-6">
         {/* Overview Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="stat bg-base-100 shadow rounded-box">
-            <div className="stat-figure text-success">
-              <CheckCircle className="w-8 h-8" />
+          <div className={cn(components.card, 'p-6')}>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className={cn(typography.textSm, colors.textSecondary)}>Sent (30 days)</p>
+                <p className={cn(typography.text2xl, typography.fontSemibold, 'text-green-400 mt-1')}>
+                  {statistics.last30Days.sent}
+                </p>
+                <p className={cn(typography.textXs, colors.textMuted, 'mt-1')}>Successfully delivered</p>
+              </div>
+              <CheckCircle className="w-8 h-8 text-green-400/50" />
             </div>
-            <div className="stat-title">Sent (30 days)</div>
-            <div className="stat-value text-success">{statistics.last30Days.sent}</div>
-            <div className="stat-desc">Successfully delivered</div>
           </div>
           
-          <div className="stat bg-base-100 shadow rounded-box">
-            <div className="stat-figure text-error">
-              <XCircle className="w-8 h-8" />
+          <div className={cn(components.card, 'p-6')}>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className={cn(typography.textSm, colors.textSecondary)}>Failed (30 days)</p>
+                <p className={cn(typography.text2xl, typography.fontSemibold, 'text-red-400 mt-1')}>
+                  {statistics.last30Days.failed}
+                </p>
+                <p className={cn(typography.textXs, colors.textMuted, 'mt-1')}>Delivery failed</p>
+              </div>
+              <XCircle className="w-8 h-8 text-red-400/50" />
             </div>
-            <div className="stat-title">Failed (30 days)</div>
-            <div className="stat-value text-error">{statistics.last30Days.failed}</div>
-            <div className="stat-desc">Delivery failed</div>
           </div>
           
-          <div className="stat bg-base-100 shadow rounded-box">
-            <div className="stat-figure text-warning">
-              <AlertCircle className="w-8 h-8" />
+          <div className={cn(components.card, 'p-6')}>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className={cn(typography.textSm, colors.textSecondary)}>Bounced (30 days)</p>
+                <p className={cn(typography.text2xl, typography.fontSemibold, 'text-yellow-400 mt-1')}>
+                  {statistics.last30Days.bounced}
+                </p>
+                <p className={cn(typography.textXs, colors.textMuted, 'mt-1')}>Email bounced</p>
+              </div>
+              <AlertCircle className="w-8 h-8 text-yellow-400/50" />
             </div>
-            <div className="stat-title">Bounced (30 days)</div>
-            <div className="stat-value text-warning">{statistics.last30Days.bounced}</div>
-            <div className="stat-desc">Email bounced</div>
           </div>
           
-          <div className="stat bg-base-100 shadow rounded-box">
-            <div className="stat-figure text-primary">
-              <Activity className="w-8 h-8" />
+          <div className={cn(components.card, 'p-6')}>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className={cn(typography.textSm, colors.textSecondary)}>Success Rate</p>
+                <p className={cn(typography.text2xl, typography.fontSemibold, colors.textAccent, 'mt-1')}>
+                  {successRate}%
+                </p>
+                <p className={cn(typography.textXs, colors.textMuted, 'mt-1')}>Last 30 days</p>
+              </div>
+              <Activity className={cn('w-8 h-8', colors.textAccentMuted)} />
             </div>
-            <div className="stat-title">Success Rate</div>
-            <div className="stat-value text-primary">{successRate}%</div>
-            <div className="stat-desc">Last 30 days</div>
           </div>
         </div>
         
         {/* By Type Stats */}
-        <div className="card bg-base-100 shadow-md">
-          <div className="card-body">
-            <h3 className="card-title">
-              <BarChart className="w-5 h-5" />
+        <div className={cn(components.card, 'p-6')}>
+          <div>
+            <h3 className={cn(typography.textLg, typography.fontSemibold, colors.textPrimary, 'flex items-center gap-2 mb-4')}>
+              <BarChart className={cn('w-5 h-5', colors.textAccent)} />
               Performance by Email Type
             </h3>
             
             <div className="overflow-x-auto">
-              <table className="table">
-                <thead>
+              <table className="w-full">
+                <thead className="border-b border-white/10">
                   <tr>
-                    <th>Email Type</th>
-                    <th className="text-center">Sent</th>
-                    <th className="text-center">Failed</th>
-                    <th className="text-center">Bounced</th>
-                    <th className="text-center">Success Rate</th>
+                    <th className={cn('px-4 py-3 text-left', typography.textSm, typography.fontMedium, colors.textProminent)}>Email Type</th>
+                    <th className={cn('px-4 py-3 text-center', typography.textSm, typography.fontMedium, colors.textProminent)}>Sent</th>
+                    <th className={cn('px-4 py-3 text-center', typography.textSm, typography.fontMedium, colors.textProminent)}>Failed</th>
+                    <th className={cn('px-4 py-3 text-center', typography.textSm, typography.fontMedium, colors.textProminent)}>Bounced</th>
+                    <th className={cn('px-4 py-3 text-center', typography.textSm, typography.fontMedium, colors.textProminent)}>Success Rate</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {Object.entries(statistics.byType).map(([type, stats]) => {
+                  {Object.entries(statistics.byType).map(([type, stats], index) => {
                     const total = stats.sent + stats.failed;
                     const rate = total > 0 ? ((stats.sent / total) * 100).toFixed(1) : '0';
                     
                     return (
-                      <tr key={type}>
-                        <td>{emailTypeDisplayNames[type] || type}</td>
-                        <td className="text-center">
-                          <span className="badge badge-success">{stats.sent}</span>
+                      <tr key={type} className={cn(
+                        'border-b border-white/5',
+                        index % 2 === 0 ? 'bg-transparent' : 'bg-white/[0.02]'
+                      )}>
+                        <td className={cn('px-4 py-3', typography.textSm, colors.textSecondary)}>
+                          {emailTypeDisplayNames[type] || type}
                         </td>
-                        <td className="text-center">
-                          <span className="badge badge-error">{stats.failed}</span>
+                        <td className="px-4 py-3 text-center">
+                          <span className="px-2 py-1 text-xs bg-green-500/20 text-green-400 rounded">
+                            {stats.sent}
+                          </span>
                         </td>
-                        <td className="text-center">
-                          <span className="badge badge-warning">{stats.bounced}</span>
+                        <td className="px-4 py-3 text-center">
+                          <span className="px-2 py-1 text-xs bg-red-500/20 text-red-400 rounded">
+                            {stats.failed}
+                          </span>
                         </td>
-                        <td className="text-center">
-                          <span className="font-medium">{rate}%</span>
+                        <td className="px-4 py-3 text-center">
+                          <span className="px-2 py-1 text-xs bg-yellow-500/20 text-yellow-400 rounded">
+                            {stats.bounced}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className={cn(typography.textSm, typography.fontMedium, colors.textProminent)}>
+                            {rate}%
+                          </span>
                         </td>
                       </tr>
                     );
@@ -544,26 +613,50 @@ export default function EmailAutomationPage() {
     >
       <div className="space-y-6">
         {/* Tab Navigation */}
-        <div className="tabs tabs-boxed">
+        <div className="flex gap-2 p-1 bg-white/5 rounded-lg border border-white/10">
           <button
-            className={`tab ${selectedTab === 'settings' ? 'tab-active' : ''}`}
+            className={cn(
+              'flex-1 px-4 py-2 rounded-md flex items-center justify-center gap-2',
+              typography.textSm,
+              typography.fontMedium,
+              effects.transitionNormal,
+              selectedTab === 'settings' 
+                ? 'bg-gold-500 text-obsidian' 
+                : 'text-white/70 hover:text-white hover:bg-white/5'
+            )}
             onClick={() => setSelectedTab('settings')}
           >
-            <Settings className="w-4 h-4 mr-2" />
+            <Settings className="w-4 h-4" />
             Settings
           </button>
           <button
-            className={`tab ${selectedTab === 'logs' ? 'tab-active' : ''}`}
+            className={cn(
+              'flex-1 px-4 py-2 rounded-md flex items-center justify-center gap-2',
+              typography.textSm,
+              typography.fontMedium,
+              effects.transitionNormal,
+              selectedTab === 'logs' 
+                ? 'bg-gold-500 text-obsidian' 
+                : 'text-white/70 hover:text-white hover:bg-white/5'
+            )}
             onClick={() => setSelectedTab('logs')}
           >
-            <Mail className="w-4 h-4 mr-2" />
+            <Mail className="w-4 h-4" />
             Activity Logs
           </button>
           <button
-            className={`tab ${selectedTab === 'stats' ? 'tab-active' : ''}`}
+            className={cn(
+              'flex-1 px-4 py-2 rounded-md flex items-center justify-center gap-2',
+              typography.textSm,
+              typography.fontMedium,
+              effects.transitionNormal,
+              selectedTab === 'stats' 
+                ? 'bg-gold-500 text-obsidian' 
+                : 'text-white/70 hover:text-white hover:bg-white/5'
+            )}
             onClick={() => setSelectedTab('stats')}
           >
-            <BarChart className="w-4 h-4 mr-2" />
+            <BarChart className="w-4 h-4" />
             Statistics
           </button>
         </div>

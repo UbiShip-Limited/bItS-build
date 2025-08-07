@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Filter, FileText, User, Calendar, DollarSign, UserPlus, Palette } from 'lucide-react';
 import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
@@ -15,6 +16,7 @@ import { DashboardCard } from '../components/DashboardCard';
 import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
 
 export default function TattooRequestsPage() {
+  const router = useRouter();
   const [requests, setRequests] = useState<TattooRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -177,28 +179,22 @@ export default function TattooRequestsPage() {
                       Request
                     </th>
                     <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
-                      Contact
+                      Customer
                     </th>
                     <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
-                      Details
+                      Description
                     </th>
                     <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
                       Status
-                    </th>
-                    <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
-                      Style
-                    </th>
-                    <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
-                      Payment
-                    </th>
-                    <th className={`px-6 py-4 text-right ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
-                      Actions
                     </th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y divide-gold-500/10`}>
                   {requests.map((request) => (
-                    <tr key={request.id} className={`hover:bg-white/5 ${effects.transitionNormal}`}>
+                    <tr 
+                      key={request.id} 
+                      onClick={() => router.push(`/dashboard/tattoo-request/${request.id}`)}
+                      className={`hover:bg-white/5 cursor-pointer ${effects.transitionNormal}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className={`flex-shrink-0 h-10 w-10 bg-obsidian/50 rounded overflow-hidden border ${colors.borderSubtle}`}>
@@ -241,75 +237,16 @@ export default function TattooRequestsPage() {
                         <div className={`${typography.textSm} ${colors.textMuted}`}>
                           {request.customer?.email || request.contactEmail || 'No email'}
                         </div>
-                        {!request.customer && (request.contactEmail || request.contactPhone) && (
-                          <button
-                            onClick={() => handleCreateCustomerClick(request)}
-                            className="mt-2 inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-gold-500 hover:text-gold-400 bg-gold-500/10 hover:bg-gold-500/20 border border-gold-500/30 hover:border-gold-500/50 rounded-lg transition-all duration-300"
-                          >
-                            <UserPlus className="w-3 h-3" />
-                            Create Customer
-                          </button>
-                        )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className={`${typography.textSm} ${typography.fontMedium} ${colors.textSecondary} max-w-xs truncate`}>
+                        <div className={`${typography.textSm} ${typography.fontMedium} ${colors.textSecondary} max-w-md truncate`}>
                           {request.description}
-                        </div>
-                        <div className={`${typography.textSm} ${colors.textMuted}`}>
-                          {request.placement} • {request.size}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-3 py-1 inline-flex text-xs leading-5 font-medium rounded-full border ${getStatusColor(request.status)}`}>
                           {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-medium">
-                        {request.style || 'Not specified'}
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap ${typography.textSm} ${colors.textSecondary} ${typography.fontMedium}`}>
-                        <div className="space-y-2">
-                          {/* Quick payment actions */}
-                          {request.customer && (
-                            <QuickPaymentActions
-                              customerId={request.customer.id}
-                              customerName={request.customer.name}
-                              tattooRequestId={request.id}
-                              requestStatus={request.status}
-                              depositPaid={request.depositPaid}
-                              variant="compact"
-                              onPaymentCreated={() => {
-                                // Refresh requests when payment is created
-                                loadTattooRequests();
-                              }}
-                            />
-                          )}
-                          
-                          {/* Show deposit status if exists */}
-                          {request.depositPaid && request.depositAmount && (
-                            <div className="text-xs text-green-400 flex items-center">
-                              <DollarSign className="w-3 h-3 mr-1" />
-                              ${request.depositAmount.toFixed(0)} paid
-                            </div>
-                          )}
-                          
-                          {/* Inline payment history */}
-                          {request.customer && (
-                            <CustomerPaymentHistory
-                              customerId={request.customer.id}
-                              variant="inline"
-                              className="mt-1"
-                            />
-                          )}
-                        </div>
-                      </td>
-                      <td className={`px-6 py-4 whitespace-nowrap text-right ${typography.textSm} ${typography.fontMedium}`}>
-                        <Link 
-                          href={`/dashboard/tattoo-request/${request.id}`} 
-                          className={`${colors.textAccent} hover:${colors.textAccentProminent} ${typography.fontMedium} px-2 py-1 ${effects.transitionNormal}`}
-                        >
-                          View
-                        </Link>
                       </td>
                     </tr>
                   ))}
@@ -320,7 +257,10 @@ export default function TattooRequestsPage() {
             {/* Mobile Card View */}
             <div className="grid lg:hidden gap-4 p-4">
               {requests.map((request) => (
-                <div key={request.id} className={`${components.card} p-4 hover:shadow-lg ${effects.transitionNormal}`}>
+                <div 
+                  key={request.id} 
+                  onClick={() => router.push(`/dashboard/tattoo-request/${request.id}`)}
+                  className={`${components.card} p-4 hover:shadow-lg cursor-pointer ${effects.transitionNormal}`}>
                   {/* Card Header with Image and Basic Info */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
@@ -397,41 +337,6 @@ export default function TattooRequestsPage() {
                     </div>
                   </div>
 
-                  {/* Payment Section */}
-                  {request.customer && (
-                    <div className={`mb-4`}>
-                      <QuickPaymentActions
-                        customerId={request.customer.id}
-                        customerName={request.customer.name}
-                        tattooRequestId={request.id}
-                        requestStatus={request.status}
-                        depositPaid={request.depositPaid}
-                        variant="compact"
-                        onPaymentCreated={() => {
-                          loadTattooRequests();
-                        }}
-                      />
-                      {request.depositPaid && request.depositAmount && (
-                        <div className="text-xs text-green-400 flex items-center mt-2">
-                          <DollarSign className="w-3 h-3 mr-1" />
-                          ${request.depositAmount.toFixed(0)} deposit paid
-                        </div>
-                      )}
-                      <CustomerPaymentHistory
-                        customerId={request.customer.id}
-                        variant="inline"
-                        className="mt-2"
-                      />
-                    </div>
-                  )}
-
-                  {/* Action Button */}
-                  <Link 
-                    href={`/dashboard/tattoo-request/${request.id}`} 
-                    className={`block w-full text-center px-4 py-2.5 ${components.button.base} ${components.button.variants.primary} ${components.button.sizes.small}`}
-                  >
-                    View Details
-                  </Link>
                 </div>
               ))}
             </div>

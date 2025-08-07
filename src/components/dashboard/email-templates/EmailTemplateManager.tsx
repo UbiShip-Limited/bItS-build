@@ -6,6 +6,8 @@ import { Mail, Edit, Trash2, Eye, Send, Plus } from 'lucide-react';
 import { useAuth } from '@/src/hooks/useAuth';
 import { toast } from '@/src/lib/toast';
 import { SkeletonLoader } from '@/src/components/ui/SkeletonLoader';
+import Modal from '@/src/components/ui/Modal';
+import { colors, typography, components, effects, cn } from '@/src/lib/styles/globalStyleConstants';
 
 interface EmailTemplate {
   id: string;
@@ -193,10 +195,14 @@ export function EmailTemplateManager({ onEdit }: EmailTemplateManagerProps) {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Email Templates</h2>
+        <h2 className={cn(typography.h3, colors.textPrimary)}>Email Templates</h2>
         <button
           onClick={() => onEdit && onEdit({} as EmailTemplate)}
-          className="btn btn-primary btn-sm"
+          className={cn(
+            components.button.base,
+            components.button.sizes.small,
+            components.button.variants.primary
+          )}
         >
           <Plus className="w-4 h-4 mr-2" />
           New Template
@@ -207,33 +213,43 @@ export function EmailTemplateManager({ onEdit }: EmailTemplateManagerProps) {
         {templates.map((template) => (
           <div
             key={template.id}
-            className="card bg-base-100 shadow-md hover:shadow-lg transition-shadow"
+            className={cn(
+              components.card,
+              'p-6',
+              effects.transitionNormal,
+              'hover:border-gold-500/50'
+            )}
           >
-            <div className="card-body">
+            <div>
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-primary" />
-                    <h3 className="text-lg font-semibold">{template.displayName}</h3>
-                    <div className={`badge ${template.isActive ? 'badge-success' : 'badge-ghost'}`}>
+                    <Mail className={cn('w-5 h-5', colors.textAccent)} />
+                    <h3 className={cn(typography.textLg, typography.fontSemibold, colors.textPrimary)}>{template.displayName}</h3>
+                    <div className={cn(
+                      'px-2 py-1 text-xs rounded-full',
+                      template.isActive 
+                        ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                        : 'bg-white/10 text-white/50 border border-white/20'
+                    )}>
                       {template.isActive ? 'Active' : 'Inactive'}
                     </div>
                   </div>
-                  <p className="text-sm text-base-content/70 mt-1">
-                    Internal name: <code className="bg-base-200 px-1 rounded">{template.name}</code>
+                  <p className={cn(typography.textSm, colors.textSecondary, 'mt-1')}>
+                    Internal name: <code className="bg-white/5 px-2 py-0.5 rounded text-gold-500/70">{template.name}</code>
                   </p>
-                  <p className="text-sm mt-2">
-                    <span className="font-medium">Subject:</span> {template.subject}
+                  <p className={cn(typography.textSm, colors.textProminent, 'mt-2')}>
+                    <span className={typography.fontMedium}>Subject:</span> {template.subject}
                   </p>
                   <div className="flex flex-wrap gap-2 mt-3">
-                    <span className="text-xs text-base-content/60">Variables:</span>
+                    <span className={cn(typography.textXs, colors.textMuted)}>Variables:</span>
                     {Object.keys(template.variables).map((variable) => (
-                      <code key={variable} className="badge badge-sm badge-ghost">
+                      <code key={variable} className="px-2 py-0.5 text-xs bg-gold-500/10 text-gold-500/70 rounded border border-gold-500/20">
                         {`{{${variable}}}`}
                       </code>
                     ))}
                   </div>
-                  <p className="text-xs text-base-content/60 mt-3">
+                  <p className={cn(typography.textXs, colors.textSubtle, 'mt-3')}>
                     Updated {formatDistanceToNow(new Date(template.updatedAt), { addSuffix: true })}
                   </p>
                 </div>
@@ -244,7 +260,11 @@ export function EmailTemplateManager({ onEdit }: EmailTemplateManagerProps) {
                       setSelectedTemplate(template);
                       setShowPreview(true);
                     }}
-                    className="btn btn-ghost btn-sm"
+                    className={cn(
+                      'p-2 rounded-lg',
+                      components.button.variants.ghost,
+                      'hover:bg-white/10'
+                    )}
                     title="Preview"
                   >
                     <Eye className="w-4 h-4" />
@@ -254,7 +274,12 @@ export function EmailTemplateManager({ onEdit }: EmailTemplateManagerProps) {
                       setSelectedTemplate(template);
                       setShowTestModal(true);
                     }}
-                    className="btn btn-ghost btn-sm"
+                    className={cn(
+                      'p-2 rounded-lg',
+                      components.button.variants.ghost,
+                      'hover:bg-white/10',
+                      !template.isActive && 'opacity-50 cursor-not-allowed'
+                    )}
                     title="Send Test"
                     disabled={!template.isActive}
                   >
@@ -262,37 +287,59 @@ export function EmailTemplateManager({ onEdit }: EmailTemplateManagerProps) {
                   </button>
                   <button
                     onClick={() => onEdit && onEdit(template)}
-                    className="btn btn-ghost btn-sm"
+                    className={cn(
+                      'p-2 rounded-lg',
+                      components.button.variants.ghost,
+                      'hover:bg-white/10'
+                    )}
                     title="Edit"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => toggleTemplateStatus(template)}
-                    className="btn btn-ghost btn-sm"
+                    className={cn(
+                      'p-2 rounded-lg',
+                      components.button.variants.ghost,
+                      'hover:bg-white/10'
+                    )}
                     title={template.isActive ? 'Deactivate' : 'Activate'}
                     disabled={togglingId === template.id}
                   >
                     {togglingId === template.id ? (
-                      <span className="loading loading-spinner loading-xs"></span>
+                      <div className="w-4 h-4 border-2 border-gold-500/50 border-t-gold-500 rounded-full animate-spin" />
                     ) : (
-                      <input
-                        type="checkbox"
-                        className="toggle toggle-primary toggle-sm"
-                        checked={template.isActive}
-                        onChange={() => {}}
-                        onClick={(e) => e.stopPropagation()}
-                      />
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={template.isActive}
+                          onChange={() => {}}
+                        />
+                        <div className={cn(
+                          'w-8 h-4 rounded-full transition-colors',
+                          template.isActive ? 'bg-green-500/30' : 'bg-white/10'
+                        )}>
+                          <div className={cn(
+                            'absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform',
+                            template.isActive ? 'translate-x-4' : 'translate-x-0.5'
+                          )} />
+                        </div>
+                      </div>
                     )}
                   </button>
                   <button
                     onClick={() => setConfirmDelete(template.id)}
-                    className="btn btn-ghost btn-sm text-error"
+                    className={cn(
+                      'p-2 rounded-lg text-red-400',
+                      components.button.variants.ghost,
+                      'hover:bg-red-500/10 hover:text-red-300'
+                    )}
                     title="Delete"
                     disabled={deletingId === template.id}
                   >
                     {deletingId === template.id ? (
-                      <span className="loading loading-spinner loading-xs"></span>
+                      <div className="w-4 h-4 border-2 border-red-400/50 border-t-red-400 rounded-full animate-spin" />
                     ) : (
                       <Trash2 className="w-4 h-4" />
                     )}
@@ -305,106 +352,86 @@ export function EmailTemplateManager({ onEdit }: EmailTemplateManagerProps) {
       </div>
 
       {/* Preview Modal */}
-      {showPreview && selectedTemplate && (
-        <div className="modal modal-open" onClick={() => setShowPreview(false)}>
-          <div className="modal-box max-w-3xl" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => setShowPreview(false)}
-            >
-              ✕
-            </button>
-            <h3 className="font-bold text-lg mb-4">
-              Template Preview: {selectedTemplate.displayName}
-            </h3>
+      <Modal
+        isOpen={showPreview && !!selectedTemplate}
+        onClose={() => setShowPreview(false)}
+        title={selectedTemplate ? `Template Preview: ${selectedTemplate.displayName}` : ''}
+        size="lg"
+      >
+        {selectedTemplate && (
             
-            <div className="space-y-4">
-              <div>
-                <label className="label">
-                  <span className="label-text font-medium">Subject</span>
-                </label>
-                <div className="bg-base-200 p-3 rounded">
-                  {selectedTemplate.subject}
-                </div>
+          <div className="space-y-4">
+            <div>
+              <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'block mb-2')}>
+                Subject
+              </label>
+              <div className="bg-white/5 p-3 rounded-lg border border-white/10">
+                {selectedTemplate.subject}
               </div>
-              
-              <div>
-                <label className="label">
-                  <span className="label-text font-medium">Plain Text</span>
-                </label>
-                <div className="bg-base-200 p-3 rounded whitespace-pre-wrap text-sm">
-                  {selectedTemplate.body}
-                </div>
-              </div>
-              
-              {selectedTemplate.htmlBody && (
-                <div>
-                  <label className="label">
-                    <span className="label-text font-medium">HTML Preview</span>
-                  </label>
-                  <div className="bg-white p-4 rounded border">
-                    <div 
-                      dangerouslySetInnerHTML={{ __html: selectedTemplate.htmlBody }}
-                      className="prose max-w-none"
-                    />
-                  </div>
-                </div>
-              )}
             </div>
             
-            <div className="modal-action">
-              <button 
-                className="btn" 
-                onClick={() => setShowPreview(false)}
-              >
-                Close
-              </button>
+            <div>
+              <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'block mb-2')}>
+                Plain Text
+              </label>
+              <div className="bg-white/5 p-3 rounded-lg border border-white/10 whitespace-pre-wrap text-sm">
+                {selectedTemplate.body}
+              </div>
             </div>
+              
+            {selectedTemplate.htmlBody && (
+              <div>
+                <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'block mb-2')}>
+                  HTML Preview
+                </label>
+                <div className="bg-white p-4 rounded-lg">
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: selectedTemplate.htmlBody }}
+                    className="prose max-w-none"
+                  />
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Test Email Modal */}
-      {showTestModal && selectedTemplate && (
-        <div className="modal modal-open" onClick={() => {
+      <Modal
+        isOpen={showTestModal && !!selectedTemplate}
+        onClose={() => {
           setShowTestModal(false);
           setTestEmail('');
-        }}>
-          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={() => {
-                setShowTestModal(false);
-                setTestEmail('');
-              }}
-            >
-              ✕
-            </button>
-            <h3 className="font-bold text-lg mb-4">
-              Send Test Email: {selectedTemplate.displayName}
-            </h3>
+        }}
+        title={selectedTemplate ? `Send Test Email: ${selectedTemplate.displayName}` : ''}
+        size="md"
+      >
+        {selectedTemplate && (
             
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Send test email to:</span>
+          <div className="space-y-4">
+            <div>
+              <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'block mb-2')}>
+                Send test email to:
               </label>
               <input
                 type="email"
                 placeholder="your@email.com"
-                className="input input-bordered"
+                className={components.input}
                 value={testEmail}
                 onChange={(e) => setTestEmail(e.target.value)}
               />
-              <label className="label">
-                <span className="label-text-alt text-info">
-                  A test email with sample data will be sent to this address
-                </span>
-              </label>
+              <p className={cn(typography.textXs, colors.textSecondary, 'mt-2')}>
+                A test email with sample data will be sent to this address
+              </p>
             </div>
             
-            <div className="modal-action">
+            <div className="flex justify-end gap-3 mt-6">
               <button 
-                className="btn btn-ghost" 
+                className={cn(
+                  components.button.base,
+                  components.button.sizes.medium,
+                  components.button.variants.secondary
+                )}
                 onClick={() => {
                   setShowTestModal(false);
                   setTestEmail('');
@@ -414,13 +441,18 @@ export function EmailTemplateManager({ onEdit }: EmailTemplateManagerProps) {
                 Cancel
               </button>
               <button
-                className="btn btn-primary"
+                className={cn(
+                  components.button.base,
+                  components.button.sizes.medium,
+                  components.button.variants.primary,
+                  (!testEmail || sendingTest) && 'opacity-50 cursor-not-allowed'
+                )}
                 onClick={sendTestEmail}
                 disabled={!testEmail || sendingTest}
               >
                 {sendingTest ? (
                   <>
-                    <span className="loading loading-spinner loading-sm mr-2"></span>
+                    <div className="w-4 h-4 border-2 border-obsidian/50 border-t-obsidian rounded-full animate-spin mr-2" />
                     Sending...
                   </>
                 ) : (
@@ -432,43 +464,55 @@ export function EmailTemplateManager({ onEdit }: EmailTemplateManagerProps) {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Delete Confirmation Modal */}
-      {confirmDelete && (
-        <div className="modal modal-open" onClick={() => setConfirmDelete(null)}>
-          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-bold text-lg">Confirm Delete</h3>
-            <p className="py-4">
-              Are you sure you want to delete this email template? This action cannot be undone.
-            </p>
-            <div className="modal-action">
-              <button 
-                className="btn btn-ghost" 
-                onClick={() => setConfirmDelete(null)}
-                disabled={deletingId === confirmDelete}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn btn-error"
-                onClick={() => deleteTemplate(confirmDelete)}
-                disabled={deletingId === confirmDelete}
-              >
-                {deletingId === confirmDelete ? (
-                  <>
-                    <span className="loading loading-spinner loading-sm mr-2"></span>
-                    Deleting...
-                  </>
-                ) : (
-                  'Delete'
-                )}
-              </button>
-            </div>
+      <Modal
+        isOpen={!!confirmDelete}
+        onClose={() => setConfirmDelete(null)}
+        title="Confirm Delete"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className={cn(typography.textBase, colors.textSecondary)}>
+            Are you sure you want to delete this email template? This action cannot be undone.
+          </p>
+          <div className="flex justify-end gap-3">
+            <button 
+              className={cn(
+                components.button.base,
+                components.button.sizes.medium,
+                components.button.variants.secondary
+              )}
+              onClick={() => setConfirmDelete(null)}
+              disabled={deletingId === confirmDelete}
+            >
+              Cancel
+            </button>
+            <button
+              className={cn(
+                components.button.base,
+                components.button.sizes.medium,
+                'bg-red-500 text-white hover:bg-red-400',
+                effects.transitionNormal,
+                (deletingId === confirmDelete) && 'opacity-50 cursor-not-allowed'
+              )}
+              onClick={() => confirmDelete && deleteTemplate(confirmDelete)}
+              disabled={deletingId === confirmDelete}
+            >
+              {deletingId === confirmDelete ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin mr-2" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

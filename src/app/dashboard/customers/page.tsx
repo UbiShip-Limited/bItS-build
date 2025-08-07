@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Search, Plus, ChevronLeft, ChevronRight, Users, Mail, Phone } from 'lucide-react';
 import { CustomerService, type Customer, type CustomerListResponse } from '@/src/lib/api/services/customerService';
 import { apiClient } from '@/src/lib/api/apiClient';
@@ -9,8 +10,10 @@ import Modal from '../../../components/ui/Modal';
 import CustomerForm from '../../../components/forms/CustomerForm';
 import { DashboardPageLayout, DashboardCard } from '../components';
 import { DashboardEmptyState } from '../components/DashboardEmptyState';
+import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants';
 
 export default function CustomersPage() {
+  const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,8 +22,6 @@ export default function CustomersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCustomers, setTotalCustomers] = useState(0);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
   
   // Define the limit constant used in pagination
   const limit = 20;
@@ -64,16 +65,6 @@ export default function CustomersPage() {
     loadCustomers();
   };
 
-  const handleEditClick = (customer: Customer) => {
-    setSelectedCustomer(customer);
-    setShowEditModal(true);
-  };
-
-  const handleEditSuccess = () => {
-    setShowEditModal(false);
-    setSelectedCustomer(null);
-    loadCustomers();
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
@@ -113,13 +104,13 @@ export default function CustomersPage() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name, email or phone" 
-                className="block w-full pl-10 pr-3 py-3 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg focus:outline-none focus:border-[#C9A449]/50 focus:ring-1 focus:ring-[#C9A449]/20 text-white placeholder-gray-500 font-medium transition-all duration-300"
+                className={`block w-full pl-10 pr-3 py-3 ${components.input}`}
               />
             </div>
           </div>
           <button
             type="submit"
-            className="px-6 py-3 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20 transition-all duration-300"
+            className={`${components.button.base} ${components.button.sizes.medium} ${components.button.variants.primary}`}
           >
             Search
           </button>
@@ -180,70 +171,46 @@ export default function CustomersPage() {
             {/* Desktop Table View */}
             <div className="hidden lg:block overflow-x-auto">
               <table className="min-w-full">
-                <thead className="bg-[#080808]">
+                <thead className="bg-obsidian/50">
                   <tr>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Name
+                    <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
+                      Customer
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
                       Contact
                     </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Notes
-                    </th>
-                    <th scope="col" className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                    <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
                       Added
-                    </th>
-                    <th scope="col" className="px-6 py-4 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#1a1a1a]">
+                <tbody className={`divide-y divide-gold-500/10`}>
                   {customers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-[#1a1a1a]/50 transition-colors duration-150">
+                    <tr 
+                      key={customer.id} 
+                      onClick={() => router.push(`/dashboard/customers/${customer.id}`)}
+                      className={`hover:bg-white/5 cursor-pointer ${effects.transitionNormal}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-gradient-to-br from-[#C9A449] to-[#8B7635] text-[#080808] rounded-full flex items-center justify-center">
-                            <span className="font-bold">
+                          <div className={`flex-shrink-0 h-10 w-10 bg-gold-500/20 ${colors.textAccent} rounded-full flex items-center justify-center border ${colors.borderDefault}`}>
+                            <span className={`${typography.fontSemibold}`}>
                               {customer.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-semibold text-white">{customer.name}</div>
+                            <div className={`${typography.textSm} ${typography.fontSemibold} ${colors.textPrimary}`}>{customer.name}</div>
                             {customer.squareId && (
-                              <div className="text-xs text-gray-500">Square ID: {customer.squareId}</div>
+                              <div className={`${typography.textXs} ${colors.textMuted}`}>Square ID: {customer.squareId}</div>
                             )}
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-300">{customer.email || '-'}</div>
-                        <div className="text-sm text-gray-500">{customer.phone || '-'}</div>
+                        <div className={`${typography.textSm} ${typography.fontMedium} ${colors.textSecondary}`}>{customer.email || '-'}</div>
+                        <div className={`${typography.textSm} ${colors.textMuted}`}>{customer.phone || '-'}</div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-400 max-w-xs truncate">
-                          {customer.notes || '-'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-medium">
+                      <td className={`px-6 py-4 whitespace-nowrap ${typography.textSm} ${colors.textSecondary} ${typography.fontMedium}`}>
                         {formatDate(customer.createdAt)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-2">
-                          <Link 
-                            href={`/dashboard/customers/${customer.id}`} 
-                            className="text-[#C9A449] hover:text-[#E5B563] font-medium px-2 py-1 transition-colors"
-                          >
-                            View
-                          </Link>
-                          <button 
-                            onClick={() => handleEditClick(customer)}
-                            className="text-gray-400 hover:text-white font-medium px-2 py-1 transition-colors"
-                          >
-                            Edit
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))}
@@ -254,21 +221,24 @@ export default function CustomersPage() {
             {/* Mobile Card View */}
             <div className="grid lg:hidden gap-4 p-4">
               {customers.map((customer) => (
-                <div key={customer.id} className="bg-gradient-to-b from-obsidian/95 to-obsidian/90 border border-gold-500/10 rounded-2xl p-5 hover:border-gold-500/30 hover:shadow-lg transition-all duration-300">
+                <div 
+                  key={customer.id} 
+                  onClick={() => router.push(`/dashboard/customers/${customer.id}`)}
+                  className={`${components.card} p-4 hover:shadow-lg cursor-pointer ${effects.transitionNormal}`}>
                   {/* Customer Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-[#C9A449] to-[#8B7635] text-[#080808] rounded-full flex items-center justify-center shadow-lg">
-                        <span className="font-bold text-lg">
+                      <div className={`flex-shrink-0 h-12 w-12 bg-gold-500/20 ${colors.textAccent} rounded-full flex items-center justify-center border ${colors.borderDefault}`}>
+                        <span className={`${typography.fontSemibold} ${typography.textLg}`}>
                           {customer.name.charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div>
-                        <div className="text-white font-semibold">
+                        <div className={`${colors.textPrimary} ${typography.fontSemibold}`}>
                           {customer.name}
                         </div>
                         {customer.squareId && (
-                          <div className="text-xs text-gray-500">
+                          <div className={`${typography.textXs} ${colors.textMuted}`}>
                             Square ID: {customer.squareId}
                           </div>
                         )}
@@ -301,32 +271,16 @@ export default function CustomersPage() {
                     </div>
                   )}
 
-                  {/* Footer with Date and Actions */}
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs text-gray-500">
-                      Added {formatDate(customer.createdAt)}
-                    </div>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => handleEditClick(customer)}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-lg transition-all duration-300"
-                      >
-                        Edit
-                      </button>
-                      <Link 
-                        href={`/dashboard/customers/${customer.id}`} 
-                        className="px-3 py-1.5 text-xs font-medium text-[#C9A449] hover:text-[#E5B563] bg-[#C9A449]/10 hover:bg-[#C9A449]/20 border border-[#C9A449]/30 hover:border-[#C9A449]/50 rounded-lg transition-all duration-300"
-                      >
-                        View Details
-                      </Link>
-                    </div>
+                  {/* Footer with Date */}
+                  <div className={`${typography.textXs} ${colors.textMuted}`}>
+                    Added {formatDate(customer.createdAt)}
                   </div>
                 </div>
               ))}
             </div>
             
             {/* Pagination */}
-            <div className="bg-[#080808] border-t border-[#1a1a1a] px-6 py-4">
+            <div className={`bg-obsidian/50 border-t ${colors.borderSubtle} px-6 py-4`}>
               <div className="flex items-center justify-between">
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button 
@@ -418,26 +372,6 @@ export default function CustomersPage() {
         />
       </Modal>
 
-      {/* Edit Customer Modal */}
-      <Modal
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedCustomer(null);
-        }}
-        title="Edit Customer"
-      >
-        {selectedCustomer && (
-          <CustomerForm
-            customer={selectedCustomer}
-            onSuccess={handleEditSuccess}
-            onCancel={() => {
-              setShowEditModal(false);
-              setSelectedCustomer(null);
-            }}
-          />
-        )}
-      </Modal>
     </DashboardPageLayout>
   );
 }

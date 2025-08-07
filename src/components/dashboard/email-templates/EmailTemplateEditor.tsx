@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Save, X, Plus, Trash2, Info } from 'lucide-react';
 import { useAuth } from '@/src/hooks/useAuth';
 import { toast } from '@/src/lib/toast';
+import { colors, typography, components, effects, cn } from '@/src/lib/styles/globalStyleConstants';
 
 interface EmailTemplate {
   id?: string;
@@ -202,86 +203,107 @@ export function EmailTemplateEditor({ template, onSave, onCancel }: EmailTemplat
 
   return (
     <form id="email-template-form" onSubmit={handleSubmit} className="space-y-6">
-      <div className="card bg-base-100 shadow-lg">
-        <div className="card-body">
+      <div className={cn(components.card, 'p-6')}>
+        <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="card-title">
+            <h2 className={cn(typography.h3, colors.textPrimary)}>
               {formData.id ? 'Edit Email Template' : 'Create Email Template'}
             </h2>
-            <div className="text-sm text-base-content/60">
-              <kbd className="kbd kbd-sm">Ctrl+S</kbd> to save • <kbd className="kbd kbd-sm">Esc</kbd> to cancel
+            <div className={cn(typography.textSm, colors.textMuted, 'flex items-center gap-2')}>
+              <kbd className="px-2 py-1 bg-white/10 border border-white/20 rounded text-xs">Ctrl+S</kbd> to save • 
+              <kbd className="px-2 py-1 bg-white/10 border border-white/20 rounded text-xs">Esc</kbd> to cancel
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Internal Name</span>
-                <span className="label-text-alt text-info">Used in code</span>
-              </label>
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent)}>
+                  Internal Name
+                </label>
+                <span className={cn(typography.textXs, colors.textAccentMuted)}>Used in code</span>
+              </div>
               <input
                 type="text"
-                className={`input input-bordered ${errors.name ? 'input-error' : ''}`}
+                className={cn(
+                  components.input,
+                  errors.name && 'border-red-500/50 focus:border-red-500',
+                  !!formData.id && 'opacity-50 cursor-not-allowed'
+                )}
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="e.g., appointment_reminder"
                 disabled={!!formData.id}
               />
               {errors.name && (
-                <label className="label">
-                  <span className="label-text-alt text-error">{errors.name}</span>
-                </label>
+                <p className={cn(typography.textXs, 'text-red-400 mt-1')}>
+                  {errors.name}
+                </p>
               )}
             </div>
 
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text">Display Name</span>
+            <div>
+              <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'block mb-2')}>
+                Display Name
               </label>
               <input
                 type="text"
-                className={`input input-bordered ${errors.displayName ? 'input-error' : ''}`}
+                className={cn(
+                  components.input,
+                  errors.displayName && 'border-red-500/50 focus:border-red-500'
+                )}
                 value={formData.displayName}
                 onChange={(e) => handleInputChange('displayName', e.target.value)}
                 placeholder="e.g., Appointment Reminder"
               />
               {errors.displayName && (
-                <label className="label">
-                  <span className="label-text-alt text-error">{errors.displayName}</span>
-                </label>
+                <p className={cn(typography.textXs, 'text-red-400 mt-1')}>
+                  {errors.displayName}
+                </p>
               )}
             </div>
           </div>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Subject Line</span>
+          <div>
+            <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'block mb-2')}>
+              Subject Line
             </label>
             <input
               id="subject"
               type="text"
-              className={`input input-bordered ${errors.subject ? 'input-error' : ''}`}
+              className={cn(
+                components.input,
+                errors.subject && 'border-red-500/50 focus:border-red-500'
+              )}
               value={formData.subject}
               onChange={(e) => handleInputChange('subject', e.target.value)}
               placeholder="e.g., Your appointment is {{timeUntil}}"
             />
             {errors.subject && (
-              <label className="label">
-                <span className="label-text-alt text-error">{errors.subject}</span>
-              </label>
+              <p className={cn(typography.textXs, 'text-red-400 mt-1')}>
+                {errors.subject}
+              </p>
             )}
           </div>
 
-          <div className="divider">Variables</div>
+          <div className="flex items-center gap-4 my-6">
+            <div className={components.ornament.lineLong} />
+            <span className={cn(typography.textSm, typography.fontMedium, colors.textAccent)}>Variables</span>
+            <div className={components.ornament.lineLong} />
+          </div>
 
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <p className="text-sm text-base-content/70">
+              <p className={cn(typography.textSm, colors.textSecondary)}>
                 Define variables that can be used in the template
               </p>
               <button
                 type="button"
-                className="btn btn-sm btn-ghost"
+                className={cn(
+                  components.button.base,
+                  components.button.sizes.small,
+                  components.button.variants.secondary
+                )}
                 onClick={addVariable}
               >
                 <Plus className="w-4 h-4 mr-1" />
@@ -293,21 +315,25 @@ export function EmailTemplateEditor({ template, onSave, onCancel }: EmailTemplat
               <div key={index} className="flex gap-2">
                 <input
                   type="text"
-                  className="input input-bordered input-sm flex-1"
+                  className={cn(components.input, 'flex-1 py-2')}
                   placeholder="Variable name (e.g., customerName)"
                   value={variable.key}
                   onChange={(e) => updateVariable(index, 'key', e.target.value)}
                 />
                 <input
                   type="text"
-                  className="input input-bordered input-sm flex-2"
+                  className={cn(components.input, 'flex-[2] py-2')}
                   placeholder="Description"
                   value={variable.description}
                   onChange={(e) => updateVariable(index, 'description', e.target.value)}
                 />
                 <button
                   type="button"
-                  className="btn btn-ghost btn-sm"
+                  className={cn(
+                    'p-2 rounded-lg text-red-400',
+                    components.button.variants.ghost,
+                    'hover:bg-red-500/10'
+                  )}
                   onClick={() => removeVariable(index)}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -316,9 +342,9 @@ export function EmailTemplateEditor({ template, onSave, onCancel }: EmailTemplat
             ))}
 
             {variables.length > 0 && (
-              <div className="alert alert-info">
-                <Info className="w-4 h-4" />
-                <span className="text-sm">
+              <div className="flex items-center gap-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <Info className="w-4 h-4 text-blue-400" />
+                <span className={cn(typography.textSm, 'text-blue-300')}>
                   Click on variable names below to insert them into the template
                 </span>
               </div>
@@ -326,66 +352,113 @@ export function EmailTemplateEditor({ template, onSave, onCancel }: EmailTemplat
 
             <div className="flex flex-wrap gap-2">
               {variables.filter(v => v.key).map((variable) => (
-                <div key={variable.key} className="dropdown">
-                  <label tabIndex={0} className="badge badge-primary cursor-pointer">
+                <div key={variable.key} className="relative group">
+                  <button
+                    type="button"
+                    className="px-3 py-1 bg-gold-500/20 text-gold-400 border border-gold-500/30 rounded-full text-sm hover:bg-gold-500/30 transition-colors cursor-pointer"
+                  >
                     {`{{${variable.key}}}`}
-                  </label>
-                  <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52 z-50">
-                    <li><a onClick={() => insertVariable(variable.key, 'subject')}>Insert in Subject</a></li>
-                    <li><a onClick={() => insertVariable(variable.key, 'body')}>Insert in Body</a></li>
+                  </button>
+                  <div className="absolute top-full left-0 mt-1 w-52 bg-[#111111] border border-[#1a1a1a] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                    <button
+                      type="button"
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-white/10 transition-colors rounded-t-lg"
+                      onClick={() => insertVariable(variable.key, 'subject')}
+                    >
+                      Insert in Subject
+                    </button>
+                    <button
+                      type="button"
+                      className="w-full px-4 py-2 text-left text-sm hover:bg-white/10 transition-colors"
+                      onClick={() => insertVariable(variable.key, 'body')}
+                    >
+                      Insert in Body
+                    </button>
                     {formData.htmlBody !== undefined && (
-                      <li><a onClick={() => insertVariable(variable.key, 'htmlBody')}>Insert in HTML</a></li>
+                      <button
+                        type="button"
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-white/10 transition-colors rounded-b-lg"
+                        onClick={() => insertVariable(variable.key, 'htmlBody')}
+                      >
+                        Insert in HTML
+                      </button>
                     )}
-                  </ul>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="divider">Email Content</div>
+          <div className="flex items-center gap-4 my-6">
+            <div className={components.ornament.lineLong} />
+            <span className={cn(typography.textSm, typography.fontMedium, colors.textAccent)}>Email Content</span>
+            <div className={components.ornament.lineLong} />
+          </div>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">Plain Text Body</span>
-              <span className="label-text-alt">Required</span>
-            </label>
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent)}>
+                Plain Text Body
+              </label>
+              <span className={cn(typography.textXs, colors.textAccentMuted)}>Required</span>
+            </div>
             <textarea
               id="body"
-              className={`textarea textarea-bordered h-48 ${errors.body ? 'textarea-error' : ''}`}
+              className={cn(
+                'w-full px-4 py-3 bg-white/5 border rounded-lg text-white placeholder-white/50 focus:outline-none h-48',
+                effects.transitionNormal,
+                errors.body ? 'border-red-500/50 focus:border-red-500' : 'border-white/10 focus:border-gold-500/30'
+              )}
               value={formData.body}
               onChange={(e) => handleInputChange('body', e.target.value)}
               placeholder="Email content in plain text..."
             />
             {errors.body && (
-              <label className="label">
-                <span className="label-text-alt text-error">{errors.body}</span>
-              </label>
+              <p className={cn(typography.textXs, 'text-red-400 mt-1')}>
+                {errors.body}
+              </p>
             )}
           </div>
 
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text">HTML Body</span>
-              <span className="label-text-alt">Optional</span>
-            </label>
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent)}>
+                HTML Body
+              </label>
+              <span className={cn(typography.textXs, colors.textMuted)}>Optional</span>
+            </div>
             <textarea
               id="htmlBody"
-              className="textarea textarea-bordered h-48"
+              className={cn(
+                'w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-gold-500/30 h-48',
+                effects.transitionNormal
+              )}
               value={formData.htmlBody || ''}
               onChange={(e) => handleInputChange('htmlBody', e.target.value)}
               placeholder="Email content in HTML (optional)..."
             />
           </div>
 
-          <div className="form-control">
-            <label className="label cursor-pointer">
-              <span className="label-text">Template is active</span>
+          <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+            <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'cursor-pointer')}>
+              Template is active
+            </label>
+            <label className="relative inline-flex items-center cursor-pointer">
               <input
                 type="checkbox"
-                className="toggle toggle-primary"
+                className="sr-only"
                 checked={formData.isActive}
                 onChange={(e) => handleInputChange('isActive', e.target.checked)}
               />
+              <div className={cn(
+                'w-11 h-6 rounded-full transition-colors',
+                formData.isActive ? 'bg-green-500/30' : 'bg-white/10'
+              )}>
+                <div className={cn(
+                  'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform',
+                  formData.isActive ? 'translate-x-5' : 'translate-x-0'
+                )} />
+              </div>
             </label>
           </div>
         </div>
@@ -394,7 +467,12 @@ export function EmailTemplateEditor({ template, onSave, onCancel }: EmailTemplat
       <div className="flex justify-end gap-3">
         <button
           type="button"
-          className="btn btn-ghost"
+          className={cn(
+            components.button.base,
+            components.button.sizes.medium,
+            components.button.variants.secondary,
+            saving && 'opacity-50 cursor-not-allowed'
+          )}
           onClick={handleCancel}
           disabled={saving}
         >
@@ -403,12 +481,17 @@ export function EmailTemplateEditor({ template, onSave, onCancel }: EmailTemplat
         </button>
         <button
           type="submit"
-          className="btn btn-primary"
+          className={cn(
+            components.button.base,
+            components.button.sizes.medium,
+            components.button.variants.primary,
+            saving && 'opacity-50 cursor-not-allowed'
+          )}
           disabled={saving}
         >
           {saving ? (
             <>
-              <span className="loading loading-spinner loading-sm mr-2"></span>
+              <div className="w-4 h-4 border-2 border-obsidian/50 border-t-obsidian rounded-full animate-spin mr-2" />
               Saving...
             </>
           ) : (

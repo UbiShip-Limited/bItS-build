@@ -425,7 +425,7 @@ export default function TattooRequestDetailPage() {
                   <div className={`pt-3 mt-3 border-t ${colors.borderSubtle}`}>
                     <button
                       onClick={() => setShowCreateCustomerModal(true)}
-                      className="w-full px-6 py-3 bg-gold-500 text-obsidian hover:bg-gold-400 font-medium tracking-[0.02em] relative overflow-hidden inline-flex items-center justify-center rounded-lg transition-all duration-300 gap-2"
+                      className="w-full px-6 py-3 bg-gold-500/20 text-gold-500 hover:bg-gold-500/30 hover:text-gold-400 border border-gold-500/50 hover:border-gold-500 font-medium tracking-[0.02em] relative overflow-hidden inline-flex items-center justify-center rounded-lg transition-all duration-300 gap-2"
                     >
                       <UserPlus className="w-4 h-4" />
                       Create Customer Profile

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, X, Plus, Trash2, Info } from 'lucide-react';
+import { Save, X, Plus, Trash2, Info, Eye, EyeOff, Palette } from 'lucide-react';
 import { useAuth } from '@/src/hooks/useAuth';
 import { toast } from '@/src/lib/toast';
 import { colors, typography, components, effects, cn } from '@/src/lib/styles/globalStyleConstants';
+import { EmailTemplatePreview } from './EmailTemplatePreview';
 
 interface EmailTemplate {
   id?: string;
@@ -38,6 +39,8 @@ export function EmailTemplateEditor({ template, onSave, onCancel }: EmailTemplat
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [useEnhancedStyling, setUseEnhancedStyling] = useState(true);
   const { session } = useAuth();
 
   useEffect(() => {
@@ -202,18 +205,34 @@ export function EmailTemplateEditor({ template, onSave, onCancel }: EmailTemplat
   };
 
   return (
-    <form id="email-template-form" onSubmit={handleSubmit} className="space-y-6">
-      <div className={cn(components.card, 'p-6')}>
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className={cn(typography.h3, colors.textPrimary)}>
-              {formData.id ? 'Edit Email Template' : 'Create Email Template'}
-            </h2>
-            <div className={cn(typography.textSm, colors.textMuted, 'flex items-center gap-2')}>
-              <kbd className="px-2 py-1 bg-white/10 border border-white/20 rounded text-xs">Ctrl+S</kbd> to save • 
-              <kbd className="px-2 py-1 bg-white/10 border border-white/20 rounded text-xs">Esc</kbd> to cancel
+    <div className="space-y-6">
+      <form id="email-template-form" onSubmit={handleSubmit} className="space-y-6">
+        <div className={cn(components.card, 'p-6')}>
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className={cn(typography.h3, colors.textPrimary)}>
+                {formData.id ? 'Edit Email Template' : 'Create Email Template'}
+              </h2>
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(!showPreview)}
+                  className={cn(
+                    'flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all',
+                    showPreview 
+                      ? 'bg-gold-500/20 text-gold-500' 
+                      : 'bg-white/10 text-white/70 hover:text-white'
+                  )}
+                >
+                  {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPreview ? 'Hide Preview' : 'Show Preview'}
+                </button>
+                <div className={cn(typography.textSm, colors.textMuted, 'flex items-center gap-2')}>
+                  <kbd className="px-2 py-1 bg-white/10 border border-white/20 rounded text-xs">Ctrl+S</kbd> to save • 
+                  <kbd className="px-2 py-1 bg-white/10 border border-white/20 rounded text-xs">Esc</kbd> to cancel
+                </div>
+              </div>
             </div>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -439,27 +458,55 @@ export function EmailTemplateEditor({ template, onSave, onCancel }: EmailTemplat
             />
           </div>
 
-          <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
-            <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'cursor-pointer')}>
-              Template is active
-            </label>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={formData.isActive}
-                onChange={(e) => handleInputChange('isActive', e.target.checked)}
-              />
-              <div className={cn(
-                'w-11 h-6 rounded-full transition-colors',
-                formData.isActive ? 'bg-green-500/30' : 'bg-white/10'
-              )}>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+              <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'cursor-pointer')}>
+                Template is active
+              </label>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={formData.isActive}
+                  onChange={(e) => handleInputChange('isActive', e.target.checked)}
+                />
                 <div className={cn(
-                  'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform',
-                  formData.isActive ? 'translate-x-5' : 'translate-x-0'
-                )} />
+                  'w-11 h-6 rounded-full transition-colors',
+                  formData.isActive ? 'bg-green-500/30' : 'bg-white/10'
+                )}>
+                  <div className={cn(
+                    'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform',
+                    formData.isActive ? 'translate-x-5' : 'translate-x-0'
+                  )} />
+                </div>
+              </label>
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-white/5 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Palette className="w-4 h-4 text-gold-500" />
+                <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'cursor-pointer')}>
+                  Use enhanced Bowen Island styling
+                </label>
               </div>
-            </label>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={useEnhancedStyling}
+                  onChange={(e) => setUseEnhancedStyling(e.target.checked)}
+                />
+                <div className={cn(
+                  'w-11 h-6 rounded-full transition-colors',
+                  useEnhancedStyling ? 'bg-gold-500/30' : 'bg-white/10'
+                )}>
+                  <div className={cn(
+                    'absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform',
+                    useEnhancedStyling ? 'translate-x-5' : 'translate-x-0'
+                  )} />
+                </div>
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -503,5 +550,21 @@ export function EmailTemplateEditor({ template, onSave, onCancel }: EmailTemplat
         </button>
       </div>
     </form>
+
+    {/* Live Preview Section */}
+    {showPreview && (
+      <div className="mt-8">
+        <EmailTemplatePreview
+          subject={formData.subject}
+          body={formData.body}
+          htmlBody={useEnhancedStyling ? undefined : formData.htmlBody}
+          variables={variables.reduce((acc, { key, description }) => {
+            if (key) acc[key] = description;
+            return acc;
+          }, {} as Record<string, string>)}
+        />
+      </div>
+    )}
+  </div>
   );
 }

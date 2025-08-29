@@ -76,6 +76,7 @@ function validateEnvironment() {
     'RECAPTCHA_SECRET_KEY': process.env.RECAPTCHA_SECRET_KEY,
     'RESEND_API_KEY': process.env.RESEND_API_KEY,
     'EMAIL_FROM': process.env.EMAIL_FROM,
+    'STAFF_ACCESS_CODE': process.env.STAFF_ACCESS_CODE,
   };
 
   const missingRequired = Object.entries(requiredEnvVars)
@@ -146,6 +147,15 @@ function validateEnvironment() {
     console.warn('   Set RESEND_API_KEY to enable email functionality');
   }
 
+  // Check staff access code configuration
+  const hasStaffAccessCode = !!process.env.STAFF_ACCESS_CODE;
+  if (hasStaffAccessCode) {
+    console.log('✅ Staff access code is configured and ready');
+  } else {
+    console.warn('⚠️  Staff access code is not configured - staff verification will return 503');
+    console.warn('   Set STAFF_ACCESS_CODE to enable staff access verification');
+  }
+
   console.log('✅ Environment validation passed');
 }
 
@@ -183,6 +193,8 @@ const build = (opts = {}) => {
         'https://b-it-s-build.vercel.app',
         'https://bowenislandtattoo.com',
         'https://www.bowenislandtattoo.com',
+        'https://bowenislandtattooshop.com',      // Production domain
+        'https://www.bowenislandtattooshop.com',  // Production domain with www
         process.env.FRONTEND_URL,
       ].filter(Boolean);
 

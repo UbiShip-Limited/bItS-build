@@ -6,8 +6,8 @@ import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Spotlight } from "./spotlight-new"
-import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants'
-import { smoothScrollTo } from '@/src/lib/utils/smoothScroll'
+import { typography, colors, effects, components } from '../../lib/styles/globalStyleConstants'
+import { smoothScrollTo } from '../../lib/utils/smoothScroll'
 import { CloudinaryImage, getCloudinaryUrl, CLOUDINARY_PRESETS } from './CloudinaryImage'
 
 
@@ -62,7 +62,7 @@ export function TattooHero() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-obsidian via-[#0a0a0a] to-obsidian text-white flex items-center justify-center w-full">
+    <section className="relative w-full min-h-[120vh] overflow-hidden bg-gradient-to-b from-obsidian via-[#0a0a0a] to-obsidian text-white">
       {/* Subtle spotlight effect with white/gray tints */}
       <Spotlight 
         gradientFirst="radial-gradient(68.54% 68.72% at 55.02% 31.46%, hsla(210, 100%, 85%, .08) 0, hsla(210, 100%, 55%, .02) 50%, hsla(210, 100%, 45%, 0) 80%)"
@@ -94,23 +94,23 @@ export function TattooHero() {
         <div className="h-full w-full bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
       </div>
 
-      {/* Main content container - highest z-index */}
+      {/* Main content container - positioned lower than center */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: isLoaded ? 1 : 0 }}
         transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
-        className="relative z-20 flex flex-col items-center justify-center w-full h-screen max-h-screen overflow-hidden px-4 sm:px-6 md:px-8 py-8 sm:py-12"
+        className="absolute inset-0 z-20 flex items-center justify-center pt-16 sm:pt-20 md:pt-24 lg:pt-28 px-2 py-4 sm:p-6 md:p-8"
       >
         {/* Main content */}
         <motion.div
-          className="relative w-full max-w-4xl mx-auto text-center flex flex-col items-center justify-center"
+          className="w-full max-w-4xl text-center space-y-4 sm:space-y-6 md:space-y-8 mt-2"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
           {/* Logo area - enhanced with glow effect */}
           <motion.div 
-            className="relative aspect-square w-[180px] h-[180px] sm:w-[200px] sm:h-[200px] md:w-[240px] md:h-[240px] lg:w-[280px] lg:h-[280px]" 
+            className="relative aspect-square w-[160px] h-[160px] sm:w-[180px] sm:h-[180px] md:w-[220px] md:h-[220px] lg:w-[260px] lg:h-[260px] mx-auto" 
             variants={itemVariants}
           >
             {/* Ambient glow behind logo */}
@@ -187,26 +187,23 @@ export function TattooHero() {
           </motion.div>
 
           {/* Title - enhanced typography with gradient */}
-          <motion.h1
-            className={`${typography.fontBrand} text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold ${typography.leadingTight} mt-4 sm:mt-6 mb-2 sm:mb-3 px-4`}
-            variants={itemVariants}
-          >
-            <span className="bg-gradient-to-r from-white via-white to-white bg-clip-text text-transparent">
-              Bowen Island Tattoo
-            </span>
-          </motion.h1>
+          <motion.div variants={itemVariants} className="-mt-4 sm:-mt-6">
+            <h1 className={`${typography.fontBrand} text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold ${typography.leadingTight} px-2 sm:px-4`}>
+              <span className="bg-gradient-to-r from-white via-white to-white bg-clip-text text-transparent">
+                Bowen Island Tattoo
+              </span>
+            </h1>
+          </motion.div>
 
-
-          <motion.p
-            className={`${typography.textSm} sm:${typography.paragraph} md:${typography.paragraphLarge} ${colors.textSecondary} max-w-2xl mx-auto mb-4 sm:mb-6 px-6`}
-            variants={itemVariants}
-          >
-           Custom tattoos, peaceful island studio.<br className="hidden sm:block" />
-           <span className={`${colors.textMuted} italic block mt-1 sm:mt-2`}>Book your spot. Let's create something beautiful.</span>
-          </motion.p>
+          <motion.div variants={itemVariants}>
+            <p className={`${typography.textSm} sm:${typography.paragraph} md:${typography.paragraphLarge} ${colors.textSecondary} max-w-2xl mx-auto px-2 sm:px-6`}>
+             Custom tattoos, peaceful island studio.<br className="hidden sm:block" />
+             <span className={`${colors.textMuted} italic block mt-1 sm:mt-2`}>Book your spot. Let's create something beautiful.</span>
+            </p>
+          </motion.div>
 
           {/* Enhanced ornamental divider */}
-          <motion.div className="mb-4 sm:mb-6 flex items-center justify-center" variants={itemVariants}>
+          <motion.div className="flex items-center justify-center" variants={itemVariants}>
             <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-r from-transparent via-white/40 to-white/20" />
             <div className="mx-4 sm:mx-6 relative">
               <div className="w-3 h-3 bg-white/40 rounded-full" />
@@ -217,7 +214,7 @@ export function TattooHero() {
 
           {/* CTA Buttons - refined with new button system */}
           <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto px-4 sm:px-0"
+            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-0 sm:px-0"
             variants={itemVariants}
           >
             <Link href="/tattooRequest" className="w-full sm:w-auto">
@@ -241,7 +238,7 @@ export function TattooHero() {
         </motion.div>
 
         {/* Enhanced corner ornaments - hidden on small screens */}
-        <div className="hidden md:block">
+        <div className="hidden md:block pointer-events-none">
           <CornerOrnament position="top-left" />
           <CornerOrnament position="top-right" />
           <CornerOrnament position="bottom-left" />
@@ -276,7 +273,12 @@ export function TattooHero() {
           </div>
         )}
       </motion.div>
-    </div>
+      
+      {/* Seamless bottom fade transition */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 sm:h-40 md:h-48 lg:h-56 z-30 pointer-events-none">
+        <div className="w-full h-full bg-gradient-to-t from-obsidian via-obsidian/80 to-transparent" />
+      </div>
+    </section>
   )
 }
 
@@ -288,7 +290,7 @@ interface CornerOrnamentProps {
 
 const CornerOrnament: React.FC<CornerOrnamentProps> = ({ position }) => {
   // Enhanced corner ornaments with gradient effect
-  const baseClasses = "absolute w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 m-4 sm:m-6 md:m-8 lg:m-12";
+  const baseClasses = "absolute w-20 h-20 sm:w-24 sm:h-24 md:w-32 md:h-32 m-4 sm:m-6 md:m-8 lg:m-12 z-10";
   let positionClasses = "";
   let cornerStyle = "";
 

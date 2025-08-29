@@ -107,23 +107,23 @@ export default function CustomerSelector({
     <div className="relative" ref={dropdownRef}>
       {selectedCustomer ? (
         // Selected customer display
-        <div className="flex items-center justify-between p-3 border border-gray-300 rounded-md bg-gray-50">
+        <div className="flex items-center justify-between p-3 border border-[#1a1a1a] rounded-md bg-[#111111]">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-gray-600 text-sm font-medium">
+            <div className="h-8 w-8 bg-gold-500/20 rounded-full flex items-center justify-center">
+              <span className="text-gold-500 text-sm font-medium">
                 {selectedCustomer.name.charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
-              <p className="font-medium text-sm">{selectedCustomer.name}</p>
-              <p className="text-xs text-gray-500">{selectedCustomer.email || selectedCustomer.phone || 'No contact info'}</p>
+              <p className="font-medium text-sm text-white">{selectedCustomer.name}</p>
+              <p className="text-xs text-white/50">{selectedCustomer.email || selectedCustomer.phone || 'No contact info'}</p>
             </div>
           </div>
           {!disabled && (
             <button
               type="button"
               onClick={handleClear}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-white/50 hover:text-white"
             >
               ×
             </button>
@@ -132,7 +132,7 @@ export default function CustomerSelector({
       ) : (
         // Search input
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gold-500/50 w-4 h-4" />
           <input
             type="text"
             value={searchTerm}
@@ -142,7 +142,7 @@ export default function CustomerSelector({
             }}
             onFocus={() => setIsOpen(true)}
             placeholder={placeholder}
-            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-3 py-2 border border-gold-500/30 rounded-md bg-white/5 text-white placeholder-white/50 focus:outline-none focus:border-gold-500/50 focus:bg-white/10 transition-all duration-300"
             required={required}
             disabled={disabled}
           />
@@ -151,10 +151,10 @@ export default function CustomerSelector({
 
       {/* Dropdown */}
       {isOpen && !selectedCustomer && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-10 w-full mt-1 bg-[#111111] border border-[#1a1a1a] rounded-md shadow-lg max-h-60 overflow-auto">
           {loading ? (
-            <div className="p-4 text-center text-gray-500">
-              <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <div className="p-4 text-center text-white/50">
+              <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-gold-500"></div>
               <p className="mt-2 text-sm">Searching...</p>
             </div>
           ) : customers.length > 0 ? (
@@ -164,16 +164,16 @@ export default function CustomerSelector({
                   <button
                     type="button"
                     onClick={() => handleSelect(customer)}
-                    className="w-full px-4 py-2 text-left hover:bg-gray-100 flex items-center gap-3"
+                    className="w-full px-4 py-2 text-left hover:bg-white/10 flex items-center gap-3 transition-colors"
                   >
-                    <div className="h-8 w-8 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-gray-600 text-sm font-medium">
+                    <div className="h-8 w-8 bg-gold-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-gold-500 text-sm font-medium">
                         {customer.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{customer.name}</p>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="font-medium text-sm text-white truncate">{customer.name}</p>
+                      <p className="text-xs text-white/50 truncate">
                         {customer.email || customer.phone || 'No contact info'}
                       </p>
                     </div>
@@ -183,7 +183,7 @@ export default function CustomerSelector({
             </ul>
           ) : searchTerm ? (
             <div className="p-4 text-center">
-              <p className="text-gray-500 text-sm mb-3">No customers found</p>
+              <p className="text-white/50 text-sm mb-3">No customers found</p>
               {onCreateNew && (
                 <button
                   type="button"
@@ -191,7 +191,7 @@ export default function CustomerSelector({
                     setIsOpen(false);
                     onCreateNew();
                   }}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-gold-500 text-[#080808] text-sm rounded hover:bg-gold-400 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Create New Customer
@@ -199,7 +199,7 @@ export default function CustomerSelector({
               )}
             </div>
           ) : (
-            <div className="p-4 text-center text-gray-500 text-sm">
+            <div className="p-4 text-center text-white/50 text-sm">
               Start typing to search customers
             </div>
           )}

@@ -196,7 +196,7 @@ export default function AppointmentForm({
                 required
                 value={formData.contactEmail}
                 onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gold-500/30 rounded-md bg-white/5 text-white focus:outline-none focus:border-gold-500/50 transition-all duration-300 [&>option]:bg-[#111111] [&>option]:text-white"
               />
             </div>
 
@@ -208,7 +208,7 @@ export default function AppointmentForm({
                 type="tel"
                 value={formData.contactPhone}
                 onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gold-500/30 rounded-md bg-white/5 text-white focus:outline-none focus:border-gold-500/50 transition-all duration-300 [&>option]:bg-[#111111] [&>option]:text-white"
               />
             </div>
           </>
@@ -225,7 +225,7 @@ export default function AppointmentForm({
               required
               value={formData.startAt}
               onChange={(e) => setFormData({ ...formData, startAt: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gold-500/30 rounded-md bg-white/5 text-white focus:outline-none focus:border-gold-500/50 transition-all duration-300 [&>option]:bg-[#111111] [&>option]:text-white"
             />
           </div>
 
@@ -240,7 +240,7 @@ export default function AppointmentForm({
               step="30"
               value={formData.duration}
               onChange={(e) => setFormData({ ...formData, duration: parseInt(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gold-500/30 rounded-md bg-white/5 text-white focus:outline-none focus:border-gold-500/50 transition-all duration-300 [&>option]:bg-[#111111] [&>option]:text-white"
             />
           </div>
         </div>
@@ -254,7 +254,7 @@ export default function AppointmentForm({
               required
               value={formData.bookingType}
               onChange={(e) => setFormData({ ...formData, bookingType: e.target.value as BookingType })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gold-500/30 rounded-md bg-white/5 text-white focus:outline-none focus:border-gold-500/50 transition-all duration-300 [&>option]:bg-[#111111] [&>option]:text-white"
               disabled={formData.isAnonymous}
             >
               <option value={BookingType.CONSULTATION}>Consultation</option>
@@ -272,7 +272,7 @@ export default function AppointmentForm({
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value as BookingStatus })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gold-500/30 rounded-md bg-white/5 text-white focus:outline-none focus:border-gold-500/50 transition-all duration-300 [&>option]:bg-[#111111] [&>option]:text-white"
             >
               <option value={BookingStatus.PENDING}>Pending</option>
               <option value={BookingStatus.SCHEDULED}>Scheduled</option>
@@ -293,7 +293,7 @@ export default function AppointmentForm({
             step="0.01"
             value={formData.priceQuote}
             onChange={(e) => setFormData({ ...formData, priceQuote: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gold-500/30 rounded-md bg-white/5 text-white placeholder-white/50 focus:outline-none focus:border-gold-500/50 transition-all duration-300"
             placeholder="0.00"
           />
         </div>
@@ -306,7 +306,7 @@ export default function AppointmentForm({
             rows={4}
             value={formData.note}
             onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gold-500/30 rounded-md bg-white/5 text-white placeholder-white/50 focus:outline-none focus:border-gold-500/50 transition-all duration-300"
             placeholder="Any additional notes about the appointment..."
           />
         </div>

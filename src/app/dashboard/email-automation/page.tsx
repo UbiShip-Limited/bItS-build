@@ -87,6 +87,7 @@ export default function EmailAutomationPage() {
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'settings' | 'logs' | 'stats'>('settings');
   const [updatingSettings, setUpdatingSettings] = useState<string | null>(null);
+  const [hasPermission, setHasPermission] = useState(true);
   const { session } = useAuth();
   const router = useRouter();
 
@@ -122,6 +123,11 @@ export default function EmailAutomationPage() {
         }
       );
 
+      if (response.status === 403) {
+        setHasPermission(false);
+        return;
+      }
+
       if (!response.ok) throw new Error('Failed to fetch settings');
       
       const data = await response.json();
@@ -149,6 +155,11 @@ export default function EmailAutomationPage() {
         }
       );
 
+      if (response.status === 403) {
+        setHasPermission(false);
+        return;
+      }
+
       if (!response.ok) throw new Error('Failed to fetch logs');
       
       const data = await response.json();
@@ -169,6 +180,11 @@ export default function EmailAutomationPage() {
           },
         }
       );
+
+      if (response.status === 403) {
+        setHasPermission(false);
+        return;
+      }
 
       if (!response.ok) throw new Error('Failed to fetch statistics');
       
@@ -602,6 +618,33 @@ export default function EmailAutomationPage() {
         description="Manage automated email workflows"
       >
         <SkeletonLoader count={3} />
+      </DashboardPageLayout>
+    );
+  }
+
+  if (!hasPermission) {
+    return (
+      <DashboardPageLayout
+        title="Email Automation"
+        description="Manage automated email workflows and monitor performance"
+      >
+        <div className={cn(components.card, 'p-8 text-center')}>
+          <div className="flex flex-col items-center gap-4">
+            <AlertCircle className={cn('w-12 h-12', colors.textWarning)} />
+            <h2 className={cn(typography.text2xl, typography.fontSemibold, colors.textPrimary)}>
+              Admin Access Required
+            </h2>
+            <p className={cn(typography.textBase, colors.textSecondary, 'max-w-md')}>
+              You need administrator privileges to access email automation settings. Please contact your system administrator for access.
+            </p>
+            <button
+              onClick={() => router.push('/dashboard')}
+              className={cn(components.button.base, components.button.variants.primary, 'mt-4')}
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
       </DashboardPageLayout>
     );
   }

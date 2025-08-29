@@ -1,6 +1,6 @@
-# Favicon Files ✅ GENERATED
+# Favicon Files ✅ UPDATED (Aug 29, 2025)
 
-All favicon files have been successfully generated from the logo.svg design.
+All favicon files have been successfully regenerated from the official Bowen Island Tattoo Shop logo (`/public/images/bowen-logo.svg`).
 
 ## Generated Files:
 - ✅ `/public/apple-touch-icon.png` - 180x180px
@@ -9,20 +9,15 @@ All favicon files have been successfully generated from the logo.svg design.
 - ✅ `/public/android-chrome-192x192.png` - 192x192px
 - ✅ `/public/android-chrome-512x512.png` - 512x512px
 - ✅ `/public/favicon.ico` - Multi-resolution
-- ✅ `/src/app/favicon.ico` - Updated for Next.js
-
-## MS Tile Images Still Needed:
-- `/public/mstile-70x70.png` - 70x70px
-- `/public/mstile-150x150.png` - 150x150px
-- `/public/mstile-310x310.png` - 310x310px
-- `/public/mstile-310x150.png` - 310x150px
+- ✅ `/public/safari-pinned-tab.svg` - Safari pinned tab icon
+- ✅ `/public/site.webmanifest` - Updated with new icons
+- ✅ `/public/browserconfig.xml` - Updated for MS tiles
 
 ## Design Used:
-- Victorian-style ornate border with gold accents
-- Stylized B and T monogram (Bowen Tattoo)
-- Primary color: #C9A449 (gold)
-- Background: White with #080808 (obsidian) details
-- Clean, professional design suitable for all platforms
+- Official Bowen Island Tattoo Shop logo
+- Generated from `/public/images/bowen-logo.svg`
+- All sizes optimized for various platforms and devices
+- Placeholder icons removed (file.svg, globe.svg, next.svg, vercel.svg, window.svg, logo.svg)
 
 # SEO & FAVICON REQUIREMENTS
 

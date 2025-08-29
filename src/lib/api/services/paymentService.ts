@@ -30,6 +30,10 @@ export interface CreatePaymentLinkParams {
   redirectUrl?: string;
   allowTipping?: boolean;
   customFields?: Array<{ title: string }>;
+  sendEmail?: boolean;
+  enableReminders?: boolean;
+  reminderSchedule?: number[];
+  expiresInDays?: number;
 }
 
 export interface CreateInvoiceParams {

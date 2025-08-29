@@ -211,7 +211,7 @@ export default function CustomerForm({
                   <select
                     value={selectedRequestId}
                     onChange={(e) => handleLinkRequest(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg focus:border-[#C9A449]/50 focus:outline-none focus:ring-1 focus:ring-[#C9A449]/20 text-white"
+                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg focus:border-[#C9A449]/50 focus:outline-none focus:ring-1 focus:ring-[#C9A449]/20 text-white [&>option]:bg-[#111111] [&>option]:text-white"
                   >
                     <option value="">-- Select a request --</option>
                     {anonymousRequests.map((request) => (

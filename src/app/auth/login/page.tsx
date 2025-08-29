@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, LogIn, Loader2, Shield, Key } from 'lucide-react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LoginPage() {
@@ -322,6 +323,16 @@ export default function LoginPage() {
                         )}
                       </button>
                     </form>
+
+                    {/* Forgot Password Link */}
+                    <div className="mt-4 text-center">
+                      <Link
+                        href="/auth/forgot-password"
+                        className="text-sm text-[#C9A449]/70 hover:text-[#C9A449] transition-colors font-body tracking-wider"
+                      >
+                        Forgot your password?
+                      </Link>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>

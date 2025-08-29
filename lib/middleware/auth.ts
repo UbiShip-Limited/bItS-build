@@ -18,13 +18,15 @@ const TEST_USER: UserWithRole = {
 const ROLE_HIERARCHY: Record<UserRole, number> = {
   'artist': 1,
   'assistant': 2, 
-  'admin': 3
+  'admin': 3,
+  'owner': 4  // Owner has highest privileges
 };
 
 const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   'artist': 'Artist - Can create payment requests and manage client payments',
   'assistant': 'Assistant - Can help with payment management tasks',
-  'admin': 'Administrator - Full access to all payment features'
+  'admin': 'Administrator - Full access to all payment features',
+  'owner': 'Owner - Full system access with all administrative privileges'
 };
 
 // Helper function to get user-friendly permission error messages
@@ -41,23 +43,26 @@ function getPermissionErrorMessage(userRole: UserRole, requiredRoles: UserRole[]
 
 // Helper function to check if user has permission (without throwing errors)
 export function hasPermission(userRole: UserRole, allowedRoles: UserRole[]): boolean {
+  // Owner has access to everything
+  if (userRole === 'owner') return true;
   return allowedRoles.includes(userRole);
 }
 
 // Get detailed permission info for a user
 export function getUserPermissions(userRole: UserRole) {
+  const isOwner = userRole === 'owner';
   return {
     role: userRole,
     description: ROLE_DESCRIPTIONS[userRole],
     level: ROLE_HIERARCHY[userRole],
     canAccess: {
-      viewPayments: hasPermission(userRole, ['artist', 'assistant', 'admin']),
-      createPaymentLinks: hasPermission(userRole, ['artist', 'admin']),
-      processPayments: hasPermission(userRole, ['artist', 'admin']),
-      manageAllPayments: hasPermission(userRole, ['admin']),
-      viewAdminFeatures: hasPermission(userRole, ['admin']),
-      manageRefunds: hasPermission(userRole, ['admin']),
-      viewSquareSettings: hasPermission(userRole, ['artist', 'assistant', 'admin'])
+      viewPayments: isOwner || hasPermission(userRole, ['artist', 'assistant', 'admin']),
+      createPaymentLinks: isOwner || hasPermission(userRole, ['artist', 'admin']),
+      processPayments: isOwner || hasPermission(userRole, ['artist', 'admin']),
+      manageAllPayments: isOwner || hasPermission(userRole, ['admin']),
+      viewAdminFeatures: isOwner || hasPermission(userRole, ['admin']),
+      manageRefunds: isOwner || hasPermission(userRole, ['admin']),
+      viewSquareSettings: isOwner || hasPermission(userRole, ['artist', 'assistant', 'admin'])
     }
   };
 }
@@ -288,6 +293,13 @@ export function authorize(allowedRoles: UserRole[]) {
     }
     
     try {
+      // Owner role has access to everything
+      const userRole = request.user.role as UserRole;
+      if (userRole === 'owner') {
+        request.log.info(`Owner access granted for user ${request.user.id}`);
+        return; // Owner has full access
+      }
+
       if (!request.user.role || !allowedRoles.includes(request.user.role)) {
         const errorMessage = getPermissionErrorMessage(request.user.role as UserRole, allowedRoles);
         const userPermissions = getUserPermissions(request.user.role as UserRole);

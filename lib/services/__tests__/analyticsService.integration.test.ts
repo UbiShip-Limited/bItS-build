@@ -352,7 +352,7 @@ describe('AnalyticsService (Integration)', () => {
     const appointments = [
       {
         customerId: testCustomers[0].id,
-        artistId: testArtist.id,
+        artistId: testArtist?.id || null,
         startTime: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000), // Yesterday
         endTime: new Date(now.getTime() - 1 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // 2 hours
         duration: 120,
@@ -362,7 +362,7 @@ describe('AnalyticsService (Integration)', () => {
       },
       {
         customerId: testCustomers[1].id,
-        artistId: testArtist.id,
+        artistId: testArtist?.id || null,
         startTime: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), // Last week
         endTime: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000), // 3 hours
         duration: 180,

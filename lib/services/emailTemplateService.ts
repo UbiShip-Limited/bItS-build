@@ -3,6 +3,7 @@ import { NotFoundError, ValidationError } from './errors';
 import type { EmailTemplate, Prisma } from '@prisma/client';
 import { auditService } from './auditService';
 import { emailService } from './emailService';
+import EmailStyleService from './emailStyleService';
 
 export interface CreateEmailTemplateData {
   name: string;
@@ -773,6 +774,193 @@ Bowen Island Tattoo Shop Team`,
           customerName: 'Customer name',
           description: 'Tattoo request description',
           trackingUrl: 'URL to track request (if available)'
+        }
+      },
+      // Owner/Admin Notification Templates
+      {
+        name: 'owner_new_request',
+        displayName: 'Owner: New Tattoo Request',
+        subject: '🎨 New Tattoo Request from {{customerName}}',
+        body: `New tattoo request received!
+
+Customer Details:
+- Name: {{customerName}}
+- Email: {{customerEmail}}
+- Phone: {{customerPhone}}
+
+Request Details:
+- Description: {{description}}
+- Placement: {{placement}}
+- Size: {{size}}
+- Style: {{style}}
+- Preferred Artist: {{preferredArtist}}
+- Timeframe: {{timeframe}}
+- Additional Notes: {{additionalNotes}}
+
+{{#if referenceImages}}
+Reference Images: {{referenceImages}} image(s) uploaded
+{{/if}}
+
+View in Dashboard: {{dashboardUrl}}
+
+This notification was sent to the shop owner.`,
+        htmlBody: `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background-color: #C9A449; color: white; padding: 20px; text-align: center; }
+    .content { padding: 20px; background-color: #f9f9f9; }
+    .details { background-color: white; padding: 15px; margin: 15px 0; border-radius: 5px; }
+    .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+    .action-button { background-color: #1a1a1a; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎨 New Tattoo Request</h1>
+    </div>
+    <div class="content">
+      <div class="details">
+        <h3>Customer Details:</h3>
+        <ul>
+          <li><strong>Name:</strong> {{customerName}}</li>
+          <li><strong>Email:</strong> {{customerEmail}}</li>
+          <li><strong>Phone:</strong> {{customerPhone}}</li>
+        </ul>
+      </div>
+      
+      <div class="details">
+        <h3>Request Details:</h3>
+        <ul>
+          <li><strong>Description:</strong> {{description}}</li>
+          <li><strong>Placement:</strong> {{placement}}</li>
+          <li><strong>Size:</strong> {{size}}</li>
+          <li><strong>Style:</strong> {{style}}</li>
+          <li><strong>Preferred Artist:</strong> {{preferredArtist}}</li>
+          <li><strong>Timeframe:</strong> {{timeframe}}</li>
+          <li><strong>Additional Notes:</strong> {{additionalNotes}}</li>
+        </ul>
+      </div>
+      
+      <a href="{{dashboardUrl}}" class="action-button">View in Dashboard</a>
+    </div>
+    <div class="footer">
+      <p>This is an automated notification for shop owners.</p>
+    </div>
+  </div>
+</body>
+</html>`,
+        variables: {
+          customerName: 'Customer name',
+          customerEmail: 'Customer email',
+          customerPhone: 'Customer phone',
+          description: 'Tattoo description',
+          placement: 'Body placement',
+          size: 'Tattoo size',
+          style: 'Tattoo style',
+          preferredArtist: 'Preferred artist',
+          timeframe: 'Desired timeframe',
+          additionalNotes: 'Additional notes',
+          referenceImages: 'Number of reference images',
+          dashboardUrl: 'URL to dashboard'
+        }
+      },
+      {
+        name: 'owner_new_appointment',
+        displayName: 'Owner: New Appointment',
+        subject: '📅 New Appointment Booked - {{appointmentDate}}',
+        body: `New appointment booked!
+
+Customer: {{customerName}}
+Email: {{customerEmail}}
+Phone: {{customerPhone}}
+
+Appointment Details:
+- Date: {{appointmentDate}}
+- Time: {{appointmentTime}}
+- Duration: {{duration}}
+- Type: {{appointmentType}}
+- Artist: {{artistName}}
+- Price Quote: {{priceQuote}}
+- Notes: {{notes}}
+
+View in Dashboard: {{dashboardUrl}}
+
+This notification was sent to the shop owner.`,
+        variables: {
+          customerName: 'Customer name',
+          customerEmail: 'Customer email',
+          customerPhone: 'Customer phone',
+          appointmentDate: 'Appointment date',
+          appointmentTime: 'Appointment time',
+          duration: 'Duration in minutes',
+          appointmentType: 'Type of appointment',
+          artistName: 'Assigned artist',
+          priceQuote: 'Price quote if provided',
+          notes: 'Appointment notes',
+          dashboardUrl: 'URL to dashboard'
+        }
+      },
+      {
+        name: 'owner_payment_received',
+        displayName: 'Owner: Payment Received',
+        subject: '💰 Payment Received - ${{amount}}',
+        body: `Payment received!
+
+Customer: {{customerName}}
+Amount: ${{amount}}
+Payment Method: {{paymentMethod}}
+Date: {{paymentDate}}
+
+Related to: {{relatedService}}
+{{#if appointmentId}}
+Appointment ID: {{appointmentId}}
+{{/if}}
+
+Transaction ID: {{transactionId}}
+
+View in Dashboard: {{dashboardUrl}}
+
+This notification was sent to the shop owner.`,
+        variables: {
+          customerName: 'Customer name',
+          amount: 'Payment amount',
+          paymentMethod: 'Payment method used',
+          paymentDate: 'Date of payment',
+          relatedService: 'Related service/appointment',
+          appointmentId: 'Related appointment ID',
+          transactionId: 'Payment transaction ID',
+          dashboardUrl: 'URL to dashboard'
+        }
+      },
+      {
+        name: 'owner_appointment_cancelled',
+        displayName: 'Owner: Appointment Cancelled',
+        subject: '❌ Appointment Cancelled - {{appointmentDate}}',
+        body: `Appointment cancelled!
+
+Customer: {{customerName}}
+Original Date: {{appointmentDate}}
+Original Time: {{appointmentTime}}
+Artist: {{artistName}}
+
+Cancellation Reason: {{cancellationReason}}
+Cancelled At: {{cancelledAt}}
+
+View in Dashboard: {{dashboardUrl}}
+
+This notification was sent to the shop owner.`,
+        variables: {
+          customerName: 'Customer name',
+          appointmentDate: 'Original appointment date',
+          appointmentTime: 'Original appointment time',
+          artistName: 'Assigned artist',
+          cancellationReason: 'Reason for cancellation',
+          cancelledAt: 'When cancellation occurred',
+          dashboardUrl: 'URL to dashboard'
         }
       }
     ];

@@ -55,17 +55,9 @@ interface AnonymousAppointmentBody {
 }
 
 const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
-  // Initialize services
-  const appointmentService = new AppointmentService();
-  const squareService = new SquareIntegrationService();
-  
-  // Decorate fastify instance so handlers can access it
-  if (!fastify.hasDecorator('appointmentService')) {
-    fastify.decorate('appointmentService', appointmentService);
-  }
-  if (!fastify.hasDecorator('squareService')) {
-    fastify.decorate('squareService', squareService);
-  }
+  // Use services from the fastify instance (already initialized with dependencies)
+  const appointmentService = fastify.services.appointmentService;
+  const squareService = fastify.services.squareIntegrationService;
 
   // Error handler for consistent error responses
   fastify.setErrorHandler((error, request, reply) => {

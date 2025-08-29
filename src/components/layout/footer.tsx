@@ -87,19 +87,7 @@ export function Footer() {
                 <span className="text-xs sm:text-sm italic text-gray-400">Artisan Square</span>
               </p>
             </div>
-            <div className="flex flex-col items-center">
-              <IconPhone className="h-5 sm:h-6 w-5 sm:w-6 text-gold-500 mb-2 sm:mb-3" />
-              <p className="text-gray-300 font-body tracking-tight text-sm sm:text-base">
-                (604) 323-4350<br />
-                <a 
-                  href="mailto:bowenislandtattooshop@gmail.com" 
-                  className="text-xs sm:text-sm text-gold-500 hover:text-gold-500/80 transition-colors break-all"
-                  onClick={() => GAEvents.emailClicked()}
-                >
-                  bowenislandtattooshop@gmail.com
-                </a>
-              </p>
-            </div>
+           
             <div className="flex flex-col items-center">
               <p className="text-gold-500 font-heading text-base sm:text-lg mb-1 sm:mb-2">Studio Hours</p>
               <p className="text-gray-300 font-body tracking-tight text-sm sm:text-base">
@@ -107,6 +95,16 @@ export function Footer() {
                 11:00 AM - 7:00 PM<br />
                 <span className="text-xs sm:text-sm italic text-gray-400">By appointment only</span>
               </p>
+            </div>
+
+            <div className="flex flex-col items-center">
+              <p className="text-gold-500 font-heading text-base sm:text-lg mb-1 sm:mb-2">Contact / Booking</p>
+              <Link
+                href="/tattooRequest"
+                className="text-gray-300 font-body tracking-tight text-sm sm:text-base underline hover:text-gold-500 transition-colors"
+              >
+                Request a Tattoo or Contact Us
+              </Link>
             </div>
           </div>
 
@@ -135,6 +133,14 @@ export function Footer() {
                 className="text-gray-300 hover:text-gold-500 transition-colors"
               >
                 UbiShip Limited
+              </Link>
+              {" • "}
+              <Link 
+                href="/auth/login" 
+                className="text-gray-400 hover:text-gold-500/70 transition-colors"
+                title="Staff Portal"
+              >
+                Staff Portal
               </Link>
             </div>
           </div>

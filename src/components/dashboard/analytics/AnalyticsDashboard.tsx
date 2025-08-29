@@ -78,7 +78,7 @@ export default function AnalyticsDashboard() {
           <select
             value={timeframe}
             onChange={(e) => setTimeframe(e.target.value)}
-            className="select select-bordered bg-base-200"
+            className="select select-bordered bg-[#111111] text-white border-[#1a1a1a] [&>option]:bg-[#111111] [&>option]:text-white"
           >
             <option value="today">Today</option>
             <option value="yesterday">Yesterday</option>

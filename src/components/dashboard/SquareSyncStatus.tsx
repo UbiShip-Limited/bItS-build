@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Cloud, CloudOff, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react';
 import { apiClient } from '@/src/lib/api/apiClient';
+import { typography, colors, effects, components, cn } from '@/src/lib/styles/globalStyleConstants';
 
 interface SquareSyncStatus {
   configuration: {
@@ -78,10 +79,10 @@ export default function SquareSyncStatus() {
 
   if (loading) {
     return (
-      <div className="bg-[#111111] border border-[#1a1a1a] rounded-xl p-6">
+      <div className="p-6">
         <div className="animate-pulse">
-          <div className="h-4 bg-[#1a1a1a] rounded w-32 mb-4"></div>
-          <div className="h-3 bg-[#1a1a1a] rounded w-48"></div>
+          <div className="h-4 bg-white/10 rounded w-32 mb-4"></div>
+          <div className="h-3 bg-white/10 rounded w-48"></div>
         </div>
       </div>
     );
@@ -95,24 +96,31 @@ export default function SquareSyncStatus() {
   const isSyncing = isRunning || syncing;
 
   return (
-    <div className="bg-[#111111] border border-[#1a1a1a] rounded-xl p-6">
+    <div className="p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-          Square Integration
+        <div className="flex items-center gap-2">
           {configuration.isConfigured ? (
-            <Cloud className="w-5 h-5 text-green-500" />
+            <Cloud className="w-5 h-5 text-emerald-500" />
           ) : (
             <CloudOff className="w-5 h-5 text-red-500" />
           )}
-        </h3>
+          <span className={cn(typography.textBase, typography.fontMedium, colors.textPrimary)}>
+            {configuration.isConfigured ? 'Connected' : 'Not Connected'}
+          </span>
+        </div>
         
         {configuration.isConfigured && (
           <button
             onClick={handleSync}
             disabled={isSyncing}
-            className="px-3 py-1.5 bg-[#C9A449] hover:bg-[#B8934A] disabled:bg-[#8B7635] disabled:cursor-not-allowed text-[#080808] rounded-lg text-sm font-medium flex items-center gap-2 transition-all duration-300"
+            className={cn(
+              components.button.base,
+              components.button.sizes.small,
+              components.button.variants.primary,
+              'disabled:opacity-50 disabled:cursor-not-allowed'
+            )}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={cn('w-3.5 h-3.5 mr-1', isSyncing && 'animate-spin')} />
             {isSyncing ? 'Syncing...' : 'Sync Now'}
           </button>
         )}
@@ -120,57 +128,50 @@ export default function SquareSyncStatus() {
 
       {/* Configuration Status */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-400">Status</span>
-          <span className={`font-medium ${configuration.isConfigured ? 'text-green-500' : 'text-red-500'}`}>
-            {configuration.isConfigured ? 'Connected' : 'Not Connected'}
-          </span>
-        </div>
-
         {configuration.isConfigured && (
           <>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-400">Environment</span>
-              <span className="text-white font-medium capitalize">
+            <div className="flex items-center justify-between">
+              <span className={cn(typography.textSm, colors.textMuted)}>Environment</span>
+              <span className={cn(typography.textSm, typography.fontMedium, colors.textPrimary, 'capitalize')}>
                 {configuration.environment}
               </span>
             </div>
 
             {lastSync?.lastRun && (
               <>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400">Last Sync</span>
-                  <span className="text-white">
+                <div className="flex items-center justify-between">
+                  <span className={cn(typography.textSm, colors.textMuted)}>Last Sync</span>
+                  <span className={cn(typography.textSm, colors.textPrimary)}>
                     {new Date(lastSync.lastRun).toLocaleString()}
                   </span>
                 </div>
 
                 {lastSync.results && (
-                  <div className="bg-[#0a0a0a] border border-[#1a1a1a] rounded-lg p-3 mt-3">
+                  <div className={cn('bg-white/5 border', colors.borderSubtle, components.radius.small, 'p-3 mt-3')}>
                     <div className="grid grid-cols-3 gap-3 text-center">
                       <div>
-                        <p className="text-2xl font-bold text-white">
+                        <p className={cn(typography.text2xl, typography.fontSemibold, colors.textPrimary)}>
                           {lastSync.results.synced}
                         </p>
-                        <p className="text-xs text-gray-500">Synced</p>
+                        <p className={cn(typography.textXs, colors.textMuted)}>Synced</p>
                       </div>
                       <div>
-                        <p className="text-2xl font-bold text-green-500">
+                        <p className={cn(typography.text2xl, typography.fontSemibold, 'text-emerald-500')}>
                           {lastSync.results.created}
                         </p>
-                        <p className="text-xs text-gray-500">Created</p>
+                        <p className={cn(typography.textXs, colors.textMuted)}>Created</p>
                       </div>
                       <div>
-                        <p className="text-2xl font-bold text-blue-500">
+                        <p className={cn(typography.text2xl, typography.fontSemibold, 'text-blue-500')}>
                           {lastSync.results.updated}
                         </p>
-                        <p className="text-xs text-gray-500">Updated</p>
+                        <p className={cn(typography.textXs, colors.textMuted)}>Updated</p>
                       </div>
                     </div>
 
                     {lastSync.results.errors.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-[#1a1a1a]">
-                        <p className="text-xs text-red-400">
+                      <div className={cn('mt-3 pt-3 border-t', colors.borderSubtle)}>
+                        <p className={cn(typography.textXs, 'text-red-400')}>
                           {lastSync.results.errors.length} error{lastSync.results.errors.length !== 1 ? 's' : ''} during sync
                         </p>
                       </div>
@@ -186,9 +187,9 @@ export default function SquareSyncStatus() {
         {configuration.warnings.length > 0 && (
           <div className="mt-4 space-y-2">
             {configuration.warnings.map((warning, index) => (
-              <div key={index} className="flex items-start gap-2 text-xs">
-                <AlertCircle className="w-3.5 h-3.5 text-yellow-500 mt-0.5 flex-shrink-0" />
-                <span className="text-gray-400">{warning}</span>
+              <div key={index} className="flex items-start gap-2">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-500 mt-0.5 flex-shrink-0" />
+                <span className={cn(typography.textXs, colors.textMuted)}>{warning}</span>
               </div>
             ))}
           </div>

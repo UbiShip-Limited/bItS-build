@@ -40,11 +40,124 @@ export class CommunicationService {
   private realtimeService: RealtimeService;
   private emailService: any; // Optional email service
   private smsService: any; // Optional SMS service
+  private ownerEmail: string | null;
+  private ownerNotificationsEnabled: boolean;
   
   constructor(realtimeService: RealtimeService, emailService?: any, smsService?: any) {
     this.realtimeService = realtimeService;
     this.emailService = emailService;
     this.smsService = smsService;
+    this.ownerEmail = process.env.OWNER_EMAIL || null;
+    this.ownerNotificationsEnabled = process.env.OWNER_NOTIFICATION_ENABLED !== 'false';
+  }
+  
+  /**
+   * Send payment link notification to customer
+   */
+  async sendPaymentLinkEmail(params: {
+    customerId: string;
+    customerEmail: string;
+    customerName: string;
+    amount: number;
+    title: string;
+    description?: string;
+    paymentType: string;
+    paymentLink: string;
+    appointmentDate?: string;
+    appointmentTime?: string;
+    allowTipping?: boolean;
+    expiresAt?: string;
+  }): Promise<NotificationResult> {
+    const {
+      customerEmail,
+      customerName,
+      amount,
+      title,
+      description,
+      paymentType,
+      paymentLink,
+      appointmentDate,
+      appointmentTime,
+      allowTipping,
+      expiresAt
+    } = params;
+    
+    try {
+      // Send payment link email to customer
+      const result = await emailTemplateService.sendEmail(
+        'payment_link_request',
+        customerEmail,
+        {
+          customerName,
+          amount: amount.toFixed(2),
+          title,
+          description,
+          paymentType,
+          paymentLink,
+          appointmentDate,
+          appointmentTime,
+          allowTipping,
+          expiresAt
+        }
+      );
+      
+      // Send notification to owner if enabled
+      if (this.ownerNotificationsEnabled && this.ownerEmail) {
+        await emailTemplateService.sendEmail(
+          'owner_payment_received',
+          this.ownerEmail,
+          {
+            customerName,
+            amount: amount.toFixed(2),
+            paymentType,
+            transactionId: 'Payment Link Sent',
+            dashboardUrl: `${process.env.APP_URL}/dashboard/payments`
+          }
+        );
+      }
+      
+      // Send real-time notification
+      this.realtimeService.sendNotification({
+        type: 'payment_link_sent',
+        title: 'Payment Link Sent',
+        message: `Payment link for $${amount.toFixed(2)} sent to ${customerName}`,
+        data: {
+          customerId: params.customerId,
+          amount,
+          paymentType
+        }
+      });
+      
+      // Log audit
+      await auditService.log({
+        action: 'payment_link_email_sent',
+        resource: 'payment_link',
+        details: {
+          customerEmail,
+          amount,
+          paymentType,
+          title
+        }
+      });
+      
+      return { success: true, messageId: result.messageId };
+    } catch (error) {
+      console.error('Error sending payment link email:', error);
+      
+      await auditService.log({
+        action: 'payment_link_email_failed',
+        resource: 'payment_link',
+        details: {
+          customerEmail,
+          error: error.message
+        }
+      });
+      
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to send payment link email' 
+      };
+    }
   }
   
   /**
@@ -479,6 +592,325 @@ Bowen Island Tattoo Shop Team
   </div>
 </body>
 </html>`;
+  }
+
+  /**
+   * Send notification to shop owner for new tattoo request
+   */
+  async sendOwnerNewRequestNotification(
+    tattooRequest: TattooRequest & { customer?: Customer | null }
+  ): Promise<NotificationResult> {
+    if (!this.ownerNotificationsEnabled || !this.ownerEmail) {
+      console.log('[CommunicationService] Owner notifications disabled or no owner email configured');
+      return { success: true };
+    }
+
+    const customerName = tattooRequest.customer?.name || 'Anonymous';
+    const customerEmail = tattooRequest.customer?.email || tattooRequest.contactEmail || 'Not provided';
+    const customerPhone = tattooRequest.customer?.phone || tattooRequest.contactPhone || 'Not provided';
+    const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/requests/${tattooRequest.id}`;
+
+    try {
+      const result = await emailTemplateService.sendEmail(
+        'owner_new_request',
+        this.ownerEmail,
+        {
+          customerName,
+          customerEmail,
+          customerPhone,
+          description: tattooRequest.description,
+          placement: tattooRequest.placement || 'Not specified',
+          size: tattooRequest.size || 'Not specified',
+          style: tattooRequest.style || 'Not specified',
+          preferredArtist: tattooRequest.preferredArtist || 'Any available',
+          timeframe: tattooRequest.timeframe || 'Not specified',
+          additionalNotes: tattooRequest.additionalNotes || 'None',
+          referenceImages: tattooRequest.referenceImages?.length || 0,
+          dashboardUrl
+        }
+      );
+
+      // Log communication
+      await auditService.log({
+        action: 'OWNER_NOTIFICATION_SENT',
+        resource: 'TattooRequest',
+        resourceId: tattooRequest.id,
+        details: { 
+          type: 'new_request',
+          to: this.ownerEmail,
+          success: result.success,
+          error: result.error
+        }
+      });
+
+      // Trigger real-time notification for dashboard
+      if (result.success) {
+        await this.realtimeService.addEvent({
+          type: 'email_sent',
+          data: {
+            message: `New tattoo request from ${customerName}`,
+            notificationType: 'owner_new_request',
+            requestId: tattooRequest.id,
+            customerName,
+            priority: 'high'
+          }
+        });
+      }
+
+      return result;
+    } catch (error) {
+      console.error('[CommunicationService] Failed to send owner notification:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to send owner notification' 
+      };
+    }
+  }
+
+  /**
+   * Send notification to shop owner for new appointment
+   */
+  async sendOwnerNewAppointmentNotification(
+    appointment: Appointment & { customer?: Customer | null, artist?: { name: string } | null }
+  ): Promise<NotificationResult> {
+    if (!this.ownerNotificationsEnabled || !this.ownerEmail) {
+      console.log('[CommunicationService] Owner notifications disabled or no owner email configured');
+      return { success: true };
+    }
+
+    const customerName = appointment.customer?.name || 'Anonymous';
+    const customerEmail = appointment.customer?.email || appointment.contactEmail || 'Not provided';
+    const customerPhone = appointment.customer?.phone || appointment.contactPhone || 'Not provided';
+    const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/appointments/${appointment.id}`;
+
+    const appointmentDate = appointment.startTime ? 
+      new Date(appointment.startTime).toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }) : 'TBD';
+      
+    const appointmentTime = appointment.startTime ?
+      new Date(appointment.startTime).toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit' 
+      }) : 'TBD';
+
+    try {
+      const result = await emailTemplateService.sendEmail(
+        'owner_new_appointment',
+        this.ownerEmail,
+        {
+          customerName,
+          customerEmail,
+          customerPhone,
+          appointmentDate,
+          appointmentTime,
+          duration: `${appointment.duration || 60} minutes`,
+          appointmentType: appointment.type || 'Tattoo Session',
+          artistName: appointment.artist?.name || 'Not assigned',
+          priceQuote: appointment.priceQuote ? `$${appointment.priceQuote}` : 'Not set',
+          notes: appointment.notes || 'None',
+          dashboardUrl
+        }
+      );
+
+      // Log communication
+      await auditService.log({
+        action: 'OWNER_NOTIFICATION_SENT',
+        resource: 'Appointment',
+        resourceId: appointment.id,
+        details: { 
+          type: 'new_appointment',
+          to: this.ownerEmail,
+          success: result.success,
+          error: result.error
+        }
+      });
+
+      // Trigger real-time notification for dashboard
+      if (result.success) {
+        await this.realtimeService.addEvent({
+          type: 'email_sent',
+          data: {
+            message: `New appointment booked by ${customerName} for ${appointmentDate}`,
+            notificationType: 'owner_new_appointment',
+            appointmentId: appointment.id,
+            customerName,
+            appointmentDate,
+            appointmentTime,
+            priority: 'high'
+          }
+        });
+      }
+
+      return result;
+    } catch (error) {
+      console.error('[CommunicationService] Failed to send owner notification:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to send owner notification' 
+      };
+    }
+  }
+
+  /**
+   * Send notification to shop owner for payment received
+   */
+  async sendOwnerPaymentNotification(
+    payment: {
+      id: string;
+      amount: number;
+      customerName: string;
+      paymentMethod: string;
+      appointmentId?: string;
+      transactionId: string;
+    }
+  ): Promise<NotificationResult> {
+    if (!this.ownerNotificationsEnabled || !this.ownerEmail) {
+      console.log('[CommunicationService] Owner notifications disabled or no owner email configured');
+      return { success: true };
+    }
+
+    const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/payments`;
+    const paymentDate = new Date().toLocaleString('en-US');
+
+    try {
+      const result = await emailTemplateService.sendEmail(
+        'owner_payment_received',
+        this.ownerEmail,
+        {
+          customerName: payment.customerName,
+          amount: payment.amount.toFixed(2),
+          paymentMethod: payment.paymentMethod,
+          paymentDate,
+          relatedService: payment.appointmentId ? 'Tattoo Appointment' : 'General Payment',
+          appointmentId: payment.appointmentId || '',
+          transactionId: payment.transactionId,
+          dashboardUrl
+        }
+      );
+
+      // Log communication
+      await auditService.log({
+        action: 'OWNER_NOTIFICATION_SENT',
+        resource: 'Payment',
+        resourceId: payment.id,
+        details: { 
+          type: 'payment_received',
+          to: this.ownerEmail,
+          success: result.success,
+          error: result.error
+        }
+      });
+
+      // Trigger real-time notification for dashboard
+      if (result.success) {
+        await this.realtimeService.addEvent({
+          type: 'email_sent',
+          data: {
+            message: `Payment of $${payment.amount.toFixed(2)} received from ${payment.customerName}`,
+            notificationType: 'owner_payment_received',
+            paymentId: payment.id,
+            amount: payment.amount,
+            customerName: payment.customerName,
+            priority: 'medium'
+          }
+        });
+      }
+
+      return result;
+    } catch (error) {
+      console.error('[CommunicationService] Failed to send owner notification:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to send owner notification' 
+      };
+    }
+  }
+
+  /**
+   * Send notification to shop owner for appointment cancellation
+   */
+  async sendOwnerCancellationNotification(
+    appointment: Appointment & { customer?: Customer | null, artist?: { name: string } | null },
+    cancellationReason?: string
+  ): Promise<NotificationResult> {
+    if (!this.ownerNotificationsEnabled || !this.ownerEmail) {
+      console.log('[CommunicationService] Owner notifications disabled or no owner email configured');
+      return { success: true };
+    }
+
+    const customerName = appointment.customer?.name || 'Anonymous';
+    const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/appointments`;
+
+    const appointmentDate = appointment.startTime ? 
+      new Date(appointment.startTime).toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      }) : 'TBD';
+      
+    const appointmentTime = appointment.startTime ?
+      new Date(appointment.startTime).toLocaleTimeString('en-US', { 
+        hour: 'numeric', 
+        minute: '2-digit' 
+      }) : 'TBD';
+
+    try {
+      const result = await emailTemplateService.sendEmail(
+        'owner_appointment_cancelled',
+        this.ownerEmail,
+        {
+          customerName,
+          appointmentDate,
+          appointmentTime,
+          artistName: appointment.artist?.name || 'Not assigned',
+          cancellationReason: cancellationReason || 'Not provided',
+          cancelledAt: new Date().toLocaleString('en-US'),
+          dashboardUrl
+        }
+      );
+
+      // Log communication
+      await auditService.log({
+        action: 'OWNER_NOTIFICATION_SENT',
+        resource: 'Appointment',
+        resourceId: appointment.id,
+        details: { 
+          type: 'appointment_cancelled',
+          to: this.ownerEmail,
+          success: result.success,
+          error: result.error
+        }
+      });
+
+      // Trigger real-time notification for dashboard
+      if (result.success) {
+        await this.realtimeService.addEvent({
+          type: 'email_sent',
+          data: {
+            message: `Appointment cancelled by ${customerName} for ${appointmentDate}`,
+            notificationType: 'owner_appointment_cancelled',
+            appointmentId: appointment.id,
+            customerName,
+            appointmentDate,
+            cancellationReason: cancellationReason || 'Not provided',
+            priority: 'urgent'
+          }
+        });
+      }
+
+      return result;
+    } catch (error) {
+      console.error('[CommunicationService] Failed to send owner notification:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Failed to send owner notification' 
+      };
+    }
   }
   
 }

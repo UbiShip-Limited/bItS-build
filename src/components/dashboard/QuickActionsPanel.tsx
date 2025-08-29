@@ -40,6 +40,7 @@ export default function QuickActionsPanel({
       title: 'Payment Link',
       description: 'Send to customer',
       icon: <Send className="w-5 h-5" />,
+      link: onSendPaymentLink ? undefined : '/dashboard/payments?action=new-link',
       onClick: onSendPaymentLink,
       color: `bg-green-500/10 hover:bg-green-500/20 text-green-400 border-green-500/30`
     },

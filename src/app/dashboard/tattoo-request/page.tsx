@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Filter, FileText, User, Calendar, DollarSign, UserPlus, Palette } from 'lucide-react';
+import { Filter, FileText, User, Calendar, DollarSign, UserPlus, Palette, Check, X, Eye, ArrowRight } from 'lucide-react';
 import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { apiClient } from '@/src/lib/api/apiClient';
 import QuickPaymentActions from '@/src/components/payments/QuickPaymentActions';
@@ -14,6 +14,7 @@ import CustomerForm from '@/src/components/forms/CustomerForm';
 import { DashboardPageLayout } from '../components/DashboardPageLayout';
 import { DashboardCard } from '../components/DashboardCard';
 import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
+import { toast } from '@/src/lib/toast';
 
 export default function TattooRequestsPage() {
   const router = useRouter();
@@ -98,6 +99,41 @@ export default function TattooRequestsPage() {
     loadTattooRequests();
   };
 
+  const handleQuickStatusUpdate = async (requestId: string, newStatus: 'reviewed' | 'approved' | 'rejected', event?: React.MouseEvent) => {
+    // Stop propagation to prevent row click
+    event?.stopPropagation();
+    
+    try {
+      await tattooRequestClient.updateStatus(requestId, newStatus);
+      
+      // Show success toast
+      switch (newStatus) {
+        case 'reviewed':
+          toast.info('Request marked as reviewed');
+          break;
+        case 'approved':
+          toast.success('Request approved! Ready to convert to appointment');
+          break;
+        case 'rejected':
+          toast.warning('Request rejected');
+          break;
+      }
+      
+      // Refresh the list
+      loadTattooRequests();
+    } catch (error) {
+      toast.error(`Failed to update status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleConvertToAppointment = (requestId: string, event?: React.MouseEvent) => {
+    // Stop propagation to prevent row click
+    event?.stopPropagation();
+    
+    // Navigate to appointment creation page with request ID
+    router.push(`/dashboard/appointments/new?tattooRequestId=${requestId}`);
+  };
+
   return (
     <DashboardPageLayout
       title="Tattoo Requests"
@@ -119,7 +155,7 @@ export default function TattooRequestsPage() {
             <select 
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-              className={`${components.input}`}
+              className={`${components.select}`}
             >
               <option value="">All Statuses</option>
               <option value="new">New</option>
@@ -187,6 +223,9 @@ export default function TattooRequestsPage() {
                     <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
                       Status
                     </th>
+                    <th className={`px-6 py-4 text-left ${typography.textXs} ${typography.fontMedium} ${colors.textSecondary} uppercase ${typography.trackingWide}`}>
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y divide-gold-500/10`}>
@@ -247,6 +286,68 @@ export default function TattooRequestsPage() {
                         <span className={`px-3 py-1 inline-flex text-xs leading-5 font-medium rounded-full border ${getStatusColor(request.status)}`}>
                           {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          {request.status === 'new' && (
+                            <>
+                              <button
+                                onClick={(e) => handleQuickStatusUpdate(request.id, 'reviewed', e)}
+                                className={`p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 ${effects.transitionNormal}`}
+                                title="Mark as Reviewed"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => handleQuickStatusUpdate(request.id, 'approved', e)}
+                                className={`p-1.5 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 ${effects.transitionNormal}`}
+                                title="Approve"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => handleQuickStatusUpdate(request.id, 'rejected', e)}
+                                className={`p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 ${effects.transitionNormal}`}
+                                title="Reject"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                          {request.status === 'reviewed' && (
+                            <>
+                              <button
+                                onClick={(e) => handleQuickStatusUpdate(request.id, 'approved', e)}
+                                className={`p-1.5 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 ${effects.transitionNormal}`}
+                                title="Approve"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => handleQuickStatusUpdate(request.id, 'rejected', e)}
+                                className={`p-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 ${effects.transitionNormal}`}
+                                title="Reject"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                          {request.status === 'approved' && (
+                            <button
+                              onClick={(e) => handleConvertToAppointment(request.id, e)}
+                              className={`px-3 py-1.5 rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 flex items-center gap-1 ${typography.textXs} ${typography.fontMedium} ${effects.transitionNormal}`}
+                              title="Convert to Appointment"
+                            >
+                              <ArrowRight className="w-3 h-3" />
+                              Convert
+                            </button>
+                          )}
+                          {(request.status === 'rejected' || request.status === 'converted_to_appointment') && (
+                            <span className={`${typography.textXs} ${colors.textMuted}`}>
+                              No actions
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -335,6 +436,61 @@ export default function TattooRequestsPage() {
                       <span>•</span>
                       <span>{request.size}</span>
                     </div>
+                  </div>
+
+                  {/* Quick Actions */}
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                    {request.status === 'new' && (
+                      <>
+                        <button
+                          onClick={(e) => handleQuickStatusUpdate(request.id, 'reviewed', e)}
+                          className={`flex-1 px-3 py-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 ${typography.textSm} ${typography.fontMedium} ${effects.transitionNormal}`}
+                        >
+                          <Eye className="w-4 h-4 inline mr-1" />
+                          Review
+                        </button>
+                        <button
+                          onClick={(e) => handleQuickStatusUpdate(request.id, 'approved', e)}
+                          className={`flex-1 px-3 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 ${typography.textSm} ${typography.fontMedium} ${effects.transitionNormal}`}
+                        >
+                          <Check className="w-4 h-4 inline mr-1" />
+                          Approve
+                        </button>
+                        <button
+                          onClick={(e) => handleQuickStatusUpdate(request.id, 'rejected', e)}
+                          className={`px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 ${effects.transitionNormal}`}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                    {request.status === 'reviewed' && (
+                      <>
+                        <button
+                          onClick={(e) => handleQuickStatusUpdate(request.id, 'approved', e)}
+                          className={`flex-1 px-3 py-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 ${typography.textSm} ${typography.fontMedium} ${effects.transitionNormal}`}
+                        >
+                          <Check className="w-4 h-4 inline mr-1" />
+                          Approve
+                        </button>
+                        <button
+                          onClick={(e) => handleQuickStatusUpdate(request.id, 'rejected', e)}
+                          className={`flex-1 px-3 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 ${typography.textSm} ${typography.fontMedium} ${effects.transitionNormal}`}
+                        >
+                          <X className="w-4 h-4 inline mr-1" />
+                          Reject
+                        </button>
+                      </>
+                    )}
+                    {request.status === 'approved' && (
+                      <button
+                        onClick={(e) => handleConvertToAppointment(request.id, e)}
+                        className={`w-full px-3 py-2 rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 flex items-center justify-center gap-1 ${typography.textSm} ${typography.fontMedium} ${effects.transitionNormal}`}
+                      >
+                        <ArrowRight className="w-4 h-4" />
+                        Convert to Appointment
+                      </button>
+                    )}
                   </div>
 
                 </div>

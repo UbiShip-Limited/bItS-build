@@ -3,6 +3,7 @@ import { BookingStatus, BookingType } from '../types/booking';
 import { AppointmentError, ValidationError, NotFoundError } from './errors';
 import type { Appointment, Prisma } from '@prisma/client';
 import { RealtimeService } from './realtimeService';
+import { auditService } from './auditService';
 
 export interface CreateAppointmentData {
   startAt: Date;
@@ -42,9 +43,11 @@ export interface AppointmentFilters {
  */
 export class AppointmentService {
   private realtimeService?: RealtimeService;
+  private communicationService?: any;
   
-  constructor(realtimeService?: RealtimeService) {
+  constructor(realtimeService?: RealtimeService, communicationService?: any) {
     this.realtimeService = realtimeService;
+    this.communicationService = communicationService;
   }
   async create(data: CreateAppointmentData): Promise<Appointment> {
     // Validate business logic first
@@ -148,6 +151,44 @@ export class AppointmentService {
           appointment.id,
           appointment.customerId || undefined
         );
+      }
+      
+      // Send confirmation email to customer
+      if (this.communicationService && (appointment.customer || appointment.contactEmail)) {
+        try {
+          await this.communicationService.sendAppointmentConfirmation(appointment);
+        } catch (error) {
+          // Log error but don't fail the appointment creation
+          console.error('Failed to send customer confirmation for appointment:', error);
+          await auditService.log({
+            action: 'CUSTOMER_CONFIRMATION_FAILED',
+            resource: 'Appointment',
+            resourceId: appointment.id,
+            details: {
+              error: error instanceof Error ? error.message : 'Unknown error',
+              type: 'appointment_confirmation'
+            }
+          });
+        }
+      }
+      
+      // Send notification to shop owner
+      if (this.communicationService) {
+        try {
+          await this.communicationService.sendOwnerNewAppointmentNotification(appointment);
+        } catch (error) {
+          // Log error but don't fail the appointment creation
+          console.error('Failed to send owner notification for new appointment:', error);
+          await auditService.log({
+            action: 'OWNER_NOTIFICATION_FAILED',
+            resource: 'Appointment',
+            resourceId: appointment.id,
+            details: {
+              error: error instanceof Error ? error.message : 'Unknown error',
+              type: 'owner_new_appointment'
+            }
+          });
+        }
       }
       
       return appointment;

@@ -4,6 +4,11 @@ import { prisma } from '../../prisma/prisma';
 import { SquareWebhookPayload } from '../../types/api';
 import { Square } from 'square';
 import { webhookRateLimit } from '../../middleware/rateLimiting';
+import { RealtimeService } from '../../services/realtimeService';
+import { CommunicationService } from '../../services/communicationService';
+
+const realtimeService = new RealtimeService();
+const communicationService = new CommunicationService(realtimeService);
 
 interface SquareWebhookRequest extends FastifyRequest {
   rawBody?: string;
@@ -158,6 +163,56 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
             }
           }
         });
+        
+        // Send real-time notification if payment is completed
+        if (payment.status === 'COMPLETED') {
+          const amount = payment.amountMoney ? Number(payment.amountMoney.amount) / 100 : 0;
+          
+          // Get payment link details to find customer
+          const paymentLink = await prisma.paymentLink.findFirst({
+            where: {
+              OR: [
+                { squareOrderId: payment.orderId },
+                { id: payment.referenceId }
+              ]
+            },
+            include: {
+              customer: true
+            }
+          });
+          
+          if (paymentLink) {
+            // Send real-time notification to dashboard
+            await realtimeService.broadcast({
+              type: 'payment_completed',
+              data: {
+                paymentId: payment.id,
+                customerId: paymentLink.customerId,
+                customerName: paymentLink.customer?.name || 'Unknown',
+                amount,
+                paymentType: paymentLink.metadata?.paymentType || 'payment',
+                timestamp: new Date().toISOString()
+              }
+            });
+            
+            // Send email notification to owner
+            try {
+              await communicationService.sendOwnerNotification({
+                type: 'payment_received',
+                subject: `Payment Received - ${paymentLink.customer?.name || 'Customer'}`,
+                data: {
+                  customerName: paymentLink.customer?.name || 'Unknown',
+                  amount: `$${amount.toFixed(2)} CAD`,
+                  paymentType: paymentLink.metadata?.paymentType || 'payment',
+                  paymentId: payment.id,
+                  timestamp: new Date().toLocaleString()
+                }
+              });
+            } catch (emailError) {
+              fastify.log.error('Failed to send owner notification:', emailError);
+            }
+          }
+        }
       }
     } catch (error) {
       fastify.log.error('Error handling payment event:', error);

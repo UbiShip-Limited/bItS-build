@@ -1,17 +1,26 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { EmailAutomationService } from '../emailAutomationService';
-import { prisma } from '../../prisma/prisma';
 import { RealtimeService } from '../realtimeService';
 import { emailService } from '../emailService';
 import { addHours, subHours, subDays } from 'date-fns';
-import { testDb } from '../../tests/testSetup';
+import { testPrisma, setupExternalMocks } from './testSetup';
+
+// Use testPrisma instead of regular prisma for tests
+const prisma = testPrisma;
 
 describe('EmailAutomationService Integration Tests', () => {
   let service: EmailAutomationService;
   let realtimeService: RealtimeService;
   
+  // Setup external mocks
+  setupExternalMocks();
+  
   beforeEach(async () => {
-    await testDb.reset();
+    // Clean database before each test
+    await testPrisma.emailAutomationLog.deleteMany();
+    await testPrisma.appointment.deleteMany();
+    await testPrisma.customer.deleteMany();
+    await testPrisma.user.deleteMany();
     
     // Initialize services
     realtimeService = new RealtimeService();
@@ -23,7 +32,6 @@ describe('EmailAutomationService Integration Tests', () => {
   
   afterEach(async () => {
     service.stop();
-    await testDb.cleanup();
   });
   
   describe('Appointment Reminder Workflow', () => {

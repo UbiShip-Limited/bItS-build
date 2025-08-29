@@ -8,6 +8,7 @@ import { toast } from '@/src/lib/toast';
 import { SkeletonLoader } from '@/src/components/ui/SkeletonLoader';
 import Modal from '@/src/components/ui/Modal';
 import { colors, typography, components, effects, cn } from '@/src/lib/styles/globalStyleConstants';
+import { EmailTemplatePreview } from './EmailTemplatePreview';
 
 interface EmailTemplate {
   id: string;
@@ -356,43 +357,15 @@ export function EmailTemplateManager({ onEdit }: EmailTemplateManagerProps) {
         isOpen={showPreview && !!selectedTemplate}
         onClose={() => setShowPreview(false)}
         title={selectedTemplate ? `Template Preview: ${selectedTemplate.displayName}` : ''}
-        size="lg"
+        size="xl"
       >
         {selectedTemplate && (
-            
-          <div className="space-y-4">
-            <div>
-              <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'block mb-2')}>
-                Subject
-              </label>
-              <div className="bg-white/5 p-3 rounded-lg border border-white/10">
-                {selectedTemplate.subject}
-              </div>
-            </div>
-            
-            <div>
-              <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'block mb-2')}>
-                Plain Text
-              </label>
-              <div className="bg-white/5 p-3 rounded-lg border border-white/10 whitespace-pre-wrap text-sm">
-                {selectedTemplate.body}
-              </div>
-            </div>
-              
-            {selectedTemplate.htmlBody && (
-              <div>
-                <label className={cn(typography.textSm, typography.fontMedium, colors.textProminent, 'block mb-2')}>
-                  HTML Preview
-                </label>
-                <div className="bg-white p-4 rounded-lg">
-                  <div 
-                    dangerouslySetInnerHTML={{ __html: selectedTemplate.htmlBody }}
-                    className="prose max-w-none"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          <EmailTemplatePreview
+            subject={selectedTemplate.subject}
+            body={selectedTemplate.body}
+            htmlBody={selectedTemplate.htmlBody}
+            variables={selectedTemplate.variables}
+          />
         )}
       </Modal>
 

@@ -35,7 +35,7 @@ export default function CalendarFilters({
         <select
           value={statusFilter}
           onChange={(e) => onStatusFilterChange(e.target.value as BookingStatus | '')}
-          className={`pl-10 pr-8 py-2 ${components.input} ${typography.textSm} appearance-none`}
+          className={`pl-10 pr-8 py-2 ${components.select} ${typography.textSm}`}
         >
           <option value="">All Status</option>
           <option value={BookingStatus.PENDING}>Pending</option>

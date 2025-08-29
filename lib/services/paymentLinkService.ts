@@ -3,6 +3,8 @@ import SquareClient from '../square/index';
 import { prisma } from '../prisma/prisma';
 import { PrismaClient } from '@prisma/client';
 import { PaymentType } from './paymentService';
+import { CommunicationService } from './communicationService';
+import { RealtimeService } from './realtimeService';
 import type { Square } from 'square';
 import type {
   SquareApiResponse,
@@ -19,6 +21,10 @@ export interface PaymentLinkParams {
   redirectUrl?: string;
   allowTipping?: boolean;
   customFields?: Array<{ title: string }>;
+  sendEmail?: boolean; // Option to send email notification
+  enableReminders?: boolean;
+  reminderSchedule?: number[];
+  expiresInDays?: number;
 }
 
 export interface InvoiceParams {
@@ -40,9 +46,15 @@ export interface InvoiceParams {
 export default class PaymentLinkService {
   private squareClient: ReturnType<typeof SquareClient.fromEnv> | null;
   private prisma: PrismaClient;
+  private communicationService: CommunicationService | null;
   
-  constructor(prismaClient?: PrismaClient, squareClient?: ReturnType<typeof SquareClient.fromEnv>) {
+  constructor(
+    prismaClient?: PrismaClient, 
+    squareClient?: ReturnType<typeof SquareClient.fromEnv>,
+    communicationService?: CommunicationService
+  ) {
     this.prisma = prismaClient || prisma;
+    this.communicationService = communicationService || null;
     
     // Initialize Square client with graceful error handling
     if (squareClient) {
@@ -54,6 +66,16 @@ export default class PaymentLinkService {
         console.warn('⚠️  Square client initialization failed in PaymentLinkService:', error.message);
         console.warn('   Payment link features will be disabled until Square is properly configured');
         this.squareClient = null;
+      }
+    }
+    
+    // If no communication service provided, try to create one
+    if (!this.communicationService) {
+      try {
+        const realtimeService = new RealtimeService();
+        this.communicationService = new CommunicationService(realtimeService);
+      } catch (error) {
+        console.warn('⚠️  Communication service initialization failed:', error.message);
       }
     }
   }
@@ -131,6 +153,11 @@ export default class PaymentLinkService {
         throw new Error('Failed to create payment link');
       }
       
+      // Calculate expiry date if specified
+      const expiresAt = params.expiresInDays 
+        ? new Date(Date.now() + params.expiresInDays * 24 * 60 * 60 * 1000)
+        : null;
+      
       // Store the payment link details in our database
       await (this.prisma as any).paymentLink.create({
         data: {
@@ -141,6 +168,9 @@ export default class PaymentLinkService {
           amount,
           status: 'active',
           url: paymentLink.url,
+          enableReminders: params.enableReminders !== false, // Default to true
+          reminderSchedule: params.reminderSchedule || [2, 7, 14],
+          expiresAt,
           metadata: {
             paymentType,
             tattooRequestId,
@@ -166,6 +196,31 @@ export default class PaymentLinkService {
           }
         }
       });
+      
+      // Send email notification if requested
+      if (params.sendEmail && this.communicationService && customer.email) {
+        try {
+          await this.communicationService.sendPaymentLinkEmail({
+            customerId,
+            customerEmail: customer.email,
+            customerName: customer.name || 'Valued Customer',
+            amount,
+            title,
+            description,
+            paymentType: PaymentType[paymentType] || paymentType,
+            paymentLink: paymentLink.url,
+            allowTipping,
+            // Add appointment details if available
+            appointmentDate: appointmentId ? undefined : undefined, // TODO: Fetch appointment details if needed
+            appointmentTime: undefined
+          });
+          
+          console.log(`✅ Payment link email sent to ${customer.email}`);
+        } catch (emailError) {
+          console.error('Failed to send payment link email:', emailError);
+          // Don't fail the whole operation if email fails
+        }
+      }
       
       return {
         success: true,

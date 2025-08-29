@@ -163,7 +163,7 @@ export default function QuickPaymentActions({
             isOpen={showPaymentModal}
             onClose={() => setShowPaymentModal(false)}
             customerId={customerId}
-            customerName={customerName}
+            customerName={customerName || undefined}
             appointmentId={appointmentId}
             tattooRequestId={tattooRequestId}
             defaultAmount={selectedAction.amount}
@@ -218,7 +218,7 @@ export default function QuickPaymentActions({
             isOpen={showPaymentModal}
             onClose={() => setShowPaymentModal(false)}
             customerId={customerId}
-            customerName={customerName}
+            customerName={customerName || undefined}
             appointmentId={appointmentId}
             tattooRequestId={tattooRequestId}
             defaultAmount={selectedAction.amount}

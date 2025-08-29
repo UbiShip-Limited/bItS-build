@@ -22,6 +22,8 @@
     "start:all": "concurrently \"npm run start\" \"npm run start:server\"",
     "lint": "next lint",
     "test": "vitest",
+    "cron:reminders": "tsx scripts/payment-reminder-cron.ts",
+    "cron:reminders:test": "cross-env NODE_ENV=development tsx scripts/payment-reminder-cron.ts",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:watch": "vitest",
@@ -29,6 +31,8 @@
     "setup:admin": "tsx scripts/setup-admin.ts",
     "seed:emails": "tsx scripts/seedEmailTemplates.ts",
     "test:email": "tsx scripts/testEmailFlow.ts",
+    "test:email-api": "tsx scripts/testEmailApi.ts",
+    "check:email-logs": "tsx scripts/checkEmailLogs.ts",
     "check:users": "tsx scripts/checkUserRole.ts",
     "update:user-role": "tsx scripts/updateUserRole.ts",
     "import:square": "tsx scripts/importSquareData.ts",
@@ -39,7 +43,10 @@
     "create:square-test-data": "tsx scripts/createSquareTestData.ts",
     "diagnose:db": "tsx scripts/diagnose-db-connection.ts",
     "diagnose:square": "tsx scripts/diagnoseSquareBookings.ts",
-    "test:square-payments": "tsx scripts/verifySquarePayments.ts"
+    "test:square-payments": "tsx scripts/verifySquarePayments.ts",
+    "verify:email": "tsx scripts/verify-email-system.ts",
+    "test:appointment-email": "tsx scripts/test-appointment-email.ts",
+    "checklist": "tsx scripts/pre-launch-checklist.ts"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",

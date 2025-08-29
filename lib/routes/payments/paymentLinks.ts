@@ -17,6 +17,7 @@ interface CreatePaymentLinkBody {
   customFields?: Array<{
     title: string;
   }>;
+  sendEmail?: boolean;
 }
 
 interface PaymentLinksQueryParams {
@@ -72,7 +73,9 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
     fastify.log.warn('⚠️  Payment link routes: Square integration is not configured - payment link features will be disabled');
   }
 
-  const paymentLinkService = new PaymentLinkService(fastify.prisma);
+  // Get communication service from fastify instance if available
+  const communicationService = (fastify as any).communicationService || null;
+  const paymentLinkService = new PaymentLinkService(fastify.prisma, undefined, communicationService);
 
   // POST /payments/links - Create a payment link
   fastify.post('/', {
@@ -102,7 +105,8 @@ const paymentLinkRoutes: FastifyPluginAsync = async (fastify) => {
                 title: { type: 'string' }
               }
             }
-          }
+          },
+          sendEmail: { type: 'boolean', description: 'Send payment link via email to customer' }
         }
       }
     }

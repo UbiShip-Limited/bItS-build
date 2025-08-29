@@ -161,7 +161,8 @@ const healthRoutes: FastifyPluginAsync = async (fastify) => {
       'CLOUDINARY_CLOUD_NAME',
       'CLOUDINARY_API_KEY',
       'CLOUDINARY_API_SECRET',
-      'SQUARE_WEBHOOK_SIGNATURE_KEY'
+      'SQUARE_WEBHOOK_SIGNATURE_KEY',
+      'STAFF_ACCESS_CODE'
     ];
 
     const envStatus = {

@@ -1,15 +1,18 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Link, FileText, CreditCard, ExternalLink, Copy, Trash2, RefreshCw, User, DollarSign, Calendar, TrendingUp, AlertCircle } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Link, FileText, CreditCard, ExternalLink, Copy, Trash2, RefreshCw, User, DollarSign, Calendar, TrendingUp, AlertCircle, Bell, Clock } from 'lucide-react';
 import CreatePaymentLinkModal from '@/src/components/payments/CreatePaymentLinkModal';
 import CreateInvoiceModal from '@/src/components/payments/CreateInvoiceModal';
 import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHistory';
 import CustomerSelector from '@/src/components/dashboard/CustomerSelector';
 import { paymentService, PaymentLink } from '@/src/lib/api/services/paymentService';
 import type { Customer } from '@/src/lib/api/services/customerService';
+import { toast } from '@/src/lib/toast';
 
 export default function PaymentsPage() {
+  const searchParams = useSearchParams();
   const [paymentLinks, setPaymentLinks] = useState<PaymentLink[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [paymentStats, setPaymentStats] = useState<any>(null);
@@ -26,6 +29,7 @@ export default function PaymentsPage() {
   // Use ref to track fetching state without causing dependency issues
   const fetchingDataRef = useRef(false);
   const hasInitialLoadRef = useRef(false);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const fetchPaymentLinks = useCallback(async () => {
     if (fetchingDataRef.current) {
@@ -84,7 +88,74 @@ export default function PaymentsPage() {
       fetchPaymentLinks();
       fetchPayments();
       fetchPaymentStats();
+      
+      // Check if we should open the payment link modal from query params
+      const action = searchParams.get('action');
+      if (action === 'new-link') {
+        // Small delay to ensure the page is loaded before opening modal
+        setTimeout(() => {
+          setShowPaymentLinkModal(true);
+        }, 100);
+      }
     }
+  }, [fetchPaymentLinks, fetchPayments, fetchPaymentStats, searchParams]);
+  
+  // Set up real-time payment notifications
+  useEffect(() => {
+    // Connect to SSE endpoint for real-time updates
+    const connectToSSE = () => {
+      try {
+        // Check if we're in a browser environment and the API is available
+        if (typeof window === 'undefined') return;
+        
+        const eventSource = new EventSource('/api/events', {
+          withCredentials: true
+        });
+        
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'payment_completed') {
+              // Show notification
+              toast.success(
+                `Payment Received! ${data.data.customerName} - $${data.data.amount.toFixed(2)}`
+              );
+              
+              // Refresh payment data
+              fetchPaymentLinks();
+              fetchPayments();
+              fetchPaymentStats();
+            }
+          } catch (error) {
+            console.error('Error parsing SSE message:', error);
+          }
+        };
+        
+        eventSource.onerror = () => {
+          // Silently close - SSE endpoint might not be available yet
+          eventSource.close();
+          eventSourceRef.current = null;
+          // Don't reconnect for now - SSE endpoint needs to be implemented
+        };
+        
+        eventSourceRef.current = eventSource;
+      } catch (error) {
+        // Silently fail - SSE is optional enhancement
+        console.log('SSE not available - real-time updates disabled');
+      }
+    };
+    
+    // Only connect if the backend SSE is available
+    // For now, commenting out until SSE endpoint is implemented
+    // connectToSSE();
+    
+    // Cleanup on unmount
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+      }
+    };
   }, [fetchPaymentLinks, fetchPayments, fetchPaymentStats]);
 
   const handleRefresh = () => {
@@ -212,11 +283,31 @@ export default function PaymentsPage() {
         </div>
       )}
 
-      {/* Customer Selection */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Select Customer for Payment
-        </label>
+      {/* Enhanced Customer Context Bar */}
+      <div className="mb-6 p-4 bg-[#111111] border border-[#1a1a1a] rounded-2xl hover:border-[#C9A449]/20 transition-all duration-300">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <User className="w-5 h-5 text-[#C9A449]" />
+            <label className="text-sm font-medium text-gray-300">
+              Customer Context
+            </label>
+            <span className="text-xs text-gray-500 bg-gray-800 px-2 py-1 rounded-full">
+              Optional but recommended
+            </span>
+          </div>
+          {selectedCustomer && (
+            <button
+              onClick={() => {
+                setSelectedCustomerId('');
+                setSelectedCustomerName('');
+                setSelectedCustomer(null);
+              }}
+              className="text-xs text-gray-400 hover:text-white transition-colors"
+            >
+              Clear Selection
+            </button>
+          )}
+        </div>
         <CustomerSelector
           value={selectedCustomerId}
           onChange={(customerId, customer) => {
@@ -226,36 +317,42 @@ export default function PaymentsPage() {
           }}
           placeholder="Search customers by name, email, or phone..."
         />
+        {selectedCustomer && (
+          <div className="mt-3 p-3 bg-gold-500/10 border border-gold-500/30 rounded-lg">
+            <p className="text-sm text-white">
+              Selected: <span className="font-medium text-[#C9A449]">{selectedCustomer.name}</span>
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Payment links and invoices will be associated with this customer
+            </p>
+          </div>
+        )}
+        {!selectedCustomer && (
+          <p className="text-xs text-gray-500 mt-2">
+            💡 Select a customer to track payments, or use quick create in the payment modal for walk-ins
+          </p>
+        )}
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <button
-          onClick={() => {
-            if (!selectedCustomer) {
-              alert('Please select a customer first');
-              return;
-            }
-            setShowPaymentLinkModal(true);
-          }}
-          className={`flex items-center justify-center gap-4 p-6 bg-[#111111] border border-[#1a1a1a] rounded-2xl transition-all duration-300 transform shadow-2xl ${
-            selectedCustomer 
-              ? 'hover:border-[#C9A449]/20 hover:bg-[#111111] hover:-translate-y-1 hover:shadow-[#C9A449]/10' 
-              : 'opacity-50 cursor-not-allowed'
-          }`}
-          disabled={!selectedCustomer}
+          onClick={() => setShowPaymentLinkModal(true)}
+          className="flex items-center justify-center gap-4 p-6 bg-[#111111] border border-[#1a1a1a] rounded-2xl transition-all duration-300 transform shadow-2xl hover:border-[#C9A449]/20 hover:bg-[#111111] hover:-translate-y-1 hover:shadow-[#C9A449]/10"
         >
           <Link className="w-8 h-8 text-[#C9A449]" />
           <div className="text-left">
             <h3 className="font-semibold text-white text-lg">Create Payment Link</h3>
-            <p className="text-sm text-gray-400 mt-1">Quick payment collection</p>
+            <p className="text-sm text-gray-400 mt-1">
+              {selectedCustomer ? `For ${selectedCustomer.name}` : 'Any customer or walk-in'}
+            </p>
           </div>
         </button>
 
         <button
           onClick={() => {
             if (!selectedCustomer) {
-              alert('Please select a customer first');
+              alert('Please select a customer for invoices');
               return;
             }
             setShowInvoiceModal(true);
@@ -270,7 +367,7 @@ export default function PaymentsPage() {
           <FileText className="w-8 h-8 text-[#C9A449]" />
           <div className="text-left">
             <h3 className="font-semibold text-white text-lg">Create Invoice</h3>
-            <p className="text-sm text-gray-400 mt-1">Detailed billing with schedules</p>
+            <p className="text-sm text-gray-400 mt-1">Formal billing (requires customer)</p>
           </div>
         </button>
 
@@ -346,11 +443,12 @@ export default function PaymentsPage() {
             <div className="p-12 text-center">
               <Link className="w-12 h-12 text-gray-600 mx-auto mb-4" />
               <p className="text-gray-400 text-lg font-medium mb-4">No payment links created yet</p>
+              <p className="text-gray-500 text-sm mb-6">Use the "Create Payment Link" button above to get started</p>
               <button
                 onClick={() => setShowPaymentLinkModal(true)}
                 className="px-6 py-2 bg-[#C9A449] hover:bg-[#B8934A] text-[#080808] rounded-lg font-medium shadow-lg shadow-[#C9A449]/20"
               >
-                Create First Link
+                Create Your First Link
               </button>
             </div>
           ) : (
@@ -402,9 +500,19 @@ export default function PaymentsPage() {
                         <div className="text-sm font-medium text-[#C9A449]">{formatCurrency(link.amount || 0)}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(link.status || 'active')}`}>
-                          {link.status || 'Active'}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`inline-flex px-3 py-1 text-xs font-medium rounded-full border ${getStatusColor(link.status || 'active')}`}>
+                            {link.status || 'Active'}
+                          </span>
+                          {link.status === 'active' && (link as any).enableReminders && (
+                            <div className="flex items-center gap-1" title={`Reminders: ${(link as any).reminderCount || 0}/3 sent`}>
+                              <Clock className="w-3 h-3 text-yellow-400" />
+                              <span className="text-xs text-yellow-400">
+                                {(link as any).reminderCount || 0}/3
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300 font-medium">
                         {formatDate(link.createdAt)}

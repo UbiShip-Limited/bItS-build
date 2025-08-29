@@ -25,6 +25,7 @@ import {
 import NotificationCenter from '@/src/components/dashboard/NotificationCenter';
 import { analyticsService } from '@/src/lib/api/services/analyticsService';
 import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
+import { toast } from '@/src/lib/toast';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -36,10 +37,23 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, session, loading, signOut } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [notificationCounts, setNotificationCounts] = useState({
-    appointments: 0,
-    tattooRequests: 0,
-    payments: 0
+  // Initialize notification counts from sessionStorage if available
+  const [notificationCounts, setNotificationCounts] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem('notificationCounts');
+      if (stored) {
+        try {
+          return JSON.parse(stored);
+        } catch (e) {
+          console.error('Failed to parse stored notification counts:', e);
+        }
+      }
+    }
+    return {
+      appointments: 0,
+      tattooRequests: 0,
+      payments: 0
+    };
   });
 
   useEffect(() => {
@@ -83,52 +97,107 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const eventSource = new EventSource(`${apiUrl}/events?userId=${user.id || 'admin-user'}`);
 
     // Update counts based on events
-    eventSource.addEventListener('appointment_created', () => {
+    eventSource.addEventListener('appointment_created', (event) => {
       setNotificationCounts(prev => ({ ...prev, appointments: prev.appointments + 1 }));
+      
+      // Show toast notification for new appointment
+      try {
+        const data = JSON.parse(event.data);
+        const message = data.customerId 
+          ? `New appointment created! Customer ID: ${data.customerId}`
+          : 'New appointment created! Walk-in appointment';
+        toast.success(message);
+      } catch (e) {
+        toast.success('New appointment created!');
+      }
     });
 
-    eventSource.addEventListener('request_submitted', () => {
+    eventSource.addEventListener('request_submitted', (event) => {
       setNotificationCounts(prev => ({ ...prev, tattooRequests: prev.tattooRequests + 1 }));
+      
+      // Show toast notification for new tattoo request
+      try {
+        const data = JSON.parse(event.data);
+        toast.info('New tattoo request received! Review in Tattoo Requests section');
+      } catch (e) {
+        toast.info('New tattoo request received!');
+      }
     });
 
-    eventSource.addEventListener('payment_received', () => {
+    eventSource.addEventListener('payment_received', (event) => {
       setNotificationCounts(prev => ({ ...prev, payments: prev.payments + 1 }));
+      
+      // Show toast notification for payment
+      try {
+        const data = JSON.parse(event.data);
+        const amount = data.amount ? `$${(data.amount / 100).toFixed(2)}` : '';
+        toast.success(`Payment received${amount ? `: ${amount}` : '!'}`);
+      } catch (e) {
+        toast.success('Payment received!');
+      }
     });
 
     // Also listen for status changes that might reduce counts
-    eventSource.addEventListener('appointment_approved', () => {
+    eventSource.addEventListener('appointment_approved', (event) => {
       if (!pathname?.includes('/appointments')) {
         setNotificationCounts(prev => ({ 
           ...prev, 
           appointments: Math.max(0, prev.appointments - 1) 
         }));
       }
+      toast.info('Appointment approved');
     });
 
-    eventSource.addEventListener('request_reviewed', () => {
+    eventSource.addEventListener('request_reviewed', (event) => {
       if (!pathname?.includes('/tattoo-request')) {
         setNotificationCounts(prev => ({ 
           ...prev, 
           tattooRequests: Math.max(0, prev.tattooRequests - 1) 
         }));
       }
+      toast.info('Tattoo request reviewed');
+    });
+    
+    eventSource.addEventListener('request_approved', (event) => {
+      toast.success('Tattoo request approved! Ready to convert to appointment');
+    });
+    
+    eventSource.addEventListener('request_rejected', (event) => {
+      toast.warning('Tattoo request rejected');
     });
 
-    // Reset counts when navigating to the respective pages
-    if (pathname?.includes('/appointments')) {
-      setNotificationCounts(prev => ({ ...prev, appointments: 0 }));
-    }
-    if (pathname?.includes('/tattoo-request')) {
-      setNotificationCounts(prev => ({ ...prev, tattooRequests: 0 }));
-    }
-    if (pathname?.includes('/payments')) {
-      setNotificationCounts(prev => ({ ...prev, payments: 0 }));
-    }
+    // No automatic resetting here - will be handled differently
 
     return () => {
       eventSource.close();
     };
-  }, [user, loading, pathname]);
+  }, [user, loading]);
+
+  // Clear notification badges when viewing the respective pages
+  // This is separate from SSE to handle page navigation properly
+  useEffect(() => {
+    if (!pathname) return;
+    
+    // Use a small delay to ensure the page has actually loaded
+    const timer = setTimeout(() => {
+      if (pathname.includes('/appointments')) {
+        setNotificationCounts(prev => ({ ...prev, appointments: 0 }));
+      } else if (pathname.includes('/tattoo-request')) {
+        setNotificationCounts(prev => ({ ...prev, tattooRequests: 0 }));
+      } else if (pathname.includes('/payments')) {
+        setNotificationCounts(prev => ({ ...prev, payments: 0 }));
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [pathname]);
+
+  // Persist notification counts to sessionStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('notificationCounts', JSON.stringify(notificationCounts));
+    }
+  }, [notificationCounts]);
 
   // Show loading while checking authentication
   if (loading) {

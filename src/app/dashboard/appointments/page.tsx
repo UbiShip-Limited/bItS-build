@@ -33,6 +33,7 @@ import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHis
 import { DashboardPageLayout, DashboardCard } from '../components';
 import { DashboardEmptyState } from '../components/DashboardEmptyState';
 import { toast } from '@/src/lib/toast';
+import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<AppointmentData[]>([]);
@@ -41,6 +42,7 @@ export default function AppointmentsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
   const [syncingSquare, setSyncingSquare] = useState(false);
+  const [newAppointmentIds, setNewAppointmentIds] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState({
     status: '',
     search: '',
@@ -91,6 +93,45 @@ export default function AppointmentsPage() {
 
   useEffect(() => {
     loadAppointments();
+  }, [loadAppointments]);
+
+  // Listen for new appointments via SSE and auto-refresh
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
+    const eventSource = new EventSource(`${apiUrl}/events?userId=admin-user`);
+
+    eventSource.addEventListener('appointment_created', (event) => {
+      // Auto-refresh the appointments list
+      loadAppointments();
+      
+      // Mark new appointment for highlighting
+      try {
+        const data = JSON.parse(event.data);
+        if (data.appointmentId) {
+          setNewAppointmentIds(prev => new Set([...prev, data.appointmentId]));
+          
+          // Remove highlight after 5 seconds
+          setTimeout(() => {
+            setNewAppointmentIds(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(data.appointmentId);
+              return newSet;
+            });
+          }, 5000);
+        }
+      } catch (e) {
+        console.error('Error parsing appointment event:', e);
+      }
+    });
+
+    eventSource.addEventListener('appointment_updated', () => {
+      // Refresh on updates too
+      loadAppointments();
+    });
+
+    return () => {
+      eventSource.close();
+    };
   }, [loadAppointments]);
 
   const handleCreateSuccess = () => {
@@ -262,14 +303,14 @@ export default function AppointmentsPage() {
         className="mb-6"
       >
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text text-gray-400 font-medium">Status</span>
+            <div>
+              <label className={`block ${typography.textSm} ${typography.fontMedium} ${colors.textSecondary} mb-2`}>
+                Status
               </label>
               <select 
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value, page: 1 })}
-                className="select select-bordered bg-[#0a0a0a] border-[#1a1a1a] text-white focus:border-[#C9A449]/50 focus:outline-none"
+                className={components.select}
               >
                 <option value="">All Statuses</option>
                 {Object.values(BookingStatus).map(status => (
@@ -280,34 +321,34 @@ export default function AppointmentsPage() {
               </select>
             </div>
             
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text text-gray-400 font-medium">From Date</span>
+            <div>
+              <label className={`block ${typography.textSm} ${typography.fontMedium} ${colors.textSecondary} mb-2`}>
+                From Date
               </label>
               <input 
                 type="date"
                 value={filters.from}
                 onChange={(e) => setFilters({ ...filters, from: e.target.value, page: 1 })}
-                className="input input-bordered bg-[#0a0a0a] border-[#1a1a1a] text-white focus:border-[#C9A449]/50 focus:outline-none"
+                className={components.input}
               />
             </div>
             
-            <div className="form-control">
-              <label className="label">
-                <span className="label-text text-gray-400 font-medium">To Date</span>
+            <div>
+              <label className={`block ${typography.textSm} ${typography.fontMedium} ${colors.textSecondary} mb-2`}>
+                To Date
               </label>
               <input 
                 type="date"
                 value={filters.to}
                 onChange={(e) => setFilters({ ...filters, to: e.target.value, page: 1 })}
-                className="input input-bordered bg-[#0a0a0a] border-[#1a1a1a] text-white focus:border-[#C9A449]/50 focus:outline-none"
+                className={components.input}
               />
             </div>
             
-            <div className="form-control justify-end">
+            <div className="flex items-end">
               <button
                 onClick={() => setFilters({ status: '', search: '', dateRange: '', from: '', to: '', page: 1, limit: 20 })}
-                className="btn btn-ghost btn-block text-gray-400 hover:text-white hover:bg-[#1a1a1a]/50"
+                className={`w-full ${components.button.base} ${components.button.sizes.medium} ${components.button.variants.secondary}`}
               >
                 Clear Filters
               </button>
@@ -317,21 +358,21 @@ export default function AppointmentsPage() {
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
-        <div className="mb-4 p-4 bg-[#111111] rounded-xl border border-[#1a1a1a] flex items-center justify-between">
+        <div className={`mb-4 p-4 ${components.card} flex items-center justify-between`}>
           <div className="flex items-center gap-4">
-            <span className="text-white font-medium">
+            <span className={`${colors.textPrimary} ${typography.fontMedium}`}>
               {selectedIds.size} appointment{selectedIds.size !== 1 ? 's' : ''} selected
             </span>
             <button
               onClick={() => setSelectedIds(new Set())}
-              className="text-gray-400 hover:text-white text-sm"
+              className={`${colors.textSecondary} hover:${colors.textPrimary} ${typography.textSm} ${effects.transitionNormal}`}
             >
               Clear selection
             </button>
           </div>
           
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400">Bulk update status:</span>
+            <span className={`${typography.textSm} ${colors.textSecondary}`}>Bulk update status:</span>
             <select
               onChange={(e) => {
                 if (e.target.value) {
@@ -339,7 +380,7 @@ export default function AppointmentsPage() {
                 }
               }}
               disabled={bulkUpdating}
-              className="select select-sm select-bordered bg-[#0a0a0a] border-[#1a1a1a] text-white focus:border-[#C9A449]/50"
+              className={`${components.select} w-auto min-w-[200px]`}
               defaultValue=""
             >
               <option value="" disabled>Choose status...</option>

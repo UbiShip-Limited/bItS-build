@@ -220,7 +220,7 @@ const notificationRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /notifications/stats - Get notification statistics
   fastify.get('/stats', {
-    preHandler: [authenticate, authorize(['admin'] as UserRole[]), readRateLimit()],
+    preHandler: [authenticate, authorize(['admin', 'artist'] as UserRole[]), readRateLimit()],
     schema: {
       querystring: {
         type: 'object',

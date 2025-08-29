@@ -68,7 +68,7 @@ const servicesPlugin: FastifyPluginAsync = async (fastify) => {
   const bookingService = new BookingService();
   
   // Appointment service
-  const appointmentService = new AppointmentService(realtimeService);
+  const appointmentService = new AppointmentService(realtimeService, communicationService);
   
   // Tattoo request services
   const tattooRequestImageService = new TattooRequestImageService(prisma);

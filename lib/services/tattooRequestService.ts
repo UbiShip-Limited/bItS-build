@@ -156,7 +156,7 @@ export class TattooRequestService {
       },
     });
     
-    // Send confirmation email
+    // Send confirmation email to customer
     if (this.communicationService) {
       try {
         await this.communicationService.sendTattooRequestConfirmation(tattooRequest);
@@ -171,6 +171,24 @@ export class TattooRequestService {
           details: {
             error: error instanceof Error ? error.message : 'Unknown error',
             type: 'tattoo_request_confirmation'
+          }
+        });
+      }
+
+      // Send notification to shop owner
+      try {
+        await this.communicationService.sendOwnerNewRequestNotification(tattooRequest);
+      } catch (error) {
+        // Log error but don't fail the request creation
+        console.error('Failed to send owner notification for new tattoo request:', error);
+        await auditService.log({
+          userId,
+          action: 'OWNER_NOTIFICATION_FAILED',
+          resource: 'TattooRequest',
+          resourceId: tattooRequest.id,
+          details: {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            type: 'owner_new_request'
           }
         });
       }

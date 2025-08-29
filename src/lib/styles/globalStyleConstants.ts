@@ -83,6 +83,11 @@ export const colors = {
   textAccentSecondary: 'text-gold-500/70',
   textAccentMuted: 'text-gold-500/50',
   
+  // Status colors
+  textWarning: 'text-yellow-500',
+  textError: 'text-red-500',
+  textSuccess: 'text-green-500',
+  
   // Backgrounds
   bgPrimary: 'bg-obsidian',
   bgSecondary: 'bg-obsidian/95',
@@ -150,6 +155,9 @@ export const components = {
   
   // Input styles
   input: `w-full px-4 py-3 bg-white/5 border ${colors.borderSubtle} rounded-lg text-white placeholder-white/50 focus:outline-none focus:${colors.borderDefault} ${effects.transitionNormal}`,
+  
+  // Select dropdown styles - enhanced for dark theme
+  select: `w-full px-4 py-3 bg-white/5 border ${colors.borderSubtle} rounded-lg text-white focus:outline-none focus:${colors.borderDefault} ${effects.transitionNormal} cursor-pointer appearance-none [&>option]:bg-[#111111] [&>option]:text-white [&>option]:py-2`,
   
   // Card styles
   card: `bg-obsidian/95 backdrop-blur-sm rounded-2xl border ${colors.borderSubtle} ${effects.shadowLight}`,

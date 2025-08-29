@@ -16,7 +16,7 @@ const squareSyncRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /square-sync/status - Get Square configuration and last sync status
   fastify.get('/status', {
-    preHandler: [authenticate, authorize(['admin'] as UserRole[])]
+    preHandler: [authenticate, authorize(['admin', 'artist'] as UserRole[])]
   }, async () => {
     const configStatus = squareService.getConfigurationStatus();
     const lastSync = await syncJob.getLastSyncStatus();
@@ -31,7 +31,7 @@ const squareSyncRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /square-sync/run - Manually trigger a sync
   fastify.post('/run', {
-    preHandler: [authenticate, authorize(['admin'] as UserRole[]), writeRateLimit()],
+    preHandler: [authenticate, authorize(['admin', 'artist'] as UserRole[]), writeRateLimit()],
     schema: {
       body: {
         type: 'object',

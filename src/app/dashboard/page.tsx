@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
 import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
 
@@ -10,10 +11,12 @@ import OperationsStatsGrid from '@/src/components/dashboard/OperationsStatsGrid'
 import PriorityActionsBar from '@/src/components/dashboard/PriorityActionsBar';
 import SimplifiedActivityTimeline from '@/src/components/dashboard/SimplifiedActivityTimeline';
 import QuickActionsPanel from '@/src/components/dashboard/QuickActionsPanel';
+import SquareSyncStatus from '@/src/components/dashboard/SquareSyncStatus';
 import { DashboardCard } from './components/DashboardCard';
 
 export default function DashboardPage() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
+  const router = useRouter();
   const [dashboardData, setDashboardData] = useState({
     metrics: {
       todayAppointments: {
@@ -42,28 +45,53 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true);
+      // This is where we'll fetch real data from the API
+      // For now, we'll just set empty data to avoid placeholder confusion
+      
+      // Example of what the API call would look like:
+      // const response = await analyticsService.getDashboardMetrics('today');
+      // setDashboardData(response);
+      
+      setIsLoading(false);
+    } catch (err) {
+      setError('Failed to load dashboard data');
+      setIsLoading(false);
+    }
+  };
+
   // TODO: Implement actual data fetching from API
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setIsLoading(true);
-        // This is where we'll fetch real data from the API
-        // For now, we'll just set empty data to avoid placeholder confusion
-        
-        // Example of what the API call would look like:
-        // const response = await analyticsService.getDashboardMetrics('today');
-        // setDashboardData(response);
-        
-        setIsLoading(false);
-      } catch (err) {
-        setError('Failed to load dashboard data');
-        setIsLoading(false);
-      }
-    };
-
     if (isAuthenticated) {
       fetchDashboardData();
     }
+  }, [isAuthenticated]);
+
+  // Listen for real-time updates via SSE and auto-refresh dashboard
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const apiUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
+    const eventSource = new EventSource(`${apiUrl}/events?userId=admin-user`);
+
+    // Auto-refresh dashboard on key events
+    eventSource.addEventListener('appointment_created', () => {
+      fetchDashboardData();
+    });
+
+    eventSource.addEventListener('request_submitted', () => {
+      fetchDashboardData();
+    });
+
+    eventSource.addEventListener('payment_received', () => {
+      fetchDashboardData();
+    });
+
+    return () => {
+      eventSource.close();
+    };
   }, [isAuthenticated]);
 
   if (authLoading || isLoading) {
@@ -147,13 +175,25 @@ export default function DashboardPage() {
           </DashboardCard>
         </div>
 
-        {/* Quick Actions Panel - Takes up 1 column */}
-        <div className="lg:col-span-1">
+        {/* Right Column - Quick Actions and Square Sync */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Square Sync Status */}
+          <DashboardCard
+            title="Square Integration"
+            subtitle="Sync appointments with Square"
+            noPadding
+          >
+            <SquareSyncStatus />
+          </DashboardCard>
+          
+          {/* Quick Actions Panel */}
           <DashboardCard
             title="Quick Actions"
             subtitle="Common tasks and shortcuts"
           >
-            <QuickActionsPanel />
+            <QuickActionsPanel 
+              onSendPaymentLink={() => router.push('/dashboard/payments?action=new-link')}
+            />
           </DashboardCard>
         </div>
       </div>

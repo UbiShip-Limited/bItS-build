@@ -18,6 +18,14 @@ interface AuthContextType {
     error?: string;
   }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{
+    success: boolean;
+    error?: string;
+  }>;
+  updatePassword: (newPassword: string) => Promise<{
+    success: boolean;
+    error?: string;
+  }>;
   loading: boolean;
   isAuthenticated: boolean;
   hasRole: (roles: UserRole[]) => boolean;
@@ -30,6 +38,8 @@ const defaultAuthContext: AuthContextType = {
   signIn: async () => ({ success: false }),
   signUp: async () => ({ success: false }),
   signOut: async () => {},
+  resetPassword: async () => ({ success: false }),
+  updatePassword: async () => ({ success: false }),
   loading: true,
   isAuthenticated: false,
   hasRole: () => false,
@@ -211,6 +221,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
   
+  // Reset password function
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      });
+      
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Password reset failed' };
+    }
+  };
+
+  // Update password function
+  const updatePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+      
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Password update failed' };
+    }
+  };
+
   // Check if user has one of the specified roles
   const hasRole = (roles: UserRole[]) => {
     if (!user || !user.role) return false;
@@ -223,6 +267,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signUp,
     signOut,
+    resetPassword,
+    updatePassword,
     loading,
     isAuthenticated: !!user,
     hasRole,

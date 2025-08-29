@@ -151,10 +151,7 @@ export function ArtistShowcase() {
               {/* Bio content */}
               <div className="space-y-6">
                 <p className={`${typography.paragraphLarge} ${colors.textSecondary}`}>
-                  With over 15 years of professional experience, Kelly has established herself as 
-                  one of the Pacific Northwest's best artists. Her journey began in 
-                  Vancouver's vibrant tattoo scene, where she developed her skills under experienced 
-                  mentors before opening her own studio.
+                  With over 12 years of professional experience, Kelly's Journey began in 2012 when her mentor and friend , Betty B, connnected through art and tattoos. Betty B guided Kelly through her passsion for tattoing. Kelly started her own studio in 2014 and has continued to grow and learn with every tattoo and story. 
                 </p>
                 
                 <p className={`${typography.textLg} ${colors.textMuted} ${typography.leadingRelaxed} italic ${typography.fontLight}`}>

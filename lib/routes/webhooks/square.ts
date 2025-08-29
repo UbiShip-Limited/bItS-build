@@ -183,30 +183,29 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
           
           if (paymentLink) {
             // Send real-time notification to dashboard
-            await realtimeService.broadcast({
+            await realtimeService.addEvent({
               type: 'payment_completed',
               data: {
                 paymentId: payment.id,
                 customerId: paymentLink.customerId,
                 customerName: paymentLink.customer?.name || 'Unknown',
                 amount,
-                paymentType: paymentLink.metadata?.paymentType || 'payment',
+                paymentType: typeof paymentLink.metadata === 'object' && paymentLink.metadata && 'paymentType' in paymentLink.metadata 
+                  ? String(paymentLink.metadata.paymentType) 
+                  : 'payment',
                 timestamp: new Date().toISOString()
               }
             });
             
             // Send email notification to owner
             try {
-              await communicationService.sendOwnerNotification({
-                type: 'payment_received',
-                subject: `Payment Received - ${paymentLink.customer?.name || 'Customer'}`,
-                data: {
-                  customerName: paymentLink.customer?.name || 'Unknown',
-                  amount: `$${amount.toFixed(2)} CAD`,
-                  paymentType: paymentLink.metadata?.paymentType || 'payment',
-                  paymentId: payment.id,
-                  timestamp: new Date().toLocaleString()
-                }
+              await communicationService.sendOwnerPaymentNotification({
+                id: payment.id || 'unknown',
+                amount: amount,
+                customerName: paymentLink.customer?.name || 'Unknown',
+                paymentMethod: 'Square',
+                appointmentId: paymentLink.appointmentId || undefined,
+                transactionId: payment.id || 'unknown'
               });
             } catch (emailError) {
               fastify.log.error('Failed to send owner notification:', emailError);

@@ -1,12 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 import { CommunicationService } from './communicationService';
 import { EmailTemplateService } from './emailTemplateService';
+import { EmailService } from './emailService';
 import { differenceInDays, isWeekend, addDays } from 'date-fns';
 
 export class PaymentReminderService {
   private prisma: PrismaClient;
   private communicationService: CommunicationService;
   private emailTemplateService: EmailTemplateService;
+  private emailService: EmailService;
 
   constructor(
     prisma: PrismaClient,
@@ -16,6 +18,7 @@ export class PaymentReminderService {
     this.prisma = prisma;
     this.communicationService = communicationService;
     this.emailTemplateService = emailTemplateService;
+    this.emailService = new EmailService();
   }
 
   /**
@@ -156,8 +159,8 @@ export class PaymentReminderService {
       shopName: 'Bowen Island Tattoo Shop'
     });
 
-    // Send email
-    await this.communicationService.sendEmail({
+    // Send email  
+    await this.emailService.send({
       to: link.customer.email,
       subject: emailContent.subject,
       html: emailContent.html,
@@ -166,15 +169,13 @@ export class PaymentReminderService {
 
     // Also notify owner about the reminder
     if (reminderNumber === 3) {
-      await this.communicationService.sendOwnerNotification({
-        type: 'payment_reminder_final',
-        subject: `Final Payment Reminder Sent - ${link.customer.name}`,
-        data: {
-          customerName: link.customer.name,
-          amount: `$${link.amount.toFixed(2)}`,
-          daysPending: differenceInDays(new Date(), new Date(link.createdAt)),
-          paymentLinkId: link.id
-        }
+      await this.communicationService.sendOwnerPaymentNotification({
+        id: link.id,
+        amount: link.amount,
+        customerName: link.customer.name,
+        paymentMethod: 'Pending',
+        appointmentId: link.appointmentId || undefined,
+        transactionId: `reminder-${link.id}`
       });
     }
   }
@@ -188,7 +189,7 @@ export class PaymentReminderService {
     // Try to get existing template
     let template = await this.prisma.emailTemplate.findFirst({
       where: { 
-        type: templateKey,
+        name: templateKey,
         isActive: true
       }
     });
@@ -198,11 +199,11 @@ export class PaymentReminderService {
       const defaultTemplate = this.getDefaultReminderTemplate(reminderNumber, isLast);
       template = await this.prisma.emailTemplate.create({
         data: {
-          type: templateKey,
-          name: `Payment Reminder ${reminderNumber}`,
+          name: templateKey,
+          displayName: `Payment Reminder ${reminderNumber}`,
           subject: defaultTemplate.subject,
-          htmlContent: defaultTemplate.html,
-          textContent: defaultTemplate.text,
+          body: defaultTemplate.text,
+          htmlBody: defaultTemplate.html,
           variables: ['customerName', 'amount', 'paymentLink', 'reminderNumber', 'daysOverdue'],
           isActive: true
         }
@@ -341,7 +342,7 @@ export class PaymentReminderService {
     const nextReminderIndex = link.reminderCount;
     const nextReminderDay = nextReminderIndex < schedule.length ? schedule[nextReminderIndex] : null;
     
-    let nextReminderDate = null;
+    let nextReminderDate: Date | null = null;
     if (nextReminderDay && link.status === 'active') {
       if (link.reminderCount === 0) {
         nextReminderDate = addDays(new Date(link.createdAt), nextReminderDay);

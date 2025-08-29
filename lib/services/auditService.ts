@@ -19,6 +19,11 @@ export type AuditAction =
   | 'EMAIL_SENT'
   | 'EMAIL_FAILED'
   | 'EMAIL_SEND_FAILED'
+  | 'CUSTOMER_CONFIRMATION_FAILED'
+  | 'OWNER_NOTIFICATION_FAILED'
+  | 'OWNER_NOTIFICATION_SENT'
+  | 'payment_link_email_sent'
+  | 'payment_link_email_failed'
   | 'business_hours_initialized'
   | 'business_hours_updated'
   | 'special_hours_created'
@@ -36,6 +41,7 @@ export type AuditResource =
   | 'Email'
   | 'EmailTemplate'
   | 'EmailAutomation'
+  | 'payment_link'
   | 'business_hours'
   | 'special_hours';
 

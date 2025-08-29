@@ -907,11 +907,11 @@ This notification was sent to the shop owner.`,
       {
         name: 'owner_payment_received',
         displayName: 'Owner: Payment Received',
-        subject: '💰 Payment Received - ${{amount}}',
+        subject: '💰 Payment Received - $' + '{{amount}}',
         body: `Payment received!
 
 Customer: {{customerName}}
-Amount: ${{amount}}
+Amount: $` + '{{amount}}' + `
 Payment Method: {{paymentMethod}}
 Date: {{paymentDate}}
 

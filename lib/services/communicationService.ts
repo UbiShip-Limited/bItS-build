@@ -121,7 +121,7 @@ export class CommunicationService {
         type: 'payment_link_sent',
         title: 'Payment Link Sent',
         message: `Payment link for $${amount.toFixed(2)} sent to ${customerName}`,
-        data: {
+        metadata: {
           customerId: params.customerId,
           amount,
           paymentType
@@ -140,7 +140,7 @@ export class CommunicationService {
         }
       });
       
-      return { success: true, messageId: result.messageId };
+      return { success: true };
     } catch (error) {
       console.error('Error sending payment link email:', error);
       
@@ -625,7 +625,7 @@ Bowen Island Tattoo Shop Team
           preferredArtist: tattooRequest.preferredArtist || 'Any available',
           timeframe: tattooRequest.timeframe || 'Not specified',
           additionalNotes: tattooRequest.additionalNotes || 'None',
-          referenceImages: tattooRequest.referenceImages?.length || 0,
+          referenceImages: Array.isArray(tattooRequest.referenceImages) ? tattooRequest.referenceImages.length : 0,
           dashboardUrl
         }
       );

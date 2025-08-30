@@ -324,9 +324,19 @@ export class SquareIntegrationService {
     try {
       const squareClient = this.getSquareClient();
       
-      // Set date range (default: last 7 days to next 30 days)
+      // Set date range (default: last 7 days to next 23 days = 30 days total, within Square's 31-day limit)
       const startAt = startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      const endAt = endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const endAt = endDate || new Date(Date.now() + 23 * 24 * 60 * 60 * 1000);
+
+      // Validate date range doesn't exceed Square's 31-day limit
+      const rangeInMs = endAt.getTime() - startAt.getTime();
+      const rangeInDays = rangeInMs / (24 * 60 * 60 * 1000);
+      
+      if (rangeInDays > 31) {
+        console.warn(`Date range of ${rangeInDays.toFixed(1)} days exceeds Square's 31-day limit. Adjusting end date.`);
+        // Adjust end date to be exactly 30 days from start
+        endAt.setTime(startAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+      }
 
       console.log(`Syncing Square bookings from ${startAt.toISOString()} to ${endAt.toISOString()}`);
 

@@ -533,17 +533,18 @@ p {
   font-weight: 400;
   letter-spacing: 0.01em;
   line-height: 1.6;
+  font-size: 1.125rem; /* 18px - increased from default 16px */
 }
 
-/* Specialized paragraph variants */
+/* Specialized paragraph variants - updated sizes */
 .p-large {
-  font-size: 1.125rem;
+  font-size: 1.5rem; /* 24px - increased from 18px */
   line-height: 1.7;
   font-weight: 400;
 }
 
 .p-small {
-  font-size: 0.875rem;
+  font-size: 1rem; /* 16px - increased from 14px */
   line-height: 1.5;
   font-weight: 400;
 }

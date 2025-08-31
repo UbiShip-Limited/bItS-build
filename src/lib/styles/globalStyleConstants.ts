@@ -53,10 +53,10 @@ export const typography = {
   h3: 'font-body text-3xl sm:text-3xl md:text-4xl font-medium leading-tight tracking-normal',
   h4: 'font-body text-2xl sm:text-2xl md:text-3xl font-medium leading-tight tracking-normal',
   
-  // Paragraph styles
-  paragraph: 'font-body text-lg leading-relaxed tracking-normal',
-  paragraphLarge: 'font-body text-xl sm:text-2xl leading-relaxed tracking-normal',
-  paragraphSmall: 'font-body text-base leading-normal tracking-normal'
+  // Paragraph styles - increased for better readability
+  paragraph: 'font-body text-xl leading-relaxed tracking-normal',
+  paragraphLarge: 'font-body text-2xl sm:text-3xl leading-relaxed tracking-normal',
+  paragraphSmall: 'font-body text-lg leading-normal tracking-normal'
 } as const;
 
 export const colors = {

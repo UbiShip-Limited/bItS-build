@@ -6,6 +6,7 @@ import { Mail, Loader2, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { createBrowserClient } from '@supabase/ssr';
+import { getSiteURL } from '@/src/lib/utils/siteUrl';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -27,16 +28,15 @@ export default function ForgotPasswordPage() {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `${getSiteURL()}/auth/reset-password`,
       });
 
       if (error) {
         setError(error.message);
       } else {
-        setMessage('Check your email for the password reset link. The link will expire in 1 hour.');
-        setTimeout(() => {
-          router.push('/auth/login');
-        }, 5000);
+        setMessage('Check your email for the password reset link. Please open it in this same browser window for best results.');
+        // Don't redirect, let user stay on this page
+        setEmail('');
       }
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');

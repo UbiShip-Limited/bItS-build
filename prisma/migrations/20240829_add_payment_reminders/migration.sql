@@ -1,10 +1,10 @@
--- Add reminder tracking fields to PaymentLink table
-ALTER TABLE "PaymentLink" ADD COLUMN IF NOT EXISTS "enableReminders" BOOLEAN DEFAULT true;
-ALTER TABLE "PaymentLink" ADD COLUMN IF NOT EXISTS "lastReminderSent" TIMESTAMP(3);
-ALTER TABLE "PaymentLink" ADD COLUMN IF NOT EXISTS "reminderCount" INTEGER DEFAULT 0;
-ALTER TABLE "PaymentLink" ADD COLUMN IF NOT EXISTS "expiresAt" TIMESTAMP(3);
-ALTER TABLE "PaymentLink" ADD COLUMN IF NOT EXISTS "reminderSchedule" JSONB DEFAULT '[2, 7, 14]';
+-- Add reminder tracking fields to payment_links table
+ALTER TABLE "payment_links" ADD COLUMN IF NOT EXISTS "enable_reminders" BOOLEAN DEFAULT true;
+ALTER TABLE "payment_links" ADD COLUMN IF NOT EXISTS "last_reminder_sent" TIMESTAMP(3);
+ALTER TABLE "payment_links" ADD COLUMN IF NOT EXISTS "reminder_count" INTEGER DEFAULT 0;
+ALTER TABLE "payment_links" ADD COLUMN IF NOT EXISTS "expires_at" TIMESTAMP(3);
+ALTER TABLE "payment_links" ADD COLUMN IF NOT EXISTS "reminder_schedule" JSONB DEFAULT '[2, 7, 14]';
 
 -- Create index for efficient reminder queries
-CREATE INDEX IF NOT EXISTS "PaymentLink_reminder_status_idx" ON "PaymentLink"("status", "enableReminders", "reminderCount");
-CREATE INDEX IF NOT EXISTS "PaymentLink_expires_idx" ON "PaymentLink"("expiresAt");
+CREATE INDEX IF NOT EXISTS "payment_links_reminder_status_idx" ON "payment_links"("status", "enable_reminders", "reminder_count");
+CREATE INDEX IF NOT EXISTS "payment_links_expires_idx" ON "payment_links"("expires_at");

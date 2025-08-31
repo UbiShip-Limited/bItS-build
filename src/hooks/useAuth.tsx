@@ -5,6 +5,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { SupabaseClient, Session } from '@supabase/supabase-js';
 import { UserRole, UserWithRole } from '../../lib/types/auth';
 import { apiClient, clearAuthCache } from '../lib/api/apiClient';
+import { getSiteURL } from '@/src/lib/utils/siteUrl';
 
 interface AuthContextType {
   user: UserWithRole | null;
@@ -225,7 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const resetPassword = async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `${getSiteURL()}/auth/reset-password`,
       });
       
       if (error) {

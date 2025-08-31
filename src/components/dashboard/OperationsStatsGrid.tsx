@@ -17,6 +17,7 @@ interface ActionableMetrics {
   requests: {
     newCount: number;
     urgentCount: number;
+    todayCount?: number;
   };
   revenue: {
     today: number;
@@ -81,8 +82,16 @@ function StatCard({ title, value, subtitle, icon: Icon, trend, alert }: StatCard
 }
 
 export default function OperationsStatsGrid({ metrics, loading, onRefresh }: OperationsStatsGridProps) {
-  const hasUrgentActions = metrics.actionItems.overdueRequests > 0 || 
-                          metrics.actionItems.unconfirmedAppointments > 0;
+  // Provide default values if metrics are undefined
+  const safeMetrics = {
+    todayAppointments: metrics?.todayAppointments || { total: 0, completed: 0, remaining: 0 },
+    actionItems: metrics?.actionItems || { overdueRequests: 0, unconfirmedAppointments: 0, followUpsNeeded: 0 },
+    requests: metrics?.requests || { newCount: 0, urgentCount: 0, todayCount: 0 },
+    revenue: metrics?.revenue || { today: 0, thisWeek: 0, thisMonth: 0 }
+  };
+  
+  const hasUrgentActions = safeMetrics.actionItems.overdueRequests > 0 || 
+                          safeMetrics.actionItems.unconfirmedAppointments > 0;
 
   // Show skeleton loading state
   if (loading) {
@@ -104,17 +113,17 @@ export default function OperationsStatsGrid({ metrics, loading, onRefresh }: Ope
       {/* Today's Appointments */}
       <StatCard
         title="Today's Appointments"
-        value={metrics.todayAppointments.total}
-        subtitle={`${metrics.todayAppointments.completed} completed, ${metrics.todayAppointments.remaining} remaining`}
+        value={safeMetrics.todayAppointments.total}
+        subtitle={`${safeMetrics.todayAppointments.completed} completed, ${safeMetrics.todayAppointments.remaining} remaining`}
         icon={Calendar}
       />
 
       {/* Action Items */}
       <StatCard
         title="Action Items"
-        value={metrics.actionItems.overdueRequests + 
-               metrics.actionItems.unconfirmedAppointments + 
-               metrics.actionItems.followUpsNeeded}
+        value={safeMetrics.actionItems.overdueRequests + 
+               safeMetrics.actionItems.unconfirmedAppointments + 
+               safeMetrics.actionItems.followUpsNeeded}
         subtitle={hasUrgentActions ? "Urgent attention needed" : "All caught up"}
         icon={AlertCircle}
         alert={hasUrgentActions}
@@ -122,20 +131,26 @@ export default function OperationsStatsGrid({ metrics, loading, onRefresh }: Ope
 
       {/* New Requests */}
       <StatCard
-        title="New Requests"
-        value={metrics.requests.newCount}
-        subtitle={metrics.requests.urgentCount > 0 ? `${metrics.requests.urgentCount} urgent` : "Ready for review"}
+        title="Tattoo Requests"
+        value={safeMetrics.requests.newCount}
+        subtitle={
+          safeMetrics.requests.urgentCount > 0 
+            ? `${safeMetrics.requests.urgentCount} urgent • ${safeMetrics.requests.todayCount || 0} today`
+            : safeMetrics.requests.todayCount 
+              ? `${safeMetrics.requests.todayCount} submitted today`
+              : "Ready for review"
+        }
         icon={FileText}
-        alert={metrics.requests.urgentCount > 0}
+        alert={safeMetrics.requests.urgentCount > 0}
       />
 
       {/* Today's Revenue */}
       <StatCard
-        title="Today's Revenue"
-        value={`$${metrics.revenue.today.toLocaleString()}`}
-        subtitle={`Week total: $${metrics.revenue.thisWeek.toLocaleString()}`}
+        title="Square Revenue"
+        value={`$${safeMetrics.revenue.today.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        subtitle={`Week: $${safeMetrics.revenue.thisWeek.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} • Month: $${safeMetrics.revenue.thisMonth.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
         icon={DollarSign}
-        trend={metrics.revenue.today > 0 ? { value: 12, isPositive: true } : undefined}
+        trend={safeMetrics.revenue.thisWeek > 0 && safeMetrics.revenue.today > 0 ? { value: Math.round((safeMetrics.revenue.today / (safeMetrics.revenue.thisWeek / 7)) * 100 - 100), isPositive: safeMetrics.revenue.today > (safeMetrics.revenue.thisWeek / 7) } : undefined}
       />
     </div>
   );

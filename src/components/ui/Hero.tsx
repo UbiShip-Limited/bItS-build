@@ -62,7 +62,7 @@ export function TattooHero() {
   }
 
   return (
-    <section className="relative w-full min-h-[120vh] overflow-hidden bg-gradient-to-b from-obsidian via-[#0a0a0a] to-obsidian text-white">
+    <section className="relative w-full min-h-screen overflow-hidden bg-gradient-to-b from-obsidian via-[#0a0a0a] to-obsidian text-white">
       {/* Subtle spotlight effect with white/gray tints */}
       <Spotlight 
         gradientFirst="radial-gradient(68.54% 68.72% at 55.02% 31.46%, hsla(210, 100%, 85%, .08) 0, hsla(210, 100%, 55%, .02) 50%, hsla(210, 100%, 45%, 0) 80%)"
@@ -76,45 +76,49 @@ export function TattooHero() {
         xOffset={100}
       />
       
-      {/* Additional ambient glow effects */}
+      {/* Enhanced ambient glow effects with better blending */}
       <div className="absolute inset-0 z-0">
-        <div className="hero-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/5 rounded-full blur-[100px] animate-pulse" />
-        <div className="hero-shadow absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-white/8 rounded-full blur-[60px]" />
-        <div className="hero-shadow absolute bottom-1/3 right-1/4 w-[300px] h-[300px] bg-white/8 rounded-full blur-[60px]" />
+        <div className="hero-glow absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-white/3 rounded-full blur-[120px] animate-pulse mix-blend-soft-light" />
+        <div className="hero-shadow absolute top-1/3 left-1/4 w-[400px] h-[400px] bg-white/4 rounded-full blur-[80px] mix-blend-overlay opacity-60" />
+        <div className="hero-shadow absolute bottom-1/3 right-1/4 w-[400px] h-[400px] bg-white/4 rounded-full blur-[80px] mix-blend-overlay opacity-60" />
+        <div className="hero-accent absolute top-1/4 right-1/3 w-[200px] h-[200px] bg-gold-500/10 rounded-full blur-[60px] mix-blend-soft-light" />
       </div>
       
-      {/* Gradient mesh background */}
-      <div className="absolute inset-0 z-0 opacity-30">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-white/5" />
-        <div className="absolute inset-0 bg-gradient-to-tl from-white/5 via-transparent to-transparent" />
+      {/* Enhanced gradient mesh background with better blending */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/8 via-transparent to-white/3 mix-blend-soft-light opacity-40" />
+        <div className="absolute inset-0 bg-gradient-to-tl from-white/4 via-transparent to-transparent mix-blend-overlay opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/2 to-transparent mix-blend-soft-light opacity-50" />
       </div>
 
-      {/* Subtle central divider */}
+      {/* Enhanced central divider with better blending */}
       <div className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 z-10 hidden lg:block">
-        <div className="h-full w-full bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
+        <div className="h-full w-full bg-gradient-to-b from-transparent via-white/8 to-transparent mix-blend-soft-light opacity-60"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-32 bg-white/5 blur-xl"></div>
       </div>
 
-      {/* Main content container - positioned lower than center */}
+      {/* Main content container - optimally positioned with header consideration */}
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: isLoaded ? 1 : 0 }}
         transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
-        className="absolute inset-0 z-20 flex items-center justify-center pt-16 sm:pt-20 md:pt-24 lg:pt-28 px-2 py-4 sm:p-6 md:p-8"
+        className="absolute inset-0 z-20 flex items-center justify-center px-4 pt-20 pb-16 sm:px-6 sm:pt-24 sm:pb-20 md:px-8 md:pt-28 md:pb-24 lg:pt-32 lg:pb-28"
       >
         {/* Main content */}
         <motion.div
-          className="w-full max-w-4xl text-center space-y-4 sm:space-y-6 md:space-y-8 mt-2"
+          className="w-full max-w-4xl text-center space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-7"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {/* Logo area - enhanced with glow effect */}
+          {/* Logo area - enhanced with glow effect and optimized sizing */}
           <motion.div 
-            className="relative aspect-square w-[160px] h-[160px] sm:w-[180px] sm:h-[180px] md:w-[220px] md:h-[220px] lg:w-[260px] lg:h-[260px] mx-auto" 
+            className="relative aspect-square w-[140px] h-[140px] sm:w-[160px] sm:h-[160px] md:w-[200px] md:h-[200px] lg:w-[240px] lg:h-[240px] mx-auto" 
             variants={itemVariants}
           >
-            {/* Ambient glow behind logo */}
-            <div className="absolute inset-0 bg-white/20 rounded-full blur-[40px] sm:blur-[60px] scale-125 sm:scale-150 animate-pulse" />
+            {/* Enhanced ambient glow behind logo with better blending */}
+            <div className="absolute inset-0 bg-white/15 rounded-full blur-[40px] sm:blur-[60px] scale-125 sm:scale-150 animate-pulse mix-blend-soft-light" />
+            <div className="absolute inset-0 bg-gold-500/10 rounded-full blur-[60px] sm:blur-[80px] scale-150 sm:scale-200 mix-blend-overlay opacity-40" />
             <div className="relative w-full h-full mx-auto">
               {/* Simplified image transition using AnimatePresence */}
               <AnimatePresence mode="sync">
@@ -186,9 +190,9 @@ export function TattooHero() {
             </div>
           </motion.div>
 
-          {/* Title - enhanced typography with gradient */}
-          <motion.div variants={itemVariants} className="-mt-4 sm:-mt-6">
-            <h1 className={`${typography.fontBrand} text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-semibold ${typography.leadingTight} px-2 sm:px-4`}>
+          {/* Title - enhanced typography with gradient and better spacing */}
+          <motion.div variants={itemVariants} className="-mt-2 sm:-mt-3 md:-mt-4">
+            <h1 className={`${typography.fontBrand} text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold ${typography.leadingTight} px-2 sm:px-4`}>
               <span className="bg-gradient-to-r from-white via-white to-white bg-clip-text text-transparent">
                 Bowen Island Tattoo
               </span>
@@ -196,25 +200,25 @@ export function TattooHero() {
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <p className={`${typography.textSm} sm:${typography.paragraph} md:${typography.paragraphLarge} ${colors.textSecondary} max-w-2xl mx-auto px-2 sm:px-6`}>
+            <p className={`${typography.textSm} sm:${typography.paragraph} md:${typography.paragraphLarge} ${colors.textSecondary} max-w-xl lg:max-w-2xl mx-auto px-2 sm:px-4`}>
              Custom tattoos, peaceful island studio.<br className="hidden sm:block" />
-             <span className={`${colors.textMuted} italic block mt-1 sm:mt-2`}>Book your spot. Let's create something beautiful.</span>
+             <span className={`${colors.textMuted} italic block mt-1`}>Book your spot. Let's create something beautiful.</span>
             </p>
           </motion.div>
 
-          {/* Enhanced ornamental divider */}
-          <motion.div className="flex items-center justify-center" variants={itemVariants}>
-            <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-r from-transparent via-white/40 to-white/20" />
-            <div className="mx-4 sm:mx-6 relative">
-              <div className="w-3 h-3 bg-white/40 rounded-full" />
-              <div className="absolute inset-0 bg-white/20 rounded-full blur-md scale-[3] animate-pulse" />
+          {/* Enhanced ornamental divider - more compact */}
+          <motion.div className="flex items-center justify-center py-1" variants={itemVariants}>
+            <div className="w-20 sm:w-24 md:w-32 h-px bg-gradient-to-r from-transparent via-white/40 to-white/20" />
+            <div className="mx-3 sm:mx-4 relative">
+              <div className="w-2.5 h-2.5 bg-white/40 rounded-full" />
+              <div className="absolute inset-0 bg-white/20 rounded-full blur-sm scale-[2.5] animate-pulse" />
             </div>
-            <div className="w-24 sm:w-32 md:w-40 h-px bg-gradient-to-l from-transparent via-white/40 to-white/20" />
+            <div className="w-20 sm:w-24 md:w-32 h-px bg-gradient-to-l from-transparent via-white/40 to-white/20" />
           </motion.div>
 
-          {/* CTA Buttons - refined with new button system */}
+          {/* CTA Buttons - refined with new button system and better spacing */}
           <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-0 sm:px-0"
+            className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 md:gap-4 px-0 pt-1"
             variants={itemVariants}
           >
             <Link href="/tattooRequest" className="w-full sm:w-auto">

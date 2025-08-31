@@ -238,7 +238,7 @@ const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
           timestamp: appointment.createdAt,
           metadata: {
             customerName: appointment.customer?.name,
-            appointmentTime: appointment.startTime
+            appointmentTime: appointment.startTime ?? undefined
           }
         });
       });

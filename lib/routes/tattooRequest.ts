@@ -16,7 +16,6 @@ import os from 'os';
 import { NotFoundError, ValidationError } from '../services/errors';
 import CloudinaryService from '../cloudinary/index.js';
 import { readRateLimit, writeRateLimit, publicSubmissionRateLimit } from '../middleware/rateLimiting';
-import { getRecaptchaService } from '../services/recaptchaService';
 
 // Type definitions for request bodies and queries
 interface TattooRequestQueryParams {
@@ -138,7 +137,6 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
               }
             }
           },
-          recaptchaToken: { type: 'string' },
           honeypot: { type: 'string' } // Bot trap field
         },
         // Either customerId OR contactEmail must be provided
@@ -151,7 +149,6 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
   }, async (request, reply) => {
     try {
       const requestData = request.body as CreateTattooRequestData & { 
-        recaptchaToken?: string;
         honeypot?: string;
       };
       
@@ -161,27 +158,8 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: 'Invalid request' });
       }
       
-      // Verify reCAPTCHA if token provided and service is available
-      if (requestData.recaptchaToken) {
-        try {
-          const recaptchaService = getRecaptchaService();
-          const isValid = await recaptchaService.verify(requestData.recaptchaToken, 'tattoo_request');
-          
-          if (!isValid) {
-            request.log.warn('reCAPTCHA verification failed for tattoo request - allowing submission anyway in development');
-            // In development, log the warning but don't block submission
-            if (process.env.NODE_ENV === 'production') {
-              return reply.status(400).send({ error: 'Security verification failed. Please try again.' });
-            }
-          }
-        } catch (error) {
-          // If reCAPTCHA service not initialized, log but don't block
-          request.log.warn('reCAPTCHA service not available:', error);
-        }
-      }
-      
       // Remove security fields before passing to service
-      const { recaptchaToken, honeypot, ...tattooRequestData } = requestData;
+      const { honeypot, ...tattooRequestData } = requestData;
       
       // Create via service (handles all business logic)
       const tattooRequest = await tattooRequestService.create(

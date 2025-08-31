@@ -13,18 +13,21 @@ interface QuickAction {
   link?: string;
   onClick?: () => void;
   color: string;
+  badge?: number;
 }
 
 interface QuickActionsPanelProps {
   onCreateAppointment?: () => void;
   onSendPaymentLink?: () => void;
   className?: string;
+  newRequestsCount?: number;
 }
 
 export default function QuickActionsPanel({ 
   onCreateAppointment, 
   onSendPaymentLink,
-  className = '' 
+  className = '',
+  newRequestsCount = 0
 }: QuickActionsPanelProps) {
   const actions: QuickAction[] = [
     {
@@ -58,7 +61,8 @@ export default function QuickActionsPanel({
       description: 'Review submissions',
       icon: <FileText className="w-5 h-5" />,
       link: '/dashboard/tattoo-request',
-      color: `bg-gold-500/10 hover:bg-gold-500/20 ${colors.textAccent} ${colors.borderDefault}`
+      color: `bg-gold-500/10 hover:bg-gold-500/20 ${colors.textAccent} ${colors.borderDefault}`,
+      badge: newRequestsCount
     }
   ];
 
@@ -88,6 +92,11 @@ export default function QuickActionsPanel({
                   <div className="p-2 ${components.radius.small} bg-current/10 relative z-10">
                     {action.icon}
                   </div>
+                  {(action.badge ?? 0) > 0 && (
+                    <div className="absolute -top-1 -right-1 bg-gold-500 text-obsidian text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                      {(action.badge ?? 0) > 9 ? '9+' : action.badge}
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-current/20 rounded-full blur-md scale-0 group-hover:scale-150 ${effects.transitionNormal}"></div>
                 </div>
                 <div>
@@ -113,6 +122,11 @@ export default function QuickActionsPanel({
                 <div className="p-2 ${components.radius.small} bg-current/10 relative z-10">
                   {action.icon}
                 </div>
+                {(action.badge ?? 0) > 0 && (
+                  <div className="absolute -top-1 -right-1 bg-gold-500 text-obsidian text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+                    {(action.badge ?? 0) > 9 ? '9+' : action.badge}
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-current/20 rounded-full blur-md scale-0 group-hover:scale-150 ${effects.transitionNormal}"></div>
               </div>
               <div>

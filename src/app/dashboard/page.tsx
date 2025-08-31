@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
 import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
+import { dashboardService, type DashboardData } from '@/src/lib/api/services/dashboardService';
 
 // Component imports
 import OperationsStatsGrid from '@/src/components/dashboard/OperationsStatsGrid';
@@ -17,7 +18,7 @@ import { DashboardCard } from './components/DashboardCard';
 export default function DashboardPage() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const router = useRouter();
-  const [dashboardData, setDashboardData] = useState({
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
     metrics: {
       todayAppointments: {
         total: 0,
@@ -31,7 +32,8 @@ export default function DashboardPage() {
       },
       requests: {
         newCount: 0,
-        urgentCount: 0
+        urgentCount: 0,
+        todayCount: 0
       },
       revenue: {
         today: 0,
@@ -48,15 +50,14 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setIsLoading(true);
-      // This is where we'll fetch real data from the API
-      // For now, we'll just set empty data to avoid placeholder confusion
       
-      // Example of what the API call would look like:
-      // const response = await analyticsService.getDashboardMetrics('today');
-      // setDashboardData(response);
+      // Fetch real dashboard data from the API
+      const data = await dashboardService.getDashboardData();
+      setDashboardData(data);
       
       setIsLoading(false);
     } catch (err) {
+      console.error('Dashboard data fetch error:', err);
       setError('Failed to load dashboard data');
       setIsLoading(false);
     }
@@ -81,8 +82,12 @@ export default function DashboardPage() {
       fetchDashboardData();
     });
 
-    eventSource.addEventListener('request_submitted', () => {
+    eventSource.addEventListener('request_submitted', (event) => {
+      // Fetch updated data when a new request is submitted
       fetchDashboardData();
+      
+      // Optionally show a toast notification
+      console.log('New tattoo request submitted:', event);
     });
 
     eventSource.addEventListener('payment_received', () => {
@@ -123,9 +128,9 @@ export default function DashboardPage() {
   }
 
   // Check if we have any data
-  const hasData = dashboardData.metrics.todayAppointments.total > 0 || 
-                  dashboardData.metrics.requests.newCount > 0 || 
-                  dashboardData.recentActivity.length > 0;
+  const hasData = dashboardData.metrics?.todayAppointments?.total > 0 || 
+                  dashboardData.metrics?.requests?.newCount > 0 || 
+                  dashboardData.recentActivity?.length > 0;
 
   return (
     <div className="space-y-6">
@@ -154,12 +159,21 @@ export default function DashboardPage() {
       )}
 
       {/* Priority Actions Bar - Only show if there are actions */}
-      {dashboardData.priorityActions.length > 0 && (
-        <PriorityActionsBar actions={dashboardData.priorityActions} />
+      {dashboardData.priorityActions?.length > 0 && (
+        <PriorityActionsBar actions={dashboardData.priorityActions.map(action => ({
+          ...action,
+          urgency: action.priority === 'high' ? 'high' : 'medium',
+          type: action.type as any // Type casting needed due to slight differences in enum values
+        }))} />
       )}
 
       {/* Stats Grid - Always show, will display zeros */}
-      <OperationsStatsGrid metrics={dashboardData.metrics} loading={isLoading} />
+      <OperationsStatsGrid metrics={dashboardData.metrics || {
+        todayAppointments: { total: 0, completed: 0, remaining: 0 },
+        actionItems: { overdueRequests: 0, unconfirmedAppointments: 0, followUpsNeeded: 0 },
+        requests: { newCount: 0, urgentCount: 0, todayCount: 0 },
+        revenue: { today: 0, thisWeek: 0, thisMonth: 0 }
+      }} loading={isLoading} />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -171,7 +185,7 @@ export default function DashboardPage() {
             viewDetailsHref="/dashboard/notifications"
             noPadding
           >
-            <SimplifiedActivityTimeline activities={dashboardData.recentActivity} />
+            <SimplifiedActivityTimeline activities={dashboardData.recentActivity || []} />
           </DashboardCard>
         </div>
 
@@ -193,6 +207,7 @@ export default function DashboardPage() {
           >
             <QuickActionsPanel 
               onSendPaymentLink={() => router.push('/dashboard/payments?action=new-link')}
+              newRequestsCount={dashboardData.metrics?.requests?.newCount || 0}
             />
           </DashboardCard>
         </div>

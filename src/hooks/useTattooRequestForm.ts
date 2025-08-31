@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { TattooRequestApiClient } from '../lib/api/services/tattooRequestApiClient';
 import { ImageUploadService } from '../lib/api/services/ImageUploadService';
 import { apiClient } from '../lib/api/apiClient';
-import { useRecaptcha } from './useRecaptcha';
 
 // Initialize the services ONCE
 const tattooRequestClient = new TattooRequestApiClient(apiClient);
@@ -80,7 +79,6 @@ const AUTOSAVE_KEY = 'tattoo_request_form_data';
 const AUTOSAVE_INTERVAL = 30000; // 30 seconds
 
 const useTattooRequestForm = (): UseTattooRequestFormReturn => {
-  const { executeRecaptcha, isAvailable: isRecaptchaAvailable } = useRecaptcha({ action: 'tattoo_request' });
   
   const [formData, setFormData] = useState<TattooRequestFormData>({
     contactEmail: '',
@@ -302,23 +300,6 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
     console.log('🎯 Proceeding with form submission...');
     
     try {
-      // Execute reCAPTCHA if available (but don't block on failure)
-      let recaptchaToken: string | null = null;
-      console.log('🔐 reCAPTCHA available:', isRecaptchaAvailable);
-      
-      if (isRecaptchaAvailable) {
-        try {
-          console.log('🔐 Executing reCAPTCHA...');
-          recaptchaToken = await executeRecaptcha();
-          console.log('🔐 reCAPTCHA token received:', !!recaptchaToken);
-        } catch (error) {
-          console.warn('⚠️ reCAPTCHA execution failed, continuing without it:', error);
-          // Continue without reCAPTCHA rather than blocking the submission
-        }
-      } else {
-        console.log('ℹ️ reCAPTCHA not configured, proceeding without it');
-      }
-      
       // Prepare the tattoo request data
       const requestData: any = {
         contactEmail: formData.contactEmail,
@@ -341,12 +322,6 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
             publicId: img.publicId!
           }))
       };
-      
-      // Add reCAPTCHA token only if we have a valid one
-      // Skip sending it if it's null to avoid backend validation issues
-      if (recaptchaToken) {
-        requestData.recaptchaToken = recaptchaToken;
-      }
       
       // Add empty honeypot field (bot trap)
       requestData.honeypot = '';

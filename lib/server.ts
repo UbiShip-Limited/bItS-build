@@ -43,7 +43,7 @@ import emailTemplatesRoutes from './routes/emailTemplates';
 import emailAutomationRoutes from './routes/emailAutomation';
 import squareSyncRoutes from './routes/square-sync';
 import databaseHealthRoutes from './routes/database-health';
-import { initializeRecaptchaService } from './services/recaptchaService';
+import dashboardRoutes from './routes/dashboard';
 import { SquareIntegrationService } from './services/squareIntegrationService';
 import { SquareBookingSyncJob } from './jobs/squareBookingSync';
 import { EmailAutomationService } from './services/emailAutomationService';
@@ -73,7 +73,6 @@ function validateEnvironment() {
     'CLOUDINARY_CLOUD_NAME': process.env.CLOUDINARY_CLOUD_NAME,
     'CLOUDINARY_API_KEY': process.env.CLOUDINARY_API_KEY,
     'CLOUDINARY_API_SECRET': process.env.CLOUDINARY_API_SECRET,
-    'RECAPTCHA_SECRET_KEY': process.env.RECAPTCHA_SECRET_KEY,
     'RESEND_API_KEY': process.env.RESEND_API_KEY,
     'EMAIL_FROM': process.env.EMAIL_FROM,
     'STAFF_ACCESS_CODE': process.env.STAFF_ACCESS_CODE,
@@ -165,18 +164,6 @@ const build = (opts = {}) => {
     validateEnvironment();
   }
 
-  // Initialize reCAPTCHA service if secret key is provided
-  if (process.env.RECAPTCHA_SECRET_KEY) {
-    try {
-      initializeRecaptchaService(process.env.RECAPTCHA_SECRET_KEY);
-      console.log('✅ reCAPTCHA service initialized');
-    } catch (error) {
-      console.warn('⚠️  Failed to initialize reCAPTCHA service:', error);
-    }
-  } else {
-    console.warn('⚠️  reCAPTCHA is not configured - bot protection will be limited to rate limiting');
-    console.warn('   Set RECAPTCHA_SECRET_KEY to enable reCAPTCHA verification');
-  }
 
   const fastifyInstance = fastify(opts);
 
@@ -262,6 +249,7 @@ const build = (opts = {}) => {
   fastifyInstance.register(emailTemplatesRoutes, { prefix: '/email-templates' });
   fastifyInstance.register(emailAutomationRoutes, { prefix: '/email-automation' });
   fastifyInstance.register(squareSyncRoutes, { prefix: '/square-sync' });
+  fastifyInstance.register(dashboardRoutes, { prefix: '/dashboard' });
   
   return fastifyInstance;
 };

@@ -302,21 +302,21 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
     console.log('🎯 Proceeding with form submission...');
     
     try {
-      // Execute reCAPTCHA if available
+      // Execute reCAPTCHA if available (but don't block on failure)
       let recaptchaToken: string | null = null;
       console.log('🔐 reCAPTCHA available:', isRecaptchaAvailable);
       
       if (isRecaptchaAvailable) {
-        console.log('🔐 Executing reCAPTCHA...');
-        recaptchaToken = await executeRecaptcha();
-        console.log('🔐 reCAPTCHA token received:', !!recaptchaToken);
-        
-        if (!recaptchaToken) {
-          console.log('❌ reCAPTCHA failed');
-          setError('Security verification failed. Please try again.');
-          setIsLoading(false);
-          return;
+        try {
+          console.log('🔐 Executing reCAPTCHA...');
+          recaptchaToken = await executeRecaptcha();
+          console.log('🔐 reCAPTCHA token received:', !!recaptchaToken);
+        } catch (error) {
+          console.warn('⚠️ reCAPTCHA execution failed, continuing without it:', error);
+          // Continue without reCAPTCHA rather than blocking the submission
         }
+      } else {
+        console.log('ℹ️ reCAPTCHA not configured, proceeding without it');
       }
       
       // Prepare the tattoo request data
@@ -342,7 +342,8 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
           }))
       };
       
-      // Add reCAPTCHA token if available
+      // Add reCAPTCHA token only if we have a valid one
+      // Skip sending it if it's null to avoid backend validation issues
       if (recaptchaToken) {
         requestData.recaptchaToken = recaptchaToken;
       }
@@ -365,7 +366,14 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
       clearSavedData();
     } catch (err: any) {
       console.error('❌ Form submission error:', err);
-      setError(err.message || 'An error occurred while submitting your request');
+      // Extract error message from axios response if available
+      const errorMessage = err.response?.data?.error || err.response?.data?.message || err.message || 'An error occurred while submitting your request';
+      console.error('📊 Full error details:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: errorMessage
+      });
+      setError(errorMessage);
     } finally {
       console.log('🏁 Setting isLoading to false');
       setIsLoading(false);

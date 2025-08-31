@@ -323,21 +323,25 @@ export class EmailStyleService {
             </h3>
             
             <p style="color: ${emailColors.textSecondary};">
-              123 Main Street<br>
-              Bowen Island, BC V0N 1G0<br>
-              (604) 123-4567
+              565 Artisan Lane<br>
+              Bowen Island, BC V0N1G2<br>
+              Artisan Square<br>
+              <br>
+              Tuesday - Saturday<br>
+              11:00 AM - 7:00 PM<br>
+              <em style="font-size: 12px;">By appointment only</em>
             </p>
             
             <div class="social-links" style="margin: ${emailSpacing.lg} 0;">
-              <a href="#" style="color: ${emailColors.gold}; margin: 0 ${emailSpacing.sm};">Instagram</a>
+              <a href="https://instagram.com/bowenislandtattooshop" style="color: ${emailColors.gold}; margin: 0 ${emailSpacing.sm};">Instagram</a>
               <span style="color: ${emailColors.textMuted};">•</span>
-              <a href="#" style="color: ${emailColors.gold}; margin: 0 ${emailSpacing.sm};">Facebook</a>
+              <a href="https://www.facebook.com/bowenislandtattooshop" style="color: ${emailColors.gold}; margin: 0 ${emailSpacing.sm};">Facebook</a>
               <span style="color: ${emailColors.textMuted};">•</span>
-              <a href="#" style="color: ${emailColors.gold}; margin: 0 ${emailSpacing.sm};">Website</a>
+              <a href="https://www.bowenislandtattooshop.com" style="color: ${emailColors.gold}; margin: 0 ${emailSpacing.sm};">Website</a>
             </div>
             
             <p style="font-size: 12px; color: ${emailColors.textMuted}; margin-top: ${emailSpacing.lg};">
-              © ${new Date().getFullYear()} Bowen Island Tattoo Shop. All rights reserved.<br>
+              © ${new Date().getFullYear()} Bowen Island Tattoo. All rights reserved.<br>
               <a href="#" style="color: ${emailColors.textMuted}; text-decoration: underline;">Unsubscribe</a>
             </p>
           </td>

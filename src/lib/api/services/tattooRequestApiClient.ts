@@ -142,10 +142,10 @@ export class TattooRequestApiClient {
   }
   
   /**
-   * Create a new tattoo request
+   * Create a new tattoo request (public endpoint - no auth required)
    */
   public async create(payload: CreateTattooRequestPayload | TattooRequestFormData): Promise<TattooRequest> {
-    return this.client.post<TattooRequest>(this.baseUrl, payload);
+    return this.client.post<TattooRequest>(this.baseUrl, payload, { skipAuth: true });
   }
   
   /**

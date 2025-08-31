@@ -81,8 +81,16 @@ export class ApiClient {
     
     // Add request interceptor for auth tokens
     this.axiosInstance.interceptors.request.use(
-      async (config) => {
+      async (config: any) => {
         console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+        
+        // Skip auth for public endpoints
+        if (config.skipAuth) {
+          console.log('🔓 Skipping auth for public endpoint');
+          delete config.skipAuth; // Remove the custom property before sending
+          return config;
+        }
+        
         try {
           // Get cached auth token
           const token = await getAuthToken();
@@ -141,7 +149,7 @@ export class ApiClient {
   /**
    * GET request with retry logic and deduplication
    */
-  public async get<T>(path: string, config?: AxiosRequestConfig): Promise<T> {
+  public async get<T>(path: string, config?: AxiosRequestConfig & { skipAuth?: boolean }): Promise<T> {
     const requestKey = this.getRequestKey('GET', path, config);
     
     // Check if the same request is already pending
@@ -198,7 +206,7 @@ export class ApiClient {
   /**
    * POST request
    */
-  public async post<T>(path: string, data?: unknown, config?: AxiosRequestConfig): Promise<T> {
+  public async post<T>(path: string, data?: unknown, config?: AxiosRequestConfig & { skipAuth?: boolean }): Promise<T> {
     const response: AxiosResponse<T> = await this.axiosInstance.post(path, data, config);
     return response.data;
   }

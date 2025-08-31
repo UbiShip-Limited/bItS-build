@@ -4,6 +4,7 @@ import type { EmailTemplate, Prisma } from '@prisma/client';
 import { auditService } from './auditService';
 import { emailService } from './emailService';
 import EmailStyleService from './emailStyleService';
+import { TemplateProcessor } from './templateProcessor';
 
 export interface CreateEmailTemplateData {
   name: string;
@@ -191,19 +192,17 @@ export class EmailTemplateService {
   }> {
     const template = await this.findById(templateId);
 
-    // Replace variables in content
-    let subject = template.subject;
-    let text = template.body;
-    let html = template.htmlBody || undefined;
-
-    Object.entries(sampleData).forEach(([key, value]) => {
-      const placeholder = `{{${key}}}`;
-      subject = subject.replace(new RegExp(placeholder, 'g'), String(value));
-      text = text.replace(new RegExp(placeholder, 'g'), String(value));
-      if (html) {
-        html = html.replace(new RegExp(placeholder, 'g'), String(value));
-      }
-    });
+    // Process templates with conditional blocks and variables
+    let subject = TemplateProcessor.process(template.subject, sampleData);
+    let text = TemplateProcessor.process(template.body, sampleData);
+    let html = template.htmlBody ? TemplateProcessor.process(template.htmlBody, sampleData) : undefined;
+    
+    // Clean up any unmatched template syntax
+    subject = TemplateProcessor.cleanUnmatchedSyntax(subject);
+    text = TemplateProcessor.cleanUnmatchedSyntax(text);
+    if (html) {
+      html = TemplateProcessor.cleanUnmatchedSyntax(html);
+    }
 
     return { subject, text, html };
   }
@@ -259,19 +258,17 @@ export class EmailTemplateService {
       return { success: true };
     }
 
-    // Replace variables
-    let subject = template.subject;
-    let text = template.body;
-    let html = template.htmlBody || undefined;
-
-    Object.entries(variables).forEach(([key, value]) => {
-      const placeholder = `{{${key}}}`;
-      subject = subject.replace(new RegExp(placeholder, 'g'), String(value));
-      text = text.replace(new RegExp(placeholder, 'g'), String(value));
-      if (html) {
-        html = html.replace(new RegExp(placeholder, 'g'), String(value));
-      }
-    });
+    // Process templates with conditional blocks and variables
+    let subject = TemplateProcessor.process(template.subject, variables);
+    let text = TemplateProcessor.process(template.body, variables);
+    let html = template.htmlBody ? TemplateProcessor.process(template.htmlBody, variables) : undefined;
+    
+    // Clean up any unmatched template syntax to ensure nothing is visible to users
+    subject = TemplateProcessor.cleanUnmatchedSyntax(subject);
+    text = TemplateProcessor.cleanUnmatchedSyntax(text);
+    if (html) {
+      html = TemplateProcessor.cleanUnmatchedSyntax(html);
+    }
 
     const result = await emailService.send({
       to,
@@ -436,8 +433,9 @@ Appointment Details:
 - Type: {{appointmentType}}
 
 Location:
-Bowen Island Tattoo Shop
-123 Main Street, Bowen Island, BC
+Bowen Island Tattoo Studio
+565 Artisan Lane, Artisan Square
+Bowen Island, BC V0N1G2
 
 Important Reminders:
 - Please arrive 10 minutes early

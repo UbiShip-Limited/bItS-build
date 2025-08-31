@@ -68,8 +68,9 @@ Appointment Details:
 - Type: {{appointmentType}}
 
 Location:
-Bowen Island Tattoo Shop
-123 Main Street, Bowen Island, BC
+Bowen Island Tattoo Studio
+565 Artisan Lane, Artisan Square
+Bowen Island, BC V0N1G2
 
 Important Reminders:
 - Please arrive 10 minutes early

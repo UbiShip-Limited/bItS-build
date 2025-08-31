@@ -27,7 +27,7 @@ async function testEmailFlow() {
   // 3. Test sending a tattoo request confirmation
   console.log('\n3️⃣ Testing tattoo request confirmation email...');
   
-  const testEmail = process.env.TEST_EMAIL || 'test@example.com';
+  const testEmail = process.env.TEST_EMAIL || 'support@ubiship.io';
   console.log(`   Sending to: ${testEmail}`);
 
   try {

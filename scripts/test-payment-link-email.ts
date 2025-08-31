@@ -39,14 +39,14 @@ async function testPaymentLinkEmail() {
     // 2. Find or create test customer
     console.log('2️⃣  Setting up test customer...');
     let testCustomer = await prisma.customer.findFirst({
-      where: { email: 'test@example.com' }
+      where: { email: 'support@ubiship.io' }
     });
 
     if (!testCustomer) {
       testCustomer = await prisma.customer.create({
         data: {
           name: 'Test Customer',
-          email: 'test@example.com',
+          email: 'support@ubiship.io',
           phone: '604-555-0123'
         }
       });
@@ -152,7 +152,7 @@ async function testPaymentLinkEmail() {
     console.log(`   - Square integration: ${squareClient ? '✅ Connected' : '⚠️  Not configured'}`);
     console.log(`   - Email sending: ${emailResult.success ? '✅ Working' : '❌ Failed'}`);
     console.log('\n💡 Next Steps:');
-    console.log('   1. Check email inbox for test@example.com');
+    console.log('   1. Check email inbox for support@ubiship.io');
     console.log('   2. Verify email formatting and content');
     console.log('   3. Test the payment link if Square is configured');
     console.log('   4. Check owner notifications if enabled');

@@ -7,7 +7,7 @@
 import '../lib/config/envLoader';
 
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
-const TEST_EMAIL = process.env.TEST_EMAIL || 'test@example.com';
+const TEST_EMAIL = process.env.TEST_EMAIL || 'support@ubiship.io';
 
 async function testEmailEndpoints() {
   console.log('🧪 Testing Email API Endpoints\n');

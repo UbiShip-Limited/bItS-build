@@ -18,6 +18,8 @@ import { DashboardCard } from './components/DashboardCard';
 export default function DashboardPage() {
   const { user, loading: authLoading, isAuthenticated } = useAuth();
   const router = useRouter();
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     metrics: {
       todayAppointments: {
@@ -47,19 +49,35 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (isAutoRefresh = false) => {
     try {
-      setIsLoading(true);
+      if (isAutoRefresh) {
+        setIsUpdating(true);
+      } else {
+        setIsLoading(true);
+      }
+      setError(null);
       
       // Fetch real dashboard data from the API
       const data = await dashboardService.getDashboardData();
-      setDashboardData(data);
       
+      // Log the data for debugging
+      console.log('📊 Dashboard data updated:', {
+        todayAppointments: data.metrics?.todayAppointments?.total,
+        newRequests: data.metrics?.requests?.newCount,
+        todayRevenue: data.metrics?.revenue?.today,
+        priorityActions: data.priorityActions?.length
+      });
+      
+      setDashboardData(data);
+      setLastUpdateTime(new Date());
       setIsLoading(false);
+      setIsUpdating(false);
     } catch (err) {
       console.error('Dashboard data fetch error:', err);
       setError('Failed to load dashboard data');
       setIsLoading(false);
+      setIsUpdating(false);
     }
   };
 
@@ -77,22 +95,49 @@ export default function DashboardPage() {
     const apiUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
     const eventSource = new EventSource(`${apiUrl}/events?userId=admin-user`);
 
+    // Handle connection open
+    eventSource.onopen = () => {
+      console.log('✅ Dashboard connected to real-time updates');
+    };
+
     // Auto-refresh dashboard on key events
-    eventSource.addEventListener('appointment_created', () => {
-      fetchDashboardData();
+    eventSource.addEventListener('appointment_created', (event) => {
+      console.log('📅 New appointment created:', event.data);
+      fetchDashboardData(true);
     });
 
     eventSource.addEventListener('request_submitted', (event) => {
-      // Fetch updated data when a new request is submitted
-      fetchDashboardData();
-      
-      // Optionally show a toast notification
-      console.log('New tattoo request submitted:', event);
+      console.log('🎨 New tattoo request submitted:', event.data);
+      fetchDashboardData(true);
     });
 
-    eventSource.addEventListener('payment_received', () => {
-      fetchDashboardData();
+    eventSource.addEventListener('payment_received', (event) => {
+      console.log('💰 Payment received:', event.data);
+      fetchDashboardData(true);
     });
+
+    // Also listen for request status changes
+    eventSource.addEventListener('request_reviewed', () => {
+      fetchDashboardData(true);
+    });
+
+    eventSource.addEventListener('request_approved', () => {
+      fetchDashboardData(true);
+    });
+
+    eventSource.addEventListener('request_rejected', () => {
+      fetchDashboardData(true);
+    });
+
+    eventSource.addEventListener('appointment_approved', () => {
+      fetchDashboardData(true);
+    });
+
+    // Handle errors
+    eventSource.onerror = (error) => {
+      console.error('❌ Dashboard SSE error:', error);
+      // Will automatically reconnect
+    };
 
     return () => {
       eventSource.close();
@@ -134,6 +179,22 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Real-time update indicator */}
+      {isUpdating && (
+        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 ${components.radius.medium} 
+                        bg-gold-500/20 backdrop-blur-sm border ${colors.borderDefault} animate-fadeIn`}>
+          <div className="animate-pulse w-2 h-2 rounded-full bg-gold-500"></div>
+          <span className={`${typography.textSm} ${colors.textAccent}`}>Updating dashboard...</span>
+        </div>
+      )}
+      
+      {/* Last update time */}
+      {lastUpdateTime && !isLoading && (
+        <div className={`text-right ${typography.textXs} ${colors.textMuted}`}>
+          Last updated: {lastUpdateTime.toLocaleTimeString()}
+        </div>
+      )}
+      
       {/* Welcome message for empty state */}
       {!hasData && (
         <div className={`text-center py-12 px-6 bg-gradient-to-b from-obsidian/95 to-obsidian/90 ${components.radius.large} border ${colors.borderSubtle}`}>

@@ -6,9 +6,10 @@ import { Square } from 'square';
 import { webhookRateLimit } from '../../middleware/rateLimiting';
 import { RealtimeService } from '../../services/realtimeService';
 import { CommunicationService } from '../../services/communicationService';
+import { emailService } from '../../services/emailService';
 
 const realtimeService = new RealtimeService();
-const communicationService = new CommunicationService(realtimeService);
+const communicationService = new CommunicationService(realtimeService, emailService);
 
 interface SquareWebhookRequest extends FastifyRequest {
   rawBody?: string;

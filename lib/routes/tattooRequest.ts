@@ -9,6 +9,7 @@ import { tattooRequestImageService } from '../services/tattooRequestImageService
 import { tattooRequestWorkflowService } from '../services/tattooRequestWorkflowService';
 import { CommunicationService } from '../services/communicationService';
 import { RealtimeService } from '../services/realtimeService';
+import { emailService } from '../services/emailService';
 import { pipeline } from 'stream/promises';
 import fs from 'fs';
 import path from 'path';
@@ -44,7 +45,7 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // Initialize services with dependencies for email notifications
   const realtimeService = new RealtimeService();
-  const communicationService = new CommunicationService(realtimeService);
+  const communicationService = new CommunicationService(realtimeService, emailService);
   const tattooRequestService = new TattooRequestService(communicationService, realtimeService);
 
   // GET /tattoo-requests - List tattoo requests (admin dashboard)

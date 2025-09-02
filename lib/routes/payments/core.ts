@@ -3,6 +3,7 @@ import { authorize, getUserPermissions } from '../../middleware/auth';
 import PaymentService from '../../services/paymentService';
 import PaymentLinkService from '../../services/paymentLinkService';
 import { PaymentType } from '../../services/paymentService';
+import { realtimeService } from '../../services/realtimeService';
 
 // Type definitions for request bodies
 interface CreatePaymentBody {
@@ -555,6 +556,15 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
       }
     });
     
+    // Send real-time notification if payment is completed
+    if (paymentData.status === 'completed') {
+      await realtimeService.notifyPaymentReceived(
+        payment.id,
+        payment.amount,
+        payment.customerId || undefined
+      );
+    }
+    
     return {
       ...payment,
       squareConfigured: isSquareConfigured()
@@ -616,6 +626,15 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
         details: { before: original, after: updated }
       }
     });
+    
+    // Send real-time notification if payment was just marked as completed
+    if (original.status !== 'completed' && updated.status === 'completed') {
+      await realtimeService.notifyPaymentReceived(
+        updated.id,
+        updated.amount,
+        updated.customerId || undefined
+      );
+    }
     
     return {
       ...updated,

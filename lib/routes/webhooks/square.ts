@@ -182,20 +182,12 @@ const squareWebhookRoutes: FastifyPluginAsync = async (fastify) => {
           });
           
           if (paymentLink) {
-            // Send real-time notification to dashboard
-            await realtimeService.addEvent({
-              type: 'payment_completed',
-              data: {
-                paymentId: payment.id,
-                customerId: paymentLink.customerId,
-                customerName: paymentLink.customer?.name || 'Unknown',
-                amount,
-                paymentType: typeof paymentLink.metadata === 'object' && paymentLink.metadata && 'paymentType' in paymentLink.metadata 
-                  ? String(paymentLink.metadata.paymentType) 
-                  : 'payment',
-                timestamp: new Date().toISOString()
-              }
-            });
+            // Send real-time notification to dashboard using the correct event type
+            await realtimeService.notifyPaymentReceived(
+              payment.id || 'unknown',
+              amount,
+              paymentLink.customerId || undefined
+            );
             
             // Send email notification to owner
             try {

@@ -10,7 +10,8 @@ export function getSiteURL(): string {
     // Only use localhost in development
     if (url.includes('localhost') && process.env.NODE_ENV === 'production') {
       // Fallback to a production URL if we're in production but somehow got localhost
-      return 'https://bowenislandtattoo.com'; // Replace with your actual domain
+      // This should be set via environment variable
+      return process.env.NEXT_PUBLIC_SITE_URL || 'https://bowenislandtattoo.com';
     }
     return url;
   }
@@ -29,6 +30,17 @@ export function getSiteURL(): string {
     return `https://${process.env.VERCEL_URL}`;
   }
   
-  // Fallback to localhost for development
-  return 'http://localhost:3000';
+  // Railway deployment
+  if (process.env.RAILWAY_STATIC_URL) {
+    return `https://${process.env.RAILWAY_STATIC_URL}`;
+  }
+  
+  // Fallback to localhost ONLY in development
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:3000';
+  }
+  
+  // In production, we should always have a proper URL
+  console.warn('No production URL configured! Set NEXT_PUBLIC_SITE_URL environment variable.');
+  return 'https://bowenislandtattoo.com'; // Your production domain as last resort
 }

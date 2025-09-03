@@ -213,7 +213,6 @@ export class TattooRequestService {
       where: { id },
       include: {
         customer: true,
-        images: true,
         appointments: {
           include: {
             artist: {
@@ -244,8 +243,7 @@ export class TattooRequestService {
       where: { id },
       data: { status },
       include: {
-        customer: true,
-        images: true
+        customer: true
       }
     });
     
@@ -300,8 +298,7 @@ export class TattooRequestService {
       where: { id },
       data: updateData,
       include: {
-        customer: true,
-        images: true
+        customer: true
       }
     });
     
@@ -340,8 +337,7 @@ export class TattooRequestService {
         include: {
           customer: {
             select: { id: true, name: true, email: true }
-          },
-          images: true
+          }
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,

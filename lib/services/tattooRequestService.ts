@@ -14,6 +14,7 @@ export interface CreateTattooRequestData {
   description: string;
   
   // Contact info (required for anonymous, optional for authenticated)
+  firstName?: string;
   contactEmail?: string;
   contactPhone?: string;
   
@@ -94,6 +95,7 @@ export class TattooRequestService {
       // Create tattoo request
       const tattooRequestData: Prisma.TattooRequestCreateInput = {
         description: data.description,
+        firstName: data.firstName,
         placement: data.placement,
         size: data.size,
         colorPreference: data.colorPreference,

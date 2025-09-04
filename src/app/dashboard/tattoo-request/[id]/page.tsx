@@ -27,6 +27,7 @@ import CustomerForm from '@/src/components/forms/CustomerForm';
 import { DashboardPageLayout } from '../../components/DashboardPageLayout';
 import { DashboardCard } from '../../components/DashboardCard';
 import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
+import { getTattooRequestDisplayName, getUserTypeBadge } from '@/src/lib/utils/displayNames';
 
 export default function TattooRequestDetailPage() {
   const params = useParams();
@@ -389,7 +390,14 @@ export default function TattooRequestDetailPage() {
                 </>
               ) : (
                 <>
-                  <p className={`${typography.textSm} ${colors.textMuted}`}>Anonymous Request</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <p className={`${typography.textSm} ${colors.textSecondary} font-medium`}>
+                      {getTattooRequestDisplayName(request)}
+                    </p>
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getUserTypeBadge(request).className}`}>
+                      {getUserTypeBadge(request).icon}
+                    </span>
+                  </div>
                   
                   {request.contactEmail && (
                     <div className="flex items-center">
@@ -421,7 +429,7 @@ export default function TattooRequestDetailPage() {
                     </div>
                   )}
                   
-                  {/* Create Customer Button for Anonymous Requests */}
+                  {/* Create Customer Button for Unregistered Requests */}
                   <div className={`pt-3 mt-3 border-t ${colors.borderSubtle}`}>
                     <button
                       onClick={() => setShowCreateCustomerModal(true)}

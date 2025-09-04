@@ -58,6 +58,7 @@ export interface UseAppointmentsReturn {
     tattooRequestId?: string;
   }) => Promise<AppointmentData>;
   createAnonymousAppointment: (data: {
+    firstName?: string;
     contactEmail: string;
     contactPhone?: string;
     startAt: string;
@@ -207,6 +208,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
   }, [createAppointment]);
 
   const createAnonymousAppointment = useCallback(async (data: {
+    firstName?: string;
     contactEmail: string;
     contactPhone?: string;
     startAt: string;

@@ -31,8 +31,12 @@ export interface AppointmentData {
   artist?: Artist;
   tattooRequest?: TattooRequest;
   // For anonymous bookings
+  firstName?: string;
   contactEmail?: string;
   contactPhone?: string;
+  // Timestamps
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateAppointmentRequest {
@@ -49,6 +53,7 @@ export interface CreateAppointmentRequest {
   customerEmail?: string;
   customerPhone?: string;
   // For anonymous bookings
+  firstName?: string;
   contactEmail?: string;
   contactPhone?: string;
   isAnonymous?: boolean;
@@ -148,6 +153,7 @@ export class AppointmentApiClient {
 
   // Create anonymous appointment (for consultations)
   async createAnonymousAppointment(data: {
+    firstName?: string;
     contactEmail: string;
     contactPhone?: string;
     startAt: string;

@@ -18,9 +18,10 @@ interface Notification {
 
 interface NotificationCenterProps {
   userId: string;
+  onDashboardMetricsUpdate?: () => void;
 }
 
-export default function NotificationCenter({ userId }: NotificationCenterProps) {
+export default function NotificationCenter({ userId, onDashboardMetricsUpdate }: NotificationCenterProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -31,7 +32,19 @@ export default function NotificationCenter({ userId }: NotificationCenterProps) 
   useEffect(() => {
     const connectToEvents = () => {
       const apiUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
-      const eventSource = new EventSource(`${apiUrl}/events?userId=${userId}`);
+      const eventTypes = [
+        'appointment_created', 
+        'payment_received', 
+        'request_submitted',
+        'request_reviewed',
+        'request_approved', 
+        'request_rejected',
+        'appointment_approved',
+        'email_sent',
+        'dashboard_metrics_updated'
+      ].join(',');
+      
+      const eventSource = new EventSource(`${apiUrl}/events?userId=${userId}&eventTypes=${eventTypes}`);
       eventSourceRef.current = eventSource;
 
       eventSource.onopen = () => {
@@ -54,6 +67,12 @@ export default function NotificationCenter({ userId }: NotificationCenterProps) 
           };
 
           setNotifications(prev => [notification, ...prev.slice(0, 49)]); // Keep last 50
+          
+          // Handle dashboard metrics updates
+          if (data.type === 'dashboard_metrics_updated' && onDashboardMetricsUpdate) {
+            console.log('Dashboard metrics update received:', data.data);
+            onDashboardMetricsUpdate();
+          }
           
           // Show browser notification for high priority
           if (notification.priority === 'high' || notification.priority === 'urgent') {
@@ -97,6 +116,7 @@ export default function NotificationCenter({ userId }: NotificationCenterProps) 
       case 'request_rejected': return 'Request Rejected';
       case 'appointment_approved': return 'Appointment Confirmed';
       case 'email_sent': return 'Email Sent';
+      case 'dashboard_metrics_updated': return 'Dashboard Updated';
       case 'system_alert': return 'System Alert';
       default: return 'Notification';
     }
@@ -120,6 +140,8 @@ export default function NotificationCenter({ userId }: NotificationCenterProps) 
         return data?.message || 'Appointment has been confirmed';
       case 'email_sent':
         return data?.message || 'Email notification sent';
+      case 'dashboard_metrics_updated':
+        return data?.message || `Metrics updated for ${data?.timeframe || 'today'}`;
       case 'system_alert':
         return data?.message || 'System notification';
       default:

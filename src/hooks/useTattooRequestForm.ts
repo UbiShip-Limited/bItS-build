@@ -8,6 +8,7 @@ const tattooRequestClient = new TattooRequestApiClient(apiClient);
 const imageUploadService = new ImageUploadService(apiClient);
 
 interface TattooRequestFormData {
+  firstName?: string;
   contactEmail: string;
   contactPhone: string;
   description: string;
@@ -52,6 +53,7 @@ interface UseTattooRequestFormReturn {
 }
 
 export interface TattooFormData {
+  firstName?: string;
   purpose?: string;
   preferredArtist?: string;
   timeframe?: string;
@@ -81,6 +83,7 @@ const AUTOSAVE_INTERVAL = 30000; // 30 seconds
 const useTattooRequestForm = (): UseTattooRequestFormReturn => {
   
   const [formData, setFormData] = useState<TattooRequestFormData>({
+    firstName: '',
     contactEmail: '',
     contactPhone: '',
     description: '',
@@ -225,6 +228,12 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    
+    // Clear any existing upload errors when user makes changes
+    if (error && error.includes('upload')) {
+      setError(null);
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -242,21 +251,51 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
   };
   
   const uploadImages = async (files: File[]) => {
-    console.log('🔍 Upload started:', { fileCount: files.length, fileNames: files.map(f => f.name) });
+    const uploadSessionId = Math.random().toString(36).substring(7);
+    console.log(`🚀 [TattooRequestForm] Upload session started [${uploadSessionId}]:`, {
+      fileCount: files.length,
+      files: files.map(f => ({
+        name: f.name,
+        size: f.size,
+        type: f.type,
+        lastModified: new Date(f.lastModified).toISOString()
+      })),
+      currentImageCount: formData.referenceImages.length,
+      timestamp: new Date().toISOString()
+    });
     
-    if (files.length === 0) return;
+    if (files.length === 0) {
+      console.warn(`⚠️ [TattooRequestForm] No files provided for upload [${uploadSessionId}]`);
+      return;
+    }
     
     setIsUploading(true);
     setError(null);
     
     try {
-      console.log('📤 Starting upload process...');
+      console.log(`📤 [TattooRequestForm] Starting parallel upload process [${uploadSessionId}]`);
       
-      // Upload all files
-      const uploadPromises = files.map(file => imageUploadService.uploadImage(file));
+      // Upload all files in parallel
+      const uploadPromises = files.map((file, index) => {
+        console.log(`📂 [TattooRequestForm] Queuing file ${index + 1}/${files.length} [${uploadSessionId}]:`, file.name);
+        return imageUploadService.uploadImage(file).catch(error => {
+          console.error(`❌ [TattooRequestForm] File ${index + 1} failed [${uploadSessionId}]:`, {
+            fileName: file.name,
+            error: error.message
+          });
+          throw error;
+        });
+      });
+      
       const uploadResults = await Promise.all(uploadPromises);
       
-      console.log('✅ Upload successful:', uploadResults);
+      console.log(`✅ [TattooRequestForm] All uploads successful [${uploadSessionId}]:`, {
+        resultCount: uploadResults.length,
+        results: uploadResults.map(r => ({
+          publicId: r.publicId,
+          url: r.url.substring(0, 50) + '...'
+        }))
+      });
       
       // Update form data with uploaded images
       const newImages = uploadResults.map((result, index) => ({
@@ -265,18 +304,42 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
         publicId: result.publicId
       }));
       
-      setFormData(prev => ({
-        ...prev,
-        referenceImages: [...prev.referenceImages, ...newImages]
-      }));
-      
-      console.log('📊 Form data updated with new images:', newImages.length);
+      setFormData(prev => {
+        const updated = {
+          ...prev,
+          referenceImages: [...prev.referenceImages, ...newImages]
+        };
+        console.log(`📊 [TattooRequestForm] Form data updated [${uploadSessionId}]:`, {
+          previousCount: prev.referenceImages.length,
+          newCount: updated.referenceImages.length,
+          addedImages: newImages.length
+        });
+        return updated;
+      });
       
     } catch (err: any) {
-      console.error('❌ Upload failed:', err);
-      setError(err.message || 'Failed to upload images');
+      console.error(`❌ [TattooRequestForm] Upload session failed [${uploadSessionId}]:`, {
+        error: err.message,
+        stack: err.stack,
+        fileCount: files.length,
+        errorType: err.constructor.name
+      });
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to upload images';
+      if (err.message.includes('signature')) {
+        errorMessage = 'Unable to connect to upload service. Please check your internet connection and try again.';
+      } else if (err.message.includes('Cloudinary')) {
+        errorMessage = 'Upload service error. Please try again or contact support if the problem persists.';
+      } else if (err.message.includes('network') || err.message.includes('fetch')) {
+        errorMessage = 'Network error during upload. Please check your connection and try again.';
+      } else {
+        errorMessage = `Upload failed: ${err.message}`;
+      }
+      
+      setError(errorMessage);
     } finally {
-      console.log('🏁 Setting isUploading to false');
+      console.log(`🏁 [TattooRequestForm] Upload session complete [${uploadSessionId}], setting isUploading to false`);
       setIsUploading(false);
     }
   };
@@ -302,6 +365,7 @@ const useTattooRequestForm = (): UseTattooRequestFormReturn => {
     try {
       // Prepare the tattoo request data
       const requestData: any = {
+        firstName: formData.firstName,
         contactEmail: formData.contactEmail,
         contactPhone: formData.contactPhone,
         description: formData.description,

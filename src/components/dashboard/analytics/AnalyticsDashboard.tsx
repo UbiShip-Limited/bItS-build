@@ -23,6 +23,7 @@ export default function AnalyticsDashboard() {
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState('today');
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('Loading analytics...');
 
   useEffect(() => {
     loadMetrics();
@@ -31,13 +32,23 @@ export default function AnalyticsDashboard() {
   const loadMetrics = async () => {
     try {
       setLoading(true);
+      setLoadingMessage('Loading analytics data...');
+      
+      // Add timeout warning after 45 seconds
+      const timeoutWarning = setTimeout(() => {
+        setLoadingMessage('Analytics taking longer than usual, please wait...');
+      }, 45000);
+      
       const data = await analyticsService.getDashboardMetrics(timeframe);
       setMetrics(data);
+      clearTimeout(timeoutWarning);
+      
     } catch (error) {
       console.error('Error loading analytics:', error);
-      toast.error('Failed to load analytics data');
+      toast.error('Failed to load analytics data. Please try again.');
     } finally {
       setLoading(false);
+      setLoadingMessage('Loading analytics...');
     }
   };
 
@@ -60,8 +71,12 @@ export default function AnalyticsDashboard() {
 
   if (loading || !metrics) {
     return (
-      <div className="flex items-center justify-center h-96">
+      <div className="flex flex-col items-center justify-center h-96 space-y-4">
         <div className="loading loading-spinner loading-lg text-primary"></div>
+        <p className="text-gray-400 text-sm">{loadingMessage}</p>
+        <div className="text-xs text-gray-500 max-w-md text-center">
+          Analytics queries can take up to 60 seconds for large datasets
+        </div>
       </div>
     );
   }

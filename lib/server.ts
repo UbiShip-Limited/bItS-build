@@ -46,8 +46,6 @@ import databaseHealthRoutes from './routes/database-health';
 import dashboardRoutes from './routes/dashboard';
 import { SquareIntegrationService } from './services/squareIntegrationService';
 import { SquareBookingSyncJob } from './jobs/squareBookingSync';
-import { EmailAutomationService } from './services/emailAutomationService';
-import { RealtimeService } from './services/realtimeService';
 
 // Environment variable validation
 function validateEnvironment() {
@@ -338,38 +336,43 @@ const setupEmailAutomation = async (fastifyInstance) => {
   fastifyInstance.log.info('Setting up email automation service...');
   
   try {
-    // Get the realtime service from the fastify instance
-    const realtimeService = fastifyInstance.services?.realtimeService || new RealtimeService();
+    // Use the existing email automation service from the services plugin
+    const emailAutomationService = fastifyInstance.services?.emailAutomationService;
     
-    // Create email automation service instance
-    const emailAutomationService = new EmailAutomationService(realtimeService);
-    
-    // Initialize the service
-    await emailAutomationService.initialize();
-    
-    // Store reference for cleanup
-    fastifyInstance.decorate('emailAutomationService', emailAutomationService);
-    
-    // Also store in services for consistency
-    if (!fastifyInstance.services) {
-      fastifyInstance.decorate('services', {});
+    if (!emailAutomationService) {
+      fastifyInstance.log.error('Email automation service not found in services - skipping initialization');
+      return;
     }
-    fastifyInstance.services.emailAutomationService = emailAutomationService;
     
-    fastifyInstance.log.info('Email automation service initialized successfully');
+    // Initialize the service asynchronously (non-blocking)
+    // This prevents the plugin timeout issue
+    setImmediate(async () => {
+      try {
+        await emailAutomationService.initialize();
+        fastifyInstance.log.info('Email automation service initialized successfully');
+      } catch (initError) {
+        fastifyInstance.log.error('Failed to initialize email automation service:', initError);
+        // Service will continue to run without automation features
+      }
+    });
+    
+    fastifyInstance.log.info('Email automation service setup completed (initialization pending)');
   } catch (error) {
-    fastifyInstance.log.error('Failed to initialize email automation:', error);
+    fastifyInstance.log.error('Failed to setup email automation:', error);
+    // Continue without email automation rather than crash
   }
   
   // Clean up on shutdown
   process.on('SIGINT', () => {
-    if (fastifyInstance.emailAutomationService) {
-      fastifyInstance.emailAutomationService.stop();
+    const service = fastifyInstance.services?.emailAutomationService;
+    if (service) {
+      service.stop();
     }
   });
   process.on('SIGTERM', () => {
-    if (fastifyInstance.emailAutomationService) {
-      fastifyInstance.emailAutomationService.stop();
+    const service = fastifyInstance.services?.emailAutomationService;
+    if (service) {
+      service.stop();
     }
   });
 };

@@ -68,7 +68,8 @@ export class RealtimeService {
             'request_reviewed',
             'request_approved',
             'request_rejected',
-            'appointment_approved'
+            'appointment_approved',
+            'dashboard_metrics_updated'
           ].includes(event.type);
           
           return (isUserEvent || isGlobalEvent) && 
@@ -211,6 +212,22 @@ export class RealtimeService {
     }
   }
   
+  /**
+   * Notify dashboard metrics update
+   */
+  async notifyDashboardMetricsUpdated(timeframe: string = 'today', trigger: string = 'system'): Promise<void> {
+    await this.addEvent({
+      type: 'dashboard_metrics_updated',
+      data: { 
+        timeframe, 
+        trigger, // 'payment', 'appointment', 'request', 'system'
+        timestamp: new Date().toISOString(),
+        message: `Dashboard metrics updated (${timeframe})`
+      },
+      userId: undefined // Global event
+    });
+  }
+
   /**
    * Create a notification with custom data (alias for notifyUser for backward compatibility)
    */

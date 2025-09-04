@@ -50,25 +50,47 @@ export class AppointmentAnalyticsService {
     today: DateRange,
     thisWeek: DateRange
   ): Promise<AppointmentMetrics> {
-    const [
-      todayAppointments,
-      todayCompleted,
-      weekStats,
-      efficiencyMetrics
-    ] = await Promise.all([
-      this.getAppointmentCountForPeriod(today.start, today.end),
-      this.getCompletedAppointmentsForPeriod(today.start, today.end),
-      this.getAppointmentStatsForPeriod(thisWeek.start, thisWeek.end),
+    // Combine queries to reduce database hits
+    const [weekAppointments, efficiencyMetrics] = await Promise.all([
+      this.prisma.appointment.findMany({
+        where: {
+          startTime: {
+            gte: Math.min(today.start.getTime(), thisWeek.start.getTime()) < new Date().getTime() ? 
+              new Date(Math.min(today.start.getTime(), thisWeek.start.getTime())) : thisWeek.start,
+            lte: new Date()
+          }
+        },
+        select: {
+          startTime: true,
+          status: true,
+        }
+      }),
       this.getAppointmentEfficiencyMetrics()
     ]);
 
+    // Calculate metrics from single query result
+    const todayAppointments = weekAppointments.filter(a => 
+      a.startTime && a.startTime >= today.start && a.startTime <= today.end
+    );
+    const todayCompleted = todayAppointments.filter(a => a.status === BookingStatus.COMPLETED);
+    
+    const thisWeekAppointments = weekAppointments.filter(a => 
+      a.startTime && a.startTime >= thisWeek.start && a.startTime <= thisWeek.end
+    );
+    const weekCompleted = thisWeekAppointments.filter(a => a.status === BookingStatus.COMPLETED);
+    const weekCancelled = thisWeekAppointments.filter(a => a.status === BookingStatus.CANCELLED);
+
     return {
       today: {
-        count: todayAppointments,
-        completed: todayCompleted,
-        remaining: todayAppointments - todayCompleted
+        count: todayAppointments.length,
+        completed: todayCompleted.length,
+        remaining: todayAppointments.length - todayCompleted.length
       },
-      week: weekStats,
+      week: {
+        scheduled: thisWeekAppointments.length,
+        completed: weekCompleted.length,
+        cancelled: weekCancelled.length
+      },
       metrics: efficiencyMetrics
     };
   }

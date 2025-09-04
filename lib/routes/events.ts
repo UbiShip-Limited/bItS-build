@@ -1,5 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { realtimeService } from '../services/realtimeService';
+import { sseMiddleware } from '../middleware/sseConnectionManager';
 
 const eventsRoutes: FastifyPluginAsync = async (fastify) => {
   // GET /events - Server-Sent Events endpoint
@@ -40,8 +41,12 @@ const eventsRoutes: FastifyPluginAsync = async (fastify) => {
           'request_approved',
           'request_rejected',
           'appointment_approved',
-          'email_sent'
+          'email_sent',
+          'dashboard_metrics_updated'
         ];
+
+    // Apply SSE connection management
+    sseMiddleware(request as any, reply);
 
     try {
       // Get initial events

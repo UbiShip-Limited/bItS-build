@@ -39,14 +39,19 @@ export class RevenueAnalyticsService {
    * Get revenue for a specific period
    */
   async getRevenueForPeriod(start: Date, end: Date): Promise<number> {
-    const result = await this.prisma.payment.aggregate({
-      where: {
-        status: 'completed',
-        createdAt: { gte: start, lte: end }
-      },
-      _sum: { amount: true }
-    });
-    return result._sum.amount || 0;
+    try {
+      const result = await this.prisma.payment.aggregate({
+        where: {
+          status: 'completed',
+          createdAt: { gte: start, lte: end }
+        },
+        _sum: { amount: true }
+      });
+      return result._sum.amount || 0;
+    } catch (error) {
+      console.error('Error getting revenue for period:', error);
+      return 0; // Return 0 instead of crashing
+    }
   }
 
   /**
@@ -59,21 +64,48 @@ export class RevenueAnalyticsService {
     lastWeek: DateRange,
     lastMonth: DateRange
   ): Promise<RevenueMetrics> {
-    const [
-      todayRevenue,
-      weekRevenue,
-      monthRevenue,
-      lastWeekRevenue,
-      lastMonthRevenue,
-      breakdown
-    ] = await Promise.all([
-      this.getRevenueForPeriod(today.start, today.end),
-      this.getRevenueForPeriod(thisWeek.start, thisWeek.end),
-      this.getRevenueForPeriod(thisMonth.start, thisMonth.end),
-      this.getRevenueForPeriod(lastWeek.start, lastWeek.end),
-      this.getRevenueForPeriod(lastMonth.start, lastMonth.end),
-      this.getRevenueBreakdownByType(thisMonth.start, thisMonth.end)
-    ]);
+    // Combine queries to reduce database hits
+    const allPayments = await this.prisma.payment.findMany({
+      where: {
+        status: 'completed',
+        createdAt: {
+          gte: Math.min(
+            today.start.getTime(),
+            thisWeek.start.getTime(),
+            thisMonth.start.getTime(),
+            lastWeek.start.getTime(),
+            lastMonth.start.getTime()
+          ) < new Date().getTime() ? new Date(Math.min(
+            today.start.getTime(),
+            thisWeek.start.getTime(),
+            thisMonth.start.getTime(),
+            lastWeek.start.getTime(),
+            lastMonth.start.getTime()
+          )) : lastMonth.start,
+          lte: new Date()
+        }
+      },
+      select: {
+        amount: true,
+        paymentType: true,
+        createdAt: true
+      }
+    });
+
+    // Calculate metrics from single query result
+    const todayRevenue = this.filterPaymentsByDateRange(allPayments, today.start, today.end)
+      .reduce((sum, p) => sum + p.amount, 0);
+    const weekRevenue = this.filterPaymentsByDateRange(allPayments, thisWeek.start, thisWeek.end)
+      .reduce((sum, p) => sum + p.amount, 0);
+    const monthRevenue = this.filterPaymentsByDateRange(allPayments, thisMonth.start, thisMonth.end)
+      .reduce((sum, p) => sum + p.amount, 0);
+    const lastWeekRevenue = this.filterPaymentsByDateRange(allPayments, lastWeek.start, lastWeek.end)
+      .reduce((sum, p) => sum + p.amount, 0);
+    const lastMonthRevenue = this.filterPaymentsByDateRange(allPayments, lastMonth.start, lastMonth.end)
+      .reduce((sum, p) => sum + p.amount, 0);
+    const breakdown = this.calculateBreakdownFromPayments(
+      this.filterPaymentsByDateRange(allPayments, thisMonth.start, thisMonth.end)
+    );
 
     const weekTrend = AnalyticsUtils.calculatePercentageChange(lastWeekRevenue, weekRevenue);
     const monthTrend = AnalyticsUtils.calculatePercentageChange(lastMonthRevenue, monthRevenue);
@@ -251,5 +283,44 @@ export class RevenueAnalyticsService {
     ]);
 
     return AnalyticsUtils.calculatePercentageChange(previousRevenue, currentRevenue);
+  }
+
+  /**
+   * Filter payments by date range from in-memory array
+   */
+  private filterPaymentsByDateRange(payments: Array<{createdAt: Date, amount: number, paymentType: string | null}>, start: Date, end: Date) {
+    return payments.filter(p => p.createdAt >= start && p.createdAt <= end);
+  }
+
+  /**
+   * Calculate breakdown from payments array
+   */
+  private calculateBreakdownFromPayments(payments: Array<{paymentType: string | null, amount: number}>) {
+    const breakdown = {
+      consultations: 0,
+      tattoos: 0,
+      touchups: 0,
+      deposits: 0
+    };
+
+    payments.forEach(payment => {
+      switch (payment.paymentType) {
+        case 'consultation':
+        case 'drawing_consultation':
+          breakdown.consultations += payment.amount;
+          break;
+        case 'tattoo_deposit':
+          breakdown.deposits += payment.amount;
+          break;
+        case 'tattoo_final':
+          breakdown.tattoos += payment.amount;
+          break;
+        case 'touchup':
+          breakdown.touchups += payment.amount;
+          break;
+      }
+    });
+
+    return breakdown;
   }
 } 

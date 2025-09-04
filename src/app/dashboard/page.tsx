@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/hooks/useAuth';
-import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
+import { typography, colors,components } from '@/src/lib/styles/globalStyleConstants';
 import { dashboardService, type DashboardData } from '@/src/lib/api/services/dashboardService';
 
 // Component imports
@@ -58,8 +58,8 @@ export default function DashboardPage() {
       }
       setError(null);
       
-      // Fetch real dashboard data from the API
-      const data = await dashboardService.getDashboardData();
+      // Fetch real dashboard data from the API with current timeframe
+      const data = await dashboardService.getDashboardData('today', true);
       
       // Log the data for debugging
       console.log('📊 Dashboard data updated:', {
@@ -93,56 +93,74 @@ export default function DashboardPage() {
     if (!isAuthenticated) return;
     
     const apiUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
-    const eventSource = new EventSource(`${apiUrl}/events?userId=admin-user`);
+    const userId = user?.id || 'admin-user'; // Use authenticated user ID or fallback
+    const eventSource = new EventSource(`${apiUrl}/events?userId=${userId}`);
 
     // Handle connection open
     eventSource.onopen = () => {
       console.log('✅ Dashboard connected to real-time updates');
     };
 
-    // Auto-refresh dashboard on key events
+    // Listen for the unified dashboard metrics update event
+    eventSource.addEventListener('dashboard_metrics_updated', (event) => {
+      console.log('📊 Dashboard metrics updated:', event.data);
+      fetchDashboardData(true);
+    });
+
+    // Auto-refresh dashboard on key events (fallback for immediate feedback)
+    const handleDashboardRefresh = (eventType: string, eventData?: any) => {
+      console.log(`🔄 Dashboard refresh triggered by: ${eventType}`, eventData);
+      fetchDashboardData(true);
+    };
+
     eventSource.addEventListener('appointment_created', (event) => {
       console.log('📅 New appointment created:', event.data);
-      fetchDashboardData(true);
+      handleDashboardRefresh('appointment_created', event.data);
     });
 
     eventSource.addEventListener('request_submitted', (event) => {
       console.log('🎨 New tattoo request submitted:', event.data);
-      fetchDashboardData(true);
+      handleDashboardRefresh('request_submitted', event.data);
     });
 
     eventSource.addEventListener('payment_received', (event) => {
       console.log('💰 Payment received:', event.data);
-      fetchDashboardData(true);
+      handleDashboardRefresh('payment_received', event.data);
     });
 
-    // Also listen for request status changes
-    eventSource.addEventListener('request_reviewed', () => {
-      fetchDashboardData(true);
+    eventSource.addEventListener('request_reviewed', (event) => {
+      handleDashboardRefresh('request_reviewed', event.data);
     });
 
-    eventSource.addEventListener('request_approved', () => {
-      fetchDashboardData(true);
+    eventSource.addEventListener('request_approved', (event) => {
+      handleDashboardRefresh('request_approved', event.data);
     });
 
-    eventSource.addEventListener('request_rejected', () => {
-      fetchDashboardData(true);
+    eventSource.addEventListener('request_rejected', (event) => {
+      handleDashboardRefresh('request_rejected', event.data);
     });
 
-    eventSource.addEventListener('appointment_approved', () => {
-      fetchDashboardData(true);
+    eventSource.addEventListener('appointment_approved', (event) => {
+      handleDashboardRefresh('appointment_approved', event.data);
     });
 
-    // Handle errors
+    // Handle errors and connection issues
     eventSource.onerror = (error) => {
       console.error('❌ Dashboard SSE error:', error);
-      // Will automatically reconnect
+      
+      // Check connection state and log appropriate message
+      if (eventSource.readyState === EventSource.CONNECTING) {
+        console.log('🔄 Dashboard reconnecting to real-time updates...');
+      } else if (eventSource.readyState === EventSource.CLOSED) {
+        console.log('❌ Dashboard real-time connection closed');
+      }
     };
 
     return () => {
+      console.log('🔌 Closing dashboard real-time connection');
       eventSource.close();
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id]); // Include user.id to reconnect on user change
 
   if (authLoading || isLoading) {
     return (
@@ -188,10 +206,26 @@ export default function DashboardPage() {
         </div>
       )}
       
-      {/* Last update time */}
-      {lastUpdateTime && !isLoading && (
-        <div className={`text-right ${typography.textXs} ${colors.textMuted}`}>
-          Last updated: {lastUpdateTime.toLocaleTimeString()}
+      {/* Header with last update time and refresh button */}
+      {(lastUpdateTime || process.env.NODE_ENV === 'development') && !isLoading && (
+        <div className={`flex items-center justify-between ${typography.textXs} ${colors.textMuted}`}>
+          {/* Last update time */}
+          <div>
+            {lastUpdateTime && `Last updated: ${lastUpdateTime.toLocaleTimeString()}`}
+          </div>
+          
+          {/* Manual refresh button for testing */}
+          {process.env.NODE_ENV === 'development' && (
+            <button 
+              onClick={() => fetchDashboardData(true)}
+              className={`${components.button.base} ${components.button.sizes.small} ${components.button.variants.ghost} 
+                          text-xs px-3 py-1.5 opacity-60 hover:opacity-100 transition-opacity`}
+              disabled={isUpdating}
+              title="Development: Refresh dashboard data"
+            >
+              🔄 {isUpdating ? 'Refreshing...' : 'Refresh'}
+            </button>
+          )}
         </div>
       )}
       

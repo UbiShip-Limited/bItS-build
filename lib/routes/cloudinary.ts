@@ -44,13 +44,19 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
       body: {
         type: 'object',
         properties: {
-          folder: { type: 'string', default: 'tattoo-requests' },
+          folder: { type: 'string' },
           tags: { type: 'array', items: { type: 'string' } },
           context: { type: 'object' }
         }
       }
     }
   }, async (request, reply) => {
+    console.log('🔍 [CloudinaryRoutes] Raw request body received:', {
+      body: request.body,
+      bodyType: typeof request.body,
+      bodyKeys: request.body ? Object.keys(request.body) : 'no body'
+    });
+    
     const { folder = 'tattoo-requests', tags = ['tattoo-request', 'public-upload'], context } = request.body as CloudinarySignatureBody;
     
     // Log the signature generation request
@@ -66,12 +72,9 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
     // This locks the upload to only go to the specified folder
     const params: any = {
       folder,
-      tags: Array.isArray(tags) ? tags : [tags], // Ensure tags is an array
-      // Security: Add upload restrictions
-      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'],
-      max_file_size: 10485760, // 10MB limit
-      resource_type: 'image',
-      type: 'upload'
+      tags: Array.isArray(tags) ? tags : [tags] // Ensure tags is an array
+      // Note: Security params like allowed_formats, max_file_size are enforced by Cloudinary
+      // but should NOT be included in signature generation for client uploads
     };
     
     // Only include context if it's provided and not empty
@@ -79,19 +82,32 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
       params.context = context;
     }
     
-    const signatureData = cloudinaryService.generateUploadSignature(params);
-    
-    // Log what we're returning
-    console.log('✅ Signature generated:', {
-      hasSignature: !!signatureData.signature,
-      timestamp: signatureData.timestamp,
-      folder: signatureData.folder,
-      tags: signatureData.tags,
-      allParams: Object.keys(signatureData)
-    });
-    
-    reply.type('application/json');
-    return signatureData;
+    try {
+      const signatureData = cloudinaryService.generateUploadSignature(params);
+      
+      // Log what we're returning
+      console.log('✅ Signature generated:', {
+        hasSignature: !!signatureData.signature,
+        timestamp: signatureData.timestamp,
+        folder: signatureData.folder,
+        tags: signatureData.tags,
+        allParams: Object.keys(signatureData)
+      });
+      
+      reply.type('application/json');
+      return signatureData;
+    } catch (error: any) {
+      console.error('❌ [CloudinaryRoutes] Signature generation failed:', {
+        error: error.message,
+        params,
+        stack: error.stack
+      });
+      
+      return reply.status(500).send({
+        error: 'Failed to generate upload signature',
+        message: error.message
+      });
+    }
   });
 
   // Generate upload signature for authenticated users
@@ -123,12 +139,9 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
     // This locks the upload to only go to the specified folder
     const params: any = {
       folder,
-      tags: Array.isArray(tags) ? tags : [tags], // Ensure tags is an array
-      // Security: Add upload restrictions
-      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'],
-      max_file_size: user?.role === 'admin' || user?.role === 'artist' ? 52428800 : 10485760, // 50MB for staff, 10MB for customers
-      resource_type: 'image',
-      type: 'upload'
+      tags: Array.isArray(tags) ? tags : [tags] // Ensure tags is an array
+      // Note: Security params like allowed_formats, max_file_size are enforced by Cloudinary
+      // but should NOT be included in signature generation for client uploads
     };
     
     const signatureData = cloudinaryService.generateUploadSignature(params);
@@ -190,12 +203,9 @@ const cloudinaryRoutes: FastifyPluginAsync = async (fastify) => {
           tattoo_request_id: tattooRequestId,
           ...(customerId && { customer_id: customerId }),
           upload_type: 'tattoo_request_reference'
-        },
-        // Security: Add upload restrictions
-        allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp'],
-        max_file_size: 10485760, // 10MB limit
-        resource_type: 'image',
-        type: 'upload'
+        }
+        // Note: Security params like allowed_formats, max_file_size are enforced by Cloudinary
+        // but should NOT be included in signature generation for client uploads
       };
       
       const signatureData = cloudinaryService.generateUploadSignature(params);

@@ -4,12 +4,15 @@
  */
 
 import EmailStyleService from '../../services/emailStyleService';
+import { generateDisplayName } from '../../utils/displayNames';
 
 /**
  * Generate tattoo request confirmation email
  */
 export function generateTattooRequestConfirmation(variables: {
   customerName: string;
+  firstName?: string;
+  contactEmail?: string;
   description: string;
   placement: string;
   size: string;
@@ -20,10 +23,16 @@ export function generateTattooRequestConfirmation(variables: {
 }): { subject: string; html: string; text: string } {
   const subject = 'Your tattoo request has been received - Bowen Island Tattoo Shop';
   
+  // Use firstName if available, otherwise use generateDisplayName for better personalization
+  const displayName = variables.firstName || generateDisplayName(
+    variables.customerName,
+    variables.contactEmail
+  );
+  
   const content = `
     ${EmailStyleService.createCard('', `
       <p style="font-size: 18px; color: #FAFAF9; margin-bottom: 24px;">
-        Hi <strong>${variables.customerName}</strong>,
+        Hi <strong>${displayName}</strong>,
       </p>
       <p>Thank you for submitting your tattoo request! We're excited to bring your vision to life. Our team will review your request and get back to you within 24-48 hours.</p>
     `, '🎨')}
@@ -115,6 +124,8 @@ export function generateTattooRequestConfirmation(variables: {
  */
 export function generateAppointmentConfirmation(variables: {
   customerName: string;
+  firstName?: string;
+  contactEmail?: string;
   appointmentDate: string;
   appointmentTime: string;
   duration: string;
@@ -123,10 +134,16 @@ export function generateAppointmentConfirmation(variables: {
 }): { subject: string; html: string; text: string } {
   const subject = `Appointment Confirmation - ${variables.appointmentDate} at ${variables.appointmentTime}`;
   
+  // Use firstName if available, otherwise use generateDisplayName for better personalization
+  const displayName = variables.firstName || generateDisplayName(
+    variables.customerName,
+    variables.contactEmail
+  );
+  
   const content = `
     ${EmailStyleService.createCard('', `
       <p style="font-size: 18px; color: #FAFAF9; margin-bottom: 24px;">
-        Hi <strong>${variables.customerName}</strong>,
+        Hi <strong>${displayName}</strong>,
       </p>
       <p>Your appointment has been confirmed! We're looking forward to seeing you.</p>
     `, '✅')}
@@ -205,6 +222,8 @@ export function generateAppointmentConfirmation(variables: {
  */
 export function generate24HourReminder(variables: {
   customerName: string;
+  firstName?: string;
+  contactEmail?: string;
   appointmentDate: string;
   appointmentTime: string;
   duration: string;
@@ -213,10 +232,16 @@ export function generate24HourReminder(variables: {
 }): { subject: string; html: string; text: string } {
   const subject = `Reminder: Your appointment is tomorrow - ${variables.appointmentTime}`;
   
+  // Use firstName if available, otherwise use generateDisplayName for better personalization
+  const displayName = variables.firstName || generateDisplayName(
+    variables.customerName,
+    variables.contactEmail
+  );
+  
   const content = `
     ${EmailStyleService.createCard('', `
       <p style="font-size: 18px; color: #FAFAF9; margin-bottom: 24px;">
-        Hi <strong>${variables.customerName}</strong>,
+        Hi <strong>${displayName}</strong>,
       </p>
       <p>Just a friendly reminder that your tattoo appointment is <strong style="color: #B8956A;">tomorrow</strong>!</p>
     `, '⏰')}
@@ -282,13 +307,21 @@ export function generate24HourReminder(variables: {
  */
 export function generateAftercareInstructions(variables: {
   customerName: string;
+  firstName?: string;
+  contactEmail?: string;
 }): { subject: string; html: string; text: string } {
   const subject = 'Important: Tattoo Aftercare Instructions';
+  
+  // Use firstName if available, otherwise use generateDisplayName for better personalization
+  const displayName = variables.firstName || generateDisplayName(
+    variables.customerName,
+    variables.contactEmail
+  );
   
   const content = `
     ${EmailStyleService.createCard('', `
       <p style="font-size: 18px; color: #FAFAF9; margin-bottom: 24px;">
-        Hi <strong>${variables.customerName}</strong>,
+        Hi <strong>${displayName}</strong>,
       </p>
       <p>Thank you for choosing Bowen Island Tattoo Shop! Your new tattoo looks amazing, and we want to make sure it heals perfectly.</p>
     `, '🌟')}
@@ -370,15 +403,23 @@ export function generateAftercareInstructions(variables: {
  */
 export function generateReviewRequest(variables: {
   customerName: string;
+  firstName?: string;
+  contactEmail?: string;
   appointmentType: string;
   artistName: string;
 }): { subject: string; html: string; text: string } {
   const subject = 'How was your experience with us?';
   
+  // Use firstName if available, otherwise use generateDisplayName for better personalization
+  const displayName = variables.firstName || generateDisplayName(
+    variables.customerName,
+    variables.contactEmail
+  );
+  
   const content = `
     ${EmailStyleService.createCard('', `
       <p style="font-size: 18px; color: #FAFAF9; margin-bottom: 24px;">
-        Hi <strong>${variables.customerName}</strong>,
+        Hi <strong>${displayName}</strong>,
       </p>
       <p>We hope you're loving your new tattoo! It's been a week since your ${variables.appointmentType} with ${variables.artistName}, and we'd love to hear about your experience.</p>
     `, '💭')}
@@ -451,6 +492,7 @@ export function generateReviewRequest(variables: {
  */
 export function generateOwnerNewRequest(variables: {
   customerName: string;
+  firstName?: string;
   customerEmail: string;
   customerPhone: string;
   description: string;
@@ -463,7 +505,13 @@ export function generateOwnerNewRequest(variables: {
   referenceImages?: number;
   dashboardUrl: string;
 }): { subject: string; html: string; text: string } {
-  const subject = `🎨 New Tattoo Request from ${variables.customerName}`;
+  // Use firstName if available, otherwise use generateDisplayName for better display
+  const displayName = variables.firstName || generateDisplayName(
+    variables.customerName,
+    variables.customerEmail
+  );
+  
+  const subject = `🎨 New Tattoo Request from ${displayName}`;
   
   const content = `
     <div style="background: linear-gradient(135deg, rgba(184, 149, 106, 0.2), rgba(184, 149, 106, 0.1)); border: 2px solid #B8956A; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
@@ -479,7 +527,7 @@ export function generateOwnerNewRequest(variables: {
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
           <td style="padding: 8px 0;">
-            <strong style="color: #B8956A;">Name:</strong> ${variables.customerName}
+            <strong style="color: #B8956A;">Name:</strong> ${displayName}${variables.firstName && variables.customerName !== variables.firstName ? ` (${variables.customerName})` : ''}
           </td>
         </tr>
         <tr>

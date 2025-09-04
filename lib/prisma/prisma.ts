@@ -85,11 +85,11 @@ const getPrismaConfig = () => {
       const databaseUrl = new URL(dbUrl);
       
       // Add connection pool and timeout parameters for Supabase
-      databaseUrl.searchParams.set('connection_limit', '10'); // Reduced for Railway
-      databaseUrl.searchParams.set('pool_timeout', '20');
+      databaseUrl.searchParams.set('connection_limit', '30'); // Further increased for high load
+      databaseUrl.searchParams.set('pool_timeout', '45'); // Longer timeout for pool acquisition
       databaseUrl.searchParams.set('connect_timeout', '60'); // Increased for Railway
-      databaseUrl.searchParams.set('statement_timeout', '60000'); // 60 seconds
-      databaseUrl.searchParams.set('idle_in_transaction_session_timeout', '60000');
+      databaseUrl.searchParams.set('statement_timeout', '25000'); // Shorter statement timeout
+      databaseUrl.searchParams.set('idle_in_transaction_session_timeout', '25000'); // Shorter idle timeout
       
       // For Supabase pooler, ensure proper SSL mode
       if (databaseUrl.hostname.includes('pooler.supabase.com')) {

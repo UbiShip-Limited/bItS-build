@@ -26,11 +26,15 @@ vi.mock('../../lib/api/services/tattooRequestApiClient', () => ({
 }));
 
 // Mock the ImageUploadService
-vi.mock('../../lib/api/services/ImageUploadService', () => ({
-  ImageUploadService: vi.fn().mockImplementation(() => ({}))
+const mockImageUploadService = vi.hoisted(() => ({
+  uploadImage: vi.fn()
 }));
 
-// Mock useCloudinaryUpload hook
+vi.mock('../../lib/api/services/ImageUploadService', () => ({
+  ImageUploadService: vi.fn().mockImplementation(() => mockImageUploadService)
+}));
+
+// Mock useCloudinaryUpload hook (kept for backward compatibility if still used somewhere)
 vi.mock('../useCloudinaryUpload', () => ({
   useCloudinaryUpload: () => ({
     uploadToCloudinary: mockUploadToCloudinary,
@@ -54,6 +58,12 @@ describe('useTattooRequestForm', () => {
       trackingToken: 'track-123'
     });
 
+    // Mock individual image upload responses
+    mockImageUploadService.uploadImage.mockResolvedValue({
+      url: 'http://example.com/image.jpg',
+      publicId: 'test-public-id'
+    });
+    
     mockUploadToCloudinary.mockResolvedValue([
       {
         url: 'http://example.com/image.jpg',
@@ -66,6 +76,7 @@ describe('useTattooRequestForm', () => {
     const { result } = renderHook(() => useTattooRequestForm());
 
     expect(result.current.formData).toEqual({
+      firstName: '',
       contactEmail: '',
       contactPhone: '',
       description: '',
@@ -214,6 +225,17 @@ describe('useTattooRequestForm', () => {
       new File([''], 'test2.jpg', { type: 'image/jpeg' })
     ];
 
+    // Mock multiple successful uploads
+    mockImageUploadService.uploadImage
+      .mockResolvedValueOnce({
+        url: 'http://example.com/image1.jpg',
+        publicId: 'test-public-id-1'
+      })
+      .mockResolvedValueOnce({
+        url: 'http://example.com/image2.jpg',
+        publicId: 'test-public-id-2'
+      });
+
     await act(async () => {
       await result.current.uploadImages(mockFiles);
     });
@@ -221,13 +243,21 @@ describe('useTattooRequestForm', () => {
     await waitFor(() => {
       expect(result.current.formData.referenceImages).toHaveLength(2);
       expect(result.current.formData.referenceImages[0]).toEqual({
-        url: 'http://example.com/image.jpg',
+        url: 'http://example.com/image1.jpg',
         file: mockFiles[0],
-        publicId: 'test-public-id'
+        publicId: 'test-public-id-1'
+      });
+      expect(result.current.formData.referenceImages[1]).toEqual({
+        url: 'http://example.com/image2.jpg',
+        file: mockFiles[1],
+        publicId: 'test-public-id-2'
       });
     });
 
-    expect(mockUploadToCloudinary).toHaveBeenCalledWith(mockFiles);
+    // Should call uploadImage once for each file
+    expect(mockImageUploadService.uploadImage).toHaveBeenCalledTimes(2);
+    expect(mockImageUploadService.uploadImage).toHaveBeenCalledWith(mockFiles[0]);
+    expect(mockImageUploadService.uploadImage).toHaveBeenCalledWith(mockFiles[1]);
   });
 
   it('should reset form correctly', () => {
@@ -248,6 +278,7 @@ describe('useTattooRequestForm', () => {
     });
 
     expect(result.current.formData.contactEmail).toBe('');
+    expect(result.current.formData.firstName).toBe('');
     expect(result.current.error).toBe(null);
     expect(result.current.success).toBe(false);
     expect(result.current.validationErrors).toBe(null);

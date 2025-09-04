@@ -191,10 +191,14 @@ export const generateUploadSignature = (
   // Only include non-empty parameters in signature
   if (params.folder) paramsToSign.folder = params.folder;
   if (params.tags && Array.isArray(params.tags) && params.tags.length > 0) {
-    paramsToSign.tags = params.tags;
+    // Cloudinary expects tags as comma-separated string for signature generation
+    paramsToSign.tags = params.tags.join(',');
   }
   if (params.context && Object.keys(params.context).length > 0) {
-    paramsToSign.context = params.context;
+    // Cloudinary expects context as pipe-separated key=value pairs for signature generation
+    paramsToSign.context = Object.entries(params.context)
+      .map(([k, v]) => `${k}=${v}`)
+      .join('|');
   }
   
   // Include any other params
@@ -231,8 +235,16 @@ export const generateUploadSignature = (
   
   // Include only the parameters that were actually signed
   if (paramsToSign.folder) result.folder = paramsToSign.folder;
-  if (paramsToSign.tags) result.tags = paramsToSign.tags;
-  if (paramsToSign.context) result.context = paramsToSign.context;
+  if (paramsToSign.tags) {
+    // Return tags as both array (for frontend) and string (for Cloudinary upload)
+    result.tags = params.tags; // Keep original array for frontend reference
+    result.tagsString = paramsToSign.tags; // String version used in signature
+  }
+  if (paramsToSign.context) {
+    // Return context as both object (for frontend) and string (for Cloudinary upload)  
+    result.context = params.context; // Keep original object for frontend reference
+    result.contextString = paramsToSign.context; // String version used in signature
+  }
   
   return result;
 };

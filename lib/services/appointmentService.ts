@@ -9,6 +9,7 @@ export interface CreateAppointmentData {
   startAt: Date;
   duration: number; // minutes
   customerId?: string;
+  firstName?: string;
   contactEmail?: string;
   contactPhone?: string;
   bookingType: BookingType;
@@ -103,6 +104,8 @@ export class AppointmentService {
       // Store contact info directly for anonymous bookings
       contactEmail: data.contactEmail,
       contactPhone: data.contactPhone
+      // Note: firstName is not stored in appointments table, 
+      // but can be derived from linked TattooRequest or generated from email
     };
     
     // Only set relations if IDs are provided
@@ -151,6 +154,9 @@ export class AppointmentService {
           appointment.id,
           appointment.customerId || undefined
         );
+        
+        // Trigger dashboard metrics update
+        await this.realtimeService.notifyDashboardMetricsUpdated('today', 'appointment');
       }
       
       // Send confirmation email to customer
@@ -289,6 +295,11 @@ export class AppointmentService {
         updated.id,
         updated.customerId || undefined
       );
+    }
+    
+    // Trigger dashboard metrics update for significant changes
+    if (this.realtimeService && (data.status === BookingStatus.COMPLETED || data.status === BookingStatus.CANCELLED)) {
+      await this.realtimeService.notifyDashboardMetricsUpdated('today', 'appointment');
     }
     
     return updated;

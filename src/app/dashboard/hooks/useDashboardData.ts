@@ -429,6 +429,12 @@ export function useDashboardData(isAuthenticated: boolean, user: any) {
     await loadDashboardData();
   }, [loadDashboardData]);
 
+  // Handle dashboard metrics updates from SSE notifications
+  const handleDashboardMetricsUpdate = useCallback(() => {
+    console.log('📊 Dashboard metrics update notification received, refreshing...');
+    handleRefreshMetrics();
+  }, [handleRefreshMetrics]);
+
   return {
     // State
     loading,
@@ -444,6 +450,7 @@ export function useDashboardData(isAuthenticated: boolean, user: any) {
     
     // Actions
     loadDashboardData,
-    handleRefreshMetrics
+    handleRefreshMetrics,
+    handleDashboardMetricsUpdate
   };
 } 

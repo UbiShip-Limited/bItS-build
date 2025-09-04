@@ -51,6 +51,8 @@ The Bowen Island crew`,
       htmlBody: emailTemplateGenerator.getTattooRequestTemplate(),
       variables: {
         customerName: 'Customer name',
+        firstName: 'Customer first name (for personalization)',
+        contactEmail: 'Contact email address',
         description: 'Tattoo description',
         placement: 'Body placement',
         size: 'Tattoo size',
@@ -95,6 +97,8 @@ See you {{appointmentDate}}!
       htmlBody: emailTemplateGenerator.getAppointmentConfirmationTemplate(),
       variables: {
         customerName: 'Customer name',
+        firstName: 'Customer first name (for personalization)',
+        contactEmail: 'Contact email address',
         appointmentDate: 'Appointment date',
         appointmentTime: 'Appointment time',
         duration: 'Appointment duration',
@@ -133,6 +137,8 @@ Can't wait to see you tomorrow!
       htmlBody: emailTemplateGenerator.get24HourReminderTemplate(),
       variables: {
         customerName: 'Customer name',
+        firstName: 'Customer first name (for personalization)',
+        contactEmail: 'Contact email address',
         appointmentDate: 'Appointment date (formatted)',
         appointmentTime: 'Appointment time',
         duration: 'Appointment duration',
@@ -168,6 +174,8 @@ The Bowen Island team`,
       htmlBody: emailTemplateGenerator.get24HourReminderTemplate(), // Reuse similar template
       variables: {
         customerName: 'Customer name',
+        firstName: 'Customer first name (for personalization)',
+        contactEmail: 'Contact email address',
         appointmentTime: 'Appointment time',
         artistName: 'Artist name',
         appointmentType: 'Type of appointment (optional)'
@@ -214,6 +222,8 @@ The Bowen Island team`,
       htmlBody: emailTemplateGenerator.getAftercareTemplate(),
       variables: {
         customerName: 'Customer name',
+        firstName: 'Customer first name (for personalization)',
+        contactEmail: 'Contact email address',
         artistName: 'Artist who did the tattoo (optional)'
       },
       isActive: true
@@ -257,6 +267,7 @@ Let's make this happen!`,
       htmlBody: emailTemplateGenerator.getOwnerNotificationTemplate(),
       variables: {
         customerName: 'Customer name',
+        firstName: 'Customer first name (for personalization)',
         customerEmail: 'Customer email',
         customerPhone: 'Customer phone',
         description: 'Tattoo description',

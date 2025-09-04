@@ -6,6 +6,7 @@ import { RealtimeService } from './realtimeService';
 import type { Appointment, Customer, TattooRequest, EmailAutomationLog } from '@prisma/client';
 import { subHours, addHours, addDays, subDays, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
+import { generateDisplayName } from '../utils/displayNames';
 
 export interface EmailAutomationType {
   appointment_reminder_24h: 'appointment_reminder_24h';
@@ -244,6 +245,8 @@ export class EmailAutomationService {
         appointment.customer.email,
         {
           customerName: appointment.customer.name,
+          firstName: appointment.customer.name,
+          contactEmail: appointment.customer.email,
           timeUntil,
           appointmentDate,
           appointmentTime,
@@ -354,7 +357,9 @@ export class EmailAutomationService {
         'aftercare_instructions',
         appointment.customer.email,
         {
-          customerName: appointment.customer.name
+          customerName: appointment.customer.name,
+          firstName: appointment.customer.name,
+          contactEmail: appointment.customer.email
         }
       );
       
@@ -457,6 +462,8 @@ export class EmailAutomationService {
         appointment.customer.email,
         {
           customerName: appointment.customer.name,
+          firstName: appointment.customer.name,
+          contactEmail: appointment.customer.email,
           artistName: appointment.artist?.name || 'our team',
           appointmentType: appointment.type || 'tattoo session'
         }
@@ -555,7 +562,9 @@ export class EmailAutomationService {
         're_engagement',
         customer.email,
         {
-          customerName: customer.name
+          customerName: customer.name,
+          firstName: customer.name,
+          contactEmail: customer.email
         }
       );
       
@@ -651,7 +660,11 @@ export class EmailAutomationService {
         return;
       }
       
-      const customerName = request.customer?.name || 'there';
+      // Use firstName if available, otherwise use generateDisplayName for better personalization
+      const customerName = request.firstName || 
+        generateDisplayName(request.customer?.name || '', email) || 
+        'there';
+        
       const trackingUrl = request.trackingToken 
         ? `${process.env.FRONTEND_URL || 'http://localhost:3000'}/track-request/${request.trackingToken}`
         : '';
@@ -661,6 +674,8 @@ export class EmailAutomationService {
         email,
         {
           customerName,
+          firstName: request.firstName,
+          contactEmail: email,
           description: request.description.substring(0, 100) + '...',
           trackingUrl
         }

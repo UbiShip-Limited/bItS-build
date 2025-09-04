@@ -32,6 +32,7 @@ export default function AppointmentForm({
   
   const [formData, setFormData] = useState({
     customerId: customerId || appointment?.customerId || '',
+    firstName: appointment?.firstName || '',
     contactEmail: appointment?.contactEmail || '',
     contactPhone: appointment?.contactPhone || '',
     startAt: appointment?.startTime ? new Date(appointment.startTime).toISOString().slice(0, 16) : '',
@@ -99,6 +100,7 @@ export default function AppointmentForm({
         // Create new appointment
         if (formData.isAnonymous) {
           appointmentResult = await appointmentClient.createAnonymousAppointment({
+            firstName: formData.firstName,
             contactEmail: formData.contactEmail,
             contactPhone: formData.contactPhone,
             startAt: formData.startAt,
@@ -187,6 +189,22 @@ export default function AppointmentForm({
         {/* Contact Information for Anonymous */}
         {formData.isAnonymous && (
           <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                First Name
+              </label>
+              <input
+                type="text"
+                value={formData.firstName}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                className="w-full px-3 py-2 border border-gold-500/30 rounded-md bg-white/5 text-white focus:outline-none focus:border-gold-500/50 transition-all duration-300"
+                placeholder="What should we call you?"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Optional but helps us personalize your experience
+              </p>
+            </div>
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email *

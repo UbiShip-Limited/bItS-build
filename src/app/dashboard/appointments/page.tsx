@@ -30,10 +30,11 @@ import Modal from '@/src/components/ui/Modal';
 import AppointmentForm from '@/src/components/forms/AppointmentForm';
 import QuickPaymentActions from '@/src/components/payments/QuickPaymentActions';
 import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHistory';
+import AppointmentNotificationStatus from '@/src/components/appointments/AppointmentNotificationStatus';
 import { DashboardPageLayout, DashboardCard } from '../components';
 import { DashboardEmptyState } from '../components/DashboardEmptyState';
 import { toast } from '@/src/lib/toast';
-import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
+import { typography, colors, effects, layout, components, spacing } from '@/src/lib/styles/globalStyleConstants';
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<AppointmentData[]>([]);
@@ -418,25 +419,27 @@ export default function AppointmentsPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider w-12">
+                    <th className={`${colors.bgPrimary} ${colors.textMuted} ${typography.textXs} ${typography.fontMedium} uppercase ${typography.trackingWide} w-12`}>
                       <input
                         type="checkbox"
                         checked={appointments.length > 0 && selectedIds.size === appointments.length}
                         onChange={(e) => handleSelectAll(e.target.checked)}
-                        className="checkbox checkbox-sm border-[#1a1a1a] checked:border-[#C9A449] [--chkbg:#C9A449] [--chkfg:#080808]"
+                        className="checkbox checkbox-sm border-gold-500/30 checked:border-gold-500 [--chkbg:#C9A449] [--chkfg:#080808]"
                       />
                     </th>
-                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Client</th>
-                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Date & Time</th>
-                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Type</th>
-                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Status</th>
-                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Square</th>
-                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Price</th>
-                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider">Payment</th>
-                    <th className="bg-[#080808] text-gray-400 text-xs font-medium uppercase tracking-wider text-right">Actions</th>
+                    <th className={`${colors.bgPrimary} ${colors.textMuted} ${typography.textXs} ${typography.fontMedium} uppercase ${typography.trackingWide}`}>Client</th>
+                    <th className={`${colors.bgPrimary} ${colors.textMuted} ${typography.textXs} ${typography.fontMedium} uppercase ${typography.trackingWide}`}>Date & Time</th>
+                    <th className={`${colors.bgPrimary} ${colors.textMuted} ${typography.textXs} ${typography.fontMedium} uppercase ${typography.trackingWide}`}>Artist</th>
+                    <th className={`${colors.bgPrimary} ${colors.textMuted} ${typography.textXs} ${typography.fontMedium} uppercase ${typography.trackingWide}`}>Type</th>
+                    <th className={`${colors.bgPrimary} ${colors.textMuted} ${typography.textXs} ${typography.fontMedium} uppercase ${typography.trackingWide}`}>Status</th>
+                    <th className={`${colors.bgPrimary} ${colors.textMuted} ${typography.textXs} ${typography.fontMedium} uppercase ${typography.trackingWide}`}>Square</th>
+                    <th className={`${colors.bgPrimary} ${colors.textMuted} ${typography.textXs} ${typography.fontMedium} uppercase ${typography.trackingWide}`}>Price</th>
+                    <th className={`${colors.bgPrimary} ${colors.textMuted} ${typography.textXs} ${typography.fontMedium} uppercase ${typography.trackingWide}`}>Payment</th>
+                    <th className={`${colors.bgPrimary} ${colors.textMuted} ${typography.textXs} ${typography.fontMedium} uppercase ${typography.trackingWide}`}>Notifications</th>
+                    <th className={`${colors.bgPrimary} ${colors.textMuted} ${typography.textXs} ${typography.fontMedium} uppercase ${typography.trackingWide} text-right`}>Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#1a1a1a]">
+                <tbody className={`divide-y ${colors.borderSubtle}`}>
                   {appointments.map((appointment) => {
                     const { date, time } = formatDateTime(appointment.startTime);
                     const isPaid = appointment.priceQuote && appointment.priceQuote > 0; // This will be improved when payment data is available
@@ -446,9 +449,9 @@ export default function AppointmentsPage() {
                     return (
                       <tr 
                         key={appointment.id} 
-                        className={`hover:bg-[#1a1a1a]/50 transition-colors border-l-4 ${
+                        className={`hover:bg-white/5 ${effects.transitionNormal} border-l-4 ${
                           appointment.status === BookingStatus.CONFIRMED ? 'border-l-green-500' :
-                          appointment.status === BookingStatus.PENDING ? 'border-l-[#C9A449]' :
+                          appointment.status === BookingStatus.PENDING ? 'border-l-gold-500' :
                           appointment.status === BookingStatus.CANCELLED ? 'border-l-red-500' :
                           appointment.status === BookingStatus.COMPLETED ? 'border-l-gray-500' :
                           'border-l-transparent'
@@ -459,32 +462,32 @@ export default function AppointmentsPage() {
                             type="checkbox"
                             checked={selectedIds.has(appointment.id)}
                             onChange={(e) => handleSelectOne(appointment.id, e.target.checked)}
-                            className="checkbox checkbox-sm border-[#1a1a1a] checked:border-[#C9A449] [--chkbg:#C9A449] [--chkfg:#080808]"
+                            className="checkbox checkbox-sm border-gold-500/30 checked:border-gold-500 [--chkbg:#C9A449] [--chkfg:#080808]"
                           />
                         </td>
                         <td>
                           <div className="flex items-center gap-3">
                             <div className="avatar placeholder">
-                              <div className="bg-gradient-to-br from-[#C9A449] to-[#8B7635] text-[#080808] rounded-full w-10">
+                              <div className={`bg-gradient-to-br from-gold-500 to-gold-600 ${colors.textPrimary} rounded-full w-10`}>
                                 <User className="w-5 h-5" />
                               </div>
                             </div>
                             <div>
-                              <div className="font-bold text-white">
+                              <div className={`${typography.fontSemibold} ${colors.textPrimary}`}>
                                 {appointment.customer?.name || 'Anonymous'}
                               </div>
-                              <div className="text-sm opacity-75 text-gray-500">
+                              <div className={`${typography.textSm} ${colors.textMuted}`}>
                                 {appointment.customer?.email || appointment.contactEmail || 'No email'}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td>
-                          <div className="flex items-center gap-2 text-gray-300">
-                            <Calendar className="w-4 h-4 text-[#C9A449]" />
+                          <div className={`flex items-center gap-2 ${colors.textSecondary}`}>
+                            <Calendar className={`w-4 h-4 ${colors.textAccent}`} />
                             <div>
-                              <div className="font-medium">{date}</div>
-                              <div className="text-sm opacity-75 flex items-center gap-1">
+                              <div className={`${typography.fontMedium}`}>{date}</div>
+                              <div className={`${typography.textSm} ${colors.textMuted} flex items-center gap-1`}>
                                 <Clock className="w-3 h-3" />
                                 {time}
                               </div>
@@ -492,15 +495,27 @@ export default function AppointmentsPage() {
                           </div>
                         </td>
                         <td>
-                          <div className="text-gray-300">
-                            <div className="font-medium">{getBookingTypeLabel(appointment.type)}</div>
-                            <div className="text-sm opacity-75">{appointment.duration} minutes</div>
+                          <div className={colors.textSecondary}>
+                            {appointment.artist ? (
+                              <div>
+                                <div className={`${typography.fontMedium} ${typography.textSm}`}>{appointment.artist.email.split('@')[0]}</div>
+                                <div className={`${typography.textXs} ${colors.textMuted} capitalize`}>{appointment.artist.role}</div>
+                              </div>
+                            ) : (
+                              <span className={`${colors.textMuted} ${typography.textSm}`}>Unassigned</span>
+                            )}
                           </div>
                         </td>
                         <td>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                          <div className={colors.textSecondary}>
+                            <div className={typography.fontMedium}>{getBookingTypeLabel(appointment.type)}</div>
+                            <div className={`${typography.textSm} ${colors.textMuted}`}>{appointment.duration} minutes</div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 ${components.radius.small} ${typography.textXs} ${typography.fontMedium} border ${
                             appointment.status === BookingStatus.CONFIRMED ? 'bg-green-500/20 text-green-400 border-green-500/30' :
-                            appointment.status === BookingStatus.PENDING ? 'bg-[#C9A449]/20 text-[#C9A449] border-[#C9A449]/30' :
+                            appointment.status === BookingStatus.PENDING ? 'bg-gold-500/20 text-gold-400 border-gold-500/30' :
                             appointment.status === BookingStatus.COMPLETED ? 'bg-gray-500/20 text-gray-400 border-gray-500/30' :
                             appointment.status === BookingStatus.CANCELLED ? 'bg-red-500/20 text-red-400 border-red-500/30' :
                             'bg-gray-500/20 text-gray-400 border-gray-500/30'
@@ -519,7 +534,7 @@ export default function AppointmentsPage() {
                                 <CloudOff className="w-5 h-5 text-gray-500" />
                               </div>
                             ) : (
-                              <div className="tooltip" data-tip="Anonymous booking">
+                              <div className="tooltip" data-tip="Walk-in appointment">
                                 <span className="text-xs text-gray-600">N/A</span>
                               </div>
                             )}
@@ -527,12 +542,12 @@ export default function AppointmentsPage() {
                         </td>
                         <td>
                           {appointment.priceQuote ? (
-                            <div className="flex items-center font-medium text-[#C9A449]">
+                            <div className={`flex items-center ${typography.fontMedium} ${colors.textAccent}`}>
                               <DollarSign className="w-4 h-4 mr-1" />
                               {appointment.priceQuote.toFixed(2)}
                             </div>
                           ) : (
-                            <span className="text-gray-600">-</span>
+                            <span className={colors.textMuted}>-</span>
                           )}
                         </td>
                         <td>
@@ -564,10 +579,17 @@ export default function AppointmentsPage() {
                           </div>
                         </td>
                         <td>
+                          <AppointmentNotificationStatus 
+                            appointmentId={appointment.id}
+                            customerId={appointment.customerId || undefined}
+                            compact={true}
+                          />
+                        </td>
+                        <td>
                           <div className="flex justify-end gap-2">
                             <Link 
                               href={`/dashboard/appointments/${appointment.id}`} 
-                              className="btn btn-ghost btn-xs text-[#C9A449] hover:text-[#E5B563]"
+                              className={`${components.button.base} ${components.button.sizes.small} ${components.button.variants.ghost} ${colors.textAccent} hover:${colors.textAccentProminent}`}
                             >
                               View
                             </Link>
@@ -576,14 +598,14 @@ export default function AppointmentsPage() {
                                 setSelectedAppointment(appointment);
                                 setShowCreateModal(true);
                               }}
-                              className="btn btn-ghost btn-xs text-gray-400 hover:text-white"
+                              className={`${components.button.base} ${components.button.sizes.small} ${components.button.variants.ghost} ${colors.textSecondary} hover:${colors.textPrimary}`}
                             >
                               Edit
                             </button>
                             {appointment.status !== BookingStatus.CANCELLED && (
                               <button 
                                 onClick={() => handleCancelAppointment(appointment.id)}
-                                className="btn btn-ghost btn-xs text-red-400 hover:text-red-300"
+                                className={`${components.button.base} ${components.button.sizes.small} ${components.button.variants.ghost} ${colors.textError} hover:text-red-300`}
                               >
                                 Cancel
                               </button>
@@ -598,30 +620,30 @@ export default function AppointmentsPage() {
             </div>
             
             {/* Pagination */}
-            <div className="bg-[#080808] border-t border-[#1a1a1a] p-4">
+            <div className={`${colors.bgPrimary} border-t ${colors.borderSubtle} p-4`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">
-                    Showing <span className="font-bold text-white">{((filters.page - 1) * filters.limit) + 1}</span> to{' '}
-                    <span className="font-bold text-white">{Math.min(filters.page * filters.limit, pagination.total)}</span> of{' '}
-                    <span className="font-bold text-white">{pagination.total}</span> results
+                  <p className={`${typography.textSm} ${colors.textMuted}`}>
+                    Showing <span className={`${typography.fontSemibold} ${colors.textPrimary}`}>{((filters.page - 1) * filters.limit) + 1}</span> to{' '}
+                    <span className={`${typography.fontSemibold} ${colors.textPrimary}`}>{Math.min(filters.page * filters.limit, pagination.total)}</span> of{' '}
+                    <span className={`${typography.fontSemibold} ${colors.textPrimary}`}>{pagination.total}</span> results
                   </p>
                 </div>
                 <div className="join">
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
                     disabled={filters.page === 1}
-                    className="join-item btn btn-sm bg-[#111111] border-[#1a1a1a] text-gray-400 hover:bg-[#1a1a1a] hover:text-white"
+                    className={`join-item btn btn-sm ${colors.bgSecondary} ${colors.borderSubtle} ${colors.textMuted} hover:bg-white/10 hover:${colors.textPrimary} ${effects.transitionNormal}`}
                   >
                     Previous
                   </button>
-                  <button className="join-item btn btn-sm btn-active bg-[#C9A449] text-[#080808] border-[#C9A449]">
+                  <button className={`join-item btn btn-sm btn-active ${colors.bgAccent} ${colors.textPrimary} ${colors.borderDefault}`}>
                     Page {filters.page} of {pagination.pages}
                   </button>
                   <button
                     onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
                     disabled={filters.page === pagination.pages}
-                    className="join-item btn btn-sm bg-[#111111] border-[#1a1a1a] text-gray-400 hover:bg-[#1a1a1a] hover:text-white"
+                    className={`join-item btn btn-sm ${colors.bgSecondary} ${colors.borderSubtle} ${colors.textMuted} hover:bg-white/10 hover:${colors.textPrimary} ${effects.transitionNormal}`}
                   >
                     Next
                   </button>

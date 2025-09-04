@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { TattooRequest } from '../../lib/api/services/tattooRequestApiClient';
+import { getTattooRequestDisplayName, getUserTypeBadge } from '../../lib/utils/displayNames';
 
 interface TattooRequestsTableProps {
   requests: TattooRequest[];
@@ -38,12 +39,24 @@ export default function TattooRequestsTable({ requests }: TattooRequestsTablePro
             requests.map((request, index) => (
               <tr key={request.id} className="transition-colors hover:bg-[#1a1a1a]/50">
                 <td className="px-5 py-4">
-                  <div>
-                    <div className="text-white font-medium">
-                      {request.customer?.name || 'Anonymous'}
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1">
+                      <div className="text-white font-medium">
+                        {getTattooRequestDisplayName(request)}
+                      </div>
+                      <div className="text-gray-400 text-sm">
+                        {request.customer?.email || request.contactEmail || 'No email'}
+                      </div>
                     </div>
-                    <div className="text-gray-400 text-sm">
-                      {request.customer?.email || request.contactEmail || 'No email'}
+                    <div className="flex-shrink-0">
+                      {(() => {
+                        const badge = getUserTypeBadge(request);
+                        return (
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${badge.className}`} title={`${badge.label} user`}>
+                            {badge.icon}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 </td>

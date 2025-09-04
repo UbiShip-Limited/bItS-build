@@ -232,13 +232,36 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
       </div>
       
       {/* Contact Information Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+      <div className="space-y-6">
+        {/* First Name Field */}
         <div className="form-control">
           <label className="block pb-2">
             <span className="font-body text-white/90 font-medium text-sm tracking-wide">
-              Email Address<span className="text-red-400 ml-1">*</span>
+              First Name
             </span>
+            <span className="text-white/60 text-xs ml-2">(Optional but recommended)</span>
           </label>
+          <input
+            type="text"
+            name="firstName"
+            value={formData.firstName || ''}
+            onChange={handleInputChange}
+            className="w-full h-12 bg-[#080808]/30 border border-white/10 hover:border-white/20 focus:border-[#C9A449]/60 focus:ring-2 focus:ring-[#C9A449]/30 rounded-xl font-body text-white placeholder-white/30 backdrop-blur-sm transition-all duration-300 focus:outline-none px-4"
+            placeholder="What should we call you?"
+          />
+          <p className="text-xs text-white/50 mt-2 ml-1 font-body">
+            Helps us personalize your experience instead of showing 'Anonymous'
+          </p>
+        </div>
+
+        {/* Email and Phone Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+          <div className="form-control">
+            <label className="block pb-2">
+              <span className="font-body text-white/90 font-medium text-sm tracking-wide">
+                Email Address<span className="text-red-400 ml-1">*</span>
+              </span>
+            </label>
           <div className="relative">
             <input
               type="email"
@@ -329,6 +352,7 @@ const InitialInfoStep: React.FC<InitialInfoStepProps> = ({
           <p className="text-xs text-white/50 mt-2 ml-1 font-body">
             US/Canada format supported. Include +1 for country code if needed.
           </p>
+        </div>
         </div>
       </div>
       

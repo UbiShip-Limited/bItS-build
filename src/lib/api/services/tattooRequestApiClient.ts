@@ -4,6 +4,7 @@ import { ApiClient } from '../apiClient';
 export interface TattooRequest {
   id: string;
   customerId?: string;
+  firstName?: string;
   contactEmail?: string;
   contactPhone?: string;
   trackingToken?: string;
@@ -51,6 +52,7 @@ export interface TattooRequestsResponse {
 
 export interface CreateTattooRequestPayload {
   customerId?: string;
+  firstName?: string;
   contactEmail?: string;
   contactPhone?: string;
   description: string;
@@ -73,6 +75,7 @@ export interface UpdateTattooRequestPayload {
 }
 
 export interface TattooRequestFormData {
+  firstName?: string;
   contactEmail: string;
   contactPhone?: string;
   description: string;

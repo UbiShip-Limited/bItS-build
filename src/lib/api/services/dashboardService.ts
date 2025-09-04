@@ -51,6 +51,8 @@ export interface DashboardData {
   metrics: DashboardMetrics;
   priorityActions: DashboardPriorityAction[];
   recentActivity: DashboardActivity[];
+  analytics?: any;
+  timeframe?: string;
 }
 
 export class DashboardService {
@@ -59,20 +61,29 @@ export class DashboardService {
   /**
    * Get dashboard metrics and recent activity
    */
-  async getDashboardData(): Promise<DashboardData> {
+  async getDashboardData(timeframe: string = 'today', includeAnalytics: boolean = true): Promise<DashboardData> {
     try {
-      const response = await this.apiClient.get<any>('/dashboard/metrics');
+      const params = new URLSearchParams({
+        timeframe,
+        includeAnalytics: includeAnalytics.toString()
+      });
+      const response = await this.apiClient.get<any>(`/dashboard/metrics?${params.toString()}`);
+      
+      // Handle new unified response format with success/data structure
+      const responseData = response?.data || response;
       
       // Ensure response has the expected structure
       const data: DashboardData = {
-        metrics: response?.metrics || {
+        metrics: responseData?.metrics || {
           todayAppointments: { total: 0, completed: 0, remaining: 0 },
           actionItems: { overdueRequests: 0, unconfirmedAppointments: 0, followUpsNeeded: 0 },
           requests: { newCount: 0, urgentCount: 0, todayCount: 0 },
           revenue: { today: 0, thisWeek: 0, thisMonth: 0 }
         },
-        priorityActions: response?.priorityActions || [],
-        recentActivity: response?.recentActivity || []
+        priorityActions: responseData?.priorityActions || [],
+        recentActivity: responseData?.recentActivity || [],
+        analytics: responseData?.analytics || null,
+        timeframe: responseData?.timeframe || timeframe
       };
       
       // Transform dates in the response
@@ -161,6 +172,29 @@ export class DashboardService {
       console.error('Failed to fetch recent tattoo requests:', error);
       return [];
     }
+  }
+
+  /**
+   * Get just metrics without analytics (faster)
+   */
+  async getMetricsOnly(timeframe: string = 'today'): Promise<DashboardMetrics> {
+    const data = await this.getDashboardData(timeframe, false);
+    return data.metrics;
+  }
+
+  /**
+   * Get analytics data only
+   */
+  async getAnalytics(timeframe: string = 'today'): Promise<any> {
+    const data = await this.getDashboardData(timeframe, true);
+    return data.analytics;
+  }
+
+  /**
+   * Refresh dashboard data with real-time updates
+   */
+  async refreshDashboard(timeframe?: string): Promise<DashboardData> {
+    return this.getDashboardData(timeframe || 'today', true);
   }
 }
 

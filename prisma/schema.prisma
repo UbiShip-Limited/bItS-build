@@ -74,6 +74,7 @@ model Appointment {
 model TattooRequest {
   id                String        @id @default(uuid())
   customerId        String?       @map("customer_id")
+  firstName         String?       @map("first_name")
   description       String
   placement         String?
   size              String?

@@ -109,7 +109,7 @@ export class AnalyticsService {
       const lastWeek = AnalyticsUtils.getDateRange('lastWeek', now);
       const lastMonth = AnalyticsUtils.getDateRange('lastMonth', now);
 
-      // Execute all metrics queries in parallel with error handling
+      // Execute all metrics queries in parallel with error handling and timeouts
       const [
         revenueMetrics,
         appointmentMetrics,
@@ -117,16 +117,26 @@ export class AnalyticsService {
         requestMetrics,
         businessMetrics
       ] = await Promise.allSettled([
-        this.revenueService.getRevenueMetrics(today, thisWeek, thisMonth, lastWeek, lastMonth)
-          .catch(() => null),
-        this.appointmentService.getAppointmentMetrics(today, thisWeek)
-          .catch(() => null),
-        this.customerService.getCustomerMetrics(today, thisWeek, thisMonth)
-          .catch(() => null),
-        this.requestService.getRequestMetrics(today, thisWeek, thisMonth)
-          .catch(() => null),
-        this.businessService.getBusinessMetrics()
-          .catch(() => null)
+        Promise.race([
+          this.revenueService.getRevenueMetrics(today, thisWeek, thisMonth, lastWeek, lastMonth),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Revenue metrics timeout')), 20000))
+        ]).catch(() => null),
+        Promise.race([
+          this.appointmentService.getAppointmentMetrics(today, thisWeek),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Appointment metrics timeout')), 15000))
+        ]).catch(() => null),
+        Promise.race([
+          this.customerService.getCustomerMetrics(today, thisWeek, thisMonth),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Customer metrics timeout')), 15000))
+        ]).catch(() => null),
+        Promise.race([
+          this.requestService.getRequestMetrics(today, thisWeek, thisMonth),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Request metrics timeout')), 10000))
+        ]).catch(() => null),
+        Promise.race([
+          this.businessService.getBusinessMetrics(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Business metrics timeout')), 10000))
+        ]).catch(() => null)
       ]);
 
       // Return dashboard metrics with proper structure
@@ -148,7 +158,7 @@ export class AnalyticsService {
       };
 
       return dashboardMetrics;
-    }, 300); // Cache for 5 minutes
+    }, 900); // Cache for 15 minutes (increased for better performance)
   }
 
   /**

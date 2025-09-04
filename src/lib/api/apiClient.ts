@@ -2,6 +2,7 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { createBrowserClient } from '@supabase/ssr';
 
 // Define base API configuration - use Fastify backend by default
+// In production, NEXT_PUBLIC_BACKEND_API_URL should be set to your Railway backend URL
 const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
 
 // Debug: Log the API URL to make sure it's correct
@@ -75,8 +76,8 @@ export class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
-      // Add timeout for better error handling
-      timeout: 30000
+      // Add timeout for better error handling (increased for analytics)
+      timeout: 60000
     });
     
     // Add request interceptor for auth tokens
@@ -239,6 +240,13 @@ export class ApiClient {
       }
     });
     return response.data;
+  }
+  
+  /**
+   * Get the base URL for this API client
+   */
+  public getBaseUrl(): string {
+    return this.baseURL;
   }
   
   /**

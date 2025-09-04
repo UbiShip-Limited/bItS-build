@@ -2,6 +2,7 @@ import { prisma } from '../prisma/prisma';
 import type { Customer, Appointment, TattooRequest } from '@prisma/client';
 import { emailTemplateService } from './emailTemplateService';
 import { auditService } from './auditService';
+import { getTattooRequestDisplayName, generateDisplayName } from '../utils/displayNames';
 import { RealtimeService } from './realtimeService';
 
 export interface EmailMessage {
@@ -175,7 +176,10 @@ export class CommunicationService {
       return { success: false, error: 'No email address available' };
     }
     
-    const customerName = appointment.customer?.name || 'Valued Customer';
+    // Use customer name if available, otherwise use generateDisplayName for better personalization
+    const customerName = appointment.customer?.name || 
+      generateDisplayName(appointment.customer?.name || '', appointment.customer?.email || '') ||
+      'Valued Customer';
     
     // Format appointment details
     const appointmentDate = appointment.startTime ? 
@@ -197,7 +201,9 @@ export class CommunicationService {
         'appointment_confirmation',
         email,
         {
-          customerName,
+          customerName: appointment.customer?.name || customerName,
+          firstName: appointment.customer?.name,
+          contactEmail: appointment.customer?.email,
           appointmentDate,
           appointmentTime,
           duration: `${appointment.duration || 60} minutes`,
@@ -256,7 +262,10 @@ export class CommunicationService {
     
     const email = appointment.customer?.email || appointment.contactEmail;
     const phone = appointment.customer?.phone || appointment.contactPhone;
-    const customerName = appointment.customer?.name || 'Valued Customer';
+    // Use customer name if available, otherwise use generateDisplayName for better personalization
+    const customerName = appointment.customer?.name || 
+      generateDisplayName(appointment.customer?.name || '', appointment.customer?.email || appointment.contactEmail || '') ||
+      'Valued Customer';
     
     // Format reminder message
     const appointmentTime = appointment.startTime ?
@@ -361,7 +370,10 @@ Bowen Island Tattoo Shop Team
     const results: { email?: NotificationResult } = {};
     
     const email = appointment.customer?.email || appointment.contactEmail;
-    const customerName = appointment.customer?.name || 'Valued Customer';
+    // Use customer name if available, otherwise use generateDisplayName for better personalization
+    const customerName = appointment.customer?.name || 
+      generateDisplayName(appointment.customer?.name || '', appointment.customer?.email || appointment.contactEmail || '') ||
+      'Valued Customer';
     
     if (!email || !this.emailService) {
       return { email: { success: false, error: 'Email not available' } };
@@ -490,7 +502,9 @@ Bowen Island Tattoo Shop Team
       return { success: false, error: 'No email address available' };
     }
     
-    const customerName = tattooRequest.customer?.name || 'Valued Customer';
+    // Use getTattooRequestDisplayName for better personalization
+    const displayName = getTattooRequestDisplayName(tattooRequest);
+    const customerName = tattooRequest.customer?.name || displayName || 'Valued Customer';
     const trackingUrl = tattooRequest.trackingToken 
       ? `${process.env.FRONTEND_URL || 'http://localhost:3000'}/track-request/${tattooRequest.trackingToken}`
       : null;
@@ -501,6 +515,8 @@ Bowen Island Tattoo Shop Team
         email,
         {
           customerName,
+          firstName: tattooRequest.firstName,
+          contactEmail: tattooRequest.contactEmail,
           description: tattooRequest.description,
           placement: tattooRequest.placement || 'Not specified',
           size: tattooRequest.size || 'Not specified',
@@ -605,7 +621,9 @@ Bowen Island Tattoo Shop Team
       return { success: true };
     }
 
-    const customerName = tattooRequest.customer?.name || 'Anonymous';
+    // Use getTattooRequestDisplayName for better display instead of 'Anonymous'
+    const displayName = getTattooRequestDisplayName(tattooRequest);
+    const customerName = tattooRequest.customer?.name || displayName || 'New Customer';
     const customerEmail = tattooRequest.customer?.email || tattooRequest.contactEmail || 'Not provided';
     const customerPhone = tattooRequest.customer?.phone || tattooRequest.contactPhone || 'Not provided';
     const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/requests/${tattooRequest.id}`;
@@ -615,7 +633,8 @@ Bowen Island Tattoo Shop Team
         'owner_new_request',
         this.ownerEmail,
         {
-          customerName,
+          customerName: displayName,
+          firstName: tattooRequest.firstName,
           customerEmail,
           customerPhone,
           description: tattooRequest.description,
@@ -678,7 +697,11 @@ Bowen Island Tattoo Shop Team
       return { success: true };
     }
 
-    const customerName = appointment.customer?.name || 'Anonymous';
+    // Use customer name if available, otherwise use generateDisplayName for better personalization
+    const displayName = appointment.customer?.name || 
+      generateDisplayName(appointment.customer?.name || '', appointment.customer?.email || appointment.contactEmail || '') ||
+      'New Customer';
+    const customerName = appointment.customer?.name || displayName;
     const customerEmail = appointment.customer?.email || appointment.contactEmail || 'Not provided';
     const customerPhone = appointment.customer?.phone || appointment.contactPhone || 'Not provided';
     const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/appointments/${appointment.id}`;
@@ -842,7 +865,11 @@ Bowen Island Tattoo Shop Team
       return { success: true };
     }
 
-    const customerName = appointment.customer?.name || 'Anonymous';
+    // Use customer name if available, otherwise use generateDisplayName for better personalization
+    const displayName = appointment.customer?.name || 
+      generateDisplayName(appointment.customer?.name || '', appointment.customer?.email || appointment.contactEmail || '') ||
+      'New Customer';
+    const customerName = appointment.customer?.name || displayName;
     const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/appointments`;
 
     const appointmentDate = appointment.startTime ? 

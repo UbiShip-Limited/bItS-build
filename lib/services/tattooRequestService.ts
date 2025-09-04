@@ -229,7 +229,15 @@ export class TattooRequestService {
       throw new NotFoundError('TattooRequest', id);
     }
     
-    return tattooRequest;
+    // Transform referenceImages JSON field to proper array for API consistency
+    const transformedRequest = {
+      ...tattooRequest,
+      referenceImages: Array.isArray(tattooRequest.referenceImages) 
+        ? tattooRequest.referenceImages 
+        : []
+    };
+    
+    return transformedRequest;
   }
   
   /**

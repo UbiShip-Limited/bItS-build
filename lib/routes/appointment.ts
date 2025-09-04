@@ -129,7 +129,7 @@ const appointmentRoutes: FastifyPluginAsync = async (fastify) => {
   }, async (request) => {
     const { id } = request.params as { id: string };
     const appointment = await appointmentService.findById(id);
-    return appointment;
+    return { appointment };
   });
   
   // POST /appointments - Create a new appointment

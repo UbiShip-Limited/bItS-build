@@ -111,8 +111,8 @@ export class AppointmentApiClient {
   }
 
   async getAppointment(id: string): Promise<AppointmentData> {
-    const response = await this.apiClient.get(`/appointments/${id}`) as AppointmentData;
-    return response;
+    const response = await this.apiClient.get(`/appointments/${id}`) as { appointment: AppointmentData };
+    return response.appointment;
   }
 
   async createAppointment(data: CreateAppointmentRequest): Promise<AppointmentData> {

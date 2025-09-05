@@ -247,10 +247,22 @@ export class EmailTemplateService {
       tags?: { name: string; value: string }[];
     }
   ): Promise<{ success: boolean; error?: string }> {
-    const template = await this.findByName(templateName);
+    let template;
+    
+    try {
+      template = await this.findByName(templateName);
+    } catch (error) {
+      // Database connection error - use fallback template
+      console.log(`[EmailTemplateService] Database error fetching template '${templateName}', using fallback:`, error.message);
+      template = this.getFallbackTemplate(templateName);
+      
+      if (!template) {
+        return { success: false, error: `Template '${templateName}' not found and no fallback available` };
+      }
+    }
 
     if (!template) {
-      throw new NotFoundError('EmailTemplate', templateName);
+      return { success: false, error: `Template '${templateName}' not found` };
     }
 
     if (!template.isActive) {
@@ -325,6 +337,63 @@ export class EmailTemplateService {
     if (!body.trim()) {
       throw new ValidationError('Email body cannot be empty');
     }
+  }
+
+  /**
+   * Get fallback template when database is unavailable
+   */
+  private getFallbackTemplate(templateName: string): any | null {
+    const fallbackTemplates = {
+      'tattoo_request_confirmation': {
+        name: 'tattoo_request_confirmation',
+        subject: 'Your tattoo request has been received - Bowen Island Tattoo Shop',
+        body: `Hi {{customerName}},
+
+Thank you for submitting your tattoo request! We've received your inquiry and will review it shortly.
+
+Request Details:
+- Description: {{description}}
+- Placement: {{placement}}
+- Size: {{size}}
+- Style: {{style}}
+- Preferred Artist: {{preferredArtist}}
+
+What happens next?
+Our team will review your request and get back to you within 24-48 hours. We'll discuss your design ideas, provide a quote, and schedule a consultation if needed.
+
+If you have any questions in the meantime, feel free to reply to this email or call us.
+
+Best regards,
+Bowen Island Tattoo Shop`,
+        htmlBody: null,
+        isActive: true
+      },
+      'owner_new_request': {
+        name: 'owner_new_request',
+        subject: '🎨 New Tattoo Request from {{customerName}}',
+        body: `New tattoo request received!
+
+Customer Details:
+- Name: {{customerName}}
+- Email: {{customerEmail}}
+- Phone: {{customerPhone}}
+
+Request Details:
+- Description: {{description}}
+- Placement: {{placement}}
+- Size: {{size}}
+- Style: {{style}}
+- Preferred Artist: {{preferredArtist}}
+- Timeframe: {{timeframe}}
+- Additional Notes: {{additionalNotes}}
+
+This notification was sent to the shop owner.`,
+        htmlBody: null,
+        isActive: true
+      }
+    };
+    
+    return fallbackTemplates[templateName] || null;
   }
 
   /**

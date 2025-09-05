@@ -498,7 +498,16 @@ Bowen Island Tattoo Shop Team
     tattooRequest: TattooRequest & { customer?: Customer | null }
   ): Promise<NotificationResult> {
     const email = tattooRequest.customer?.email || tattooRequest.contactEmail;
+    
+    // Enhanced logging for debugging
+    console.log('[CommunicationService] Attempting to send tattoo request confirmation');
+    console.log('  - Customer ID:', tattooRequest.customerId || 'None');
+    console.log('  - Customer email:', tattooRequest.customer?.email || 'None');
+    console.log('  - Contact email:', tattooRequest.contactEmail || 'None');
+    console.log('  - Final email:', email || 'None');
+    
     if (!email) {
+      console.log('[CommunicationService] ❌ No email address available for confirmation');
       return { success: false, error: 'No email address available' };
     }
     
@@ -526,6 +535,14 @@ Bowen Island Tattoo Shop Team
           trackingUrl
         }
       );
+      
+      // Enhanced logging for debugging
+      console.log('[CommunicationService] Email send result:', result.success ? '✅ Success' : '❌ Failed');
+      if (!result.success && result.error) {
+        console.log('  - Error:', result.error);
+      } else if (result.success) {
+        console.log('  - Email sent to:', email);
+      }
       
       // Send real-time notification
       if (result.success) {

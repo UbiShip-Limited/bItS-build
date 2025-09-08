@@ -27,7 +27,7 @@ export class EmailService {
 
   constructor() {
     const apiKey = process.env.RESEND_API_KEY;
-    this.from = process.env.EMAIL_FROM || 'noreply@bowenislandtattoo.com';
+    this.from = process.env.EMAIL_FROM || 'noreply@bowenislandtattooshop.com';
     this.enabled = process.env.EMAIL_ENABLED !== 'false' && !!apiKey;
 
     if (this.enabled && apiKey) {

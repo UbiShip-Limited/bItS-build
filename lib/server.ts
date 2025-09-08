@@ -8,6 +8,17 @@ import cors from '@fastify/cors';
 console.log('🔧 Production Database Diagnostics:');
 console.log('   NODE_ENV:', process.env.NODE_ENV);
 console.log('   DATABASE_URL present:', !!process.env.DATABASE_URL);
+console.log('   PORT:', process.env.PORT || '3001 (default)');
+console.log('   FRONTEND_URL:', process.env.FRONTEND_URL || 'not set');
+
+// Enhanced Railway deployment diagnostics
+if (process.env.RAILWAY_ENVIRONMENT) {
+  console.log('🚂 Railway Environment Detected:');
+  console.log('   Environment:', process.env.RAILWAY_ENVIRONMENT);
+  console.log('   Service Name:', process.env.RAILWAY_SERVICE_NAME || 'not specified');
+  console.log('   Git Branch:', process.env.RAILWAY_GIT_BRANCH || 'not specified');
+}
+
 if (process.env.DATABASE_URL) {
   try {
     const dbUrl = new URL(process.env.DATABASE_URL);
@@ -16,11 +27,22 @@ if (process.env.DATABASE_URL) {
     console.log('   Database Name:', dbUrl.pathname.slice(1));
     console.log('   SSL Mode:', dbUrl.searchParams.get('sslmode') || 'not specified');
     console.log('   Connection Limit:', dbUrl.searchParams.get('connection_limit') || 'not specified');
+    console.log('   PgBouncer:', dbUrl.searchParams.get('pgbouncer') === 'true' ? 'enabled' : 'disabled');
   } catch (e) {
     console.error('   ❌ Invalid DATABASE_URL format:', e.message);
   }
 } else {
   console.error('   ❌ DATABASE_URL is not set!');
+}
+
+// Verify critical frontend environment variables for production
+if (process.env.NODE_ENV === 'production') {
+  console.log('🌐 Frontend Integration Check:');
+  console.log('   CORS will allow:', [
+    'https://bowenislandtattooshop.com',
+    'https://www.bowenislandtattooshop.com',
+    '*.vercel.app domains'
+  ].join(', '));
 }
 
 import tattooRequestsRoutes from './routes/tattooRequest';
@@ -169,6 +191,7 @@ const build = (opts = {}) => {
     origin: (origin, callback) => {
       // Allow requests with no origin (e.g., mobile apps, Postman)
       if (!origin) {
+        fastifyInstance.log.debug('CORS: Allowing request with no origin');
         return callback(null, true);
       }
 
@@ -185,16 +208,22 @@ const build = (opts = {}) => {
 
       // Check if origin is in allowed list
       if (allowedOrigins.includes(origin)) {
+        fastifyInstance.log.debug(`CORS: Allowing known origin: ${origin}`);
         return callback(null, true);
       }
 
       // Allow all Vercel preview deployments
       if (origin.includes('.vercel.app')) {
+        fastifyInstance.log.debug(`CORS: Allowing Vercel deployment: ${origin}`);
         return callback(null, true);
       }
 
+      // Log rejected origins for debugging
+      fastifyInstance.log.warn(`CORS: Rejecting origin: ${origin}`);
+      fastifyInstance.log.info(`CORS: Allowed origins: ${allowedOrigins.join(', ')}`);
+      
       // Reject other origins
-      callback(new Error('Not allowed by CORS'), false);
+      callback(new Error(`Origin ${origin} not allowed by CORS`), false);
     },
     credentials: true,
   });
@@ -256,12 +285,40 @@ const build = (opts = {}) => {
 const start = async (fastifyInstance) => {
   try {
     const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
+    
+    // Enhanced startup logging for production
+    if (process.env.NODE_ENV === 'production') {
+      fastifyInstance.log.info('🚀 Starting production server...', {
+        port,
+        environment: process.env.NODE_ENV,
+        railway: {
+          environment: process.env.RAILWAY_ENVIRONMENT,
+          serviceName: process.env.RAILWAY_SERVICE_NAME,
+          gitBranch: process.env.RAILWAY_GIT_BRANCH,
+          deploymentId: process.env.RAILWAY_DEPLOYMENT_ID
+        }
+      });
+    }
+    
     await fastifyInstance.listen({ port, host: '0.0.0.0' });
-    fastifyInstance.log.info(`Backend server listening on port ${port}`);
+    
+    fastifyInstance.log.info(`✅ Backend server listening on port ${port}`);
+    console.log(`🌐 Server ready at: http://0.0.0.0:${port}`);
+    console.log(`🏥 Health check: http://0.0.0.0:${port}/health`);
+    
+    // Log important endpoints for debugging
+    if (process.env.NODE_ENV === 'production') {
+      console.log('🔗 Critical endpoints:');
+      console.log(`   • Health: /health`);
+      console.log(`   • Database Health: /health/database`);
+      console.log(`   • Tattoo Requests: /tattoo-requests`);
+      console.log(`   • Appointments: /appointments`);
+    }
     
     // Set up automatic Square sync
     setupSquareSync(fastifyInstance);
   } catch (err) {
+    console.error('❌ Failed to start server:', err);
     fastifyInstance.log.error(err);
     process.exit(1);
   }

@@ -112,10 +112,32 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
   }
   
   try {
+    // Production debugging for auth issues
+    if (process.env.NODE_ENV === 'production') {
+      request.log.info('🔑 Production auth attempt:', {
+        hasToken: !!token,
+        tokenLength: token?.length,
+        supabaseUrl: process.env.SUPABASE_URL ? 'configured' : 'missing',
+        requestOrigin: request.headers.origin,
+        userAgent: request.headers['user-agent']
+      });
+    }
+    
     const { data, error } = await supabase.auth.getUser(token);
     
     if (error || !data.user) {
       request.log.warn(`🔑 Auth failed: Supabase validation failed - ${error?.message || 'No user returned'}`);
+      
+      // Enhanced error logging for production
+      if (process.env.NODE_ENV === 'production') {
+        request.log.error('🔑 Production auth failure details:', {
+          supabaseError: error?.message,
+          errorCode: error?.status,
+          hasUser: !!data?.user,
+          tokenPreview: token ? `${token.substring(0, 10)}...` : 'none'
+        });
+      }
+      
       return reply.status(401).send({ 
         error: 'Invalid or expired token',
         message: error?.message || 'Authentication failed',
@@ -133,17 +155,29 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
     
     while (retryCount < maxRetries) {
       try {
-        // Enhanced database connection test with timeout
+        // Enhanced database connection test with timeout (increased for production)
         try {
           const connectionTest = request.server.prisma.$queryRaw`SELECT 1 as test`;
+          // Increase timeout for production/Railway (15 seconds)
+          const timeoutMs = process.env.NODE_ENV === 'production' ? 15000 : 10000;
           const timeout = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Database connection timeout')), 10000)
+            setTimeout(() => reject(new Error(`Database connection timeout after ${timeoutMs}ms`)), timeoutMs)
           );
           
           await Promise.race([connectionTest, timeout]);
-          request.log.info('Database connection test passed');
+          request.log.info('✅ Database connection test passed');
         } catch (connError) {
-          request.log.warn('Database connection test failed:', connError);
+          request.log.warn('❌ Database connection test failed:', connError);
+          
+          // Log additional details for production debugging
+          if (process.env.NODE_ENV === 'production') {
+            request.log.error('🔍 Database connection failure details:', {
+              error: connError instanceof Error ? connError.message : connError,
+              dbUrl: process.env.DATABASE_URL ? 'configured' : 'missing',
+              retry: retryCount + 1,
+              maxRetries
+            });
+          }
           
           // Try to reconnect
           try {
@@ -159,10 +193,29 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
           }
         }
         
-        userWithRole = await request.server.prisma.user.findUnique({
+        // Query user with timeout protection
+        const userQuery = request.server.prisma.user.findUnique({
           where: { id: data.user.id },
           select: { role: true, email: true }
         });
+        
+        // Add timeout for the user query (15 seconds in production)
+        const userQueryTimeout = process.env.NODE_ENV === 'production' ? 15000 : 10000;
+        const queryTimeout = new Promise<null>((_, reject) => 
+          setTimeout(() => reject(new Error(`User query timeout after ${userQueryTimeout}ms`)), userQueryTimeout)
+        );
+        
+        userWithRole = await Promise.race([userQuery, queryTimeout]);
+        
+        // Log successful user retrieval for production debugging
+        if (process.env.NODE_ENV === 'production') {
+          request.log.info('✅ User role retrieved successfully:', {
+            userId: data.user.id,
+            hasRole: !!userWithRole?.role,
+            role: userWithRole?.role,
+            attempt: retryCount + 1
+          });
+        }
         
         break; // Success, exit retry loop
         
@@ -185,11 +238,27 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
             isConnectionError 
           });
           
-          return reply.status(503).send({
+          // Enhanced error response for production debugging
+          const errorResponse: any = {
             error: 'Database service temporarily unavailable',
-            details: process.env.NODE_ENV === 'production' ? undefined : (dbError as Error).message,
+            message: 'Authentication system cannot connect to database',
+            code: 'DATABASE_UNAVAILABLE',
             retryAfter: 30 // seconds
-          });
+          };
+          
+          // Add debug info in production (but not sensitive details)
+          if (process.env.NODE_ENV === 'production') {
+            errorResponse.debugInfo = {
+              attemptsMade: retryCount,
+              maxRetries,
+              isConnectionError,
+              timestamp: new Date().toISOString()
+            };
+          } else {
+            errorResponse.details = (dbError as Error).message;
+          }
+          
+          return reply.status(503).send(errorResponse);
         }
         
         // Exponential backoff for retries

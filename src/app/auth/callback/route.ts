@@ -75,10 +75,10 @@ export async function GET(request: NextRequest) {
       if (data.session) {
         console.log('✅ PKCE session created successfully for user:', data.session.user.id);
         
-        // For recovery type, always redirect to reset password page
+        // For recovery type, redirect to update-password (Supabase's expected endpoint)
         if (type === 'recovery') {
-          console.log('🔐 Password recovery session detected, redirecting to reset password');
-          return NextResponse.redirect(new URL('/auth/reset-password', requestUrl.origin));
+          console.log('🔐 Password recovery session detected, redirecting to update-password');
+          return NextResponse.redirect(new URL('/auth/update-password', requestUrl.origin));
         } else {
           console.log('✅ Other auth type, redirecting to dashboard');
           return NextResponse.redirect(new URL('/dashboard', requestUrl.origin));
@@ -133,8 +133,8 @@ export async function GET(request: NextRequest) {
                                    type === 'password_recovery';
 
         if (isPasswordRecovery) {
-          console.log('🔐 Password recovery session detected, redirecting to reset password');
-          return NextResponse.redirect(new URL('/auth/reset-password', requestUrl.origin));
+          console.log('🔐 Password recovery session detected, redirecting to update-password');
+          return NextResponse.redirect(new URL('/auth/update-password', requestUrl.origin));
         } else {
           console.log('✅ Regular auth session, redirecting to dashboard');
           return NextResponse.redirect(new URL('/dashboard', requestUrl.origin));

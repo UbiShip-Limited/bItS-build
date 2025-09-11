@@ -20,9 +20,9 @@ http://localhost:3000/auth/reset-password
 **For Production (replace with your actual domain):**
 ```
 https://yourdomain.com/auth/callback
-https://yourdomain.com/auth/reset-password
+https://yourdomain.com/auth/update-password
 https://www.yourdomain.com/auth/callback
-https://www.yourdomain.com/auth/reset-password
+https://www.yourdomain.com/auth/update-password
 ```
 
 #### Site URL

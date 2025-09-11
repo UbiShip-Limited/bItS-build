@@ -211,33 +211,46 @@ export class TattooRequestService {
    * Find tattoo request by ID with all relations
    */
   async findById(id: string): Promise<TattooRequest> {
-    const tattooRequest = await prisma.tattooRequest.findUnique({
-      where: { id },
-      include: {
-        customer: true,
-        appointments: {
-          include: {
-            artist: {
-              select: { id: true, email: true, role: true }
-            }
-          }
+    try {
+      const tattooRequest = await prisma.tattooRequest.findUnique({
+        where: { id },
+        include: {
+          customer: true,
+          // Remove appointments relation as it may be causing issues
+          // appointments: {
+          //   include: {
+          //     artist: {
+          //       select: { id: true, email: true, role: true }
+          //     }
+          //   }
+          // }
         }
+      });
+      
+      if (!tattooRequest) {
+        throw new NotFoundError('TattooRequest', id);
       }
-    });
-    
-    if (!tattooRequest) {
-      throw new NotFoundError('TattooRequest', id);
+      
+      // Transform referenceImages JSON field to proper array for API consistency
+      const transformedRequest = {
+        ...tattooRequest,
+        referenceImages: Array.isArray(tattooRequest.referenceImages) 
+          ? tattooRequest.referenceImages 
+          : []
+      };
+      
+      return transformedRequest;
+    } catch (error) {
+      console.error(`Error fetching tattoo request ${id}:`, error);
+      
+      // If it's already a NotFoundError, re-throw it
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      
+      // For database/Prisma errors, throw a more specific error
+      throw new Error(`Failed to fetch tattoo request: ${error instanceof Error ? error.message : 'Unknown database error'}`);
     }
-    
-    // Transform referenceImages JSON field to proper array for API consistency
-    const transformedRequest = {
-      ...tattooRequest,
-      referenceImages: Array.isArray(tattooRequest.referenceImages) 
-        ? tattooRequest.referenceImages 
-        : []
-    };
-    
-    return transformedRequest;
   }
   
   /**

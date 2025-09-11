@@ -349,20 +349,32 @@ export class AppointmentService {
   }
   
   async findById(id: string): Promise<Appointment> {
-    const appointment = await prisma.appointment.findUnique({
-      where: { id },
-      include: {
-        customer: true,
-        artist: true,
-        tattooRequest: true
+    try {
+      const appointment = await prisma.appointment.findUnique({
+        where: { id },
+        include: {
+          customer: true,
+          artist: true,
+          tattooRequest: true
+        }
+      });
+      
+      if (!appointment) {
+        throw new NotFoundError('Appointment', id);
       }
-    });
-    
-    if (!appointment) {
-      throw new NotFoundError('Appointment', id);
+      
+      return appointment;
+    } catch (error) {
+      console.error(`Error fetching appointment ${id}:`, error);
+      
+      // If it's already a NotFoundError, re-throw it
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      
+      // For database/Prisma errors, throw a more specific error
+      throw new Error(`Failed to fetch appointment: ${error instanceof Error ? error.message : 'Unknown database error'}`);
     }
-    
-    return appointment;
   }
   
   /**

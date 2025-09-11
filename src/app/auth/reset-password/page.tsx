@@ -28,7 +28,18 @@ function ResetPasswordContent() {
   useEffect(() => {
     const handleAuth = async () => {
       try {
-        // Let Supabase handle the URL automatically
+        // Check for error parameters from the callback route
+        const errorParam = searchParams.get('error');
+        const messageParam = searchParams.get('message');
+        
+        if (errorParam && messageParam) {
+          console.error('Auth callback error:', errorParam, messageParam);
+          setError(messageParam);
+          setIsVerifying(false);
+          return;
+        }
+        
+        // Give Supabase a moment to process the callback
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Check if we have a valid session
@@ -36,30 +47,32 @@ function ResetPasswordContent() {
         
         if (error) {
           console.error('Error getting session:', error);
-          setError('An error occurred. Please try again.');
+          setError('Unable to verify your reset session. Please try requesting a new password reset.');
           setIsVerifying(false);
           return;
         }
         
         if (session) {
-          console.log('Password reset session active');
+          console.log('Password reset session active for user:', session.user.id);
           setIsVerifying(false);
         } else {
-          // No session means the link didn't work
+          // No session means the callback flow didn't complete properly
           const code = searchParams.get('code');
           if (code) {
-            setError('The reset link must be opened in the same browser where you requested it. Please request a new password reset and open the link in this browser.');
+            setError('Your reset session could not be established. This may happen if you opened the link in a different browser. Please request a new password reset.');
           } else {
-            setError('You must use a valid password reset link to access this page.');
+            setError('You must use a valid password reset link to access this page. Please request a new password reset.');
           }
           setIsVerifying(false);
+          
+          // Redirect to forgot password page after 5 seconds
           setTimeout(() => {
             router.push('/auth/forgot-password');
           }, 5000);
         }
       } catch (err) {
         console.error('Error in auth handler:', err);
-        setError('An error occurred. Please try again.');
+        setError('An unexpected error occurred while verifying your reset session. Please try again.');
         setIsVerifying(false);
       }
     };

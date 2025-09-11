@@ -77,10 +77,17 @@ Here's how the complete flow works:
 
 1. **User requests reset** → Submits email on `/auth/forgot-password`
 2. **Email sent** → Supabase sends email with link to `/auth/callback`
-3. **User clicks link** → Redirected to `/auth/callback` route
-4. **Auth callback handles** → Exchanges code for session, redirects to `/auth/reset-password`
-5. **Reset password** → User enters new password with valid session
-6. **Success** → User redirected to dashboard
+3. **User clicks link** → Redirected to `/auth/callback` route with PKCE parameters
+4. **Auth callback handles** → Verifies `token_hash` using `verifyOtp()`, creates session
+5. **Redirect to reset** → User redirected to `/auth/reset-password` with active session
+6. **Reset password** → User enters new password with valid session
+7. **Success** → User redirected to dashboard
+
+### PKCE Flow Parameters
+The modern Supabase auth flow uses these parameters:
+- `token_hash`: PKCE token for verification (replaces legacy `code`)
+- `type=recovery`: Indicates password reset flow
+- `next=/auth/update-password`: Supabase default (we redirect to our own page)
 
 ## 🐛 Troubleshooting
 
@@ -90,18 +97,29 @@ Here's how the complete flow works:
 - Check that `NEXT_PUBLIC_SITE_URL` matches your Vercel deployment URL exactly
 - Verify Supabase redirect URLs include both `/auth/callback` and `/auth/reset-password`
 - Ensure no trailing slashes in URLs
+- For PKCE flow: Check `token_hash` parameter is being handled correctly
 
 **2. "Reset link must be opened in same browser" error**
 - This is the old error - should be fixed with the callback route
 - If still occurring, check browser console for auth errors
 
-**3. CORS errors**
+**3. PKCE Token Verification Failures**
+- Verify the callback route handles `token_hash` and `type=recovery` parameters
+- Check browser console for `verifyOtp()` errors
+- Ensure the `@supabase/auth-helpers-nextjs` package is up to date
+
+**4. CORS errors**
 - Verify `FRONTEND_URL` in Railway matches your Vercel deployment
 - Check that both www and non-www versions are configured
 
-**4. Database connection issues (Railway)**
+**5. Database connection issues (Railway)**
 - Ensure `DATABASE_URL` is properly set in Railway
 - Check that Supabase connection pooling is configured correctly
+
+**6. Wrong redirect after callback**
+- If redirected to `/auth/update-password` instead of `/auth/reset-password`
+- This is expected behavior - the callback route should handle the redirect correctly
+- Check that the callback route is deployed and functioning
 
 ### Debug Steps
 

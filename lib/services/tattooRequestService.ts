@@ -120,7 +120,8 @@ export class TattooRequestService {
       const newRequest = await tx.tattooRequest.create({
         data: tattooRequestData,
         include: {
-          customer: true
+          customer: true,
+          images: true  // Include images relation
         }
       });
       
@@ -141,6 +142,17 @@ export class TattooRequestService {
             })
           )
         );
+        
+        // Re-fetch with images after creating them
+        const requestWithImages = await tx.tattooRequest.findUnique({
+          where: { id: newRequest.id },
+          include: {
+            customer: true,
+            images: true
+          }
+        });
+        
+        return requestWithImages!;
       }
       
       return newRequest;
@@ -204,7 +216,16 @@ export class TattooRequestService {
       );
     }
     
-    return tattooRequest;
+    // Transform images relation to referenceImages format for consistency
+    const transformedRequest = {
+      ...tattooRequest,
+      referenceImages: tattooRequest.images ? tattooRequest.images.map(img => ({
+        url: img.url,
+        publicId: img.publicId
+      })) : (tattooRequest.referenceImages || [])
+    };
+    
+    return transformedRequest;
   }
   
   /**
@@ -216,14 +237,7 @@ export class TattooRequestService {
         where: { id },
         include: {
           customer: true,
-          // Remove appointments relation as it may be causing issues
-          // appointments: {
-          //   include: {
-          //     artist: {
-          //       select: { id: true, email: true, role: true }
-          //     }
-          //   }
-          // }
+          images: true  // Include the images relation
         }
       });
       
@@ -231,12 +245,14 @@ export class TattooRequestService {
         throw new NotFoundError('TattooRequest', id);
       }
       
-      // Transform referenceImages JSON field to proper array for API consistency
+      // Transform images relation to referenceImages format for API consistency
+      // Use the images relation as the source of truth instead of the JSON field
       const transformedRequest = {
         ...tattooRequest,
-        referenceImages: Array.isArray(tattooRequest.referenceImages) 
-          ? tattooRequest.referenceImages 
-          : []
+        referenceImages: tattooRequest.images.map(img => ({
+          url: img.url,
+          publicId: img.publicId
+        }))
       };
       
       return transformedRequest;
@@ -266,7 +282,8 @@ export class TattooRequestService {
       where: { id },
       data: { status },
       include: {
-        customer: true
+        customer: true,
+        images: true  // Include images relation
       }
     });
     
@@ -298,7 +315,16 @@ export class TattooRequestService {
       }
     }
     
-    return updatedRequest;
+    // Transform images relation to referenceImages format
+    const transformedRequest = {
+      ...updatedRequest,
+      referenceImages: updatedRequest.images.map(img => ({
+        url: img.url,
+        publicId: img.publicId
+      }))
+    };
+    
+    return transformedRequest;
   }
   
   /**
@@ -321,7 +347,8 @@ export class TattooRequestService {
       where: { id },
       data: updateData,
       include: {
-        customer: true
+        customer: true,
+        images: true  // Include images relation
       }
     });
     
@@ -341,7 +368,16 @@ export class TattooRequestService {
       await this.realtimeService.notifyRequestSubmitted(id, data.customerId);
     }
     
-    return updatedRequest;
+    // Transform images relation to referenceImages format
+    const transformedRequest = {
+      ...updatedRequest,
+      referenceImages: updatedRequest.images.map(img => ({
+        url: img.url,
+        publicId: img.publicId
+      }))
+    };
+    
+    return transformedRequest;
   }
   
   /**
@@ -360,7 +396,8 @@ export class TattooRequestService {
         include: {
           customer: {
             select: { id: true, name: true, email: true }
-          }
+          },
+          images: true  // Include images relation for consistency
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
@@ -369,8 +406,17 @@ export class TattooRequestService {
       prisma.tattooRequest.count({ where })
     ]);
     
+    // Transform images relation to referenceImages format for each request
+    const transformedRequests = tattooRequests.map(request => ({
+      ...request,
+      referenceImages: request.images.map(img => ({
+        url: img.url,
+        publicId: img.publicId
+      }))
+    }));
+    
     return {
-      data: tattooRequests,
+      data: transformedRequests,
       pagination: {
         total,
         page,

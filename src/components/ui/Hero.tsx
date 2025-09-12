@@ -43,8 +43,7 @@ export function TattooHero() {
       opacity: 1,
       transition: {
         staggerChildren: 0.08,
-        duration: 0.5,
-        ease: [0.4, 0, 0.2, 1]
+        duration: 0.5
       },
     },
   }
@@ -55,14 +54,13 @@ export function TattooHero() {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.3,
-        ease: [0.4, 0, 0.2, 1],
+        duration: 0.3
       },
     },
   }
 
   return (
-    <section className="relative w-full min-h-screen overflow-hidden bg-gradient-to-b from-obsidian via-[#0a0a0a] to-obsidian text-white">
+    <section className="relative w-full min-h-[100dvh] overflow-hidden bg-gradient-to-b from-obsidian via-[#0a0a0a] to-obsidian text-white">
       {/* Subtle spotlight effect with white/gray tints */}
       <Spotlight 
         gradientFirst="radial-gradient(68.54% 68.72% at 55.02% 31.46%, hsla(210, 100%, 85%, .08) 0, hsla(210, 100%, 55%, .02) 50%, hsla(210, 100%, 45%, 0) 80%)"
@@ -101,12 +99,12 @@ export function TattooHero() {
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: isLoaded ? 1 : 0 }}
-        transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }}
-        className="absolute inset-0 z-20 flex items-center justify-center px-4 pt-20 pb-16 sm:px-6 sm:pt-24 sm:pb-20 md:px-8 md:pt-28 md:pb-24 lg:pt-32 lg:pb-28"
+        transition={{ duration: 1.2 }}
+        className="absolute inset-0 z-20 grid place-items-center px-4 py-20 sm:px-6 sm:pt-24 sm:pb-20 md:px-8 md:pt-28 md:pb-24 lg:pt-32 lg:pb-28 mx-auto"
       >
         {/* Main content */}
         <motion.div
-          className="w-full max-w-4xl text-center space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-7"
+          className="w-full max-w-[22rem] sm:max-w-4xl mx-auto text-center space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-7"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
@@ -191,7 +189,7 @@ export function TattooHero() {
           </motion.div>
 
           {/* Title - enhanced typography with gradient and better spacing */}
-          <motion.div variants={itemVariants} className="-mt-2 sm:-mt-3 md:-mt-4">
+          <motion.div variants={itemVariants} className="mt-0 sm:-mt-2 md:-mt-3">
             <h1 className={`${typography.fontBrand} text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold ${typography.leadingTight} px-2 sm:px-4`}>
               <span className="bg-gradient-to-r from-white via-white to-white bg-clip-text text-transparent">
                 Bowen Island Tattoo
@@ -207,7 +205,7 @@ export function TattooHero() {
           </motion.div>
 
           {/* Enhanced ornamental divider - more compact */}
-          <motion.div className="flex items-center justify-center py-1" variants={itemVariants}>
+          <motion.div className="flex items-center justify-center py-1 mx-auto" variants={itemVariants}>
             <div className="w-20 sm:w-24 md:w-32 h-px bg-gradient-to-r from-transparent via-white/40 to-white/20" />
             <div className="mx-3 sm:mx-4 relative">
               <div className="w-2.5 h-2.5 bg-white/40 rounded-full" />
@@ -218,7 +216,7 @@ export function TattooHero() {
 
           {/* CTA Buttons - refined with new button system and better spacing */}
           <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 md:gap-4 px-0 pt-1"
+            className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 md:gap-4 px-0 pt-1 mx-auto"
             variants={itemVariants}
           >
             <Link href="/tattooRequest" className="w-full sm:w-auto">
@@ -269,8 +267,7 @@ export function TattooHero() {
                 transition={{
                   duration: 15 + i * 3,
                   repeat: Infinity,
-                  delay: i * 2.5,
-                  ease: "linear"
+                  delay: i * 2.5
                 }}
               />
             ))}
@@ -279,7 +276,7 @@ export function TattooHero() {
       </motion.div>
       
       {/* Seamless bottom fade transition */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 sm:h-40 md:h-48 lg:h-56 z-30 pointer-events-none">
+      <div className="absolute bottom-0 left-0 right-0 h-20 sm:h-28 md:h-40 lg:h-56 z-30 pointer-events-none">
         <div className="w-full h-full bg-gradient-to-t from-obsidian via-obsidian/80 to-transparent" />
       </div>
     </section>

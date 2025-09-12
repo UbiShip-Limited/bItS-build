@@ -159,7 +159,7 @@ const FAQItem = ({
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
                 <p className={`mt-4 ${typography.fontUI} text-base md:text-lg ${typography.leadingRelaxed} text-obsidian/70 dark:text-white/70 ${typography.fontLight} pr-2`}>

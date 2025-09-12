@@ -28,8 +28,7 @@ export function SkeletonLoader({
     },
     transition: {
       duration: 1.5,
-      repeat: Infinity,
-      ease: "linear"
+      repeat: Infinity
     }
   }
   
@@ -57,8 +56,7 @@ export function ImageSkeleton({ className = "" }: { className?: string }) {
         }}
         transition={{
           duration: 1.5,
-          repeat: Infinity,
-          ease: "linear"
+          repeat: Infinity
         }}
       />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">

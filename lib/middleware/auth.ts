@@ -114,13 +114,13 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
   try {
     // Production debugging for auth issues
     if (process.env.NODE_ENV === 'production') {
-      request.log.info('🔑 Production auth attempt:', {
+      request.log.info(`🔑 Production auth attempt: ${JSON.stringify({
         hasToken: !!token,
         tokenLength: token?.length,
         supabaseUrl: process.env.SUPABASE_URL ? 'configured' : 'missing',
         requestOrigin: request.headers.origin,
         userAgent: request.headers['user-agent']
-      });
+      })}`);
     }
     
     const { data, error } = await supabase.auth.getUser(token);
@@ -130,12 +130,12 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
       
       // Enhanced error logging for production
       if (process.env.NODE_ENV === 'production') {
-        request.log.error('🔑 Production auth failure details:', {
+        request.log.error(`🔑 Production auth failure details: ${JSON.stringify({
           supabaseError: error?.message,
           errorCode: error?.status,
           hasUser: !!data?.user,
           tokenPreview: token ? `${token.substring(0, 10)}...` : 'none'
-        });
+        })}`);
       }
       
       return reply.status(401).send({ 
@@ -171,12 +171,12 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
           
           // Log additional details for production debugging
           if (process.env.NODE_ENV === 'production') {
-            request.log.error('🔍 Database connection failure details:', {
+            request.log.error(`🔍 Database connection failure details: ${JSON.stringify({
               error: connError instanceof Error ? connError.message : connError,
               dbUrl: process.env.DATABASE_URL ? 'configured' : 'missing',
               retry: retryCount + 1,
               maxRetries
-            });
+            })}`);
           }
           
           // Try to reconnect
@@ -209,12 +209,12 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
         
         // Log successful user retrieval for production debugging
         if (process.env.NODE_ENV === 'production') {
-          request.log.info('✅ User role retrieved successfully:', {
+          request.log.info(`✅ User role retrieved successfully: ${JSON.stringify({
             userId: data.user.id,
             hasRole: !!userWithRole?.role,
             role: userWithRole?.role,
             attempt: retryCount + 1
-          });
+          })}`);
         }
         
         break; // Success, exit retry loop
@@ -232,11 +232,11 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
                                   (dbError as Error).message.includes('pooler.supabase.com');
         
         if (!isConnectionError || retryCount >= maxRetries) {
-          request.log.error('Giving up on database connection', { 
+          request.log.error(`Giving up on database connection: ${JSON.stringify({ 
             error: dbError,
             retryCount,
             isConnectionError 
-          });
+          })}`);
           
           // Enhanced error response for production debugging
           const errorResponse: any = {

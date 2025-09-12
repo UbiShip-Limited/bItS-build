@@ -1,0 +1,20 @@
+{
+  "buildCommand": "rm -rf .next node_modules/.cache && npm cache clean --force && npm install --force && npm run build",
+  "framework": "nextjs",
+  "installCommand": "npm install --force --legacy-peer-deps",
+  "ignoreCommand": "node scripts/vercelIgnore.js",
+  "functions": {
+    "src/app/dashboard/tattoo-request/[id]/page.tsx": {
+      "maxDuration": 30
+    },
+    "src/app/dashboard/appointments/[id]/page.tsx": {
+      "maxDuration": 30
+    },
+    "src/app/api/**/*.ts": {
+      "maxDuration": 30
+    }
+  },
+  "env": {
+    "NODE_OPTIONS": "--max-old-space-size=4096"
+  }
+}

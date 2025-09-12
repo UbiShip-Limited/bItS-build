@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -34,6 +35,13 @@ const nextConfig: NextConfig = {
         'child_process': false,
       };
     }
+    
+    // Add explicit module resolution for @tabler/icons-react and project alias '@'
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@tabler/icons-react': require.resolve('@tabler/icons-react'),
+      '@': path.resolve(__dirname),
+    };
     
     return config;
   },

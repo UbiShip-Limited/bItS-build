@@ -58,7 +58,7 @@ export function AboutBowenIslandSection() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
         >
           {/* Ornamental divider */}
           <div className="flex items-center justify-center mb-8">
@@ -105,7 +105,7 @@ export function AboutBowenIslandSection() {
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={isVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: 30 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeInOut" }}
           >
             <div className={`inline-block bg-gold-500/5 border border-gold-500/20 px-5 py-2.5 ${typography.textBase} ${colors.textAccent} mb-6 ${typography.trackingWide} ${components.radius.small} backdrop-blur-sm`}>
               Private Studio

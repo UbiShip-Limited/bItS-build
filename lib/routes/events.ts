@@ -101,18 +101,18 @@ const eventsRoutes: FastifyPluginAsync = async (fastify) => {
         } else if (errorCode === 'EPIPE') {
           fastify.log.warn(`SSE broken pipe for user ${userId} - client disconnected`);
         } else {
-          fastify.log.error(`SSE connection error for user ${userId}:`, {
+          fastify.log.error(`SSE connection error for user ${userId}: ${JSON.stringify({
             code: errorCode,
             message: error?.message,
             stack: error?.stack
-          });
+          })}`);
         }
       });
 
       // Handle response errors
       reply.raw.on('error', (error) => {
         clearInterval(keepAliveInterval);
-        fastify.log.error(`SSE response error for user ${userId}:`, error);
+        fastify.log.error(`SSE response error for user ${userId}: ${error instanceof Error ? error.message : String(error)}`);
       });
 
       // Keep connection alive

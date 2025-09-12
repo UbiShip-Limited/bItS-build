@@ -247,15 +247,24 @@ export class TattooRequestService {
       
       // Transform images relation to referenceImages format for API consistency
       // Use the images relation as the source of truth instead of the JSON field
-      const transformedRequest = {
-        ...tattooRequest,
-        referenceImages: tattooRequest.images.map(img => ({
-          url: img.url,
-          publicId: img.publicId
-        }))
-      };
-      
-      return transformedRequest;
+      try {
+        const transformedRequest = {
+          ...tattooRequest,
+          referenceImages: tattooRequest.images ? tattooRequest.images.map(img => ({
+            url: img.url,
+            publicId: img.publicId
+          })) : []
+        };
+        
+        return transformedRequest;
+      } catch (transformError) {
+        console.error(`Error transforming tattoo request ${id}:`, transformError);
+        // If transformation fails, return with empty images array
+        return {
+          ...tattooRequest,
+          referenceImages: []
+        };
+      }
     } catch (error) {
       console.error(`Error fetching tattoo request ${id}:`, error);
       

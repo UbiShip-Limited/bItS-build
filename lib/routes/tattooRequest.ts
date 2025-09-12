@@ -94,16 +94,42 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    
     try {
-      const { id } = request.params as { id: string };
+      // Add detailed logging for production debugging
+      request.log.info(`Fetching tattoo request ${id}`);
+      
       const tattooRequest = await tattooRequestService.findById(id);
+      
+      request.log.info(`Successfully fetched tattoo request ${id}`);
       return tattooRequest;
     } catch (error) {
+      // Enhanced error logging for production debugging
+      request.log.error({
+        msg: `Failed to fetch tattoo request ${id}`,
+        error: error instanceof Error ? {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        } : error,
+        requestId: id
+      });
+      
       if (error instanceof NotFoundError) {
-        return reply.status(404).send({ error: error.message });
+        return reply.status(404).send({ 
+          error: error.message,
+          requestId: id 
+        });
       }
-      request.log.error(error);
-      return reply.status(500).send({ error: 'Internal server error' });
+      
+      // Return more detailed error in production for debugging
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      return reply.status(500).send({ 
+        error: 'Failed to fetch tattoo request',
+        message: process.env.NODE_ENV === 'production' ? errorMessage : 'Internal server error',
+        requestId: id
+      });
     }
   });
   

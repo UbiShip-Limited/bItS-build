@@ -5,6 +5,7 @@
 // Generate a cache buster query parameter
 export const getCacheBuster = (): string => {
   // Use build time or deployment time as cache buster
+  // Force rebuild: 2025-09-12-fix-next-module
   const buildTime = process.env.NEXT_PUBLIC_BUILD_TIME || Date.now().toString();
   return `v=${buildTime}`;
 };

@@ -217,12 +217,37 @@ export class TattooRequestService {
     }
     
     // Transform images relation to referenceImages format for consistency
-    const transformedRequest = {
-      ...tattooRequest,
+    // Use safe extraction to avoid any circular references
+    const transformedRequest: any = {
+      id: tattooRequest.id,
+      customerId: tattooRequest.customerId,
+      firstName: tattooRequest.firstName,
+      contactEmail: tattooRequest.contactEmail,
+      contactPhone: tattooRequest.contactPhone,
+      trackingToken: tattooRequest.trackingToken,
+      description: tattooRequest.description,
+      placement: tattooRequest.placement,
+      size: tattooRequest.size,
+      colorPreference: tattooRequest.colorPreference,
+      style: tattooRequest.style,
+      status: tattooRequest.status,
+      depositPaid: tattooRequest.depositPaid,
+      depositAmount: tattooRequest.depositAmount,
+      finalAmount: tattooRequest.finalAmount,
+      paymentId: tattooRequest.paymentId,
+      purpose: tattooRequest.purpose,
+      preferredArtist: tattooRequest.preferredArtist,
+      timeframe: tattooRequest.timeframe,
+      contactPreference: tattooRequest.contactPreference,
+      additionalNotes: tattooRequest.additionalNotes,
+      createdAt: tattooRequest.createdAt,
+      updatedAt: tattooRequest.updatedAt,
+      customer: tattooRequest.customer || undefined,
+      // Use images if available, otherwise fall back to referenceImages JSON
       referenceImages: tattooRequest.images ? tattooRequest.images.map(img => ({
         url: img.url,
         publicId: img.publicId
-      })) : (tattooRequest.referenceImages || [])
+      })) : (Array.isArray(tattooRequest.referenceImages) ? tattooRequest.referenceImages : [])
     };
     
     return transformedRequest;
@@ -248,8 +273,34 @@ export class TattooRequestService {
       // Transform images relation to referenceImages format for API consistency
       // Use the images relation as the source of truth instead of the JSON field
       try {
-        const transformedRequest = {
-          ...tattooRequest,
+        // Safely extract only the fields we need to avoid circular references
+        const transformedRequest: any = {
+          id: tattooRequest.id,
+          customerId: tattooRequest.customerId,
+          firstName: tattooRequest.firstName,
+          contactEmail: tattooRequest.contactEmail,
+          contactPhone: tattooRequest.contactPhone,
+          trackingToken: tattooRequest.trackingToken,
+          description: tattooRequest.description,
+          placement: tattooRequest.placement,
+          size: tattooRequest.size,
+          colorPreference: tattooRequest.colorPreference,
+          style: tattooRequest.style,
+          status: tattooRequest.status,
+          depositPaid: tattooRequest.depositPaid,
+          depositAmount: tattooRequest.depositAmount,
+          finalAmount: tattooRequest.finalAmount,
+          paymentId: tattooRequest.paymentId,
+          purpose: tattooRequest.purpose,
+          preferredArtist: tattooRequest.preferredArtist,
+          timeframe: tattooRequest.timeframe,
+          contactPreference: tattooRequest.contactPreference,
+          additionalNotes: tattooRequest.additionalNotes,
+          createdAt: tattooRequest.createdAt,
+          updatedAt: tattooRequest.updatedAt,
+          // Include customer if it exists
+          customer: tattooRequest.customer || undefined,
+          // Transform images to referenceImages format
           referenceImages: tattooRequest.images ? tattooRequest.images.map(img => ({
             url: img.url,
             publicId: img.publicId
@@ -259,11 +310,15 @@ export class TattooRequestService {
         return transformedRequest;
       } catch (transformError) {
         console.error(`Error transforming tattoo request ${id}:`, transformError);
-        // If transformation fails, return with empty images array
+        // If transformation fails, return minimal safe object
         return {
-          ...tattooRequest,
+          id: tattooRequest.id,
+          description: tattooRequest.description,
+          status: tattooRequest.status,
+          createdAt: tattooRequest.createdAt,
+          updatedAt: tattooRequest.updatedAt,
           referenceImages: []
-        };
+        } as any;
       }
     } catch (error) {
       console.error(`Error fetching tattoo request ${id}:`, error);
@@ -325,12 +380,36 @@ export class TattooRequestService {
     }
     
     // Transform images relation to referenceImages format
-    const transformedRequest = {
-      ...updatedRequest,
-      referenceImages: updatedRequest.images.map(img => ({
+    // Use safe transformation to avoid circular references
+    const transformedRequest: any = {
+      id: updatedRequest.id,
+      customerId: updatedRequest.customerId,
+      firstName: updatedRequest.firstName,
+      contactEmail: updatedRequest.contactEmail,
+      contactPhone: updatedRequest.contactPhone,
+      trackingToken: updatedRequest.trackingToken,
+      description: updatedRequest.description,
+      placement: updatedRequest.placement,
+      size: updatedRequest.size,
+      colorPreference: updatedRequest.colorPreference,
+      style: updatedRequest.style,
+      status: updatedRequest.status,
+      depositPaid: updatedRequest.depositPaid,
+      depositAmount: updatedRequest.depositAmount,
+      finalAmount: updatedRequest.finalAmount,
+      paymentId: updatedRequest.paymentId,
+      purpose: updatedRequest.purpose,
+      preferredArtist: updatedRequest.preferredArtist,
+      timeframe: updatedRequest.timeframe,
+      contactPreference: updatedRequest.contactPreference,
+      additionalNotes: updatedRequest.additionalNotes,
+      createdAt: updatedRequest.createdAt,
+      updatedAt: updatedRequest.updatedAt,
+      customer: updatedRequest.customer || undefined,
+      referenceImages: updatedRequest.images ? updatedRequest.images.map(img => ({
         url: img.url,
         publicId: img.publicId
-      }))
+      })) : []
     };
     
     return transformedRequest;
@@ -378,12 +457,36 @@ export class TattooRequestService {
     }
     
     // Transform images relation to referenceImages format
-    const transformedRequest = {
-      ...updatedRequest,
-      referenceImages: updatedRequest.images.map(img => ({
+    // Use safe transformation to avoid circular references
+    const transformedRequest: any = {
+      id: updatedRequest.id,
+      customerId: updatedRequest.customerId,
+      firstName: updatedRequest.firstName,
+      contactEmail: updatedRequest.contactEmail,
+      contactPhone: updatedRequest.contactPhone,
+      trackingToken: updatedRequest.trackingToken,
+      description: updatedRequest.description,
+      placement: updatedRequest.placement,
+      size: updatedRequest.size,
+      colorPreference: updatedRequest.colorPreference,
+      style: updatedRequest.style,
+      status: updatedRequest.status,
+      depositPaid: updatedRequest.depositPaid,
+      depositAmount: updatedRequest.depositAmount,
+      finalAmount: updatedRequest.finalAmount,
+      paymentId: updatedRequest.paymentId,
+      purpose: updatedRequest.purpose,
+      preferredArtist: updatedRequest.preferredArtist,
+      timeframe: updatedRequest.timeframe,
+      contactPreference: updatedRequest.contactPreference,
+      additionalNotes: updatedRequest.additionalNotes,
+      createdAt: updatedRequest.createdAt,
+      updatedAt: updatedRequest.updatedAt,
+      customer: updatedRequest.customer || undefined,
+      referenceImages: updatedRequest.images ? updatedRequest.images.map(img => ({
         url: img.url,
         publicId: img.publicId
-      }))
+      })) : []
     };
     
     return transformedRequest;
@@ -416,13 +519,48 @@ export class TattooRequestService {
     ]);
     
     // Transform images relation to referenceImages format for each request
-    const transformedRequests = tattooRequests.map(request => ({
-      ...request,
-      referenceImages: request.images.map(img => ({
-        url: img.url,
-        publicId: img.publicId
-      }))
-    }));
+    // Use safe transformation to avoid circular references
+    const transformedRequests = tattooRequests.map(request => {
+      try {
+        return {
+          id: request.id,
+          customerId: request.customerId,
+          firstName: request.firstName,
+          contactEmail: request.contactEmail,
+          contactPhone: request.contactPhone,
+          trackingToken: request.trackingToken,
+          description: request.description,
+          placement: request.placement,
+          size: request.size,
+          colorPreference: request.colorPreference,
+          style: request.style,
+          status: request.status,
+          depositPaid: request.depositPaid,
+          depositAmount: request.depositAmount,
+          finalAmount: request.finalAmount,
+          paymentId: request.paymentId,
+          purpose: request.purpose,
+          preferredArtist: request.preferredArtist,
+          timeframe: request.timeframe,
+          contactPreference: request.contactPreference,
+          additionalNotes: request.additionalNotes,
+          createdAt: request.createdAt,
+          updatedAt: request.updatedAt,
+          customer: request.customer || undefined,
+          referenceImages: request.images ? request.images.map(img => ({
+            url: img.url,
+            publicId: img.publicId
+          })) : []
+        };
+      } catch (err) {
+        console.error('Error transforming request in list:', err);
+        // Return minimal safe object on error
+        return {
+          ...request,
+          referenceImages: []
+        };
+      }
+    });
     
     return {
       data: transformedRequests,

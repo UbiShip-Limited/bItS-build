@@ -213,6 +213,13 @@ export class ApiClient {
   }
   
   /**
+   * Get the base URL for debugging
+   */
+  public getBaseURL(): string {
+    return this.baseURL;
+  }
+  
+  /**
    * GET request with retry logic and deduplication
    */
   public async get<T>(path: string, config?: AxiosRequestConfig & { skipAuth?: boolean }): Promise<T> {

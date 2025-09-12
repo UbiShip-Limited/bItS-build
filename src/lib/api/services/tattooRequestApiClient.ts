@@ -141,7 +141,24 @@ export class TattooRequestApiClient {
    * Get a single tattoo request by ID
    */
   public async getById(id: string): Promise<TattooRequest> {
-    return this.client.get<TattooRequest>(`${this.baseUrl}/${id}`);
+    const url = `${this.baseUrl}/${id}`;
+    console.log('🔗 [TattooRequestApiClient] GET request to:', url);
+    console.log('🔗 [TattooRequestApiClient] Request ID:', id);
+    console.log('🔗 [TattooRequestApiClient] Base URL:', this.client.getBaseURL());
+    console.log('🔗 [TattooRequestApiClient] Full URL:', `${this.client.getBaseURL()}${url}`);
+    
+    try {
+      const result = await this.client.get<TattooRequest>(url);
+      console.log('✅ [TattooRequestApiClient] Response received:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ [TattooRequestApiClient] Request failed:', error);
+      console.error('❌ [TattooRequestApiClient] Error details:', {
+        url: `${this.client.getBaseURL()}${url}`,
+        error: error
+      });
+      throw error;
+    }
   }
   
   /**

@@ -41,13 +41,21 @@ export default function TattooRequestDetailPage() {
   const tattooRequestClient = useMemo(() => new TattooRequestApiClient(apiClient), []);
 
   const loadTattooRequest = useCallback(async (id: string) => {
+    console.log('🔍 [TattooRequest] Starting to load request:', id);
     setLoading(true);
     setError(null);
     
     try {
+      console.log('🔍 [TattooRequest] Calling API client getById...');
       const data = await tattooRequestClient.getById(id);
+      console.log('✅ [TattooRequest] Successfully loaded:', data);
       setRequest(data);
     } catch (err: unknown) {
+      console.error('❌ [TattooRequest] Error loading request:', err);
+      console.error('Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        error: err
+      });
       setError(err instanceof Error ? err.message : 'Failed to load tattoo request');
     } finally {
       setLoading(false);

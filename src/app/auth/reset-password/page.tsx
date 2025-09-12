@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, Loader2, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { createBrowserClient } from '@supabase/ssr';
+import { createClient } from '@/src/utils/supabase/client';
 
 function ResetPasswordContent() {
   const [password, setPassword] = useState('');
@@ -19,10 +19,7 @@ function ResetPasswordContent() {
   const searchParams = useSearchParams();
 
   // Initialize Supabase client
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = createClient();
 
   // Handle authentication and session check
   useEffect(() => {

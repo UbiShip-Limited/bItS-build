@@ -1,27 +1,28 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import type { EmailOtpType } from '@supabase/supabase-js';
+import { createClient } from '@/src/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
-  const requestUrl = new URL(request.url);
-  const code = requestUrl.searchParams.get('code');
-  const tokenHash = requestUrl.searchParams.get('token_hash');
-  const type = requestUrl.searchParams.get('type');
-  const next = requestUrl.searchParams.get('next');
-  const error = requestUrl.searchParams.get('error');
-  const errorCode = requestUrl.searchParams.get('error_code');
-  const errorDescription = requestUrl.searchParams.get('error_description');
+  try {
+    const requestUrl = new URL(request.url);
+    const code = requestUrl.searchParams.get('code');
+    const tokenHash = requestUrl.searchParams.get('token_hash');
+    const type = requestUrl.searchParams.get('type');
+    const next = requestUrl.searchParams.get('next');
+    const error = requestUrl.searchParams.get('error');
+    const errorCode = requestUrl.searchParams.get('error_code');
+    const errorDescription = requestUrl.searchParams.get('error_description');
 
-  console.log('🔄 Auth callback received:', {
-    hasCode: !!code,
-    hasTokenHash: !!tokenHash,
-    type,
-    next,
-    error,
-    errorCode,
-    errorDescription,
-    url: requestUrl.toString()
-  });
+    console.log('🔄 Auth callback received:', {
+      hasCode: !!code,
+      hasTokenHash: !!tokenHash,
+      type,
+      next,
+      error,
+      errorCode,
+      errorDescription,
+      url: requestUrl.toString()
+    });
 
   // Handle Supabase auth errors
   if (error) {
@@ -43,30 +44,53 @@ export async function GET(request: NextRequest) {
 
   // Handle PKCE flow with token_hash (modern Supabase auth)
   if (tokenHash && type) {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createClient();
 
     try {
       console.log('🔄 Verifying OTP with token_hash (PKCE flow)...');
+      console.log('🔍 Type from URL:', type);
       
-      // Use verifyOtp for PKCE flow
+      // Pass the type parameter as-is from the URL per Supabase documentation
+      // This allows both 'recovery' for password resets and other types to work correctly
       const { data, error: verifyError } = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
-        type: type as any, // 'recovery' for password reset
+        type: type as EmailOtpType, // Use the actual type from URL
       });
       
       if (verifyError) {
         console.error('❌ Token verification failed:', verifyError);
+        console.error('Error details:', {
+          message: verifyError.message,
+          status: (verifyError as any).status,
+          code: (verifyError as any).code,
+        });
         
         const redirectUrl = new URL('/auth/reset-password', requestUrl.origin);
         
-        // Handle specific PKCE errors
-        if (verifyError.message?.includes('expired') || verifyError.message?.includes('invalid')) {
+        // Handle rate limiting errors
+        if (verifyError.message?.includes('rate') || 
+            verifyError.message?.includes('too many') ||
+            (verifyError as any).status === 429) {
+          redirectUrl.searchParams.set('error', 'rate_limit');
+          redirectUrl.searchParams.set('message', 'Too many attempts. Please wait a few minutes and try again.');
+        }
+        // Handle expired or invalid tokens
+        else if (verifyError.message?.includes('expired') || 
+                 verifyError.message?.includes('invalid') ||
+                 verifyError.message?.includes('not found')) {
           redirectUrl.searchParams.set('error', 'expired');
           redirectUrl.searchParams.set('message', 'The reset link has expired or is invalid. Please request a new one.');
-        } else {
+        }
+        // Handle OTP/token specific errors
+        else if (verifyError.message?.includes('otp') || 
+                 verifyError.message?.includes('token')) {
+          redirectUrl.searchParams.set('error', 'invalid_token');
+          redirectUrl.searchParams.set('message', 'The reset link is invalid. Please request a new password reset.');
+        }
+        // Generic error fallback
+        else {
           redirectUrl.searchParams.set('error', 'verification_failed');
-          redirectUrl.searchParams.set('message', 'Failed to validate reset link. Please try again.');
+          redirectUrl.searchParams.set('message', 'Failed to validate reset link. Please try again or contact support.');
         }
         
         return NextResponse.redirect(redirectUrl);
@@ -74,17 +98,28 @@ export async function GET(request: NextRequest) {
 
       if (data.session) {
         console.log('✅ PKCE session created successfully for user:', data.session.user.id);
+        console.log('📊 Session details:', {
+          userId: data.session.user.id,
+          email: data.session.user.email,
+          expiresAt: data.session.expires_at,
+        });
         
-        // For recovery type, redirect to update-password (Supabase's expected endpoint)
-        if (type === 'recovery') {
+        // For password recovery, always redirect to update-password page
+        // Check both the URL type parameter and the session's recovery indicators
+        const isPasswordRecovery = type === 'recovery' || 
+                                   type === 'magiclink' ||
+                                   data.session.user.recovery_sent_at;
+                                   
+        if (isPasswordRecovery) {
           console.log('🔐 Password recovery session detected, redirecting to update-password');
           return NextResponse.redirect(new URL('/auth/update-password', requestUrl.origin));
         } else {
-          console.log('✅ Other auth type, redirecting to dashboard');
+          console.log('✅ Regular auth session, redirecting to dashboard');
           return NextResponse.redirect(new URL('/dashboard', requestUrl.origin));
         }
       } else {
         console.warn('⚠️ Token verification succeeded but no session created');
+        console.warn('Verification response:', JSON.stringify(data, null, 2));
         
         const redirectUrl = new URL('/auth/reset-password', requestUrl.origin);
         redirectUrl.searchParams.set('error', 'no_session');
@@ -105,8 +140,7 @@ export async function GET(request: NextRequest) {
 
   // Handle legacy flow with code (for backwards compatibility)
   if (code) {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = await createClient();
 
     try {
       console.log('🔄 Exchanging code for session (legacy flow)...');
@@ -159,12 +193,33 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // No valid parameters - invalid callback
-  console.warn('⚠️ Auth callback called without valid parameters (no code or token_hash)');
-  
-  const redirectUrl = new URL('/auth/forgot-password', requestUrl.origin);
-  redirectUrl.searchParams.set('error', 'invalid_callback');
-  redirectUrl.searchParams.set('message', 'Invalid reset link. Please request a new password reset.');
-  
-  return NextResponse.redirect(redirectUrl);
+    // No valid parameters - invalid callback
+    console.warn('⚠️ Auth callback called without valid parameters (no code or token_hash)');
+    
+    const redirectUrl = new URL('/auth/forgot-password', requestUrl.origin);
+    redirectUrl.searchParams.set('error', 'invalid_callback');
+    redirectUrl.searchParams.set('message', 'Invalid reset link. Please request a new password reset.');
+    
+    return NextResponse.redirect(redirectUrl);
+  } catch (error) {
+    // Catch any unhandled errors to prevent 500 errors
+    console.error('❌ Unhandled error in auth callback:', error);
+    
+    // Log detailed error information
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    }
+    
+    // Redirect to error page with a generic message
+    const requestUrl = new URL(request.url);
+    const redirectUrl = new URL('/auth/reset-password', requestUrl.origin);
+    redirectUrl.searchParams.set('error', 'server_error');
+    redirectUrl.searchParams.set('message', 'An unexpected error occurred. Please try again or contact support.');
+    
+    return NextResponse.redirect(redirectUrl);
+  }
 }

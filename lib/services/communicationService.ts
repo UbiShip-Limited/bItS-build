@@ -112,7 +112,7 @@ export class CommunicationService {
             amount: amount.toFixed(2),
             paymentType,
             transactionId: 'Payment Link Sent',
-            dashboardUrl: `${process.env.APP_URL}/dashboard/payments`
+            dashboardUrl: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/payments`
           }
         );
       }
@@ -643,7 +643,7 @@ Bowen Island Tattoo Shop Team
     const customerName = tattooRequest.customer?.name || displayName || 'New Customer';
     const customerEmail = tattooRequest.customer?.email || tattooRequest.contactEmail || 'Not provided';
     const customerPhone = tattooRequest.customer?.phone || tattooRequest.contactPhone || 'Not provided';
-    const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/requests/${tattooRequest.id}`;
+    const dashboardUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/tattoo-request/${tattooRequest.id}`;
 
     try {
       const result = await emailTemplateService.sendEmail(

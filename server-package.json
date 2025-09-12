@@ -2,7 +2,6 @@
   "name": "bowenislandtattooshop-backend",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "scripts": {
     "build": "npx prisma generate && tsc -p tsconfig.server.json",
     "start": "node dist/server.js",

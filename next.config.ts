@@ -35,6 +35,12 @@ const nextConfig: NextConfig = {
       };
     }
     
+    // Add explicit module resolution for @tabler/icons-react
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@tabler/icons-react': require.resolve('@tabler/icons-react'),
+    };
+    
     return config;
   },
   async rewrites() {

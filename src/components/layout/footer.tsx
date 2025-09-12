@@ -2,13 +2,13 @@
 
 import { cn } from "@/src/lib/utils/cn";
 import {
-  IconBrandInstagram,
-  IconBrandFacebook,
-  IconAt,
-  IconPhone,
-  IconMapPin,
-  IconWorld,
-} from "@tabler/icons-react";
+  Instagram,
+  Facebook,
+  AtSign,
+  Phone,
+  MapPin,
+  Globe,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
@@ -80,7 +80,7 @@ export function Footer() {
           {/* Contact Information */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 text-center mb-8 sm:mb-12 w-full max-w-3xl">
             <div className="flex flex-col items-center">
-              <IconMapPin className="h-5 sm:h-6 w-5 sm:w-6 text-gold-500 mb-2 sm:mb-3" />
+              <MapPin className="h-5 sm:h-6 w-5 sm:w-6 text-gold-500 mb-2 sm:mb-3" />
               <p className="text-gray-300 font-body tracking-tight text-sm sm:text-base">
                 565 Artisan Lane<br />
                 Bowen Island, BC V0N1G2<br />
@@ -152,7 +152,7 @@ export function Footer() {
               className="text-gray-400 hover:text-gold-500 transition-colors"
               title="Website"
             >
-              <IconWorld className="h-5 w-5 sm:h-6 sm:w-6" />
+              <Globe className="h-5 w-5 sm:h-6 sm:w-6" />
             </Link>
             <Link 
               href="https://www.facebook.com/bowenislandtattooshop" 
@@ -162,7 +162,7 @@ export function Footer() {
               title="Facebook"
               onClick={() => GAEvents.socialMediaClicked('Facebook')}
             >
-              <IconBrandFacebook className="h-5 w-5 sm:h-6 sm:w-6" />
+              <Facebook className="h-5 w-5 sm:h-6 sm:w-6" />
             </Link>
             <Link 
               href="https://instagram.com/bowenislandtattooshop" 
@@ -172,7 +172,7 @@ export function Footer() {
               title="Instagram"
               onClick={() => GAEvents.socialMediaClicked('Instagram')}
             >
-              <IconBrandInstagram className="h-5 w-5 sm:h-6 sm:w-6" />
+              <Instagram className="h-5 w-5 sm:h-6 sm:w-6" />
             </Link>
             <Link 
               href="mailto:bowenislandtattooshop@gmail.com"
@@ -180,7 +180,7 @@ export function Footer() {
               title="Email"
               onClick={() => GAEvents.emailClicked()}
             >
-              <IconAt className="h-5 w-5 sm:h-6 sm:w-6" />
+              <AtSign className="h-5 w-5 sm:h-6 sm:w-6" />
             </Link>
           </div>
         </div>

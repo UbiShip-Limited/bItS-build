@@ -54,7 +54,7 @@ export function SectionSpacer({
               className="w-32 h-px bg-gradient-to-r from-transparent via-gold-500/20 to-gold-500/10"
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
-              transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: 0.8, ease: "easeInOut" }}
             />
             <motion.div 
               className="mx-6 w-2.5 h-2.5 bg-gold-500/30 rounded-full relative"
@@ -68,7 +68,7 @@ export function SectionSpacer({
               className="w-32 h-px bg-gradient-to-l from-transparent via-gold-500/20 to-gold-500/10"
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
-              transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: 0.8, ease: "easeInOut" }}
             />
           </div>
         )
@@ -78,7 +78,7 @@ export function SectionSpacer({
             className="w-48 md:w-64 h-px bg-gradient-to-r from-transparent via-gold-500/15 to-transparent"
             initial={{ scaleX: 0, opacity: 0 }}
             whileInView={{ scaleX: 1, opacity: 1 }}
-            transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: 1, ease: "easeInOut" }}
           />
         )
     }
@@ -92,7 +92,7 @@ export function SectionSpacer({
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
         >
           {renderDivider()}
         </motion.div>

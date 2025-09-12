@@ -392,13 +392,13 @@ const dashboardRoutes: FastifyPluginAsync = async (fastify) => {
         }
       };
 
-      request.log.info('Dashboard metrics calculated:', {
+      request.log.info(`Dashboard metrics calculated: ${JSON.stringify({
         todayAppointments: finalMetrics.todayAppointments,
         requests: finalMetrics.requests,
         revenue: finalMetrics.revenue,
         priorityActionsCount: priorityActions.length,
         recentActivityCount: recentActivities.length
-      });
+      })}`);
 
       return {
         success: true,

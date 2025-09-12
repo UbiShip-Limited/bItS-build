@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { SupabaseClient, Session } from '@supabase/supabase-js';
+import { Session } from '@supabase/supabase-js';
 import { UserRole, UserWithRole } from '../../lib/types/auth';
 import { apiClient, clearAuthCache } from '../lib/api/apiClient';
 import { getSiteURL } from '@/src/lib/utils/siteUrl';
@@ -50,7 +50,7 @@ const defaultAuthContext: AuthContextType = {
 const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [supabase] = useState<SupabaseClient>(() => 
+  const [supabase] = useState(() => 
     createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!

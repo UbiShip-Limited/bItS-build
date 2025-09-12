@@ -748,7 +748,7 @@ const coreRoutes: FastifyPluginAsync = async (fastify) => {
   
   // Log the registered routes for debugging
   const routes = fastify.printRoutes({ commonPrefix: false });
-  fastify.log.debug('Registered payment routes:', routes);
+  fastify.log.debug(`Registered payment routes: ${routes}`);
 };
 
 // Helper function to get available endpoints based on user role

@@ -36,11 +36,10 @@ const nextConfig: NextConfig = {
       };
     }
     
-    // Add explicit module resolution for @tabler/icons-react and project alias '@'
+    // Add explicit module resolution for @tabler/icons-react
     config.resolve.alias = {
       ...config.resolve.alias,
       '@tabler/icons-react': require.resolve('@tabler/icons-react'),
-      '@': path.resolve(__dirname),
     };
     
     return config;

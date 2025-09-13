@@ -1,7 +1,8 @@
 {
   "buildCommand": "npm run build",
   "framework": "nextjs",
-  "installCommand": "npm install",
+  "installCommand": "npm ci --prefer-offline --no-audit",
+  "outputDirectory": ".next",
   "functions": {
     "src/app/dashboard/tattoo-request/[id]/page.tsx": {
       "maxDuration": 30
@@ -14,6 +15,17 @@
     }
   },
   "env": {
-    "NODE_OPTIONS": "--max-old-space-size=4096"
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "NEXT_TELEMETRY_DISABLED": "1"
+  },
+  "build": {
+    "env": {
+      "NODE_OPTIONS": "--max-old-space-size=4096",
+      "NEXT_TELEMETRY_DISABLED": "1",
+      "FORCE_REBUILD": "v3-fix-module-resolution"
+    }
+  },
+  "github": {
+    "silent": true
   }
 }

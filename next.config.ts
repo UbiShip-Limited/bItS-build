@@ -3,6 +3,7 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  output: 'standalone',
   eslint: {
     // Temporarily ignore ESLint during builds to prevent deployment failures
     // TODO: Fix all ESLint warnings and re-enable strict checking
@@ -19,7 +20,14 @@ const nextConfig: NextConfig = {
     // ignoreBuildErrors: true,
   },
   outputFileTracingExcludes: {
-    '*': ['./lib/**/*'],
+    '*': [
+      './lib/**/*',
+      './scripts/**/*',
+      './prisma/**/*',
+      './server-package.json',
+      './railway.json',
+      './.railwayignore'
+    ],
   },
   webpack: (config, { isServer }) => {
     // Don't try to bundle backend Node.js modules in the frontend

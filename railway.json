@@ -4,7 +4,7 @@
     "buildCommand": "npm run build:railway"
   },
   "deploy": {
-    "startCommand": "npm run start:server",
+    "startCommand": "node dist/lib/server.js",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE"

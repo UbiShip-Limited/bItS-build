@@ -37,9 +37,9 @@ export const typography = {
   leadingRelaxed: 'leading-relaxed',  // 1.625 for readability
   
   // Letter spacing (limited options)
-  trackingTight: 'tracking-[-0.02em]',
-  trackingNormal: 'tracking-[0]',
-  trackingWide: 'tracking-[0.02em]',
+  trackingTight: 'tracking-tight',
+  trackingNormal: 'tracking-normal',
+  trackingWide: 'tracking-wide',
   
   // Font weights
   fontLight: 'font-light',      // 300
@@ -48,15 +48,15 @@ export const typography = {
   fontSemibold: 'font-semibold', // 600
   
   // Heading hierarchy - using sentence case
-  h1: 'font-body text-5xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold leading-tight tracking-[-0.02em]',
-  h2: 'font-body text-4xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-[-0.02em]',
-  h3: 'font-body text-3xl sm:text-3xl md:text-4xl font-medium leading-tight tracking-normal',
-  h4: 'font-body text-2xl sm:text-2xl md:text-3xl font-medium leading-tight tracking-normal',
+  h1: 'font-body text-5xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold leading-tight',
+  h2: 'font-body text-4xl sm:text-4xl md:text-5xl font-semibold leading-tight',
+  h3: 'font-body text-3xl sm:text-3xl md:text-4xl font-medium leading-tight',
+  h4: 'font-body text-2xl sm:text-2xl md:text-3xl font-medium leading-tight',
   
   // Paragraph styles - increased for better readability
-  paragraph: 'font-body text-xl leading-relaxed tracking-normal',
-  paragraphLarge: 'font-body text-2xl sm:text-3xl leading-relaxed tracking-normal',
-  paragraphSmall: 'font-body text-lg leading-normal tracking-normal'
+  paragraph: 'font-body text-xl leading-relaxed',
+  paragraphLarge: 'font-body text-2xl sm:text-3xl leading-relaxed',
+  paragraphSmall: 'font-body text-lg leading-normal'
 } as const;
 
 export const colors = {
@@ -140,27 +140,27 @@ export const layout = {
 export const components = {
   // Button styles - refined
   button: {
-    base: 'font-body font-medium tracking-[0.02em] relative overflow-hidden inline-flex items-center justify-center rounded-lg',
+    base: 'font-body font-medium tracking-wide relative overflow-hidden inline-flex items-center justify-center rounded-lg',
     sizes: {
       small: 'px-4 py-2 text-sm',     // 32px height
       medium: 'px-6 py-3 text-base',  // 44px height  
       large: 'px-8 py-4 text-lg',     // 56px height
     },
     variants: {
-      primary: `bg-gold-500 text-obsidian hover:bg-gold-400 ${effects.transitionNormal}`,
-      secondary: `bg-transparent border ${colors.borderDefault} ${colors.textPrimary} hover:bg-gold-500/10 ${colors.borderHover} ${effects.transitionNormal}`,
-      ghost: `bg-transparent ${colors.textSecondary} hover:${colors.textPrimary} ${effects.transitionNormal}`,
+      primary: 'bg-gold-500 text-obsidian hover:bg-gold-400 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
+      secondary: 'bg-transparent border border-gold-500/30 text-white hover:bg-gold-500/10 hover:border-gold-500/50 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
+      ghost: 'bg-transparent text-white/70 hover:text-white transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]'
     }
   },
   
   // Input styles
-  input: `w-full px-4 py-3 bg-white/5 border ${colors.borderSubtle} rounded-lg text-white placeholder-white/50 focus:outline-none focus:${colors.borderDefault} ${effects.transitionNormal}`,
+  input: 'w-full px-4 py-3 bg-white/5 border border-gold-500/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-gold-500/30 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
   
   // Select dropdown styles - enhanced for dark theme
-  select: `w-full px-4 py-3 bg-white/5 border ${colors.borderSubtle} rounded-lg text-white focus:outline-none focus:${colors.borderDefault} ${effects.transitionNormal} cursor-pointer appearance-none [&>option]:bg-[#111111] [&>option]:text-white [&>option]:py-2`,
+  select: 'w-full px-4 py-3 bg-white/5 border border-gold-500/10 rounded-lg text-white focus:outline-none focus:border-gold-500/30 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] cursor-pointer appearance-none [&>option]:bg-[#111111] [&>option]:text-white [&>option]:py-2',
   
   // Card styles
-  card: `bg-obsidian/95 backdrop-blur-sm rounded-2xl border ${colors.borderSubtle} ${effects.shadowLight}`,
+  card: 'bg-obsidian/95 backdrop-blur-sm rounded-2xl border border-gold-500/10 shadow-[0_1px_3px_rgba(0,0,0,0.1)]',
   
   // Ornamental elements - standardized
   ornament: {

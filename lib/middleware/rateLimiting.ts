@@ -23,7 +23,7 @@ class RateLimitService {
     // General endpoint categories
     AUTH: { limit: 10, window: 15 * 60 * 1000 }, // 10 attempts per 15 minutes
     WRITE_HEAVY: { limit: 20, window: 60 * 1000 }, // 20 writes per minute
-    READ_HEAVY: { limit: 60, window: 60 * 1000 }, // 60 reads per minute
+    READ_HEAVY: { limit: 120, window: 60 * 1000 }, // 120 reads per minute (increased for dashboard)
     UPLOAD: { limit: 5, window: 60 * 1000 }, // 5 uploads per minute
     WEBHOOK: { limit: 100, window: 60 * 1000 }, // 100 webhook calls per minute
     PUBLIC_SUBMISSION: { limit: 3, window: 60 * 60 * 1000 }, // 3 submissions per hour (for tattoo requests)

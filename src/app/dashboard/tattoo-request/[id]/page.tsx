@@ -84,12 +84,12 @@ export default function TattooRequestDetailPage() {
 
   const getStatusColor = (status: string) => {
     const statusColors: Record<string, string> = {
-      'new': `bg-gold-500/20 ${colors.textAccent} ${colors.borderDefault}`,
+      'new': 'bg-gold-500/20 text-gold-500 border-gold-500/30',
       'reviewed': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
       'approved': 'bg-green-500/20 text-green-400 border-green-500/30',
       'rejected': 'bg-red-500/20 text-red-400 border-red-500/30'
     };
-    return statusColors[status] || `bg-white/10 ${colors.textSecondary} ${colors.borderSubtle}`;
+    return statusColors[status] || 'bg-white/10 text-white/70 border-gold-500/10';
   };
 
   const formatDate = (dateString: string) => {
@@ -116,8 +116,8 @@ export default function TattooRequestDetailPage() {
       >
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${colors.borderDefault} mx-auto mb-4`}></div>
-            <p className={colors.textSecondary}>Loading tattoo request...</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-500/30 mx-auto mb-4"></div>
+            <p className="text-white/70">Loading tattoo request...</p>
           </div>
         </div>
       </DashboardPageLayout>
@@ -139,7 +139,7 @@ export default function TattooRequestDetailPage() {
             <p className="text-red-400 mb-4">{error || 'Tattoo request not found'}</p>
             <Link 
               href="/dashboard/tattoo-request"
-              className={`${colors.textAccent} hover:${colors.textAccentProminent} ${effects.transitionNormal}`}
+              className="text-gold-500 hover:text-gold-500/90 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
             >
               Back to tattoo requests
             </Link>
@@ -168,14 +168,14 @@ export default function TattooRequestDetailPage() {
                 <button
                   onClick={() => handleStatusUpdate('reviewed')}
                   disabled={updating}
-                  className={`${components.button.base} ${components.button.sizes.medium} bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className="font-body font-medium tracking-wide relative overflow-hidden inline-flex items-center justify-center rounded-lg px-6 py-3 text-base bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 >
                   Mark as Reviewed
                 </button>
                 <button
                   onClick={() => handleStatusUpdate('approved')}
                   disabled={updating}
-                  className={`${components.button.base} ${components.button.sizes.medium} bg-green-500/20 hover:bg-green-500/30 text-green-400 border-green-500/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className="font-body font-medium tracking-wide relative overflow-hidden inline-flex items-center justify-center rounded-lg px-6 py-3 text-base bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 flex gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 >
                   <CheckCircle className="w-4 h-4" />
                   Approve
@@ -195,7 +195,7 @@ export default function TattooRequestDetailPage() {
                 <button
                   onClick={() => handleStatusUpdate('approved')}
                   disabled={updating}
-                  className={`${components.button.base} ${components.button.sizes.medium} bg-green-500/20 hover:bg-green-500/30 text-green-400 border-green-500/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className="font-body font-medium tracking-wide relative overflow-hidden inline-flex items-center justify-center rounded-lg px-6 py-3 text-base bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/30 flex gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                 >
                   <CheckCircle className="w-4 h-4" />
                   Approve

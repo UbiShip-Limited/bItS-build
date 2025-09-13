@@ -1,10 +1,10 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Header } from "@/src/components/layout/header";
-import { Footer } from "@/src/components/layout/footer";
-import { AuthProvider } from "@/src/hooks/useAuth";
-import { ToastProvider } from "@/src/components/providers/ToastProvider";
+import { Header } from "../components/layout/header";
+import { Footer } from "../components/layout/footer";
+import { AuthProvider } from "../hooks/useAuth";
+import { ToastProvider } from "../components/providers/ToastProvider";
 import MobileOptimizer from "./MobileOptimizer";
 
 export default function ClientLayout({

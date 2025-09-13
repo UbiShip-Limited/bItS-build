@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Bell, 
   Mail, 
@@ -30,6 +30,10 @@ interface NotificationData {
   communicationHistory: CommunicationHistory[];
 }
 
+// Cache for notification data to prevent unnecessary API calls
+const notificationCache = new Map<string, { data: NotificationData; timestamp: number }>();
+const CACHE_TTL = 60000; // 1 minute cache
+
 export default function AppointmentNotificationStatus({ 
   appointmentId, 
   customerId, 
@@ -38,28 +42,51 @@ export default function AppointmentNotificationStatus({
   const [notificationData, setNotificationData] = useState<NotificationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const loadingRef = useRef(false);
+  const previousIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    if (appointmentId) {
-      loadNotificationStatus();
+  const loadNotificationStatus = useCallback(async () => {
+    // Prevent duplicate requests
+    if (loadingRef.current || !appointmentId) {
+      return;
     }
-  }, [appointmentId]);
 
-  const loadNotificationStatus = async () => {
+    // Check cache first
+    const cached = notificationCache.get(appointmentId);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      setNotificationData(cached.data);
+      setLoading(false);
+      return;
+    }
+
     try {
+      loadingRef.current = true;
       setLoading(true);
       setError(null);
       
       // Call the backend service to get notification status
       const response = await apiClient.get<NotificationData>(`/appointments/${appointmentId}/notifications`);
+      
+      // Cache the response
+      notificationCache.set(appointmentId, { data: response, timestamp: Date.now() });
+      
       setNotificationData(response);
     } catch (err: any) {
       console.error('Failed to load notification status:', err);
       setError(err.message || 'Failed to load notification data');
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
-  };
+  }, [appointmentId]);
+
+  useEffect(() => {
+    // Only load if appointmentId changed
+    if (appointmentId && appointmentId !== previousIdRef.current) {
+      previousIdRef.current = appointmentId;
+      loadNotificationStatus();
+    }
+  }, [appointmentId, loadNotificationStatus]);
 
   const getNotificationTypeIcon = (type: string) => {
     switch (type) {

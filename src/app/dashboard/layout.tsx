@@ -3,8 +3,8 @@
 import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from '@/src/hooks/useAuth';
-import ThemeSwitcher from '@/src/components/ThemeSwitcher';
+import { useAuth } from '../../hooks/useAuth';
+import ThemeSwitcher from '../../components/ThemeSwitcher';
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -22,10 +22,10 @@ import {
   X,
   Mail
 } from 'lucide-react';
-import NotificationCenter from '@/src/components/dashboard/NotificationCenter';
-import { analyticsService } from '@/src/lib/api/services/analyticsService';
-import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
-import { toast } from '@/src/lib/toast';
+import NotificationCenter from '../../components/dashboard/NotificationCenter';
+import { analyticsService } from '../../lib/api/services/analyticsService';
+import { typography, colors, effects, layout, components } from '../../lib/styles/globalStyleConstants';
+import { toast } from '../../lib/toast';
 
 interface DashboardLayoutProps {
   children: ReactNode;

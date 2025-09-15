@@ -17,7 +17,7 @@
   "build": {
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096",
-      "FORCE_REBUILD": "v12-nextjs-15-0-3",
+      "FORCE_REBUILD": "v13-nextjs-15-5-3-react-19-stable",
       "NEXT_TELEMETRY_DISABLED": "1"
     }
   },

@@ -4,13 +4,13 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { 
-  Calendar, 
-  User, 
-  Mail, 
-  Phone, 
-  Palette, 
-  Ruler, 
+import {
+  Calendar,
+  User,
+  Mail,
+  Phone,
+  Palette,
+  Ruler,
   MapPin,
   Clock,
   Image as ImageIcon,
@@ -20,7 +20,7 @@ import {
   UserPlus
 } from 'lucide-react';
 import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
-import { apiClient } from '@/src/lib/api/apiClient';
+import { getApiClient } from '@/src/lib/api/apiClient';
 import Modal from '@/src/components/ui/Modal';
 import CustomerForm from '@/src/components/forms/CustomerForm';
 import { DashboardPageLayout } from '../../components/DashboardPageLayout';
@@ -38,14 +38,29 @@ export default function TattooRequestDetailPage() {
 
   // Create API client instance - stable reference
   const tattooRequestClient = useMemo(() => {
-    return new TattooRequestApiClient(apiClient);
+    // Only create client in browser
+    if (typeof window === 'undefined') {
+      return null;
+    }
+    try {
+      const client = getApiClient();
+      return new TattooRequestApiClient(client);
+    } catch (error) {
+      console.error('Failed to create tattoo request client:', error);
+      return null;
+    }
   }, []);
 
   const loadTattooRequest = useCallback(async (id: string) => {
+    // Don't try to load on server or without client
+    if (!tattooRequestClient || typeof window === 'undefined') {
+      return;
+    }
+
     console.log('🔍 [TattooRequest] Starting to load request:', id);
     setLoading(true);
     setError(null);
-    
+
     try {
       console.log('🔍 [TattooRequest] Calling API client getById...');
       const data = await tattooRequestClient.getById(id);
@@ -70,8 +85,8 @@ export default function TattooRequestDetailPage() {
   }, [params, loadTattooRequest]);
 
   const handleStatusUpdate = async (newStatus: string) => {
-    if (!request || updating) return;
-    
+    if (!request || updating || !tattooRequestClient) return;
+
     setUpdating(true);
     try {
       await tattooRequestClient.updateStatus(request.id, newStatus);

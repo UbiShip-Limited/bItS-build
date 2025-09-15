@@ -6,45 +6,69 @@ import { createBrowserClient } from '@supabase/ssr';
 // The /api/* routes are rewritten to the backend URL in next.config.ts
 const API_URL = '/api';
 
-// Debug: Log the API URL to make sure it's correct
-console.log('🔗 API Client configured for:', API_URL);
-console.log('🌍 Environment:', process.env.NODE_ENV);
-console.log('🖥️  Platform:', typeof window !== 'undefined' ? 'Browser' : 'Server');
+// Only log in browser to avoid SSR noise
+if (typeof window !== 'undefined') {
+  console.log('🔗 API Client configured for:', API_URL);
+  console.log('🌍 Environment:', process.env.NODE_ENV);
+  console.log('🖥️  Platform:', 'Browser');
 
-// Production debugging for Railway deployment
-if (process.env.NODE_ENV === 'production') {
-  console.log('🚀 Production API Client initialized');
-  console.log('   - API URL:', API_URL);
-  console.log('   - Backend URL (via rewrite):', process.env.NEXT_PUBLIC_BACKEND_API_URL || 'not configured');
-  console.log('   - Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'missing');
-  console.log('   - Frontend Domain:', process.env.NEXT_PUBLIC_SITE_URL || 'not specified');
+  // Production debugging for Railway deployment
+  if (process.env.NODE_ENV === 'production') {
+    console.log('🚀 Production API Client initialized');
+    console.log('   - API URL:', API_URL);
+    console.log('   - Backend URL (via rewrite):', process.env.NEXT_PUBLIC_BACKEND_API_URL || 'not configured');
+    console.log('   - Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'missing');
+    console.log('   - Frontend Domain:', process.env.NEXT_PUBLIC_SITE_URL || 'not specified');
+  }
 }
 
-// Create Supabase client for getting session tokens
-const supabase = createBrowserClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Lazy initialize Supabase client only in browser
+let supabase: ReturnType<typeof createBrowserClient> | null = null;
+
+function getSupabaseClient() {
+  if (typeof window === 'undefined') {
+    return null; // Don't initialize on server
+  }
+
+  if (!supabase) {
+    supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
+
+  return supabase;
+}
 
 // Cache the session to avoid multiple concurrent calls
 let sessionCache: { token: string | null; expires: number } = { token: null, expires: 0 };
 
 async function getAuthToken(): Promise<string | null> {
+  // Don't try to get auth token on server
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const supabaseClient = getSupabaseClient();
+  if (!supabaseClient) {
+    return null;
+  }
+
   const now = Date.now();
-  
+
   // Use cached token if it's still valid (cache for 5 minutes instead of 30 seconds)
   if (sessionCache.token && sessionCache.expires > now) {
     return sessionCache.token;
   }
-  
+
   console.log('🔍 Fetching fresh auth token from Supabase...');
   try {
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const { data: { session }, error } = await supabaseClient.auth.getSession();
     if (error) {
       console.error('❌ API Client: Error getting session:', error);
       return null;
     }
-    
+
     if (session?.access_token) {
       // Cache the token for 5 minutes (longer cache to reduce auth overhead)
       sessionCache = {
@@ -54,7 +78,7 @@ async function getAuthToken(): Promise<string | null> {
       console.log('✅ API Client: Auth token cached successfully for 5 minutes');
       return session.access_token;
     }
-    
+
     console.log('⚠️ API Client: No session found when fetching token');
     return null;
   } catch (error) {
@@ -89,7 +113,10 @@ export class ApiClient {
     const productionTimeout = 90000; // 90 seconds for production (cold starts)
     const timeout = isProduction ? productionTimeout : baseTimeout;
 
-    console.log(`⏱️  API Client timeout configured: ${timeout}ms ${isProduction ? '(Production)' : '(Development)'}`);
+    // Only log in browser
+    if (typeof window !== 'undefined') {
+      console.log(`⏱️  API Client timeout configured: ${timeout}ms ${isProduction ? '(Production)' : '(Development)'}`);
+    }
     
     this.axiosInstance = axios.create({
       baseURL: baseURL,
@@ -364,8 +391,27 @@ export class ApiClient {
   }
 }
 
-// Create a singleton instance
-export const apiClient = new ApiClient();
+// Create a singleton instance with error handling
+let apiClientInstance: ApiClient | null = null;
+
+export function getApiClient(): ApiClient {
+  if (!apiClientInstance) {
+    try {
+      apiClientInstance = new ApiClient();
+    } catch (error) {
+      console.error('Failed to initialize API client:', error);
+      // Create a basic instance without Supabase if initialization fails
+      apiClientInstance = new ApiClient();
+    }
+  }
+  return apiClientInstance;
+}
+
+// Export a getter that creates the client lazily
+export const apiClient = getApiClient();
+
+// Also export as default for backward compatibility
+export default apiClient;
 
 /**
  * Helper function to get authentication headers for direct fetch calls

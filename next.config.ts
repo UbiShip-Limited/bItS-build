@@ -3,7 +3,9 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  output: 'standalone',
+  // Change from standalone to default for Vercel deployment
+  // Vercel handles the deployment automatically
+  // output: 'standalone', // Commented out for Vercel
   eslint: {
     // Temporarily ignore ESLint during builds to prevent deployment failures
     // TODO: Fix all ESLint warnings and re-enable strict checking

@@ -1,7 +1,7 @@
 {
-  "buildCommand": "rm -rf .next node_modules/.cache && npm run build",
+  "buildCommand": "npm run build",
   "framework": "nextjs",
-  "installCommand": "npm ci --force",
+  "installCommand": "rm -rf node_modules package-lock.json && npm install",
   "outputDirectory": ".next",
   "functions": {
     "src/app/**/*.tsx": {
@@ -19,8 +19,7 @@
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096",
       "NEXT_TELEMETRY_DISABLED": "1",
-      "FORCE_REBUILD": "v5-fix-launcher-module-resolution",
-      "NEXT_PRIVATE_STANDALONE": "false"
+      "FORCE_REBUILD": "v7-clean-install"
     }
   },
   "github": {

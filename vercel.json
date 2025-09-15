@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npx prisma generate && next build",
-  "installCommand": "rm -rf node_modules package-lock.json .next && npm install --force",
+  "buildCommand": "npx prisma generate && node scripts/fix-next-modules.js && next build",
+  "installCommand": "rm -rf node_modules package-lock.json .next && npm install --force && node scripts/fix-next-modules.js",
   "framework": "nextjs",
   "functions": {
     "src/app/**/*.tsx": {
@@ -17,7 +17,7 @@
   "build": {
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096",
-      "FORCE_REBUILD": "v13-nextjs-15-5-3-react-19-stable",
+      "FORCE_REBUILD": "v14-fix-missing-modules",
       "NEXT_TELEMETRY_DISABLED": "1"
     }
   },

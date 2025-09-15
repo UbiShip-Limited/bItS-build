@@ -1,7 +1,7 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "buildCommand": "cp server-package.json package.json && npm ci --production=false && npm run build"
+    "buildCommand": "bash scripts/build-backend-railway.sh"
   },
   "deploy": {
     "startCommand": "node dist/lib/server.js",

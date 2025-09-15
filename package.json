@@ -17,6 +17,7 @@
     "build": "next build",
     "build:server": "tsc -p tsconfig.server.json",
     "build:railway": "npx prisma generate && npm run build:server",
+    "build:backend-only": "npx prisma generate && tsc -p tsconfig.server.json",
     "start": "next start",
     "start:server": "node dist/lib/server.js",
     "start:all": "concurrently \"npm run start\" \"npm run start:server\"",

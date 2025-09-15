@@ -11,9 +11,6 @@ next-env.d.ts
 middleware.ts
 next.config.js
 next.config.mjs
-package.json
-package-lock.json
-node_modules/
 
 # Frontend components and hooks
 components/
@@ -57,7 +54,7 @@ jsconfig.json
 .gitignore
 .DS_Store
 
-# Scripts not needed for backend
+# Scripts not needed for backend (keep build script)
 scripts/payment-reminder-cron.ts
 scripts/seedEmailTemplates.ts
 scripts/test*.ts
@@ -69,4 +66,5 @@ scripts/diagnose*.ts
 scripts/verify*.ts
 scripts/sync*.ts
 scripts/setup-admin.ts
-scripts/pre-launch-checklist.ts 
+scripts/pre-launch-checklist.ts
+!scripts/build-backend-railway.sh 

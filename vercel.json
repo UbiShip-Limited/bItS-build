@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm run build:vercel",
-  "installCommand": "npm run clean:vercel && npm install",
+  "buildCommand": "npx prisma generate && next build",
+  "installCommand": "rm -rf node_modules package-lock.json .next && npm install --force",
   "framework": "nextjs",
   "functions": {
     "src/app/**/*.tsx": {
@@ -17,7 +17,7 @@
   "build": {
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096",
-      "FORCE_REBUILD": "v11-fix-next-modules",
+      "FORCE_REBUILD": "v12-nextjs-15-0-3",
       "NEXT_TELEMETRY_DISABLED": "1"
     }
   },

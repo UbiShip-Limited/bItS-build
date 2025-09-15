@@ -1,12 +1,22 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "buildCommand": "bash scripts/build-backend-railway.sh"
+    "builder": "nixpacks",
+    "buildCommand": "bash scripts/build-backend-railway.sh",
+    "nixpacksPlan": {
+      "providers": ["node"],
+      "phases": {
+        "setup": {
+          "nixPkgs": ["nodejs_20", "npm-9_x"]
+        }
+      }
+    }
   },
   "deploy": {
     "startCommand": "node dist/lib/server.js",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
-    "restartPolicyType": "ON_FAILURE"
+    "restartPolicyType": "ON_FAILURE",
+    "numReplicas": 1
   }
 } 

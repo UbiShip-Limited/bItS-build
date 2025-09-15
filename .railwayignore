@@ -11,6 +11,9 @@ next-env.d.ts
 middleware.ts
 next.config.js
 next.config.mjs
+vercel.json
+.vercel/
+.vercelignore
 
 # Frontend components and hooks
 components/

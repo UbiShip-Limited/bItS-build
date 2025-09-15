@@ -2,7 +2,7 @@
  * Shared status helpers and color mappings
  */
 
-import { BookingStatus } from '../../../lib/types/booking';
+import { BookingStatus } from '../types/booking';
 
 /**
  * Get Tailwind CSS classes for appointment status badges

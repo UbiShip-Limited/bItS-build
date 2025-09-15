@@ -1,4 +1,4 @@
-import { GalleryImage } from "../../../lib/api/services/galleryService";
+import { GalleryImage } from "@/src/lib/api/services/galleryService";
 
 export interface BaseSection {
   id: number;

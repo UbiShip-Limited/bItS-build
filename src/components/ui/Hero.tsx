@@ -6,8 +6,8 @@ import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Spotlight } from "./spotlight-new"
-import { typography, colors, effects, components } from '../../lib/styles/globalStyleConstants'
-import { smoothScrollTo } from '../../lib/utils/smoothScroll'
+import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants'
+import { smoothScrollTo } from '@/src/lib/utils/smoothScroll'
 import { CloudinaryImage, getCloudinaryUrl, CLOUDINARY_PRESETS } from './CloudinaryImage'
 
 

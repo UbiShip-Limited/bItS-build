@@ -2,8 +2,8 @@
 
 import { useRef, useState, useEffect } from "react"
 import { useScroll, motion } from "framer-motion"
-import { GalleryService, GalleryImage } from "../../lib/api/services/galleryService"
-import { ApiClient } from "../../lib/api/apiClient"
+import { GalleryService, GalleryImage } from "@/src/lib/api/services/galleryService"
+import { ApiClient } from "@/src/lib/api/apiClient"
 import Link from "next/link"
 import { ChevronRight } from "lucide-react"
 import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants'

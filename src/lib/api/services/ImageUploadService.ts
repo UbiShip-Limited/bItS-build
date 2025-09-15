@@ -89,7 +89,7 @@ export class ImageUploadService {
         statusText: error.response?.statusText,
         responseData: error.response?.data,
         endpoint: this.cloudinarySignatureUrl,
-        requestUrl: this.client.getBaseUrl() + this.cloudinarySignatureUrl
+        requestUrl: this.client.getBaseUrl ? this.client.getBaseUrl() + this.cloudinarySignatureUrl : this.cloudinarySignatureUrl
       });
       
       // Provide more specific error messages based on error type

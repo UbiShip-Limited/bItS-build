@@ -433,7 +433,24 @@ export function getApiClientSafe(): ApiClient {
   return _apiClient;
 }
 
-export const apiClient = typeof window !== 'undefined' ? getApiClient() : ({} as ApiClient);
+// Create a proxy that handles SSR gracefully
+const createSafeApiClient = (): ApiClient => {
+  if (typeof window === 'undefined') {
+    // Return a proxy that provides stub methods during SSR
+    return new Proxy({} as ApiClient, {
+      get: (target, prop) => {
+        // Return functions that do nothing during SSR
+        if (typeof prop === 'string' && ['get', 'post', 'put', 'delete', 'uploadFile', 'getBaseUrl', 'getBaseURL'].includes(prop)) {
+          return () => Promise.resolve({});
+        }
+        return undefined;
+      }
+    });
+  }
+  return getApiClient();
+};
+
+export const apiClient = createSafeApiClient();
 
 // Also export as default for backward compatibility
 export default apiClient;

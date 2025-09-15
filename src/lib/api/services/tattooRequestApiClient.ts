@@ -142,22 +142,32 @@ export class TattooRequestApiClient {
    */
   public async getById(id: string): Promise<TattooRequest> {
     const url = `${this.baseUrl}/${id}`;
-    console.log('🔗 [TattooRequestApiClient] GET request to:', url);
-    console.log('🔗 [TattooRequestApiClient] Request ID:', id);
-    console.log('🔗 [TattooRequestApiClient] Base URL:', this.client.getBaseURL());
-    console.log('🔗 [TattooRequestApiClient] Full URL (before rewrite):', `${this.client.getBaseURL()}${url}`);
-    console.log('🔗 [TattooRequestApiClient] Expected backend URL:', url.replace('/api', ''));
+
+    // Only log in browser to avoid SSR issues
+    if (typeof window !== 'undefined') {
+      console.log('🔗 [TattooRequestApiClient] GET request to:', url);
+      console.log('🔗 [TattooRequestApiClient] Request ID:', id);
+      if (this.client.getBaseURL) {
+        console.log('🔗 [TattooRequestApiClient] Base URL:', this.client.getBaseURL());
+        console.log('🔗 [TattooRequestApiClient] Full URL (before rewrite):', `${this.client.getBaseURL()}${url}`);
+      }
+      console.log('🔗 [TattooRequestApiClient] Expected backend URL:', url.replace('/api', ''));
+    }
 
     try {
       const result = await this.client.get<TattooRequest>(url);
-      console.log('✅ [TattooRequestApiClient] Response received:', result);
+      if (typeof window !== 'undefined') {
+        console.log('✅ [TattooRequestApiClient] Response received:', result);
+      }
       return result;
     } catch (error) {
-      console.error('❌ [TattooRequestApiClient] Request failed:', error);
-      console.error('❌ [TattooRequestApiClient] Error details:', {
-        url: `${this.client.getBaseURL()}${url}`,
-        error: error
-      });
+      if (typeof window !== 'undefined') {
+        console.error('❌ [TattooRequestApiClient] Request failed:', error);
+        console.error('❌ [TattooRequestApiClient] Error details:', {
+          url: this.client.getBaseURL ? `${this.client.getBaseURL()}${url}` : url,
+          error: error
+        });
+      }
       throw error;
     }
   }

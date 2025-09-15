@@ -47,7 +47,8 @@
     "test:square-payments": "tsx scripts/verifySquarePayments.ts",
     "verify:email": "tsx scripts/verify-email-system.ts",
     "test:appointment-email": "tsx scripts/test-appointment-email.ts",
-    "checklist": "tsx scripts/pre-launch-checklist.ts"
+    "checklist": "tsx scripts/pre-launch-checklist.ts",
+    "postinstall": "node scripts/postinstall.js || true"
   },
   "dependencies": {
     "@fastify/cors": "^8.5.0",

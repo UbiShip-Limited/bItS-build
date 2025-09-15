@@ -3,9 +3,11 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  // Change from standalone to default for Vercel deployment
-  // Vercel handles the deployment automatically
-  // output: 'standalone', // Commented out for Vercel
+  // Vercel deployment configuration
+  experimental: {
+    // Fix for Next.js 15 module resolution
+    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
+  },
   eslint: {
     // Temporarily ignore ESLint during builds to prevent deployment failures
     // TODO: Fix all ESLint warnings and re-enable strict checking

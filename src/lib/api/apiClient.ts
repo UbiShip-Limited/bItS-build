@@ -2,8 +2,8 @@ import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { createBrowserClient } from '@supabase/ssr';
 
 // Define base API configuration
-// Use relative URL to go through Next.js rewrites (/api/* -> backend)
-// This avoids CORS issues and centralizes the backend URL configuration
+// Always use Next.js rewrites to avoid CORS issues
+// The /api/* routes are rewritten to the backend URL in next.config.ts
 const API_URL = '/api';
 
 // Debug: Log the API URL to make sure it's correct

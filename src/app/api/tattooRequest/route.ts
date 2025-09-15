@@ -13,14 +13,27 @@ export async function POST(request: NextRequest) {
   const origin = request.headers.get('origin');
   const referer = request.headers.get('referer');
   const userAgent = request.headers.get('user-agent');
+  const contentType = request.headers.get('content-type');
+  const host = request.headers.get('host');
 
   console.log('Request details:', {
     origin,
     referer,
     userAgent,
+    contentType,
+    host,
     url: request.url,
-    method: request.method
+    method: request.method,
+    timestamp: new Date().toISOString()
   });
+
+  // Try to get request body for debugging (be careful with sensitive data)
+  try {
+    const body = await request.text();
+    console.log('Request body preview:', body.substring(0, 200));
+  } catch (e) {
+    console.log('Could not read request body');
+  }
 
   // Check if this is a bot or crawler
   const botPatterns = /bot|crawler|spider|scraper|curl|wget|python|java|ruby|perl/i;

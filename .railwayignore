@@ -3,29 +3,70 @@ src/
 .next/
 out/
 public/
+app/
 
-# Next.js configuration
+# Next.js configuration and dependencies
 next.config.ts
 next-env.d.ts
 middleware.ts
+next.config.js
+next.config.mjs
+package.json
+package-lock.json
+node_modules/
+
+# Frontend components and hooks
+components/
+hooks/
 
 # Tailwind and PostCSS
 tailwind.config.js
 postcss.config.mjs
+postcss.config.js
 
 # Test files
 coverage/
 vitest.config.ts
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
 
 # Documentation
 docs/
 README.md
 DEPLOYMENT.md
+*.md
 
 # Development tools
 .vscode/
 .idea/
 ecosystem.config.js
+.env.local
+.env.development
+.env.test
 
 # Other frontend configs
-eslint.config.mjs 
+eslint.config.mjs
+tsconfig.json
+jsconfig.json
+
+# Git and other files
+.git/
+.gitignore
+.DS_Store
+
+# Scripts not needed for backend
+scripts/payment-reminder-cron.ts
+scripts/seedEmailTemplates.ts
+scripts/test*.ts
+scripts/check*.ts
+scripts/update*.ts
+scripts/import*.ts
+scripts/create*.ts
+scripts/diagnose*.ts
+scripts/verify*.ts
+scripts/sync*.ts
+scripts/setup-admin.ts
+scripts/pre-launch-checklist.ts 

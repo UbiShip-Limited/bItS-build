@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { DollarSign, CreditCard, FileText, Clock } from 'lucide-react';
-import { PaymentType } from '@/lib/config/pricing';
-import { formatPaymentType, getMinimumAmount } from '@/lib/config/pricing';
+import { PaymentType } from '@/src/lib/config/pricing';
+import { formatPaymentType, getMinimumAmount } from '@/src/lib/config/pricing';
 import CreatePaymentLinkModal from './CreatePaymentLinkModal';
 
 interface QuickPaymentActionsProps {

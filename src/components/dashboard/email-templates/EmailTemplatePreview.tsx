@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Eye, Smartphone, Monitor, Code, Mail } from 'lucide-react';
 import { colors, typography, components, effects, cn } from '@/src/lib/styles/globalStyleConstants';
-import EmailStyleService from '../../../../lib/services/emailStyleService';
+import EmailStyleService from '@/src/lib/services/emailStyleService';
 
 interface EmailTemplatePreviewProps {
   subject: string;

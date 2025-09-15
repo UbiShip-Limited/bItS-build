@@ -4,7 +4,7 @@ import React from 'react';
 import { CreditCard } from 'lucide-react';
 import { BasePaymentHistoryProps, PaymentHistoryItem, PaymentSummary } from './types';
 import { getStatusIcon, getStatusColor, formatDate } from './utils';
-import { formatPaymentType } from '@/lib/config/pricing';
+import { formatPaymentType } from '@/src/lib/config/pricing';
 
 interface PaymentHistoryFullProps extends BasePaymentHistoryProps {
   payments: PaymentHistoryItem[];

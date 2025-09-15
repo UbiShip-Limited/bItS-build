@@ -1,9 +1,10 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { createBrowserClient } from '@supabase/ssr';
 
-// Define base API configuration - use Fastify backend by default
-// In production, NEXT_PUBLIC_BACKEND_API_URL should be set to your Railway backend URL
-const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
+// Define base API configuration
+// Use relative URL to go through Next.js rewrites (/api/* -> backend)
+// This avoids CORS issues and centralizes the backend URL configuration
+const API_URL = '/api';
 
 // Debug: Log the API URL to make sure it's correct
 console.log('🔗 API Client configured for:', API_URL);
@@ -13,7 +14,8 @@ console.log('🖥️  Platform:', typeof window !== 'undefined' ? 'Browser' : 'S
 // Production debugging for Railway deployment
 if (process.env.NODE_ENV === 'production') {
   console.log('🚀 Production API Client initialized');
-  console.log('   - Backend URL:', API_URL);
+  console.log('   - API URL:', API_URL);
+  console.log('   - Backend URL (via rewrite):', process.env.NEXT_PUBLIC_BACKEND_API_URL || 'not configured');
   console.log('   - Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'configured' : 'missing');
   console.log('   - Frontend Domain:', process.env.NEXT_PUBLIC_SITE_URL || 'not specified');
 }
@@ -79,26 +81,26 @@ export class ApiClient {
   private pendingRequests = new Map<string, Promise<any>>();
   
   constructor(baseURL: string = API_URL) {
-    // Now calls Fastify backend at localhost:3001 by default (can be overridden with NEXT_PUBLIC_BACKEND_API_URL)
+    // Use relative URLs to go through Next.js rewrites
     this.baseURL = baseURL;
-    // Determine timeout based on environment and Railway deployment
-    const isRailway = baseURL.includes('railway.app');
+    // Determine timeout based on environment
+    const isProduction = process.env.NODE_ENV === 'production';
     const baseTimeout = 60000; // 60 seconds base timeout
-    const railwayTimeout = 90000; // 90 seconds for Railway (cold starts)
-    const timeout = isRailway ? railwayTimeout : baseTimeout;
-    
-    console.log(`⏱️  API Client timeout configured: ${timeout}ms ${isRailway ? '(Railway)' : '(Local)'}`);
+    const productionTimeout = 90000; // 90 seconds for production (cold starts)
+    const timeout = isProduction ? productionTimeout : baseTimeout;
+
+    console.log(`⏱️  API Client timeout configured: ${timeout}ms ${isProduction ? '(Production)' : '(Development)'}`);
     
     this.axiosInstance = axios.create({
       baseURL: baseURL,
       headers: {
         'Content-Type': 'application/json',
       },
-      // Increased timeout for Railway cold starts and production issues
+      // Increased timeout for production cold starts
       timeout: timeout,
-      // Add retry configuration for Railway
-      ...(isRailway && {
-        // Additional Railway-specific configuration
+      // Add retry configuration for production
+      ...(isProduction && {
+        // Additional production-specific configuration
         maxRedirects: 3,
       })
     });
@@ -232,18 +234,18 @@ export class ApiClient {
     }
     
     let lastError: unknown;
-    // Increase retries for Railway due to cold start issues
-    const isRailway = this.baseURL.includes('railway.app');
-    const maxRetries = isRailway ? 3 : 2;
+    // Increase retries for production due to cold start issues
+    const isProduction = process.env.NODE_ENV === 'production';
+    const maxRetries = isProduction ? 3 : 2;
     
     const requestPromise = (async () => {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
           const response: AxiosResponse<T> = await this.axiosInstance.get(path, config);
           
-          // Log successful requests for Railway debugging
-          if (process.env.NODE_ENV === 'production' && isRailway) {
-            console.log(`✅ Railway request successful: ${path} (attempt ${attempt})`);
+          // Log successful requests for production debugging
+          if (isProduction) {
+            console.log(`✅ Production request successful: ${path} (attempt ${attempt})`);
           }
           
           return response.data;
@@ -260,19 +262,19 @@ export class ApiClient {
             throw error;
           }
           
-          // Special handling for Railway cold start and network issues
+          // Special handling for production cold start and network issues
           const isNetworkError = !axiosError?.response;
           const isTimeout = axiosError?.code === 'ECONNABORTED' || axiosError?.code === 'ETIMEDOUT';
-          const isRailwayIssue = isRailway && (isNetworkError || isTimeout || axiosError?.response?.status === 500);
-          
-          // Retry on network errors or server errors (5xx), with special Railway handling
+          const isProductionIssue = isProduction && (isNetworkError || isTimeout || axiosError?.response?.status === 500);
+
+          // Retry on network errors or server errors (5xx), with special production handling
           if (attempt < maxRetries) {
             let backoffTime = 1000 * attempt; // Base backoff: 1s, 2s, 3s
-            
-            // Increase backoff time for Railway issues (cold starts need more time)
-            if (isRailwayIssue) {
+
+            // Increase backoff time for production issues (cold starts need more time)
+            if (isProductionIssue) {
               backoffTime = Math.min(2000 * Math.pow(1.5, attempt - 1), 8000); // 2s, 3s, 4.5s, max 8s
-              console.warn(`🚂 Railway issue detected, using extended backoff: ${backoffTime}ms`);
+              console.warn(`🏭 Production issue detected, using extended backoff: ${backoffTime}ms`);
             }
             
             console.warn(`🔄 Retrying request (${attempt}/${maxRetries}) for ${path} in ${backoffTime}ms`);
@@ -280,9 +282,9 @@ export class ApiClient {
             
             await new Promise(resolve => setTimeout(resolve, backoffTime));
           } else {
-            // Log final failure details for Railway
-            if (isRailway) {
-              console.error(`🚂 Railway request failed after ${maxRetries} attempts: ${path}`, {
+            // Log final failure details for production
+            if (isProduction) {
+              console.error(`🏭 Production request failed after ${maxRetries} attempts: ${path}`, {
                 finalError: error instanceof Error ? error.message : error,
                 isNetworkError,
                 isTimeout,

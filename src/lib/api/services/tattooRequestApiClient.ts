@@ -145,8 +145,9 @@ export class TattooRequestApiClient {
     console.log('🔗 [TattooRequestApiClient] GET request to:', url);
     console.log('🔗 [TattooRequestApiClient] Request ID:', id);
     console.log('🔗 [TattooRequestApiClient] Base URL:', this.client.getBaseURL());
-    console.log('🔗 [TattooRequestApiClient] Full URL:', `${this.client.getBaseURL()}${url}`);
-    
+    console.log('🔗 [TattooRequestApiClient] Full URL (before rewrite):', `${this.client.getBaseURL()}${url}`);
+    console.log('🔗 [TattooRequestApiClient] Expected backend URL:', url.replace('/api', ''));
+
     try {
       const result = await this.client.get<TattooRequest>(url);
       console.log('✅ [TattooRequestApiClient] Response received:', result);

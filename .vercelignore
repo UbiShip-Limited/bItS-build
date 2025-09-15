@@ -5,8 +5,9 @@ tsconfig.server.json
 railway.json
 .railwayignore
 
-# Scripts
-/scripts/
+# Scripts (keep postinstall)
+/scripts/*
+!scripts/postinstall.js
 
 # Database
 /prisma/migrations/

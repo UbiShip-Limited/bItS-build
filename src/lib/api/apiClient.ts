@@ -31,10 +31,20 @@ function getSupabaseClient() {
   }
 
   if (!supabase) {
-    supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('❌ Missing Supabase environment variables');
+      return null;
+    }
+
+    try {
+      supabase = createBrowserClient(supabaseUrl, supabaseKey);
+    } catch (error) {
+      console.error('❌ Failed to create Supabase client:', error);
+      return null;
+    }
   }
 
   return supabase;
@@ -408,7 +418,22 @@ export function getApiClient(): ApiClient {
 }
 
 // Export a getter that creates the client lazily
-export const apiClient = getApiClient();
+// Only create if in browser to avoid SSR issues
+let _apiClient: ApiClient | null = null;
+
+export function getApiClientSafe(): ApiClient {
+  if (typeof window === 'undefined') {
+    // Return a dummy client for SSR that won't be used
+    return {} as ApiClient;
+  }
+
+  if (!_apiClient) {
+    _apiClient = getApiClient();
+  }
+  return _apiClient;
+}
+
+export const apiClient = typeof window !== 'undefined' ? getApiClient() : ({} as ApiClient);
 
 // Also export as default for backward compatibility
 export default apiClient;

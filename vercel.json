@@ -1,9 +1,9 @@
 {
-  "buildCommand": "next build",
-  "installCommand": "npm ci --force",
+  "buildCommand": "npm run build",
+  "installCommand": "rm -rf node_modules package-lock.json && npm install",
   "framework": "nextjs",
   "functions": {
-    "src/app/dashboard/tattoo-request/[id]/*.tsx": {
+    "src/app/**/*.tsx": {
       "maxDuration": 30
     },
     "src/app/api/**/*.ts": {
@@ -16,7 +16,7 @@
   "build": {
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096",
-      "FORCE_REBUILD": "v9-simplified"
+      "FORCE_REBUILD": "v10-clean-install"
     }
   }
 }

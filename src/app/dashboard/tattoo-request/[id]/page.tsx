@@ -19,14 +19,17 @@ import {
   MessageSquare,
   UserPlus
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
 import { getApiClient } from '@/src/lib/api/apiClient';
-import Modal from '@/src/components/ui/Modal';
-import CustomerForm from '@/src/components/forms/CustomerForm';
 import { DashboardPageLayout } from '../../components/DashboardPageLayout';
 import { DashboardCard } from '../../components/DashboardCard';
 import {  colors, components } from '@/src/lib/styles/globalStyleConstants';
 import { getTattooRequestDisplayName, getUserTypeBadge } from '@/src/lib/utils/displayNames';
+
+// Dynamic imports for components that might cause SSR issues
+const Modal = dynamic(() => import('@/src/components/ui/Modal'), { ssr: false });
+const CustomerForm = dynamic(() => import('@/src/components/forms/CustomerForm'), { ssr: false });
 
 export default function TattooRequestDetailPage() {
   const params = useParams();

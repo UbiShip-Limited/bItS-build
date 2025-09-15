@@ -45,26 +45,26 @@ const FAQs = [
 
 export function FrequentlyAskedQuestionsAccordion() {
   const [open, setOpen] = useState<string | null>(null);
-  
+
   return (
-    <div 
-      id="faq" 
-      className={`mx-auto grid ${layout.containerLg} grid-cols-1 gap-8 md:gap-12 ${layout.padding.mobile} ${layout.sectionY.large} md:grid-cols-2 ${layout.padding.desktop}`}
-      style={{ 
-        color: 'var(--foreground, #FAFAF9)',
+    <div
+      id="faq"
+      className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:gap-12 px-4 sm:px-6 lg:px-8 py-16 md:py-24 md:grid-cols-2"
+      style={{
+        color: '#FAFAF9',
       }}
     >
       <div className="text-center md:text-left">
-        <h2 className={`${typography.h1} text-obsidian dark:text-white mb-8`}>
+        <h2 className="font-body text-5xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold leading-tight text-white mb-8">
           Frequently asked questions
         </h2>
         <div className="flex items-center justify-center md:justify-start mb-6">
-          <div className={components.ornament.lineShort}></div>
-          <div className={`${components.ornament.dot} mx-5 relative`}>
+          <div className="w-16 h-px bg-gradient-to-r from-gold-500/30 to-transparent"></div>
+          <div className="w-2 h-2 bg-gold-500/30 rounded-full mx-5 relative">
             <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-sm scale-[2]"></div>
           </div>
         </div>
-        <p className={`${typography.paragraphLarge} text-obsidian/60 dark:text-white/70 max-w-md mx-auto md:mx-0`}>
+        <p className="font-body text-2xl sm:text-3xl leading-relaxed text-white/70 max-w-md mx-auto md:mx-0">
           Everything you need to know about getting your tattoo at Bowen Island Tattoo Shop.
         </p>
       </div>
@@ -150,7 +150,7 @@ const FAQItem = ({
           />
         </div>
         <div className="flex-1">
-          <h3 className={`${typography.fontUI} text-xl md:text-2xl ${typography.fontMedium} text-obsidian/90 dark:text-white/90 ${typography.leadingTight}`}>
+          <h3 className="font-body text-xl md:text-2xl font-medium text-white/90 leading-tight">
             {question}
           </h3>
           <AnimatePresence mode="wait">
@@ -162,7 +162,7 @@ const FAQItem = ({
                 transition={{ duration: 0.4, ease: "easeInOut" }}
                 className="overflow-hidden"
               >
-                <p className={`mt-4 ${typography.fontUI} text-base md:text-lg ${typography.leadingRelaxed} text-obsidian/70 dark:text-white/70 ${typography.fontLight} pr-2`}>
+                <p className="mt-4 font-body text-base md:text-lg leading-relaxed text-white/70 font-light pr-2">
                   {answer}
                 </p>
               </motion.div>

@@ -1,5 +1,7 @@
 // Global Style Constants for Bowen Island Tattoo Shop
 // This file ensures consistent styling across all components
+// NOTE: When using these in production components, prefer static Tailwind classes
+// over dynamic string interpolation to avoid purging issues
 
 export const spacing = {
   // Base 8px grid system for Apple-like precision

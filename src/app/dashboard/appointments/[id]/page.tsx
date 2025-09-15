@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -34,7 +34,10 @@ export default function AppointmentDetailPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [updating, setUpdating] = useState(false);
 
-  const appointmentService = new AppointmentApiClient(apiClient);
+  // Create API client instance - stable reference
+  const appointmentService = useMemo(() => {
+    return new AppointmentApiClient(apiClient);
+  }, []);
 
   useEffect(() => {
     if (params?.id) {
@@ -209,7 +212,7 @@ export default function AppointmentDetailPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-white/50 mb-1">Status</p>
-                <span className={`px-3 py-1 inline-flex ${typography.textSm} ${typography.fontSemibold} rounded-full ${getStatusColor(appointment.status)}`}>
+                <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full ${getStatusColor(appointment.status)}`}>
                   {appointment.status.replace('_', ' ')}
                 </span>
               </div>
@@ -260,17 +263,17 @@ export default function AppointmentDetailPage() {
             
             <div className="space-y-3">
               <div className="flex items-center">
-                <Calendar className={`w-5 h-5 ${colors.textAccent} mr-3`} />
+                <Calendar className="w-5 h-5 text-gold-500 mr-3" />
                 <div>
-                  <p className={`${typography.textSm} ${colors.textMuted}`}>Date</p>
+                  <p className="text-sm text-white/50">Date</p>
                   <p className="font-medium text-white/70">{date}</p>
                 </div>
               </div>
               
               <div className="flex items-center">
-                <Clock className={`w-5 h-5 ${colors.textAccent} mr-3`} />
+                <Clock className="w-5 h-5 text-gold-500 mr-3" />
                 <div>
-                  <p className={`${typography.textSm} ${colors.textMuted}`}>Time</p>
+                  <p className="text-sm text-white/50">Time</p>
                   <p className="font-medium text-white/70">{time} ({appointment.duration} minutes)</p>
                 </div>
               </div>
@@ -280,11 +283,11 @@ export default function AppointmentDetailPage() {
           {/* Notes */}
           {appointment.notes && (
             <div className="bg-obsidian/95 backdrop-blur-sm rounded-2xl border border-gold-500/10 shadow-[0_4px_12px_rgba(0,0,0,0.1)] p-6 hover:border-gold-500/50 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
-              <h2 className={`${typography.textLg} ${typography.fontSemibold} mb-4 flex items-center ${colors.textPrimary}`}>
-                <FileText className={`w-5 h-5 mr-2 ${colors.textAccent}`} />
+              <h2 className="text-lg font-semibold mb-4 flex items-center text-white">
+                <FileText className="w-5 h-5 mr-2 text-gold-500" />
                 Notes
               </h2>
-              <p className={`${colors.textSecondary} whitespace-pre-wrap`}>{appointment.notes}</p>
+              <p className="text-white/70 whitespace-pre-wrap">{appointment.notes}</p>
             </div>
           )}
         </div>
@@ -298,21 +301,21 @@ export default function AppointmentDetailPage() {
             {appointment.customer ? (
               <div className="space-y-3">
                 <div className="flex items-center">
-                  <User className={`w-5 h-5 ${colors.textAccent} mr-3`} />
+                  <User className="w-5 h-5 text-gold-500 mr-3" />
                   <div>
-                    <p className={`${typography.textSm} ${colors.textMuted}`}>Name</p>
+                    <p className="text-sm text-white/50">Name</p>
                     <p className="font-medium text-white/70">{appointment.customer?.name || 'Unknown'}</p>
                   </div>
                 </div>
                 
                 {appointment.customer?.email && (
                   <div className="flex items-center">
-                    <Mail className={`w-5 h-5 ${colors.textAccent} mr-3`} />
+                    <Mail className="w-5 h-5 text-gold-500 mr-3" />
                     <div>
-                      <p className={`${typography.textSm} ${colors.textMuted}`}>Email</p>
+                      <p className="text-sm text-white/50">Email</p>
                       <a 
                         href={`mailto:${appointment.customer.email}`}
-                        className="font-medium text-gold-500 hover:text-gold-500/90 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                        className="font-medium text-gold-500 hover:text-gold-400 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                       >
                         {appointment.customer?.email}
                       </a>
@@ -327,7 +330,7 @@ export default function AppointmentDetailPage() {
                       <p className="text-sm text-gray-400">Phone</p>
                       <a 
                         href={`tel:${appointment.customer.phone}`}
-                        className="font-medium text-gold-500 hover:text-gold-500/90 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                        className="font-medium text-gold-500 hover:text-gold-400 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                       >
                         {appointment.customer?.phone}
                       </a>
@@ -362,7 +365,7 @@ export default function AppointmentDetailPage() {
                       <p className="text-sm text-gray-400">Contact Email</p>
                       <a 
                         href={`mailto:${appointment.contactEmail}`}
-                        className="font-medium text-gold-500 hover:text-gold-500/90 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                        className="font-medium text-gold-500 hover:text-gold-400 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                       >
                         {appointment.contactEmail}
                       </a>
@@ -377,7 +380,7 @@ export default function AppointmentDetailPage() {
                       <p className="text-sm text-gray-400">Contact Phone</p>
                       <a 
                         href={`tel:${appointment.contactPhone}`}
-                        className="font-medium text-gold-500 hover:text-gold-500/90 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+                        className="font-medium text-gold-500 hover:text-gold-400 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                       >
                         {appointment.contactPhone}
                       </a>

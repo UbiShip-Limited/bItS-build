@@ -6,7 +6,7 @@ import { typography, colors, effects, layout, components } from '@/src/lib/style
 
 export function TattooAftercareGuide() {
   return (
-    <div id="aftercare" className={layout.sectionY.large}>
+    <div id="aftercare" className="py-16 md:py-24">
       {/* Header Section */}
       <motion.div 
         className="mx-auto max-w-7xl px-6 text-center mb-16 md:mb-20"
@@ -15,19 +15,19 @@ export function TattooAftercareGuide() {
         transition={{ duration: 0.6 }}
       >
         <div className="flex items-center justify-center mb-8">
-          <div className={components.ornament.lineLong}></div>
+          <div className="w-32 h-px bg-gradient-to-r from-transparent via-gold-500/30 to-transparent"></div>
           <div className="mx-6">
-            <div className={`${components.ornament.dot} relative`}>
+            <div className="w-2 h-2 bg-gold-500/30 rounded-full relative">
               <div className="absolute inset-0 bg-gold-500/20 rounded-full blur-sm scale-[2]"></div>
             </div>
           </div>
-          <div className={components.ornament.lineLong}></div>
+          <div className="w-32 h-px bg-gradient-to-r from-transparent via-gold-500/30 to-transparent"></div>
         </div>
-        <h2 className={`${typography.h1} text-obsidian dark:${colors.textPrimary} mb-8`}>
+        <h2 className="font-body text-5xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold leading-tight text-white mb-8">
           Tattoo Aftercare Guide
         </h2>
-        <p className={`${typography.paragraphLarge} text-obsidian/70 dark:${colors.textSecondary} max-w-3xl mx-auto ${typography.fontLight} ${typography.leadingRelaxed}`}>
-          Taking care of your new tattoo is pretty simple. Here's what you need to know 
+        <p className="font-body text-2xl sm:text-3xl leading-relaxed text-white/70 max-w-3xl mx-auto font-light">
+          Taking care of your new tattoo is pretty simple. Here's what you need to know
           to keep it looking fresh while it heals up.
         </p>
       </motion.div>
@@ -53,10 +53,10 @@ export function TattooAftercareGuide() {
               
               {/* Content */}
               <div className="relative z-10">
-                <h3 className={`${typography.fontUI} text-xl md:text-2xl ${typography.fontSemibold} text-white/90 mb-4 ${typography.leadingTight}`}>
+                <h3 className="font-body text-xl md:text-2xl font-semibold text-white/90 mb-4 leading-tight">
                   {step.title}
                 </h3>
-                <p className={`${typography.fontUI} text-base md:text-lg ${typography.leadingRelaxed} text-white/70 ${typography.fontLight}`}>
+                <p className="font-body text-base md:text-lg leading-relaxed text-white/70 font-light">
                   {step.description}
                 </p>
               </div>
@@ -77,11 +77,11 @@ export function TattooAftercareGuide() {
       >
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-gold-500/10 to-gold-500/5 backdrop-blur-sm p-8 md:p-10 border border-gold-500/20">
           <div className="absolute -top-12 -right-12 w-32 h-32 bg-gold-500/10 rounded-full blur-3xl"></div>
-          <p className={`${typography.fontUI} text-lg md:text-xl ${colors.textAccent} ${typography.fontMedium} mb-2`}>
+          <p className="font-body text-lg md:text-xl text-gold-500 font-medium mb-2">
             Important Reminder
           </p>
-          <p className={`${typography.fontUI} text-base md:text-lg text-white/80 ${typography.leadingRelaxed}`}>
-            If you have any concerns about your healing tattoo, don't hesitate to contact your artist. 
+          <p className="font-body text-base md:text-lg text-white/80 leading-relaxed">
+            If you have any concerns about your healing tattoo, don't hesitate to contact your artist.
             We're here to ensure your tattoo heals perfectly.
           </p>
         </div>

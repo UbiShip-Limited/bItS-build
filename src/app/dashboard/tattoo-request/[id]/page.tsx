@@ -37,8 +37,10 @@ export default function TattooRequestDetailPage() {
   const [updating, setUpdating] = useState(false);
   const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
 
-  // Memoize the client to prevent recreation on every render
-  const tattooRequestClient = useMemo(() => new TattooRequestApiClient(apiClient), []);
+  // Create API client instance - stable reference
+  const tattooRequestClient = useMemo(() => {
+    return new TattooRequestApiClient(apiClient);
+  }, []);
 
   const loadTattooRequest = useCallback(async (id: string) => {
     console.log('🔍 [TattooRequest] Starting to load request:', id);
@@ -233,16 +235,16 @@ export default function TattooRequestDetailPage() {
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className={`${typography.textSm} ${colors.textMuted} mb-1`}>Status</p>
-                <span className={`px-3 py-1 inline-flex ${typography.textSm} ${typography.fontSemibold} rounded-full border ${getStatusColor(request.status)}`}>
+                <p className="text-sm text-white/50 mb-1">Status</p>
+                <span className={`px-3 py-1 inline-flex text-sm font-semibold rounded-full border ${getStatusColor(request.status)}`}>
                   {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
                 </span>
               </div>
               
               <div>
-                <p className={`${typography.textSm} ${colors.textMuted} mb-1`}>Submitted</p>
-                <p className={`${typography.textSm} flex items-center ${colors.textSecondary}`}>
-                  <Calendar className={`w-4 h-4 mr-1 ${colors.textAccent}`} />
+                <p className="text-sm text-white/50 mb-1">Submitted</p>
+                <p className="text-sm flex items-center text-white/70">
+                  <Calendar className="w-4 h-4 mr-1 text-gold-500" />
                   {formatDate(request.createdAt)}
                 </p>
               </div>
@@ -256,67 +258,67 @@ export default function TattooRequestDetailPage() {
             
             <div className="space-y-4">
               <div>
-                <p className={`${typography.textSm} ${colors.textMuted} mb-1`}>Description</p>
-                <p className={colors.textSecondary}>{request.description}</p>
+                <p className="text-sm text-white/50 mb-1">Description</p>
+                <p className="text-white/70">{request.description}</p>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className={`${typography.textSm} ${colors.textMuted} mb-1 flex items-center`}>
-                    <MapPin className={`w-4 h-4 mr-1 ${colors.textAccent}`} />
+                  <p className="text-sm text-white/50 mb-1 flex items-center">
+                    <MapPin className="w-4 h-4 mr-1 text-gold-500" />
                     Placement
                   </p>
-                  <p className={`${typography.fontMedium} ${colors.textSecondary}`}>{request.placement || 'Not specified'}</p>
+                  <p className="font-medium text-white/70">{request.placement || 'Not specified'}</p>
                 </div>
                 
                 <div>
-                  <p className={`${typography.textSm} ${colors.textMuted} mb-1 flex items-center`}>
-                    <Ruler className={`w-4 h-4 mr-1 ${colors.textAccent}`} />
+                  <p className="text-sm text-white/50 mb-1 flex items-center">
+                    <Ruler className="w-4 h-4 mr-1 text-gold-500" />
                     Size
                   </p>
-                  <p className={`${typography.fontMedium} ${colors.textSecondary}`}>{request.size || 'Not specified'}</p>
+                  <p className="font-medium text-white/70">{request.size || 'Not specified'}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className={`${typography.textSm} ${colors.textMuted} mb-1 flex items-center`}>
-                    <Palette className={`w-4 h-4 mr-1 ${colors.textAccent}`} />
+                  <p className="text-sm text-white/50 mb-1 flex items-center">
+                    <Palette className="w-4 h-4 mr-1 text-gold-500" />
                     Color Preference
                   </p>
-                  <p className={`${typography.fontMedium} ${colors.textSecondary}`}>{request.colorPreference || 'Not specified'}</p>
+                  <p className="font-medium text-white/70">{request.colorPreference || 'Not specified'}</p>
                 </div>
                 
                 <div>
-                  <p className={`${typography.textSm} ${colors.textMuted} mb-1`}>Style</p>
-                  <p className={`${typography.fontMedium} ${colors.textSecondary}`}>{request.style || 'Not specified'}</p>
+                  <p className="text-sm text-white/50 mb-1">Style</p>
+                  <p className="font-medium text-white/70">{request.style || 'Not specified'}</p>
                 </div>
               </div>
               
               {request.purpose && (
                 <div>
-                  <p className={`${typography.textSm} ${colors.textMuted} mb-1`}>Purpose/Meaning</p>
-                  <p className={colors.textSecondary}>{request.purpose}</p>
+                  <p className="text-sm text-white/50 mb-1">Purpose/Meaning</p>
+                  <p className="text-white/70">{request.purpose}</p>
                 </div>
               )}
               
               {request.timeframe && (
                 <div>
-                  <p className={`${typography.textSm} ${colors.textMuted} mb-1 flex items-center`}>
-                    <Clock className={`w-4 h-4 mr-1 ${colors.textAccent}`} />
+                  <p className="text-sm text-white/50 mb-1 flex items-center">
+                    <Clock className="w-4 h-4 mr-1 text-gold-500" />
                     Timeframe
                   </p>
-                  <p className={`${typography.fontMedium} ${colors.textSecondary}`}>{request.timeframe}</p>
+                  <p className="font-medium text-white/70">{request.timeframe}</p>
                 </div>
               )}
               
               {request.additionalNotes && (
                 <div>
-                  <p className={`${typography.textSm} ${colors.textMuted} mb-1 flex items-center`}>
-                    <MessageSquare className={`w-4 h-4 mr-1 ${colors.textAccent}`} />
+                  <p className="text-sm text-white/50 mb-1 flex items-center">
+                    <MessageSquare className="w-4 h-4 mr-1 text-gold-500" />
                     Additional Notes
                   </p>
-                  <p className={colors.textSecondary}>{request.additionalNotes}</p>
+                  <p className="text-white/70">{request.additionalNotes}</p>
                 </div>
               )}
             </div>
@@ -335,15 +337,15 @@ export default function TattooRequestDetailPage() {
                       alt={`Reference ${index + 1}`}
                       width={300}
                       height={192}
-                      className={`w-full h-48 object-cover ${components.radius.medium} border ${colors.borderSubtle}`}
+                      className="w-full h-48 object-cover rounded-2xl border border-gold-500/10"
                     />
                     <a
                       href={image.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`absolute inset-0 bg-obsidian bg-opacity-0 group-hover:bg-opacity-70 flex items-center justify-center ${components.radius.medium} ${effects.transitionNormal}`}
+                      className="absolute inset-0 bg-obsidian bg-opacity-0 group-hover:bg-opacity-70 flex items-center justify-center rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                     >
-                      <span className={`${colors.textPrimary} opacity-0 group-hover:opacity-100 ${effects.transitionNormal}`}>
+                      <span className="text-white opacity-0 group-hover:opacity-100 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
                         View Full Size
                       </span>
                     </a>
@@ -365,21 +367,21 @@ export default function TattooRequestDetailPage() {
               {request.customer ? (
                 <>
                   <div className="flex items-center">
-                    <User className={`w-5 h-5 ${colors.textAccent} mr-3`} />
+                    <User className="w-5 h-5 text-gold-500 mr-3" />
                     <div>
-                      <p className={`${typography.textSm} ${colors.textMuted}`}>Name</p>
-                      <p className={`${typography.fontMedium} ${colors.textSecondary}`}>{request.customer.name}</p>
+                      <p className="text-sm text-white/50">Name</p>
+                      <p className="font-medium text-white/70">{request.customer.name}</p>
                     </div>
                   </div>
                   
                   {request.customer.email && (
                     <div className="flex items-center">
-                      <Mail className={`w-5 h-5 ${colors.textAccent} mr-3`} />
+                      <Mail className="w-5 h-5 text-gold-500 mr-3" />
                       <div>
-                        <p className={`${typography.textSm} ${colors.textMuted}`}>Email</p>
-                        <a 
+                        <p className="text-sm text-white/50">Email</p>
+                        <a
                           href={`mailto:${request.customer.email}`}
-                          className={`${typography.fontMedium} ${colors.textAccent} hover:${colors.textAccentProminent} ${effects.transitionNormal}`}
+                          className="font-medium text-gold-500 hover:text-gold-400 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                         >
                           {request.customer.email}
                         </a>
@@ -387,10 +389,10 @@ export default function TattooRequestDetailPage() {
                     </div>
                   )}
                   
-                  <div className={`pt-3 mt-3 border-t ${colors.borderSubtle}`}>
+                  <div className="pt-3 mt-3 border-t border-gold-500/10">
                     <Link
                       href={`/dashboard/customers/${request.customer.id}`}
-                      className={`${typography.textSm} ${colors.textAccent} hover:${colors.textAccentProminent} ${effects.transitionNormal}`}
+                      className="text-sm text-gold-500 hover:text-gold-400 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                     >
                       View customer profile →
                     </Link>
@@ -399,7 +401,7 @@ export default function TattooRequestDetailPage() {
               ) : (
                 <>
                   <div className="flex items-center gap-2 mb-2">
-                    <p className={`${typography.textSm} ${colors.textSecondary} font-medium`}>
+                    <p className="text-sm text-white/70 font-medium">
                       {getTattooRequestDisplayName(request)}
                     </p>
                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${getUserTypeBadge(request).className}`}>
@@ -409,12 +411,12 @@ export default function TattooRequestDetailPage() {
                   
                   {request.contactEmail && (
                     <div className="flex items-center">
-                      <Mail className={`w-5 h-5 ${colors.textAccent} mr-3`} />
+                      <Mail className="w-5 h-5 text-gold-500 mr-3" />
                       <div>
-                        <p className={`${typography.textSm} ${colors.textMuted}`}>Contact Email</p>
-                        <a 
+                        <p className="text-sm text-white/50">Contact Email</p>
+                        <a
                           href={`mailto:${request.contactEmail}`}
-                          className={`${typography.fontMedium} ${colors.textAccent} hover:${colors.textAccentProminent} ${effects.transitionNormal}`}
+                          className="font-medium text-gold-500 hover:text-gold-400 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                         >
                           {request.contactEmail}
                         </a>
@@ -424,12 +426,12 @@ export default function TattooRequestDetailPage() {
                   
                   {request.contactPhone && (
                     <div className="flex items-center">
-                      <Phone className={`w-5 h-5 ${colors.textAccent} mr-3`} />
+                      <Phone className="w-5 h-5 text-gold-500 mr-3" />
                       <div>
-                        <p className={`${typography.textSm} ${colors.textMuted}`}>Contact Phone</p>
-                        <a 
+                        <p className="text-sm text-white/50">Contact Phone</p>
+                        <a
                           href={`tel:${request.contactPhone}`}
-                          className={`${typography.fontMedium} ${colors.textAccent} hover:${colors.textAccentProminent} ${effects.transitionNormal}`}
+                          className="font-medium text-gold-500 hover:text-gold-400 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
                         >
                           {request.contactPhone}
                         </a>
@@ -438,7 +440,7 @@ export default function TattooRequestDetailPage() {
                   )}
                   
                   {/* Create Customer Button for Unregistered Requests */}
-                  <div className={`pt-3 mt-3 border-t ${colors.borderSubtle}`}>
+                  <div className="pt-3 mt-3 border-t border-gold-500/10">
                     <button
                       onClick={() => setShowCreateCustomerModal(true)}
                       className="w-full px-6 py-3 bg-gold-500/20 text-gold-500 hover:bg-gold-500/30 hover:text-gold-400 border border-gold-500/50 hover:border-gold-500 font-medium tracking-[0.02em] relative overflow-hidden inline-flex items-center justify-center rounded-lg transition-all duration-300 gap-2"
@@ -452,8 +454,8 @@ export default function TattooRequestDetailPage() {
               
               {request.contactPreference && (
                 <div className={`pt-3 mt-3 border-t ${colors.borderSubtle}`}>
-                  <p className={`${typography.textSm} ${colors.textMuted}`}>Contact Preference</p>
-                  <p className={`${typography.fontMedium} ${colors.textSecondary}`}>{request.contactPreference}</p>
+                  <p className="text-sm text-white/50">Contact Preference</p>
+                  <p className="font-medium text-white/70">{request.contactPreference}</p>
                 </div>
               )}
             </div>

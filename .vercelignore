@@ -1,16 +1,16 @@
 # Backend/Server files
-lib/
+/lib/
 server-package.json
 tsconfig.server.json
 railway.json
 .railwayignore
 
 # Scripts
-scripts/
+/scripts/
 
 # Database
-prisma/migrations/
-prisma/seed.ts
+/prisma/migrations/
+/prisma/seed.ts
 
 # Development files
 *.test.ts
@@ -18,11 +18,11 @@ prisma/seed.ts
 *.spec.ts
 *.spec.tsx
 __tests__/
-coverage/
+/coverage/
 .vitest/
 
 # Documentation
-docs/
+/docs/
 *.md
 !README.md
 
@@ -47,7 +47,7 @@ pnpm-debug.log*
 Thumbs.db
 
 # Build artifacts from backend
-dist/
+/dist/
 
 # Git
 .git/

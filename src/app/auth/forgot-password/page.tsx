@@ -6,7 +6,7 @@ import { Mail, Loader2, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { createBrowserClient } from '@supabase/ssr';
-import { getSiteURL } from '../../../lib/utils/siteUrl';
+import { getSiteURL } from '@/src/lib/utils/siteUrl';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');

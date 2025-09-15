@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
-  ArrowLeft, 
   Calendar, 
   User, 
   Mail, 
@@ -26,7 +25,7 @@ import Modal from '@/src/components/ui/Modal';
 import CustomerForm from '@/src/components/forms/CustomerForm';
 import { DashboardPageLayout } from '../../components/DashboardPageLayout';
 import { DashboardCard } from '../../components/DashboardCard';
-import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
+import {  colors, components } from '@/src/lib/styles/globalStyleConstants';
 import { getTattooRequestDisplayName, getUserTypeBadge } from '@/src/lib/utils/displayNames';
 
 export default function TattooRequestDetailPage() {

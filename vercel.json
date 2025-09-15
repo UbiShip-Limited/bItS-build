@@ -1,25 +1,14 @@
 {
-  "buildCommand": "npx prisma generate && node scripts/fix-next-modules.js && next build",
-  "installCommand": "rm -rf node_modules package-lock.json .next && npm install --force && node scripts/fix-next-modules.js",
   "framework": "nextjs",
-  "functions": {
-    "src/app/**/*.tsx": {
-      "maxDuration": 30
-    },
-    "src/app/api/**/*.ts": {
-      "maxDuration": 30
-    }
-  },
+  "buildCommand": "next build",
+  "installCommand": "npm install",
   "env": {
-    "NODE_OPTIONS": "--max-old-space-size=4096",
-    "NEXT_TELEMETRY_DISABLED": "1"
+    "NODE_OPTIONS": "--max-old-space-size=4096"
   },
   "build": {
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096",
-      "FORCE_REBUILD": "v14-fix-missing-modules",
-      "NEXT_TELEMETRY_DISABLED": "1"
+      "FORCE_REBUILD": "v16-fix-runtime-config-bug"
     }
-  },
-  "crons": []
+  }
 }

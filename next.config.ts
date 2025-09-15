@@ -4,10 +4,7 @@ import path from "path";
 const nextConfig: NextConfig = {
   /* config options here */
   // Vercel deployment configuration
-  experimental: {
-    // Fix for Next.js 15 module resolution
-    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
-  },
+  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   eslint: {
     // Temporarily ignore ESLint during builds to prevent deployment failures
     // TODO: Fix all ESLint warnings and re-enable strict checking

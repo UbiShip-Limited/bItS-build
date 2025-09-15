@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   // Vercel deployment configuration
   serverExternalPackages: ['@prisma/client', 'bcryptjs'],
+
   eslint: {
     // Temporarily ignore ESLint during builds to prevent deployment failures
     // TODO: Fix all ESLint warnings and re-enable strict checking
@@ -44,13 +45,13 @@ const nextConfig: NextConfig = {
         'child_process': false,
       };
     }
-    
+
     // Add explicit module resolution for @tabler/icons-react
     config.resolve.alias = {
       ...config.resolve.alias,
       '@tabler/icons-react': require.resolve('@tabler/icons-react'),
     };
-    
+
     return config;
   },
   async rewrites() {

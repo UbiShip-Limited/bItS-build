@@ -1,10 +1,9 @@
 {
   "buildCommand": "npm run build",
+  "installCommand": "npm ci --force",
   "framework": "nextjs",
-  "installCommand": "rm -rf node_modules package-lock.json && npm install",
-  "outputDirectory": ".next",
   "functions": {
-    "src/app/**/*.tsx": {
+    "src/app/dashboard/tattoo-request/[id]/*.tsx": {
       "maxDuration": 30
     },
     "src/app/api/**/*.ts": {
@@ -12,17 +11,12 @@
     }
   },
   "env": {
-    "NODE_OPTIONS": "--max-old-space-size=4096",
-    "NEXT_TELEMETRY_DISABLED": "1"
+    "NODE_OPTIONS": "--max-old-space-size=4096"
   },
   "build": {
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096",
-      "NEXT_TELEMETRY_DISABLED": "1",
-      "FORCE_REBUILD": "v7-clean-install"
+      "FORCE_REBUILD": "v9-simplified"
     }
-  },
-  "github": {
-    "silent": true
   }
 }

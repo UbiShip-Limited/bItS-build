@@ -4,8 +4,9 @@
 [phases.setup]
 nixPkgs = ["nodejs_20", "npm-9_x"]
 
+# Skip install phase - our build script handles everything
 [phases.install]
-cmds = ["npm ci --production=false || npm install --production=false"]
+cmds = ["echo 'Skipping install phase - handled by build script'"]
 
 [phases.build]
 cmds = ["bash scripts/build-backend-railway.sh"]

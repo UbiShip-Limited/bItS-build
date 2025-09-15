@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "rm -rf node_modules package-lock.json && npm install",
+  "buildCommand": "npm run build:vercel",
+  "installCommand": "npm run clean:vercel && npm install",
   "framework": "nextjs",
   "functions": {
     "src/app/**/*.tsx": {
@@ -11,12 +11,15 @@
     }
   },
   "env": {
-    "NODE_OPTIONS": "--max-old-space-size=4096"
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "NEXT_TELEMETRY_DISABLED": "1"
   },
   "build": {
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096",
-      "FORCE_REBUILD": "v10-clean-install"
+      "FORCE_REBUILD": "v11-fix-next-modules",
+      "NEXT_TELEMETRY_DISABLED": "1"
     }
-  }
+  },
+  "crons": []
 }

@@ -16,6 +16,8 @@
     "dev:parallel": "start \"Backend\" npm run dev:backend && start \"Frontend\" npm run dev:frontend-wait",
     "build": "next build",
     "vercel-build": "next build",
+    "build:vercel": "npx prisma generate && next build",
+    "clean:vercel": "rm -rf node_modules package-lock.json .next",
     "build:server": "tsc -p tsconfig.server.json",
     "build:railway": "npx prisma generate && npm run build:server",
     "build:backend-only": "npx prisma generate && tsc -p tsconfig.server.json",

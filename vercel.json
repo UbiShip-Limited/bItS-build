@@ -1,7 +1,7 @@
 {
   "framework": "nextjs",
   "buildCommand": "next build",
-  "installCommand": "npm install",
+  "installCommand": "npm install --force",
   "env": {
     "NODE_OPTIONS": "--max-old-space-size=4096"
   },

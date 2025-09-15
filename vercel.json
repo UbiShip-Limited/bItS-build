@@ -8,7 +8,7 @@
   "build": {
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096",
-      "FORCE_REBUILD": "v16-fix-runtime-config-bug"
+      "FORCE_REBUILD": "v17-nextjs15-runtime-fix"
     }
   }
 }

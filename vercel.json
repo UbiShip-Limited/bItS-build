@@ -1,14 +1,14 @@
 {
   "framework": "nextjs",
-  "buildCommand": "next build",
-  "installCommand": "npm install --force",
+  "buildCommand": "npm run build:vercel",
+  "installCommand": "rm -rf node_modules package-lock.json && npm install",
   "env": {
     "NODE_OPTIONS": "--max-old-space-size=4096"
   },
   "build": {
     "env": {
       "NODE_OPTIONS": "--max-old-space-size=4096",
-      "FORCE_REBUILD": "v17-nextjs15-runtime-fix"
+      "FORCE_REBUILD": "v18-nextjs14-downgrade-fix"
     }
   }
 }

@@ -1,7 +1,7 @@
-import type { NextConfig } from "next";
-import path from "path";
+const path = require("path");
 
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   /* config options here */
   // Vercel deployment configuration
   serverExternalPackages: ['@prisma/client', 'bcryptjs'],
@@ -57,9 +57,9 @@ const nextConfig: NextConfig = {
   async rewrites() {
     // Trim whitespace and ensure proper URL format
     const backendUrl = (process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001').trim();
-    
+
     console.log('🔗 Next.js rewrites configured for backend:', backendUrl);
-    
+
     return [
       {
         source: '/api/:path*',
@@ -78,4 +78,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+module.exports = nextConfig;

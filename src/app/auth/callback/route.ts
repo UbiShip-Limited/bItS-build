@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { createClient } from '@/src/utils/supabase/server';
 
+// Force dynamic rendering for auth callback route
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const requestUrl = new URL(request.url);

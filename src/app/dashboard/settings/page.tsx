@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { DashboardPageLayout } from '../components/DashboardPageLayout';
 import { DashboardCard } from '../components/DashboardCard';
 import { typography, colors, effects, layout, components } from '@/src/lib/styles/globalStyleConstants';
+import { AccountSecurityTab } from '@/src/components/settings/AccountSecurityTab';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('profile');
@@ -61,17 +62,19 @@ export default function SettingsPage() {
 
         {/* Main Content */}
         <div className="md:col-span-2">
-          <DashboardCard
-            title={activeTab === 'profile' ? 'Shop Profile' : 
-                   activeTab === 'hours' ? 'Business Hours' :
-                   activeTab === 'staff' ? 'Staff Management' :
-                   activeTab === 'email' ? 'Email Templates' :
-                   activeTab === 'payment' ? 'Payment Settings' :
-                   activeTab === 'account' ? 'Account & Security' : 'Notifications'}
-            subtitle={activeTab === 'profile' ? "Update your shop's basic information" : undefined}
-          >
+          {activeTab === 'account' ? (
+            <AccountSecurityTab />
+          ) : (
+            <DashboardCard
+              title={activeTab === 'profile' ? 'Shop Profile' :
+                     activeTab === 'hours' ? 'Business Hours' :
+                     activeTab === 'staff' ? 'Staff Management' :
+                     activeTab === 'email' ? 'Email Templates' :
+                     activeTab === 'payment' ? 'Payment Settings' : 'Notifications'}
+              subtitle={activeTab === 'profile' ? "Update your shop's basic information" : undefined}
+            >
 
-            {activeTab === 'profile' && (
+              {activeTab === 'profile' && (
             <form>
               <div className="space-y-6">
                 {/* Shop Logo */}
@@ -240,19 +243,19 @@ export default function SettingsPage() {
             </form>
             )}
 
-            {activeTab !== 'profile' && (
-              <div className={`text-center py-12`}>
-                <p className={`${colors.textSecondary} mb-4`}>
-                  {activeTab === 'hours' && 'Business hours settings coming soon...'}
-                  {activeTab === 'staff' && 'Staff management features coming soon...'}
-                  {activeTab === 'email' && 'Email template settings coming soon...'}
-                  {activeTab === 'payment' && 'Payment settings coming soon...'}
-                  {activeTab === 'account' && 'Account & security settings coming soon...'}
-                  {activeTab === 'notifications' && 'Notification preferences coming soon...'}
-                </p>
-              </div>
-            )}
-          </DashboardCard>
+              {activeTab !== 'profile' && (
+                <div className={`text-center py-12`}>
+                  <p className={`${colors.textSecondary} mb-4`}>
+                    {activeTab === 'hours' && 'Business hours settings coming soon...'}
+                    {activeTab === 'staff' && 'Staff management features coming soon...'}
+                    {activeTab === 'email' && 'Email template settings coming soon...'}
+                    {activeTab === 'payment' && 'Payment settings coming soon...'}
+                    {activeTab === 'notifications' && 'Notification preferences coming soon...'}
+                  </p>
+                </div>
+              )}
+            </DashboardCard>
+          )}
         </div>
       </div>
     </DashboardPageLayout>

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Loader2, ArrowLeft } from 'lucide-react';
+import { Mail, Loader2, ArrowLeft, AlertCircle, Clock, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { createBrowserClient } from '@supabase/ssr';
@@ -13,12 +13,27 @@ export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [isRateLimited, setIsRateLimited] = useState(false);
+  const [cooldownTime, setCooldownTime] = useState(0);
   const router = useRouter();
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
+
+  // Cooldown timer effect
+  useEffect(() => {
+    if (cooldownTime > 0) {
+      const timer = setTimeout(() => {
+        setCooldownTime(cooldownTime - 1);
+        if (cooldownTime === 1) {
+          setIsRateLimited(false);
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldownTime]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +47,16 @@ export default function ForgotPasswordPage() {
       });
 
       if (error) {
-        setError(error.message);
+        // Check for rate limiting
+        if (error.message.toLowerCase().includes('rate') ||
+            error.message.toLowerCase().includes('too many') ||
+            error.message.toLowerCase().includes('exceeded')) {
+          setIsRateLimited(true);
+          setCooldownTime(300); // 5 minute cooldown
+          setError('');
+        } else {
+          setError(error.message);
+        }
       } else {
         setMessage('Check your email for the password reset link. Please open it in this same browser window for best results.');
         // Don't redirect, let user stay on this page
@@ -144,6 +168,44 @@ export default function ForgotPasswordPage() {
                 </div>
               )}
 
+              {/* Rate Limit Warning */}
+              {isRateLimited && (
+                <div className="mb-6 p-4 bg-amber-900/20 border border-amber-500/30 rounded-lg backdrop-blur-sm">
+                  <div className="flex items-start space-x-3">
+                    <AlertCircle className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-amber-300 text-sm font-medium mb-2">
+                        Email Rate Limit Reached
+                      </p>
+                      <p className="text-amber-200/80 text-xs mb-3">
+                        Too many password reset attempts. For security, please wait before trying again.
+                      </p>
+                      <div className="flex items-center space-x-2 mb-3">
+                        <Clock className="w-4 h-4 text-amber-400" />
+                        <span className="text-amber-300 text-sm font-mono">
+                          {Math.floor(cooldownTime / 60)}:{String(cooldownTime % 60).padStart(2, '0')} remaining
+                        </span>
+                      </div>
+                      <div className="border-t border-amber-500/20 pt-3">
+                        <p className="text-amber-200/80 text-xs mb-2">
+                          <strong>Alternative Options:</strong>
+                        </p>
+                        <ul className="space-y-2 text-xs text-amber-200/70">
+                          <li className="flex items-start">
+                            <Shield className="w-3 h-3 mr-1.5 mt-0.5 flex-shrink-0" />
+                            <span>If you can still log in, go to Settings → Account & Security to change your password</span>
+                          </li>
+                          <li className="flex items-start">
+                            <Mail className="w-3 h-3 mr-1.5 mt-0.5 flex-shrink-0" />
+                            <span>Contact an administrator at bowenislandtattooshop@gmail.com for assistance</span>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Reset Form */}
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
@@ -158,13 +220,13 @@ export default function ForgotPasswordPage() {
                     required
                     className="w-full px-4 py-4 bg-[#080808]/50 border border-[#C9A449]/30 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[#C9A449]/50 focus:border-[#C9A449]/70 transition-all backdrop-blur-sm"
                     placeholder="Enter your email address"
-                    disabled={isLoading || !!message}
+                    disabled={isLoading || !!message || isRateLimited}
                   />
                 </div>
 
                 <button
                   type="submit"
-                  disabled={isLoading || !email || !!message}
+                  disabled={isLoading || !email || !!message || isRateLimited}
                   className="w-full bg-gradient-to-r from-[#C9A449]/80 to-[#C9A449]/60 text-[#080808] py-4 px-6 rounded-lg font-medium hover:from-[#C9A449] hover:to-[#C9A449]/80 focus:outline-none focus:ring-2 focus:ring-[#C9A449]/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center tracking-wider uppercase text-sm"
                 >
                   {isLoading ? (

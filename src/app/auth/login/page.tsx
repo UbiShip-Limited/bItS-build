@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, LogIn, Loader2, Shield, Key } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants';
 
 export default function LoginPage() {
   const [step, setStep] = useState<'access' | 'login'>('access');
@@ -18,9 +19,20 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { signIn } = useAuth();
   const router = useRouter();
+
+  // Get redirect URL from query params
+  const [redirectTo, setRedirectTo] = useState('/dashboard');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const from = params.get('from');
+    if (from) {
+      setRedirectTo(from);
+    }
+  }, []);
 
   // Check if access code is already verified in this session
   useEffect(() => {
@@ -72,7 +84,7 @@ export default function LoginPage() {
       
       if (result.success) {
         sessionStorage.removeItem('staff_access_verified');
-        router.push('/dashboard');
+        router.push(redirectTo);
       } else {
         setError(result.error || 'Login failed');
       }
@@ -150,10 +162,10 @@ export default function LoginPage() {
                 </div>
 
                 {/* Title with sophisticated typography */}
-                <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl tracking-wide text-white mb-2 uppercase">
+                <h1 className={`${typography.fontBrand} ${typography.h2} ${colors.textPrimary} mb-2 uppercase`}>
                   Bowen Island Tattoo
                 </h1>
-                <p className="font-body text-[#FFFFFF]/70 italic">
+                <p className={`${typography.fontUI} ${typography.paragraph} ${colors.textSecondary} italic`}>
                   {step === 'access' 
                     ? 'Staff Portal - Access Required' 
                     : 'Staff Portal - Sign in to continue'
@@ -185,14 +197,14 @@ export default function LoginPage() {
                   >
                     {/* Access Code Form */}
                     {accessError && (
-                      <div className="mb-6 p-4 bg-red-900/20 border border-red-500/30 rounded-lg backdrop-blur-sm">
-                        <p className="text-red-300 text-sm text-center">{accessError}</p>
+                      <div className={`mb-6 p-4 bg-red-900/20 border border-red-500/30 ${components.radius.small} backdrop-blur-sm`}>
+                        <p className={`${colors.textError} ${typography.textSm} text-center`}>{accessError}</p>
                       </div>
                     )}
 
                     <form onSubmit={handleAccessCodeSubmit} className="space-y-6">
                       <div>
-                        <label htmlFor="accessCode" className="block text-sm font-medium text-[#C9A449]/90 mb-3 tracking-wider uppercase">
+                        <label htmlFor="accessCode" className={`block ${typography.textSm} ${typography.fontMedium} ${colors.textAccentProminent} mb-3 ${typography.trackingWide} uppercase`}>
                           Staff Access Code
                         </label>
                         <div className="relative">
@@ -208,7 +220,7 @@ export default function LoginPage() {
                           />
                           <Key className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#C9A449]/60" />
                         </div>
-                        <p className="text-xs text-white/50 mt-3 text-center italic">
+                        <p className={`${typography.textXs} ${colors.textMuted} mt-3 text-center italic`}>
                           Contact your administrator if you don't have the current access code.
                         </p>
                       </div>

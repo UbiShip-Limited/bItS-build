@@ -5,6 +5,7 @@ import { useAuth } from '../../../hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { UserPlus, Mail, Lock, Loader2, ArrowLeft, Shield, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants';
 
 type UserRole = 'artist' | 'assistant' | 'admin';
 
@@ -98,7 +99,7 @@ export default function RegisterPage() {
                   <Shield className="w-8 h-8 text-red-400" />
                 </div>
                 
-                <h1 className="font-heading text-2xl font-bold text-white mb-4 tracking-wide uppercase">Access Denied</h1>
+                <h1 className={`${typography.fontBrand} ${typography.h3} ${colors.textPrimary} mb-4 ${typography.trackingWide} uppercase`}>Access Denied</h1>
                 <p className="text-white/70 mb-6 italic">
                   Only administrators can create staff accounts.
                 </p>
@@ -225,10 +226,10 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Title with sophisticated typography */}
-                <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl tracking-wide text-white mb-2 uppercase">
+                <h1 className={`${typography.fontBrand} ${typography.h2} ${colors.textPrimary} mb-2 uppercase`}>
                   {step === 'access' ? 'Staff Access Required' : 'Invite Staff Member'}
                 </h1>
-                <p className="font-body text-[#FFFFFF]/70 italic">
+                <p className={`${typography.fontUI} ${typography.paragraph} ${colors.textSecondary} italic`}>
                   {step === 'access' 
                     ? 'Admin Portal - Access Required' 
                     : 'Create an account for a new team member'

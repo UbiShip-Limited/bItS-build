@@ -76,19 +76,19 @@ export function DashboardPageLayout({
           <nav className="mb-4">
             <ol className={`flex items-center space-x-2 ${typography.textSm}`}>
               <li>
-                <Link href="/dashboard" className="text-white/70 hover:text-white transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
+                <Link href="/dashboard" className={`${colors.textSecondary} hover:${colors.textPrimary} ${effects.transitionNormal}`}>
                   Dashboard
                 </Link>
               </li>
               {breadcrumbs.map((crumb, index) => (
                 <li key={index} className="flex items-center">
-                  <ChevronRight className="w-4 h-4 text-white/50 mx-2" />
+                  <ChevronRight className={`w-4 h-4 ${colors.textMuted} mx-2`} />
                   {crumb.href ? (
-                    <Link href={crumb.href} className="text-white/70 hover:text-white transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
+                    <Link href={crumb.href} className={`${colors.textSecondary} hover:${colors.textPrimary} ${effects.transitionNormal}`}>
                       {crumb.label}
                     </Link>
                   ) : (
-                    <span className="text-white font-medium">{crumb.label}</span>
+                    <span className={`${colors.textPrimary} ${typography.fontMedium}`}>{crumb.label}</span>
                   )}
                 </li>
               ))}
@@ -97,16 +97,16 @@ export function DashboardPageLayout({
         )}
 
         {/* Main Container */}
-        <div className="relative border border-gold-500/30 rounded-3xl bg-gradient-to-b from-obsidian/95 to-obsidian/90 backdrop-blur-sm">
+        <div className={`relative border ${colors.borderDefault} ${components.radius.large} bg-gradient-to-b from-obsidian/95 to-obsidian/90 backdrop-blur-sm`}>
           {/* Page Header */}
-          <div className="border-b border-gold-500/10 px-8 py-6">
+          <div className={`border-b ${colors.borderSubtle} px-8 py-6`}>
             <div className="flex justify-between items-start">
               <div>
-                <h1 className="font-body text-4xl sm:text-4xl md:text-5xl font-semibold leading-tight text-white mb-2">
+                <h1 className={`${typography.h2} ${colors.textPrimary} mb-2`}>
                   {title}
                 </h1>
                 {description && (
-                  <p className="text-lg text-white/70">{description}</p>
+                  <p className={`${typography.textLg} ${colors.textSecondary}`}>{description}</p>
                 )}
               </div>
               {actions && actions.length > 0 && (
@@ -122,15 +122,15 @@ export function DashboardPageLayout({
             {loading ? (
               <div className="flex items-center justify-center py-16">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold-500/30 mx-auto mb-4"></div>
-                  <p className="text-white/70">Loading...</p>
+                  <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${colors.borderDefault} mx-auto mb-4`}></div>
+                  <p className={colors.textSecondary}>Loading...</p>
                 </div>
               </div>
             ) : error ? (
               <div className="flex items-center justify-center py-16">
                 <div className="text-center max-w-md">
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-6">
-                    <p className="text-red-400 font-medium mb-4">{error}</p>
+                  <div className={`bg-red-500/10 border border-red-500/30 ${components.radius.medium} p-6`}>
+                    <p className={`${colors.textError} ${typography.fontMedium} mb-4`}>{error}</p>
                     {onRetry && (
                       <button 
                         onClick={onRetry}

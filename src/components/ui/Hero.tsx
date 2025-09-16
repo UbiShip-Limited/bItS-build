@@ -190,7 +190,7 @@ export function TattooHero() {
 
           {/* Title - enhanced typography with gradient and better spacing */}
           <motion.div variants={itemVariants} className="mt-0 sm:-mt-2 md:-mt-3">
-            <h1 className={`${typography.fontBrand} text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold ${typography.leadingTight} px-2 sm:px-4`}>
+            <h1 className={`${typography.fontBrand} ${typography.h1} px-2 sm:px-4`}>
               <span className="bg-gradient-to-r from-white via-white to-white bg-clip-text text-transparent">
                 Bowen Island Tattoo
               </span>
@@ -198,7 +198,7 @@ export function TattooHero() {
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <p className={`${typography.textSm} sm:${typography.paragraph} md:${typography.paragraphLarge} ${colors.textSecondary} max-w-xl lg:max-w-2xl mx-auto px-2 sm:px-4`}>
+            <p className={`${typography.paragraph} ${colors.textSecondary} max-w-xl lg:max-w-2xl mx-auto px-2 sm:px-4`}>
              Custom tattoos, peaceful island studio.<br className="hidden sm:block" />
              <span className={`${colors.textMuted} italic block mt-1`}>Book your spot. Let's create something beautiful.</span>
             </p>

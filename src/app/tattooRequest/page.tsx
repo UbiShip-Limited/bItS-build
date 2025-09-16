@@ -2,6 +2,7 @@ import React from 'react';
 import { Metadata } from 'next';
 import TattooRequestForm from '../../components/forms/TattooRequestForm';
 import { StructuredData } from '../../components/StructuredData';
+import { typography, colors, effects, components } from '@/src/lib/styles/globalStyleConstants';
 
 // Enhanced metadata for tattoo request page
 export const metadata: Metadata = {
@@ -73,7 +74,7 @@ const TattooRequestPage: React.FC = () => {
             <div className="w-20 sm:w-28 md:w-36 h-[1px] bg-gradient-to-l from-transparent via-gold-500/30 to-gold-500/10" />
           </div>
           
-          <h1 className="font-body text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold leading-[1.1] mb-6 text-white tracking-tight">Start Your Journey</h1>
+          <h1 className={`${typography.h1} ${colors.textPrimary} mb-6`}>Start Your Journey</h1>
           
           {/* Enhanced dots divider below title */}
           <div className="mb-6 sm:mb-8 flex items-center justify-center gap-3 sm:gap-4">
@@ -86,7 +87,7 @@ const TattooRequestPage: React.FC = () => {
             <div className="w-1 h-1 bg-gold-500/30 rounded-full animate-pulse" style={{animationDelay: '600ms'}}></div>
           </div>
           
-          <p className="text-white/60 max-w-2xl mx-auto font-body text-base sm:text-lg md:text-xl leading-[1.7] px-2 sm:px-4">
+          <p className={`${colors.textSecondary} max-w-2xl mx-auto ${typography.paragraphLarge} px-2 sm:px-4`}>
             Share your vision with us. We'll craft something meaningful together.
           </p>
         </div>

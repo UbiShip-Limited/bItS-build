@@ -4,18 +4,18 @@ import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../../hooks/useAuth';
+import { AuthGuard } from '../../components/auth/AuthGuard';
 import ThemeSwitcher from '../../components/ThemeSwitcher';
-import { 
-  LayoutDashboard, 
-  Calendar, 
-  Users, 
-  Palette, 
-  CreditCard, 
+import {
+  LayoutDashboard,
+  Calendar,
+  Users,
+  Palette,
+  CreditCard,
   Settings,
   LogOut,
   Bell,
   ChevronLeft,
-  Loader2,
   BarChart3,
   Clock,
   Menu,
@@ -31,10 +31,10 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
+function DashboardLayoutContent({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, session, loading, signOut } = useAuth();
+  const { user, session, signOut } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   // Initialize notification counts from sessionStorage if available
@@ -56,17 +56,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     };
   });
 
-  useEffect(() => {
-    // Only redirect if we're done loading AND have no session at all
-    if (!loading && !session) {
-      console.log('🚪 No session found in DashboardLayout, redirecting to login');
-      router.push('/auth/login');
-    }
-  }, [session, loading, router]);
-
   // Connect to SSE for real-time notification counts
   useEffect(() => {
-    if (!user || loading) return;
+    if (!user) return;
 
     // Load initial counts from analytics API
     const loadInitialCounts = async () => {
@@ -171,7 +163,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return () => {
       eventSource.close();
     };
-  }, [user, loading]);
+  }, [user]);
 
   // Clear notification badges when viewing the respective pages
   // This is separate from SSE to handle page navigation properly
@@ -198,18 +190,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       sessionStorage.setItem('notificationCounts', JSON.stringify(notificationCounts));
     }
   }, [notificationCounts]);
-
-  // Show loading while checking authentication
-  if (loading) {
-    return (
-      <div className={`min-h-screen ${colors.bgPrimary} flex items-center justify-center`}>
-        <div className="text-center">
-          <Loader2 className={`w-8 h-8 animate-spin ${colors.textAccent} mx-auto mb-4`} />
-          <p className={colors.textSecondary}>Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   const handleSignOut = async () => {
     await signOut();
@@ -353,7 +333,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           {/* Brand Header */}
           <div className={`p-6 border-b ${colors.borderSubtle} bg-gradient-to-b from-obsidian via-obsidian/95 to-transparent`}>
             <div className={`${effects.transitionNormal} ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
-              <h1 className={`text-2xl ${typography.fontBrand} font-bold ${colors.textPrimary} ${typography.trackingWide}`}>
+              <h1 className={`${typography.text2xl} ${typography.fontBrand} ${typography.fontSemibold} ${colors.textPrimary} ${typography.trackingWide}`}>
                 BOWEN ISLAND
               </h1>
               <p className={`${typography.textSm} ${colors.textAccentSecondary} mt-1 tracking-widest uppercase`}>
@@ -361,7 +341,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </p>
             </div>
             {isCollapsed && (
-              <div className={`text-2xl font-bold ${colors.textAccent} text-center ${typography.fontBrand}`}>B</div>
+              <div className={`${typography.text2xl} ${typography.fontSemibold} ${colors.textAccent} text-center ${typography.fontBrand}`}>B</div>
             )}
           </div>
 
@@ -519,7 +499,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </button>
                 
                 <div>
-                  <h2 className="text-xl lg:text-2xl font-heading font-bold text-white tracking-wide">
+                  <h2 className={`${typography.text2xl} ${typography.fontBrand} ${typography.fontSemibold} ${colors.textPrimary} ${typography.trackingWide}`}>
                   {(() => {
                     for (const section of navItems) {
                       const activeItem = section.items.find(item => {
@@ -531,7 +511,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     return 'Dashboard';
                   })()}
                   </h2>
-                  <p className="text-sm text-gray-500 mt-1 hidden lg:block">
+                  <p className={`${typography.textSm} ${colors.textMuted} mt-1 hidden lg:block`}>
                   {new Date().toLocaleDateString('en-US', { 
                     weekday: 'long', 
                     year: 'numeric', 
@@ -564,5 +544,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </main>
     </div>
+  );
+}
+
+// Export the layout wrapped with AuthGuard for authentication protection
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  return (
+    <AuthGuard requiredRoles={['artist', 'assistant', 'admin', 'owner']}>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </AuthGuard>
   );
 }

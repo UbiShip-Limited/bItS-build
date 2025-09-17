@@ -6,6 +6,7 @@ import consultationRoutes from './consultation';
 import tattooRoutes from './tattoo';
 import refundRoutes from './refunds';
 import paymentLinkRoutes from './paymentLinks';
+import paymentStatsRoutes from './stats';
 
 const paymentRoutes: FastifyPluginAsync = async (fastify) => {
   // Apply authentication middleware to all routes EXCEPT health check
@@ -43,6 +44,7 @@ const paymentRoutes: FastifyPluginAsync = async (fastify) => {
     fastify.register(tattooRoutes, { prefix: '/tattoo' });      // Tattoo payments at /payments/tattoo/
     fastify.register(refundRoutes, { prefix: '/refunds' });     // Refund operations at /payments/refunds/
     fastify.register(paymentLinkRoutes, { prefix: '/links' });  // Payment links at /payments/links/
+    fastify.register(paymentStatsRoutes);      // Stats and export at /payments/stats, /payments/export
     
     fastify.log.info('✅ Payment routes registered successfully');
   } catch (error) {

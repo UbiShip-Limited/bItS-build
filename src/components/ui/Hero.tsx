@@ -96,11 +96,11 @@ export function TattooHero() {
       </div>
 
       {/* Main content container - optimally positioned with header consideration */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: isLoaded ? 1 : 0 }}
         transition={{ duration: 1.2 }}
-        className="absolute inset-0 z-20 grid place-items-center px-4 py-20 sm:px-6 sm:pt-24 sm:pb-20 md:px-8 md:pt-28 md:pb-24 lg:pt-32 lg:pb-28 mx-auto"
+        className="absolute inset-0 z-30 grid place-items-center px-4 py-20 sm:px-6 sm:pt-24 sm:pb-20 md:px-8 md:pt-28 md:pb-24 lg:pt-32 lg:pb-28 mx-auto"
       >
         {/* Main content */}
         <motion.div
@@ -275,9 +275,9 @@ export function TattooHero() {
         )}
       </motion.div>
       
-      {/* Seamless bottom fade transition */}
-      <div className="absolute bottom-0 left-0 right-0 h-20 sm:h-28 md:h-40 lg:h-56 z-30 pointer-events-none">
-        <div className="w-full h-full bg-gradient-to-t from-obsidian via-obsidian/80 to-transparent" />
+      {/* Subtle bottom fade transition - reduced height and opacity to not cover buttons */}
+      <div className="absolute bottom-0 left-0 right-0 h-12 sm:h-16 md:h-20 lg:h-24 z-10 pointer-events-none">
+        <div className="w-full h-full bg-gradient-to-t from-obsidian/60 via-obsidian/20 to-transparent" />
       </div>
     </section>
   )

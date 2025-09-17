@@ -13,6 +13,7 @@ import PriorityActionsBar from '@/src/components/dashboard/PriorityActionsBar';
 import SimplifiedActivityTimeline from '@/src/components/dashboard/SimplifiedActivityTimeline';
 import QuickActionsPanel from '@/src/components/dashboard/QuickActionsPanel';
 import SquareSyncStatus from '@/src/components/dashboard/SquareSyncStatus';
+import RevenueWidget from '@/src/components/dashboard/RevenueWidget';
 import { DashboardCard } from './components/DashboardCard';
 
 export default function DashboardPage() {
@@ -81,7 +82,7 @@ export default function DashboardPage() {
     }
   };
 
-  // TODO: Implement actual data fetching from API
+  // Initial data fetch
   useEffect(() => {
     if (isAuthenticated) {
       fetchDashboardData();
@@ -91,74 +92,109 @@ export default function DashboardPage() {
   // Listen for real-time updates via SSE and auto-refresh dashboard
   useEffect(() => {
     if (!isAuthenticated) return;
-    
+
     const apiUrl = process.env.NEXT_PUBLIC_BACKEND_API_URL || 'http://localhost:3001';
     const userId = user?.id || 'admin-user'; // Use authenticated user ID or fallback
-    const eventSource = new EventSource(`${apiUrl}/events?userId=${userId}`);
 
-    // Handle connection open
-    eventSource.onopen = () => {
-      console.log('✅ Dashboard connected to real-time updates');
-    };
+    let eventSource: EventSource | null = null;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+    const BASE_RECONNECT_DELAY = 1000; // 1 second
 
-    // Listen for the unified dashboard metrics update event
-    eventSource.addEventListener('dashboard_metrics_updated', (event) => {
-      console.log('📊 Dashboard metrics updated:', event.data);
-      fetchDashboardData(true);
-    });
-
-    // Auto-refresh dashboard on key events (fallback for immediate feedback)
-    const handleDashboardRefresh = (eventType: string, eventData?: any) => {
-      console.log(`🔄 Dashboard refresh triggered by: ${eventType}`, eventData);
-      fetchDashboardData(true);
-    };
-
-    eventSource.addEventListener('appointment_created', (event) => {
-      console.log('📅 New appointment created:', event.data);
-      handleDashboardRefresh('appointment_created', event.data);
-    });
-
-    eventSource.addEventListener('request_submitted', (event) => {
-      console.log('🎨 New tattoo request submitted:', event.data);
-      handleDashboardRefresh('request_submitted', event.data);
-    });
-
-    eventSource.addEventListener('payment_received', (event) => {
-      console.log('💰 Payment received:', event.data);
-      handleDashboardRefresh('payment_received', event.data);
-    });
-
-    eventSource.addEventListener('request_reviewed', (event) => {
-      handleDashboardRefresh('request_reviewed', event.data);
-    });
-
-    eventSource.addEventListener('request_approved', (event) => {
-      handleDashboardRefresh('request_approved', event.data);
-    });
-
-    eventSource.addEventListener('request_rejected', (event) => {
-      handleDashboardRefresh('request_rejected', event.data);
-    });
-
-    eventSource.addEventListener('appointment_approved', (event) => {
-      handleDashboardRefresh('appointment_approved', event.data);
-    });
-
-    // Handle errors and connection issues
-    eventSource.onerror = (error) => {
-      console.error('❌ Dashboard SSE error:', error);
-      
-      // Check connection state and log appropriate message
-      if (eventSource.readyState === EventSource.CONNECTING) {
-        console.log('🔄 Dashboard reconnecting to real-time updates...');
-      } else if (eventSource.readyState === EventSource.CLOSED) {
-        console.log('❌ Dashboard real-time connection closed');
+    const connectSSE = () => {
+      if (eventSource) {
+        eventSource.close();
       }
+
+      eventSource = new EventSource(`${apiUrl}/events?userId=${userId}`);
+
+      // Handle connection open
+      eventSource.onopen = () => {
+        console.log('✅ Dashboard connected to real-time updates');
+        reconnectAttempts = 0; // Reset attempts on successful connection
+      };
+
+      // Listen for the unified dashboard metrics update event
+      eventSource.addEventListener('dashboard_metrics_updated', (event) => {
+        console.log('📊 Dashboard metrics updated:', event.data);
+        fetchDashboardData(true);
+      });
+
+      // Auto-refresh dashboard on key events (fallback for immediate feedback)
+      const handleDashboardRefresh = (eventType: string, eventData?: any) => {
+        console.log(`🔄 Dashboard refresh triggered by: ${eventType}`, eventData);
+        fetchDashboardData(true);
+      };
+
+      eventSource.addEventListener('appointment_created', (event) => {
+        console.log('📅 New appointment created:', event.data);
+        handleDashboardRefresh('appointment_created', event.data);
+      });
+
+      eventSource.addEventListener('request_submitted', (event) => {
+        console.log('🎨 New tattoo request submitted:', event.data);
+        handleDashboardRefresh('request_submitted', event.data);
+      });
+
+      eventSource.addEventListener('payment_received', (event) => {
+        console.log('💰 Payment received:', event.data);
+        handleDashboardRefresh('payment_received', event.data);
+      });
+
+      eventSource.addEventListener('request_reviewed', (event) => {
+        handleDashboardRefresh('request_reviewed', event.data);
+      });
+
+      eventSource.addEventListener('request_approved', (event) => {
+        handleDashboardRefresh('request_approved', event.data);
+      });
+
+      eventSource.addEventListener('request_rejected', (event) => {
+        handleDashboardRefresh('request_rejected', event.data);
+      });
+
+      eventSource.addEventListener('appointment_approved', (event) => {
+        handleDashboardRefresh('appointment_approved', event.data);
+      });
+
+      // Handle errors and connection issues with exponential backoff
+      eventSource.onerror = (error) => {
+        console.error('❌ Dashboard SSE error:', error);
+
+        // Check connection state and handle reconnection
+        if (eventSource!.readyState === EventSource.CONNECTING) {
+          console.log('🔄 Dashboard reconnecting to real-time updates...');
+        } else if (eventSource!.readyState === EventSource.CLOSED) {
+          console.log('❌ Dashboard real-time connection closed');
+
+          // Attempt to reconnect with exponential backoff
+          if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            reconnectAttempts++;
+            const delay = BASE_RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1);
+            console.log(`🔄 Attempting reconnection ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${delay}ms...`);
+
+            reconnectTimeout = setTimeout(() => {
+              connectSSE();
+            }, delay);
+          } else {
+            console.error('❌ Max reconnection attempts reached. Please refresh the page.');
+          }
+        }
+      };
     };
+
+    // Initial connection
+    connectSSE();
 
     return () => {
       console.log('🔌 Closing dashboard real-time connection');
-      eventSource.close();
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      if (eventSource) {
+        eventSource.close();
+      }
     };
   }, [isAuthenticated, user?.id]); // Include user.id to reconnect on user change
 
@@ -284,8 +320,11 @@ export default function DashboardPage() {
           </DashboardCard>
         </div>
 
-        {/* Right Column - Quick Actions and Square Sync */}
+        {/* Right Column - Revenue, Quick Actions and Square Sync */}
         <div className="lg:col-span-1 space-y-6">
+          {/* Revenue Widget - NEW */}
+          <RevenueWidget />
+
           {/* Square Sync Status */}
           <DashboardCard
             title="Square Integration"
@@ -294,13 +333,13 @@ export default function DashboardPage() {
           >
             <SquareSyncStatus />
           </DashboardCard>
-          
+
           {/* Quick Actions Panel */}
           <DashboardCard
             title="Quick Actions"
             subtitle="Common tasks and shortcuts"
           >
-            <QuickActionsPanel 
+            <QuickActionsPanel
               onSendPaymentLink={() => router.push('/dashboard/payments?action=new-link')}
               newRequestsCount={dashboardData.metrics?.requests?.newCount || 0}
             />

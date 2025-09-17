@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Edit, Calendar, FileText, DollarSign, Clock, Mail, Phone } from 'lucide-react';
+import { ArrowLeft, Edit, Calendar, FileText, DollarSign, Clock, Mail, Phone, Trash2 } from 'lucide-react';
 import { CustomerService, type Customer } from '@/src/lib/api/services/customerService';
 import { AppointmentApiClient, type AppointmentData } from '@/src/lib/api/services/appointmentApiClient';
 import { TattooRequestService, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
@@ -16,6 +16,7 @@ import { typography, colors, effects, components } from '@/src/lib/styles/global
 
 export default function CustomerDetailPage() {
   const params = useParams();
+  const router = useRouter();
 
   // ✅ ALL React hooks must be called before any early returns
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -24,6 +25,7 @@ export default function CustomerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // ✅ Memoize service instances to prevent infinite loops
   const customerService = useMemo(() => new CustomerService(apiClient), []);
@@ -99,6 +101,26 @@ export default function CustomerDetailPage() {
   const handleEditSuccess = () => {
     setShowEditModal(false);
     loadCustomerData();
+  };
+
+  const handleDeleteCustomer = async () => {
+    if (!customer) return;
+
+    const confirmed = confirm(
+      `Are you sure you want to delete ${customer.name}? This action cannot be undone. All associated appointments and requests will be preserved but unlinked.`
+    );
+
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await customerService.deleteCustomer(customer.id);
+      // Navigate back to customers list after successful deletion
+      router.push('/dashboard/customers');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to delete customer');
+      setDeleting(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -185,6 +207,12 @@ export default function CustomerDetailPage() {
           onClick: () => setShowEditModal(true),
           icon: <Edit className="w-4 h-4" />,
           variant: 'primary'
+        },
+        {
+          label: deleting ? 'Deleting...' : 'Delete',
+          onClick: handleDeleteCustomer,
+          icon: <Trash2 className="w-4 h-4" />,
+          variant: 'secondary'
         }
       ]}
     >

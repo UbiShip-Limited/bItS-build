@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Link, FileText, CreditCard, ExternalLink, Copy, Trash2, RefreshCw, User, DollarSign, Calendar, TrendingUp, AlertCircle, Bell, Clock } from 'lucide-react';
+import { Link, FileText, CreditCard, ExternalLink, Copy, Trash2, RefreshCw, User, DollarSign, Calendar, TrendingUp, AlertCircle, Bell, Clock, Zap, Search, Download, Filter } from 'lucide-react';
 import CreatePaymentLinkModal from '@/src/components/payments/CreatePaymentLinkModal';
 import CreateInvoiceModal from '@/src/components/payments/CreateInvoiceModal';
+import QuickCollectModal from '@/src/components/payments/QuickCollectModal';
 import CustomerPaymentHistory from '@/src/components/payments/CustomerPaymentHistory';
 import CustomerSelector from '@/src/components/dashboard/CustomerSelector';
 import { paymentService, PaymentLink } from '@/src/lib/api/services/paymentService';
 import type { Customer } from '@/src/lib/api/services/customerService';
+import { apiClient } from '@/src/lib/api/apiClient';
 import { toast } from '@/src/lib/toast';
 
 export default function PaymentsPage() {
@@ -20,11 +22,17 @@ export default function PaymentsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showPaymentLinkModal, setShowPaymentLinkModal] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [showQuickCollectModal, setShowQuickCollectModal] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
   const [selectedCustomerName, setSelectedCustomerName] = useState<string>('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'links' | 'history'>('links');
+
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'completed' | 'refunded'>('all');
   
   // Use ref to track fetching state without causing dependency issues
   const fetchingDataRef = useRef(false);
@@ -66,16 +74,9 @@ export default function PaymentsPage() {
 
   const fetchPaymentStats = useCallback(async () => {
     try {
-      const response = await fetch('/api/payments/stats', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setPaymentStats(data.data);
+      const response = await apiClient.get<{ success: boolean; data: any }>('/payments/stats');
+      if (response.success) {
+        setPaymentStats(response.data);
       }
     } catch (err: unknown) {
       console.error('Failed to fetch payment stats:', err);
@@ -335,16 +336,26 @@ export default function PaymentsPage() {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <button
+          onClick={() => setShowQuickCollectModal(true)}
+          className="flex items-center justify-center gap-4 p-6 bg-gradient-to-r from-[#C9A449]/20 to-[#C9A449]/10 border border-[#C9A449]/30 rounded-2xl transition-all duration-300 transform shadow-2xl hover:border-[#C9A449]/50 hover:-translate-y-1 hover:shadow-[#C9A449]/20"
+        >
+          <Zap className="w-8 h-8 text-[#C9A449]" />
+          <div className="text-left">
+            <h3 className="font-semibold text-white text-lg">Quick Collect</h3>
+            <p className="text-sm text-[#C9A449] mt-1">Walk-in payment</p>
+          </div>
+        </button>
         <button
           onClick={() => setShowPaymentLinkModal(true)}
           className="flex items-center justify-center gap-4 p-6 bg-[#111111] border border-[#1a1a1a] rounded-2xl transition-all duration-300 transform shadow-2xl hover:border-[#C9A449]/20 hover:bg-[#111111] hover:-translate-y-1 hover:shadow-[#C9A449]/10"
         >
           <Link className="w-8 h-8 text-[#C9A449]" />
           <div className="text-left">
-            <h3 className="font-semibold text-white text-lg">Create Payment Link</h3>
+            <h3 className="font-semibold text-white text-lg">Payment Link</h3>
             <p className="text-sm text-gray-400 mt-1">
-              {selectedCustomer ? `For ${selectedCustomer.name}` : 'Any customer or walk-in'}
+              {selectedCustomer ? `For ${selectedCustomer.name}` : 'Any customer'}
             </p>
           </div>
         </button>
@@ -381,6 +392,71 @@ export default function PaymentsPage() {
             <p className="text-sm text-gray-600 mt-1">Coming soon</p>
           </div>
         </button>
+      </div>
+
+      {/* Filters and Search Bar */}
+      <div className="bg-[#111111] border border-[#1a1a1a] rounded-2xl p-4 mb-6 hover:border-[#C9A449]/20 transition-all duration-300">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Search */}
+          <div className="flex-1 min-w-[300px] relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search customers, amounts, or reference IDs..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-[#080808] border border-[#1a1a1a] rounded-lg text-white placeholder-gray-500 focus:border-[#C9A449]/50 focus:outline-none"
+            />
+          </div>
+
+          {/* Date Filter */}
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value as any)}
+            className="px-4 py-2 bg-[#080808] border border-[#1a1a1a] rounded-lg text-white focus:border-[#C9A449]/50 focus:outline-none"
+          >
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="px-4 py-2 bg-[#080808] border border-[#1a1a1a] rounded-lg text-white focus:border-[#C9A449]/50 focus:outline-none"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+            <option value="refunded">Refunded</option>
+          </select>
+
+          {/* Export Button */}
+          <button
+            onClick={async () => {
+              try {
+                // Use the new getBlob method for blob response
+                const blob = await apiClient.getBlob('/payments/export');
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `payments-${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                toast.success('Payments exported successfully!');
+              } catch (error) {
+                toast.error('Failed to export payments');
+                console.error('Export error:', error);
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-[#C9A449]/10 hover:bg-[#C9A449]/20 text-[#C9A449] border border-[#C9A449]/30 rounded-lg transition-all duration-300"
+          >
+            <Download className="w-4 h-4" />
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -685,6 +761,15 @@ export default function PaymentsPage() {
       )}
 
       {/* Modals */}
+      <QuickCollectModal
+        isOpen={showQuickCollectModal}
+        onClose={() => setShowQuickCollectModal(false)}
+        onSuccess={() => {
+          setShowQuickCollectModal(false);
+          handleRefresh();
+        }}
+      />
+
       <CreatePaymentLinkModal
         isOpen={showPaymentLinkModal}
         onClose={() => setShowPaymentLinkModal(false)}

@@ -15,7 +15,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { NotFoundError, ValidationError } from '../services/errors';
-import CloudinaryService from '../cloudinary/index.js';
+import CloudinaryService from '../cloudinary/index';
 import { readRateLimit, writeRateLimit, publicSubmissionRateLimit } from '../middleware/rateLimiting';
 
 // Type definitions for request bodies and queries
@@ -530,6 +530,67 @@ const tattooRequestsRoutes: FastifyPluginAsync = async (fastify) => {
         error: 'Failed to upload images',
         message: errorMessage
       });
+    }
+  });
+
+  // DELETE /tattoo-requests/:id - Delete tattoo request (admin only)
+  fastify.delete('/:id', {
+    preHandler: [authenticate, authorize(['admin'] as UserRole[]), writeRateLimit()],
+    schema: {
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: {
+          id: { type: 'string' }
+        }
+      }
+    }
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+
+    try {
+      // Check if tattoo request exists
+      const tattooRequest = await fastify.prisma.tattooRequest.findUnique({
+        where: { id }
+      });
+
+      if (!tattooRequest) {
+        return reply.status(404).send({ error: 'Tattoo request not found' });
+      }
+
+      // Delete associated reference images from Cloudinary if any
+      if (tattooRequest.referenceImages && Array.isArray(tattooRequest.referenceImages)) {
+        for (const image of tattooRequest.referenceImages as any[]) {
+          if (image.publicId) {
+            try {
+              await CloudinaryService.deleteImage(image.publicId);
+            } catch (error) {
+              fastify.log.error(`Failed to delete Cloudinary image ${image.publicId}:`, error);
+            }
+          }
+        }
+      }
+
+      // Delete the tattoo request
+      await fastify.prisma.tattooRequest.delete({
+        where: { id }
+      });
+
+      // Log audit
+      await fastify.prisma.auditLog.create({
+        data: {
+          userId: request.user?.id,
+          action: 'DELETE',
+          resource: 'TattooRequest',
+          resourceId: id,
+          details: { deletedRequest: tattooRequest }
+        }
+      });
+
+      return reply.status(204).send();
+    } catch (error) {
+      fastify.log.error('Failed to delete tattoo request:', error);
+      return reply.status(500).send({ error: 'Failed to delete tattoo request' });
     }
   });
 };

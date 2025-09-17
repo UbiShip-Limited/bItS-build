@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -17,7 +17,9 @@ import {
   CheckCircle,
   XCircle,
   MessageSquare,
-  UserPlus
+  UserPlus,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { TattooRequestApiClient, type TattooRequest } from '@/src/lib/api/services/tattooRequestApiClient';
@@ -33,11 +35,14 @@ const CustomerForm = dynamic(() => import('@/src/components/forms/CustomerForm')
 
 export default function TattooRequestDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const [request, setRequest] = useState<TattooRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updating, setUpdating] = useState(false);
   const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Create API client instance - stable reference
   const tattooRequestClient = useMemo(() => {
@@ -98,6 +103,25 @@ export default function TattooRequestDetailPage() {
       alert(err instanceof Error ? err.message : 'Failed to update status');
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!request || !tattooRequestClient) return;
+
+    const confirmed = confirm(
+      `Are you sure you want to delete this tattoo request? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await tattooRequestClient.delete(request.id);
+      router.push('/dashboard/tattoo-request');
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to delete request');
+      setDeleting(false);
     }
   };
 
@@ -180,7 +204,7 @@ export default function TattooRequestDetailPage() {
       {/* Header Actions */}
       <div className="mb-6">
         <div className="flex justify-between items-start">
-          
+
           <div className="flex gap-2">
             {request.status === 'new' && (
               <>
@@ -237,6 +261,25 @@ export default function TattooRequestDetailPage() {
                 Create Appointment
               </Link>
             )}
+          </div>
+
+          {/* Edit/Delete Actions */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => alert('Edit functionality coming soon')}
+              className={`${components.button.base} ${components.button.sizes.medium} ${components.button.variants.secondary} flex items-center gap-2`}
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className={`${components.button.base} ${components.button.sizes.medium} bg-red-500/20 hover:bg-red-500/30 text-red-400 border-red-500/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              <Trash2 className="w-4 h-4" />
+              {deleting ? 'Deleting...' : 'Delete'}
+            </button>
           </div>
         </div>
       </div>

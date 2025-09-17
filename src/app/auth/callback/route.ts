@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
       error,
       errorCode,
       errorDescription,
-      url: requestUrl.toString()
+      url: requestUrl.toString(),
+      origin: requestUrl.origin,
+      expectedDomain: process.env.NEXT_PUBLIC_SITE_URL || 'not set'
     });
 
   // Handle Supabase auth errors
@@ -66,6 +68,9 @@ export async function GET(request: NextRequest) {
           message: verifyError.message,
           status: (verifyError as any).status,
           code: (verifyError as any).code,
+          possibleCause: 'This may occur if the redirect URL domain does not match exactly what is configured in Supabase',
+          currentOrigin: requestUrl.origin,
+          tokenHash: tokenHash?.substring(0, 20) + '...'
         });
         
         const redirectUrl = new URL('/auth/reset-password', requestUrl.origin);
@@ -77,12 +82,13 @@ export async function GET(request: NextRequest) {
           redirectUrl.searchParams.set('error', 'rate_limit');
           redirectUrl.searchParams.set('message', 'Too many attempts. Please wait a few minutes and try again.');
         }
-        // Handle expired or invalid tokens
-        else if (verifyError.message?.includes('expired') || 
+        // Handle expired or invalid tokens (including domain mismatch)
+        else if (verifyError.message?.includes('expired') ||
                  verifyError.message?.includes('invalid') ||
-                 verifyError.message?.includes('not found')) {
+                 verifyError.message?.includes('not found') ||
+                 (verifyError as any).code === 'otp_expired') {
           redirectUrl.searchParams.set('error', 'expired');
-          redirectUrl.searchParams.set('message', 'The reset link has expired or is invalid. Please request a new one.');
+          redirectUrl.searchParams.set('message', 'The reset link has expired or is invalid. This may happen if you clicked the link from a different domain (with or without www). Please request a new password reset.');
         }
         // Handle OTP/token specific errors
         else if (verifyError.message?.includes('otp') || 

@@ -386,12 +386,23 @@ export class ApiClient {
   }
   
   /**
+   * GET request for blob/file downloads
+   */
+  public async getBlob(path: string, config?: AxiosRequestConfig & { skipAuth?: boolean }): Promise<Blob> {
+    const response = await this.axiosInstance.get(path, {
+      ...config,
+      responseType: 'blob'
+    });
+    return response.data;
+  }
+
+  /**
    * Get the base URL for this API client
    */
   public getBaseUrl(): string {
     return this.baseURL;
   }
-  
+
   /**
    * Clear all pending requests (useful for cleanup)
    */

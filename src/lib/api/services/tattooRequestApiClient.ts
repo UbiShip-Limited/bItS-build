@@ -194,6 +194,13 @@ export class TattooRequestApiClient {
   }
 
   /**
+   * Delete a tattoo request
+   */
+  public async delete(id: string): Promise<void> {
+    return this.client.delete(`${this.baseUrl}/${id}`);
+  }
+
+  /**
    * Get a tattoo request by ID
    */
   async getTattooRequestById(id: string): Promise<TattooRequest> {

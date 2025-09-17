@@ -12,6 +12,7 @@ import { useCalendarNavigation } from './calendar/hooks/useCalendarNavigation';
 import { useAppointmentFiltering } from './calendar/hooks/useAppointmentFiltering';
 import { useKeyboardShortcuts } from './calendar/hooks/useKeyboardShortcuts';
 import { useCalendarStats } from './calendar/hooks/useCalendarStats';
+import { components, effects, colors } from '@/src/lib/styles/globalStyleConstants';
 
 interface AppointmentCalendarProps {
   appointments: AppointmentData[];
@@ -62,8 +63,8 @@ export default function AppointmentCalendar({
   };
 
   return (
-    <div className="card bg-smoke-100 shadow-smoke hover:shadow-smoke-lg transition-all duration-300 border border-smoke-200">
-      <div className="card-body">
+    <div className={`${components.card} ${effects.shadowMedium} ${effects.transitionNormal} hover:${effects.shadowHeavy} p-6`}>
+      <div>
         <CalendarHeader
           currentDate={currentDate}
           viewMode={viewMode}
